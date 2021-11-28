@@ -20,11 +20,9 @@
     "@chakra-ui/react": "^1.6.7",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
-    "@snek-at/jaen": "^2.0.0",
-    "@snek-at/jaen-pages": "^2.0.0",
+    "@jaenjs/jaen": "^2.0.0",
     "framer-motion": "^4",
-    "gatsby": "^3.11.1",
-    "gatsby-plugin-emotion": "^6.11.0",
+    "gatsby": "^4.2.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },

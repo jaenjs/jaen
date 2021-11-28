@@ -1,4 +1,15 @@
 //@ts-ignore
-import {extendTheme} from '@chakra-ui/react'
+import {theme as baseTheme, extendTheme} from '@chakra-ui/react'
 
-export default extendTheme({})
+const jaenTheme = extendTheme({
+  components: {
+    Drawer: {
+      sizes: {
+        ...baseTheme.components.Drawer.sizes,
+        '6xl': {dialog: {maxW: '8xl'}}
+      }
+    }
+  }
+})
+
+export default jaenTheme

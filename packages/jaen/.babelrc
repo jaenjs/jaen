@@ -7,5 +7,51 @@
         "runtime": "automatic"
       }
     ]
+  ],
+  "plugins": [
+    "inline-react-svg",
+    [
+      "babel-plugin-relative-path-import",
+      {
+        "paths": [
+          {
+            "rootPathPrefix": "@src",
+            "rootPathSuffix": "src"
+          },
+          {
+            "rootPathPrefix": "@assets",
+            "rootPathSuffix": "src/assets"
+          },
+          {
+            "rootPathPrefix": "@store",
+            "rootPathSuffix": "src/store"
+          },
+          {
+            "rootPathPrefix": "@actions",
+            "rootPathSuffix": "src/store/actions"
+          },
+          {
+            "rootPathPrefix": "@reducers",
+            "rootPathSuffix": "src/store/reducers"
+          },
+          {
+            "rootPathPrefix": "@common",
+            "rootPathSuffix": "src/common"
+          },
+          {
+            "rootPathPrefix": "@components",
+            "rootPathSuffix": "src/components"
+          },
+          {
+            "rootPathPrefix": "@containers",
+            "rootPathSuffix": "src/containers"
+          },
+          {
+            "rootPathPrefix": "@contexts",
+            "rootPathSuffix": "src/contexts"
+          }
+        ]
+      }
+    ]
   ]
 }

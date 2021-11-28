@@ -17,9 +17,15 @@ import {
 
 import {loadState, saveState} from './localStorage'
 import authReducer from './reducers/authReducer'
+import optionsReducer from './reducers/optionsReducer'
+import sfReducer from './reducers/sfReducer'
+import siteReducer from './reducers/siteReducer'
 
 const combinedReducer = combineReducers({
-  auth: authReducer
+  auth: authReducer,
+  options: optionsReducer,
+  sf: sfReducer,
+  site: siteReducer
 })
 
 const rootReducer = (state: any, action: any) => {

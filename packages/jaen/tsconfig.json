@@ -9,9 +9,15 @@
       "@store/*": ["store/*"],
       "@src/*": ["./*"],
       "@reducers/*": ["store/reducers/*"],
-      "@containers/*": ["containers/*"]
+      "@components/*": ["components/*"],
+      "@containers/*": ["containers/*"],
+      "@contexts/*": ["contexts/*"],
+      "@common/*": ["common/*"],
+      "@assets/*": ["assets/*"]
     }
   },
-  "include": ["src", "src/gatsby"],
-  "references": [{"path": "../jaen-shared-ui"}]
+  "include": ["src", "src/**/*.json"],
+  "typeRoots": ["./@types", "../../node_modules"],
+  "references": [],
+  "exclude": ["**/*.stories.tsx"]
 }
