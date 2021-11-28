@@ -1,5 +1,5 @@
-import {ReactComponent as SnekDarkMode} from '@assets/snek-logo-dm.svg'
-import {ReactComponent as Snek} from '@assets/snek-logo.svg'
+import SnekDarkMode from '@assets/snek-logo-dm.svg'
+import Snek from '@assets/snek-logo.svg'
 import {Icon, IconProps, useColorMode} from '@chakra-ui/react'
 
 type SnekIconProps = IconProps
