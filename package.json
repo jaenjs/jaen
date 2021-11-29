@@ -4,12 +4,12 @@
   "license": "EUPL-1.2",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/snek-at/snek-tools.git"
+    "url": "git+https://github.com/jaenjs/jaen.git"
   },
   "bugs": {
-    "url": "https://github.com/snek-at/snek-tools/issues"
+    "url": "https://github.com/jaenjs/jaen/issues"
   },
-  "homepage": "https://github.com/snek-at/snek-tools#readme",
+  "homepage": "https://github.com/jaenjs/jaen#readme",
   "devDependencies": {
     "@babel/cli": "^7.14.8",
     "@babel/core": "^7.15.0",
