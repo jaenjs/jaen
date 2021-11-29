@@ -21,10 +21,12 @@
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
     "@jaenjs/jaen": "^2.0.0",
+    "electron": "^16.0.2",
     "framer-motion": "^4",
     "gatsby": "^4.2.0",
     "react": "^17.0.1",
-    "react-dom": "^17.0.1"
+    "react-dom": "^17.0.1",
+    "react-icons": "^4.3.1"
   },
   "devDependencies": {
     "gatsby-plugin-webpack-bundle-analyser-v2": "^1.1.24"
