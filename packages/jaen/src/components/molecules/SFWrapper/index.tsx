@@ -56,8 +56,9 @@ const SFWrapper: React.FC<SFWrapperProps> = ({
         <Wrapper
           {...wrapProps}
           boxShadow={popover.isOpen ? 'outline' : 'none'}
-          rounded="md">
-          {shouldRenderSkeleton ? <Skeleton h={20} /> : children}
+          rounded="md"
+          w="full">
+          {shouldRenderSkeleton ? <Skeleton h={20} w="full" /> : children}
         </Wrapper>
       </PopoverTrigger>
       <PopoverContent>
