@@ -1,3 +1,26 @@
+# [my-gatsby-site-v2.0.0](https://github.com/jaenjs/jaen/compare/my-gatsby-site-v1.1.0...my-gatsby-site-v2.0.0) (2021-11-29)
+
+
+### Bug Fixes
+
+* **jaen/ui:** fix svg loading issues ([d2de469](https://github.com/jaenjs/jaen/commit/d2de46907a35712d49d5e8b10b44dcc754d3325a))
+
+
+### Code Refactoring
+
+* **packages:** combine all packages in one ([d0b268b](https://github.com/jaenjs/jaen/commit/d0b268b1a3a17f1f744c6421b1e59d8883ade785))
+
+
+### Features
+
+* add example page with some jaen fields ([f7598a6](https://github.com/jaenjs/jaen/commit/f7598a6e2eeb40bdf27591e7f4e947c74a925f8a))
+
+
+### BREAKING CHANGES
+
+* **packages:** The jaen-pages and jaen-shared-ui package are now included in jaen.
+Also jaen is no longer installable as `@snek-at/jaen` but `@jaenjs/jaen`.
+
 # [my-gatsby-site-v1.1.0](https://github.com/snek-at/jaen/compare/my-gatsby-site-v1.0.0...my-gatsby-site-v1.1.0) (2021-11-22)
 
 
