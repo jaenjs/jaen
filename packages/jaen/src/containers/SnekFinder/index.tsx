@@ -50,6 +50,9 @@ const Finder: React.FC<FinderProps> = ({mode = 'browser', ...props}) => {
       }
 
       run()
+    } else {
+      localStorage.removeItem('snek-finder-osg-backend-root')
+      setLoading(false)
     }
   })
 
