@@ -15,6 +15,9 @@
     "src",
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@atlaskit/tree": "^8.4.0",
     "@babel/cli": "^7.14.8",
