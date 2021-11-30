@@ -12,6 +12,8 @@ const IndexField: React.FC<IndexFieldProps> = props => {
   const {jaenPageContext} = useTemplate()
   const page = usePage(props.fixedSlug || jaenPageContext.id)
 
+  console.log(page)
+
   if (!page) {
     throw new Error(`Page not found: ${props.fixedSlug || jaenPageContext.id}`)
   }

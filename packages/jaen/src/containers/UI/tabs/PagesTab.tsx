@@ -112,6 +112,7 @@ const PagesTab: React.FC<{}> = () => {
       actions.addPage({
         pageId,
         page: {
+          id: pageId,
           slug,
           template,
           parent: parentId ? {id: parentId} : null,

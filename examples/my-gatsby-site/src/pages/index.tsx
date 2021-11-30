@@ -39,7 +39,14 @@ const IndexPage: React.FC = () => {
           onRender={page => (
             <>
               {page.children.map(e => (
-                <BlogCard></BlogCard>
+                <>
+                  <fields.TextField
+                    fieldName="test"
+                    initValue="test"
+                    pageId={e.page.id}
+                  />
+                  <BlogCard></BlogCard>
+                </>
               ))}
             </>
           )}
