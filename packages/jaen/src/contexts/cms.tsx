@@ -52,11 +52,9 @@ export const useCMSContext = (): CMSContextType => {
 }
 
 export const usePage = (id: string): ResolvedPageType => {
-  const context = useCMSContext()
-  const storePages = useAppSelector(state => state.site.allSitePage)
-
-  const nodes = context.site.allSitePage.nodes
-  const cNode = merge(nodes[id], storePages?.nodes?.[id] || {}) as PageType
+  const pages = usePages()
+  const nodes = pages.nodes
+  const cNode = nodes[id]
 
   let resolvedPage = ({...cNode} as unknown) as ResolvedPageType
 
