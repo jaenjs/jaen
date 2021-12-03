@@ -52,17 +52,26 @@ export const useCMSContext = (): CMSContextType => {
 }
 
 export const usePage = (id: string): ResolvedPageType => {
-  const pages = usePages()
-  const nodes = pages.nodes
-  const cNode = nodes[id]
+  const context = useCMSContext()
 
-  let resolvedPage = ({...cNode} as unknown) as ResolvedPageType
+  const contextPage = context.site.allSitePage?.nodes?.[id]
+  const storePage = useAppSelector(state => state.site.allSitePage?.nodes?.[id])
 
-  resolvedPage.parent = cNode.parent ? {page: nodes[cNode.parent.id]} : null
+  // merge the two
+  const page = merge(contextPage, storePage || {}) as PageType
 
-  resolvedPage.children = cNode.children.map(child => ({
-    page: nodes[child.id]
-  }))
+  // get all nodes from usePages
+  const {nodes} = usePages()
+
+  let resolvedPage = (page as unknown) as ResolvedPageType
+
+  resolvedPage.parent = page.parent ? {page: nodes[page.parent.id]} : null
+
+  resolvedPage.children = page.children
+    .map(child => ({
+      page: nodes[child.id]
+    }))
+    .filter(e => !e.page.deleted)
 
   return resolvedPage
 }
