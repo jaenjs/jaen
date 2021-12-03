@@ -57,6 +57,18 @@ const PageContent: React.FC<PageContentType> = props => {
 
   const CONTENT = useLanguageModeValue(translations)
 
+  // get time string from values.lastPublished
+  // use time if day is today else use date
+  const formatLastPublish = (lastPublished: string) => {
+    const date = new Date(lastPublished)
+    const now = new Date()
+    if (date.toDateString() === now.toDateString()) {
+      return date.toLocaleTimeString()
+    } else {
+      return date.toLocaleDateString()
+    }
+  }
+
   return (
     <>
       <Stack spacing="24px" h="70vh">
@@ -76,9 +88,13 @@ const PageContent: React.FC<PageContentType> = props => {
                 BlogPost
               </Badge>
             )}
-            {values.lastPublished && (
+            {values.lastPublished ? (
               <Badge variant="outline" colorScheme="blue">
-                Last published: {values.lastPublished}
+                {formatLastPublish(values.lastPublished as string)}
+              </Badge>
+            ) : (
+              <Badge variant="outline" colorScheme="red">
+                {CONTENT.unpublished}
               </Badge>
             )}
           </Box>

@@ -22,5 +22,9 @@
   "slugtooltip": {
     "en": "This is a tooltip",
     "de": "Dies ist ein Tooltip"
+  },
+  "unpublished": {
+    "en": "Unpublished",
+    "de": "Unveröffentlicht"
   }
 }

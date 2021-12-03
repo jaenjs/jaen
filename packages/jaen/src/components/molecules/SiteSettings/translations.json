@@ -1,25 +1,25 @@
 {
-  "headingtooltip":{
+  "headingtooltip": {
     "en": "This is a tooltip.",
     "de": "Dies ist ein Tooltip"
   },
-  "titletooltip":{
+  "titletooltip": {
     "en": "This is a tooltip.",
     "de": "Dies ist ein Tooltip"
   },
-  "urltooltip":{
+  "urltooltip": {
     "en": "This is a tooltip.",
     "de": "Dies ist ein Tooltip"
   },
-  "descriptiontooltip":{
+  "descriptiontooltip": {
     "en": "This is a tooltip.",
     "de": "Dies ist ein Tooltip"
   },
-  "authortooltip":{
+  "authortooltip": {
     "en": "This is a tooltip.",
     "de": "Dies ist ein Tooltip"
   },
-  "organizationtooltip":{
+  "organizationtooltip": {
     "en": "This is a tooltip.",
     "de": "Dies ist ein Tooltip"
   },
