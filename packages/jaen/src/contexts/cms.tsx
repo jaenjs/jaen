@@ -1,15 +1,11 @@
 import {withRedux} from '@store/withRedux'
-import * as buffer from 'buffer'
-// import {PageTree} from '@snek-at/jaen-shared-ui'
 import {StaticQuery, graphql} from 'gatsby'
 import {createContext, useContext} from 'react'
-import * as ts from 'typescript'
 
 import {merge} from '../common/utils'
 import {store, useAppSelector} from '../store'
 import {
   JaenTemplate,
-  PageMetadata,
   PageType,
   ResolvedPageType,
   SiteMetadata
