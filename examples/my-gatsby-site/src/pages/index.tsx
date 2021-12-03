@@ -2,7 +2,7 @@ import {Center, Heading, HStack, VStack, WrapItem} from '@chakra-ui/layout'
 import {Wrap} from '@chakra-ui/layout'
 import {Box} from '@chakra-ui/layout'
 import {Button, Skeleton} from '@chakra-ui/react'
-import {BlockContainer, fields} from '@jaenjs/jaen'
+import {BlockContainer, fields, renderer} from '@jaenjs/jaen'
 import * as React from 'react'
 
 import {PricingBlock} from '../blocks'
@@ -36,7 +36,7 @@ const IndexPage: React.FC = () => {
           The IndexField
         </Heading>
         <fields.IndexField
-          onRender={page => (
+          onRender={({page, addPage}) => (
             <>
               {page.children.map(e => (
                 <>
@@ -50,6 +50,8 @@ const IndexPage: React.FC = () => {
               ))}
             </>
           )}
+          defaultPopover
+          //onRenderPopover={renderer.IndexField.PopoverSimpleAdd}
         />
       </VStack>
 

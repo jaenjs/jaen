@@ -5,4 +5,5 @@ export {useOptions} from './store/hooks'
 
 export {default as BlockContainer} from './containers/blocks/Container'
 
+export * as renderer from './containers/renderer'
 export * as fields from './containers/fields'
