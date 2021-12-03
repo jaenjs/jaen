@@ -1,3 +1,20 @@
+# [@jaenjs/jaen-v2.1.0](https://github.com/jaenjs/jaen/compare/@jaenjs/jaen-v2.0.0...@jaenjs/jaen-v2.1.0) (2021-12-03)
+
+
+### Bug Fixes
+
+* **files:** render snekFinder even without initBackendLink ([6517d31](https://github.com/jaenjs/jaen/commit/6517d31ebd5d79d4e3441d28ec229c47ff8a3631))
+* **indexfield:** addition to 24b5276 ([3781ac0](https://github.com/jaenjs/jaen/commit/3781ac00d9720fa46b0cef65a0f691cd29f7c2cf))
+* **indexfield:** rerender when page data changes (e.g. new childs) ([24b5276](https://github.com/jaenjs/jaen/commit/24b5276110acacf0dcf6914f511f0367b45e03b6))
+* **pageexplorer:** fix ContextMenu pos in PageTree ([3c4a638](https://github.com/jaenjs/jaen/commit/3c4a638703b1550e2746783e4750298db6347531))
+
+
+### Features
+
+* **basepage:** add `id` to BasePageType ([4741544](https://github.com/jaenjs/jaen/commit/47415441c1e515d6055fa0472af30397ec703e72))
+* **indexfield:** add page creation with renderers ([329c3b0](https://github.com/jaenjs/jaen/commit/329c3b00931c2b2603772938f5c8c259e1be5839))
+* **pageexplorer:** update last publish date ([27feb97](https://github.com/jaenjs/jaen/commit/27feb97ff540d566e436b884d660bbd63dfd5290))
+
 # [@jaenjs/jaen-v2.0.0](https://github.com/jaenjs/jaen/compare/@jaenjs/jaen-v1.0.0...@jaenjs/jaen-v2.0.0) (2021-11-30)
 
 
