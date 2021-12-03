@@ -177,7 +177,7 @@ const PageTree: React.FC<PageTreeProps> = ({
 
     selectItem(id || defaultSelection)
 
-    setContextMenu({id, spawnX: event.clientX, spawnY: event.clientY})
+    setContextMenu({id, spawnX: event.pageX, spawnY: event.pageY})
   }
 
   const getIcon = (
