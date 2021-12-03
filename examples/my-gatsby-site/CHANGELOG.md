@@ -1,3 +1,11 @@
+# [my-gatsby-site-v1.1.0](https://github.com/jaenjs/jaen/compare/my-gatsby-site-v1.0.0...my-gatsby-site-v1.1.0) (2021-12-03)
+
+
+### Features
+
+* **basepage:** add `id` to BasePageType ([4741544](https://github.com/jaenjs/jaen/commit/47415441c1e515d6055fa0472af30397ec703e72))
+* **indexfield:** add page creation with renderers ([329c3b0](https://github.com/jaenjs/jaen/commit/329c3b00931c2b2603772938f5c8c259e1be5839))
+
 # my-gatsby-site-v1.0.0 (2021-11-30)
 
 
