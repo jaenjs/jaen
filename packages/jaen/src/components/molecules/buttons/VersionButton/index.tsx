@@ -19,7 +19,7 @@ const VersionButton: React.FC = props => {
         size="sm"
         variant="ghost"
         onClick={() =>
-          window.open('https://github.com/snek-at/jaen/releases', 'blank')
+          window.open('https://github.com/jaenjs/jaen/releases', 'blank')
         }>
         v{version}
       </Button>

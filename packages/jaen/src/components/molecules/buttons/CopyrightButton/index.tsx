@@ -18,7 +18,7 @@ const CopyrightButton: React.FC = props => {
         variant="ghost"
         onClick={() =>
           window.open(
-            'https://github.com/snek-at/jaen/blob/main/LICENSES/preferred/EUPL-1.2',
+            'https://github.com/jaenjs/jaen/blob/main/LICENSES/preferred/EUPL-1.2',
             'blank'
           )
         }>
