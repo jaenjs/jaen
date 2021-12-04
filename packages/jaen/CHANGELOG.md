@@ -1,3 +1,10 @@
+# [@jaenjs/jaen-v2.1.1](https://github.com/jaenjs/jaen/compare/@jaenjs/jaen-v2.1.0...@jaenjs/jaen-v2.1.1) (2021-12-04)
+
+
+### Bug Fixes
+
+* update links to new organisation ([c3cb936](https://github.com/jaenjs/jaen/commit/c3cb9361247286518985cb3fd08bd33262b9224d))
+
 # [@jaenjs/jaen-v2.1.0](https://github.com/jaenjs/jaen/compare/@jaenjs/jaen-v2.0.0...@jaenjs/jaen-v2.1.0) (2021-12-03)
 
 
