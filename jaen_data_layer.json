@@ -1,0 +1,32 @@
+{
+  "allJaenPage": {
+    "nodes": [
+      {
+        "id": "1",
+        "section": {
+          "fields": {
+            "images": [
+              {
+                "fieldName": "test",
+                "sections": [
+                  {
+                    "sectionName": "test",
+                    "fields": [{"fieldName": "test", "fieldValue": "test"}],
+                    "sections": [
+                      {
+                        "sectionName": "test",
+                        "fields": [{"fieldName": "test", "fieldValue": "test"}]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "documents": [],
+            "texts": [{"fieldName": "test", "text": "test"}]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -7,7 +7,7 @@
  * Use of this source code is governed by an EUPL-1.2 license that can be found
  * in the LICENSE file at https://snek.at/license
  */
-import {configureStore, combineReducers} from '@reduxjs/toolkit'
+import {combineReducers, configureStore} from '@reduxjs/toolkit'
 import {
   useDispatch,
   useSelector,
@@ -16,13 +16,21 @@ import {
 } from 'react-redux'
 
 import {loadState, saveState} from './localStorage'
+import authReducer from './reducers/authReducer'
+import optionsReducer from './reducers/optionsReducer'
+import sfReducer from './reducers/sfReducer'
+import siteReducer from './reducers/siteReducer'
 
-const combinedReducer = combineReducers({})
+const combinedReducer = combineReducers({
+  auth: authReducer,
+  options: optionsReducer,
+  sf: sfReducer,
+  site: siteReducer
+})
 
-// Reset state if action called
 const rootReducer = (state: any, action: any) => {
   if (action.type === 'RESET_STATE') {
-    return undefined
+    state = undefined
   }
 
   return combinedReducer(state, action)
@@ -41,11 +49,7 @@ export const store = configureStore({
 })
 
 store.subscribe(() => {
-  const state = store.getState()
-
-  if (state) {
-    saveState(state)
-  }
+  saveState(store.getState())
 })
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

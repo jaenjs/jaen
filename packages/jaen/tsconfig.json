@@ -4,17 +4,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": "src",
-    "paths": {
-      "@actions/*": ["store/actions/*"],
-      "@store/*": ["store/*"],
-      "@src/*": ["./*"],
-      "@reducers/*": ["store/reducers/*"],
-      "@components/*": ["components/*"],
-      "@containers/*": ["containers/*"],
-      "@contexts/*": ["contexts/*"],
-      "@common/*": ["common/*"],
-      "@assets/*": ["assets/*"]
-    }
+    "paths": {}
   },
   "include": ["src", "src/**/*.json"],
   "typeRoots": ["./@types", "../../node_modules"],

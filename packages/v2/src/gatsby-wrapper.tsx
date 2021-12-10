@@ -2,9 +2,7 @@ import {ChakraProvider} from '@chakra-ui/react'
 import type {GatsbyBrowser, PluginOptions} from 'gatsby'
 
 import jaenTheme from './@chakra-ui/theme'
-import {JaenCoreProvider} from './contexts'
-import {CMSProvider} from './contexts/cms'
-import TemplateProvider from './contexts/template'
+import {JaenProvider} from './contexts'
 import {JaenConfig, JaenTemplate} from './types'
 
 interface JaenPluginOptions extends PluginOptions {
@@ -22,28 +20,9 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
 
   const {remote, initialHideUI, templates} = config
 
-  console.log('Config', config)
-
   return (
     <ChakraProvider theme={jaenTheme}>
-      <CMSProvider templates={templates}>
-        <JaenCoreProvider remote={remote} initialHideUI={initialHideUI}>
-          {element}
-        </JaenCoreProvider>
-      </CMSProvider>
+      <JaenProvider templates={templates}>{element}</JaenProvider>
     </ChakraProvider>
-  )
-}
-
-export const wrapPageElement: GatsbyBrowser['wrapPageElement'] = (
-  {element, props},
-  _
-) => {
-  const {pageContext} = props
-
-  return (
-    <TemplateProvider jaenPageContext={pageContext.jaenPageContext as any}>
-      {element}
-    </TemplateProvider>
   )
 }

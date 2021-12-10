@@ -202,3 +202,5 @@ const ArticlePage: JaenTemplate = args => {
 ArticlePage.TemplateName = 'ArticlePage'
 
 export default ArticlePage
+
+export {pageQuery} from '@jaenjs/jaen'
