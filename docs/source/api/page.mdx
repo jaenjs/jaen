@@ -1,0 +1,20 @@
+---
+title: Page & Template
+description: Define a page and connect it to Jaen. 
+---
+
+You can use `connectPage` to connect a page or template to Jean.
+
+```tsx
+import { connectPage } from '@jaenjs/jaen';
+
+const Page = connectPage(() => (
+  <div>
+    <h1>Hello World</h1>
+    <p>This is a placeholder. [Link to dummy page](./dummy)</p>
+  </div>
+), {
+  displayName: 'Sample Page',
+  id: 'SamplePage',
+});
+```
