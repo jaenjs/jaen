@@ -6,5 +6,6 @@ require('ts-node').register({
 })
 
 module.exports = {
-  jsxRuntime: 'automatic'
+  jsxRuntime: 'automatic',
+  jsxImportSource: '@emotion/react'
 }

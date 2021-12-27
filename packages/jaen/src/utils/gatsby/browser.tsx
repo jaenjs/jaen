@@ -1,15 +1,13 @@
 import {GatsbyBrowser} from 'gatsby'
+import {JaenPluginOptions} from 'utils/types'
 
 import {JaenProvider} from '../providers/JaenProvider'
 
 export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
   {element},
-  _
+  pluginOptions: JaenPluginOptions
 ) => {
-  // @ts-ignore
-  const config = require(___JAEN_CONFIG___) as JaenConfig
+  const {templates} = pluginOptions
 
-  const {remote, initialHideUI, templates} = config
-
-  return <JaenProvider templates={templates}>{element}</JaenProvider>
+  return <JaenProvider templatesPaths={templates.paths}>{element}</JaenProvider>
 }

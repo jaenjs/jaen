@@ -16,8 +16,11 @@ import {
 } from 'react-redux'
 
 import {loadState, saveState} from './localStorage'
+import pagesSlice from './slices/pagesSlice'
 
-const combinedReducer = combineReducers({})
+const combinedReducer = combineReducers({
+  pages: pagesSlice
+})
 
 // Reset state if action called
 const rootReducer = (state: any, action: any) => {

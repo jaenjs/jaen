@@ -2,7 +2,7 @@ import {createSlice, PayloadAction, DeepPartial} from '@reduxjs/toolkit'
 import update from 'immutability-helper'
 import {v4 as uuidv4} from 'uuid'
 
-import {JaenPage} from '../../utils/types'
+import {JaenPage, JaenSection, JaenSectionWithId} from '../../utils/types'
 
 export interface JaenPagesState extends Omit<Partial<JaenPage>, 'sections'> {
   id: JaenPage['id']
@@ -171,11 +171,11 @@ const pagesSlice = createSlice({
       action: PayloadAction<{
         pageId: string
         chapterName: string
-        componentName: string
-        between: [string | null, string | null]
+        sectionName: string
+        between: [JaenSectionWithId | null, JaenSectionWithId | null]
       }>
     ) {
-      const {pageId, chapterName, componentName, position} = action.payload
+      const {pageId, chapterName, sectionName, between} = action.payload
 
       let pageIndex = state.findIndex(page => page.id === pageId)
 
@@ -194,32 +194,154 @@ const pagesSlice = createSlice({
 
       page.chapters = page.chapters || {}
 
+      if (!page.chapters[chapterName].sections) {
+        // @ts-ignore - This is a hack to ignore the fact that no head or tail pointer is defined
+        page.chapters[chapterName] = {
+          sections: {}
+        }
+      }
+
+      const chapter = page.chapters[chapterName]
+
       // Generate a new id in the pattern of `JaenSection {uuid}`
       const sectionId = `JaenSection ${uuidv4()}`
 
-      // If `position.sectionId` is defined, then the section is added to the chapter at the specified position
+      const [prev, next] = between
 
-      // Add the section to the page
-      page.chapters[chapterName] = {
-        ...page.chapters[chapterName],
-        [sectionId]: {
-          jaenFields: null,
-          componentName,
-          ptrTo: null,
-          ptrFrom: null
-        }
+      if (!prev && !next) {
+        // If the before and after are not defined, add the section without changing
+        // the pointers of other sections
+
+        chapter.sections = update(chapter.sections, {
+          [sectionId]: {
+            $set: {
+              name: sectionName,
+              ptrPrev: null,
+              ptrNext: null,
+              jaenFields: null
+            }
+          }
+        })
+
+        // Set head and tail pointers
+        chapter.ptrHead = sectionId
+        chapter.ptrTail = sectionId
+      } else if (prev && !next) {
+        // If the after is defined, add the section before the after
+        chapter.sections = update(chapter.sections, {
+          [prev.id]: {
+            ptrNext: {$set: sectionId}
+          },
+          [sectionId]: {
+            $set: {
+              name: sectionName,
+              ptrPrev: prev.id,
+              ptrNext: null,
+              jaenFields: null
+            }
+          }
+        })
+
+        // Set head and tail pointers
+        chapter.ptrTail = sectionId
+      } else if (!prev && next) {
+        // If the before is defined, add the section after the before
+        chapter.sections = update(chapter.sections, {
+          [next.id]: {
+            ptrPrev: {$set: sectionId}
+          },
+          [sectionId]: {
+            $set: {
+              name: sectionName,
+              ptrPrev: null,
+              ptrNext: next.id,
+              jaenFields: null
+            }
+          }
+        })
+
+        // Set head and tail pointers
+        chapter.ptrHead = sectionId
+      } else if (prev && next) {
+        // cannot use else here because of the null check
+        // If both before and after are defined, add the section between the before and after
+
+        chapter.sections = update(chapter.sections, {
+          [next.id]: {
+            ptrPrev: {$set: sectionId}
+          },
+          [prev.id]: {
+            ptrNext: {$set: sectionId}
+          },
+          [sectionId]: {
+            $set: {
+              name: sectionName,
+              ptrPrev: prev.id,
+              ptrNext: next.id,
+              jaenFields: null
+            }
+          }
+        })
       }
 
       return state
     },
 
-    section_move(
+    field_write(
       state,
-      action: PayloadAction<{id: string; from: string; to: string}>
+      action: PayloadAction<{
+        pageId: string
+        section?: {chapterName: string; sectionId: string}
+        fieldName: string
+        value: any
+      }>
     ) {
-      const {id, from, to} = action.payload
+      const {pageId, section, fieldName, value} = action.payload
 
-      const pageIndex = state.findIndex(page => page.id === from)
+      let pageIndex = state.findIndex(page => page.id === pageId)
+
+      // If the page is not found, create it
+      if (pageIndex === -1) {
+        state = update(state, {
+          $push: [{id: pageId, children: []}]
+        })
+
+        pageIndex = state.length - 1
+      }
+
+      const page = state[pageIndex]
+
+      // If the page is found, add the field
+
+      if (section) {
+        page.chapters = page.chapters || {}
+
+        if (!page.chapters[section.chapterName]?.sections) {
+          // @ts-ignore - This is a hack to ignore the fact that no head or tail pointer is defined
+          page.chapters[section.chapterName] = {
+            sections: {}
+          }
+        }
+
+        const chapter = page.chapters[section.chapterName]
+
+        if (!chapter.sections[section.sectionId]?.jaenFields) {
+          // @ts-ignore - This is a hack to ignore the fact that no head or tail pointer is defined
+          chapter.sections[section.sectionName] = {
+            jaenFields: {}
+          }
+        }
+
+        const sectionFields = chapter.sections[section.sectionId].jaenFields
+
+        // @ts-ignore
+        sectionFields[fieldName] = value
+      } else {
+        page.jaenFields = page.jaenFields || {}
+        page.jaenFields[fieldName] = value
+      }
+
+      return state
     }
   }
 })
@@ -227,6 +349,7 @@ const pagesSlice = createSlice({
 export const {
   page_updateOrCreate,
   page_markForDeletion,
-  section_add
+  section_add,
+  field_write
 } = pagesSlice.actions
 export default pagesSlice.reducer

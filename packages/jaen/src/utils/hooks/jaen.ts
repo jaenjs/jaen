@@ -1,21 +1,48 @@
+import {graphql, useStaticQuery} from 'gatsby'
 import React from 'react'
 
-import {JaenContext} from '../providers/JaenProvider'
+import {store, RootState} from '../../store'
+import {JaenPage} from '../types'
 
 /**
- * Access the JaenContext.
- *
- * @example
- * ```
- * const { jaen } = useJaenContext()
- * ```
+ * Access the PageTree of the JaenContext and Static.
  */
-export const useJaenContext = () => {
-  const context = React.useContext(JaenContext)
+export const useJaenPageTree = () => {
+  //const {jaen} = useJaenContext()
 
-  if (context === undefined) {
-    throw new Error('useJaenContext must be within JaenContextProvider')
+  type QueryData = {
+    allJaenPage: {
+      nodes: Pick<JaenPage, 'id' | 'parent' | 'children'>[]
+    }
   }
 
-  return context
+  const data = useStaticQuery<QueryData>(graphql`
+    query {
+      allJaenPage {
+        nodes {
+          id
+          parent {
+            id
+          }
+          children {
+            id
+          }
+          jaenPageMetadata {
+            title
+            isBlogPost
+            image
+            description
+            datePublished
+            canonical
+          }
+        }
+      }
+    }
+  `)
+
+  const pages = store.getState()?.pages
+
+  console.log(data.allJaenPage.nodes, pages)
+
+  return data.allJaenPage.nodes
 }

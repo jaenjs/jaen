@@ -17,6 +17,7 @@
     "access": "public"
   },
   "devDependencies": {
+    "@storybook/react": "^6.4.9",
     "@types/jest": "^27.0.3",
     "@types/react-test-renderer": "^17.0.1",
     "babel-jest": "^27.4.2",
@@ -27,6 +28,8 @@
     "ts-jest": "^27.1.0"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-react": "^3.0.3",
+    "@loadable/component": "^5.15.2",
     "@reduxjs/toolkit": "^1.6.2",
     "gatsby": "^4.3.0",
     "redux": "^4.1.2",

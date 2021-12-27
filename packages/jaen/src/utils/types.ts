@@ -1,8 +1,35 @@
-import {PageProps} from 'gatsby'
+import {PluginOptions, PageProps} from 'gatsby'
 
 import {connectPage} from './hooks/jaenPage'
+import {connectSection} from './hooks/section'
+
+export interface JaenPluginOptions extends PluginOptions {
+  plugins: string[]
+  templates: {
+    rootDir: string
+    paths: {
+      [key: string]: string
+    }
+  }
+  UI?: {
+    show: boolean
+  }
+}
 
 export type ConnectedPage = typeof connectPage
+export type ConnectedSection = typeof connectSection
+
+export interface JaenSection {
+  name: string
+  ptrNext: string | null
+  ptrPrev: string | null
+}
+
+export interface JaenSectionWithId extends JaenSection {
+  id: string
+}
+
+export type JaenSectionData = JaenSection & JaenData
 
 /**
  * This interace is used to define how a JaenData should look like.
@@ -12,21 +39,14 @@ export type ConnectedPage = typeof connectPage
  */
 export interface JaenData {
   jaenFields: {
-    jaenTextFields: {
-      name: string
-      value: string
-    }[]
-    jaenFileFields: {
-      name: string
-      value: object
-    }[]
+    [name: string]: any
   } | null
 }
 
 /**
  * This interface is used to define the properties of the page.
  *
- * @extends PageSection The page is also a section and includes all the properties of a section except sectionName.
+ * @extends JaenData
  *
  * It contains the following properties:
  * - `id`: The id of the page.
@@ -34,8 +54,8 @@ export interface JaenData {
  * - `jaenPageMetadata`: The metadata of the page.
  * - `parent`: The parent of the page.
  * - `children`: The children of the page.
- * - `sections`: All sections included in the pae.
- * - `jaenFields`: All the fields that are used in the section.
+ * - `chapters`: All chapters with their sections included in the page.
+ * - `jaenFields`: All the fields that are used in the page.
  */
 export interface JaenPage extends JaenData {
   id: string
@@ -56,28 +76,43 @@ export interface JaenPage extends JaenData {
   }[]
   chapters: {
     [chapterName: string]: {
-      [uuid: string]: JaenData & {
-        ptrTo: string | null
-        ptrFrom: string | null
-        componentName: string
+      ptrHead: string | null
+      ptrTail: string | null
+      sections: {
+        [uuid: string]: JaenSectionData
       }
     }
   } | null
+  /**
+   * Unique identifier of the page component name (e.g. `JaenPageHome`).
+   * - Must be unique across all pages.
+   * - Used to determine the component to render.
+   * - Possible templateNames are specified in the `gatsby-config.js` file.
+   */
+  templateName: string | null
 }
 
-export type JaenPageProps = PageProps<{jaenPage: JaenPage | null}>
+export interface JaenPageProps extends Omit<PageProps, 'data'> {
+  data?: PageProps<{jaenPage: JaenPage | null}>['data']
+}
 
 export interface JaenPageOptions {
-  /**
-   * A unique identifier for the page.
-   *
-   * @example `ArticlePage`
-   *
-   * Warning: This should only be used on template pages (`src/templates/` and not `src/pages/`).
-   */
-  template?: string
   /**
    * Specifies how the JaenPage is displayed in the the UI.
    */
   displayName: string
+}
+
+export interface JaenTemplateOptions extends JaenPageOptions {
+  /**
+   * A unique identifier for the page.
+   *
+   * @example `ArticlePage`
+   */
+  templateName: string
+}
+
+export interface JaenSectionOptions {
+  displayName: string
+  name: string
 }

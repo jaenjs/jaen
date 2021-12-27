@@ -1,35 +1,48 @@
 import {graphql} from 'gatsby'
 import React from 'react'
 
-import {JaenPage, JaenPageOptions} from '../types'
+import {JaenPage, JaenPageOptions, JaenTemplateOptions} from '../types'
 
 export const JaenPageContext = React.createContext<
-  {jaenPage: JaenPage | null} | undefined
+  {jaenPage: JaenPage | null; staticJaenPage: JaenPage | null} | undefined
 >(undefined)
 
 export const JaenPageProvider: React.FC<{
-  pageOptions: JaenPageOptions
+  templateOptions: Omit<JaenTemplateOptions, 'templateName'>
   staticJaenPage: JaenPage | null
 }> = ({children, staticJaenPage}) => {
   const jaenPage = staticJaenPage
 
   return (
-    <JaenPageContext.Provider value={{jaenPage}}>
+    <JaenPageContext.Provider value={{jaenPage, staticJaenPage}}>
       {children}
     </JaenPageContext.Provider>
   )
 }
 
+/**
+ * Access the JaenPageContext.
+ *
+ * @example
+ * ```
+ * const {jaenPage} = useJaenPageContext()
+ * ```
+ */
+export const useJaenPageContext = () => {
+  const context = React.useContext(JaenPageContext)
+
+  if (context === undefined) {
+    throw new Error('useJaenPageContext must be within JaenPageContext')
+  }
+
+  return context
+}
+
 export const pageQuery = graphql`
   fragment JaenPageData on Query {
-    jaenPage(sitePageId: {eq: $sitePageId}) {
+    jaenPage(id: {eq: $jaenPageId}) {
       id
-      jaenFields {
-        jaenTextFields {
-          name
-          value
-        }
-      }
+      jaenFields
       jaenPageMetadata {
         title
         isBlogPost

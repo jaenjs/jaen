@@ -3,7 +3,8 @@ import reducer, {
   JaenPagesState,
   page_updateOrCreate,
   page_markForDeletion,
-  section_add
+  section_add,
+  field_write
 } from '../pagesSlice'
 
 const previousState: JaenPagesState[] = [
@@ -22,38 +23,45 @@ const previousState: JaenPagesState[] = [
     },
     chapters: {
       Chapter1: {
-        'JaenSection foo-bar-baz-1': {
-          jaenFields: null,
-          componentName: 'AboutSection',
-          ptrTo: 'JaenSection foo-bar-baz-2',
-          ptrFrom: null // this is the first section of the chapter
-        },
-        'JaenSection foo-bar-baz-2': {
-          jaenFields: null,
-          componentName: 'AboutSection',
-          ptrTo: null, // this is the last section of the chapter
-          ptrFrom: 'JaenSection foo-bar-baz-1'
+        ptrHead: 'JaenSection foo-bar-baz-1',
+        ptrTail: 'JaenSection foo-bar-baz-2',
+        sections: {
+          'JaenSection foo-bar-baz-1': {
+            jaenFields: null,
+            name: 'AboutSection',
+            ptrNext: 'JaenSection foo-bar-baz-2',
+            ptrPrev: null // this is the first section of the chapter
+          },
+          'JaenSection foo-bar-baz-2': {
+            jaenFields: null,
+            name: 'AboutSection',
+            ptrNext: null, // this is the last section of the chapter
+            ptrPrev: 'JaenSection foo-bar-baz-1'
+          }
         }
       },
-
       Chapter2: {
-        'JaenSection foo-bar-baz-3': {
-          jaenFields: null,
-          componentName: 'AboutSection',
-          ptrTo: 'JaenSection foo-bar-baz-4',
-          ptrFrom: null // this is the first section of the chapter
-        },
-        'JaenSection foo-bar-baz-4': {
-          jaenFields: null,
-          componentName: 'AboutSection',
-          ptrTo: 'JaenSection foo-bar-baz-5',
-          ptrFrom: 'JaenSection foo-bar-baz-3'
-        },
-        'JaenSection foo-bar-baz-5': {
-          jaenFields: null,
-          componentName: 'AboutSection',
-          ptrTo: null, // this is the last section of the chapter
-          ptrFrom: 'JaenSection foo-bar-baz-4'
+        ptrHead: 'JaenSection foo-bar-baz-3',
+        ptrTail: 'JaenSection foo-bar-baz-5',
+        sections: {
+          'JaenSection foo-bar-baz-3': {
+            jaenFields: null,
+            name: 'AboutSection',
+            ptrNext: 'JaenSection foo-bar-baz-4',
+            ptrPrev: null // this is the first section of the chapter
+          },
+          'JaenSection foo-bar-baz-4': {
+            jaenFields: null,
+            name: 'AboutSection',
+            ptrNext: 'JaenSection foo-bar-baz-5',
+            ptrPrev: 'JaenSection foo-bar-baz-3'
+          },
+          'JaenSection foo-bar-baz-5': {
+            jaenFields: null,
+            name: 'AboutSection',
+            ptrNext: null, // this is the last section of the chapter
+            ptrPrev: 'JaenSection foo-bar-baz-4'
+          }
         }
       }
     }
@@ -430,10 +438,15 @@ describe('section_add', () => {
     const payload = {
       pageId: 'JaenPage foo-bar-baz-1',
       chapterName: 'Chapter1',
-      componentName: 'AboutSection',
-      position: {
-        at: 'before'
-      }
+      sectionName: 'AboutSection',
+      between: [
+        null,
+        {
+          id: 'JaenSection foo-bar-baz-1',
+          ptrNext: 'JaenSection foo-bar-baz-2',
+          ptrPrev: null
+        }
+      ]
     }
 
     const result = reducer(previousState, section_add(payload as any))
@@ -441,43 +454,49 @@ describe('section_add', () => {
     // Expect
     const page = result.find(page => page.id === payload.pageId)
 
-    const prevChapter = previousState[0].chapters![payload.chapterName]!
-    const chapter = page!.chapters![payload.chapterName]!
+    const prevNodes = previousState[0].chapters![payload.chapterName]!.sections
+    const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
     // Expect the chapter to be of length prevChapter length + 1
-    expect(Object.keys(chapter).length).toBe(
-      Object.keys(prevChapter).length + 1
-    )
+    expect(Object.keys(sections).length).toBe(Object.keys(prevNodes).length + 1)
 
     // get the section of chapter that was added to the object
-    const sectionKey = Object.keys(chapter)[Object.keys(chapter).length - 1]
+    const sectionKey = Object.keys(sections)[Object.keys(sections).length - 1]
 
     // Expect the pointers to be correct
-    const p1 = chapter['JaenSection foo-bar-baz-1']
-    expect({ptrFrom: p1.ptrFrom, ptrTo: p1.ptrTo}).toEqual(
+    const p1 = sections['JaenSection foo-bar-baz-1']
+    expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
       expect.objectContaining({
-        ptrFrom: sectionKey,
-        ptrTo: 'JaenSection foo-bar-baz-2'
+        ptrPrev: sectionKey,
+        ptrNext: 'JaenSection foo-bar-baz-2'
       })
     )
 
-    const p2 = chapter[sectionKey]
-    expect({ptrFrom: p2.ptrFrom, ptrTo: p2.ptrTo}).toEqual(
+    const p2 = sections[sectionKey]
+    expect({ptrPrev: p2.ptrPrev, ptrNext: p2.ptrNext}).toEqual(
       expect.objectContaining({
-        ptrFrom: expect.any(null),
-        ptrTo: 'JaenSection foo-bar-baz-1'
+        ptrPrev: null,
+        ptrNext: 'JaenSection foo-bar-baz-1'
       })
     )
+
+    // Expect that the head pointer is correct
+    expect(page!.chapters![payload.chapterName]!.ptrHead).toEqual(sectionKey)
   })
   test('should add a section as last chapter element', () => {
     const payload = {
       pageId: 'JaenPage foo-bar-baz-1',
       chapterName: 'Chapter1',
-      componentName: 'AboutSection',
-      position: {
-        at: 'after'
-      }
+      sectionName: 'AboutSection',
+      between: [
+        {
+          id: 'JaenSection foo-bar-baz-2',
+          ptrNext: null,
+          ptrPrev: 'JaenSection foo-bar-baz-1'
+        },
+        null
+      ]
     }
 
     const result = reducer(previousState, section_add(payload as any))
@@ -485,46 +504,55 @@ describe('section_add', () => {
     // Expect
     const page = result.find(page => page.id === payload.pageId)
 
-    const prevChapter = previousState[0].chapters![payload.chapterName]!
-    const chapter = page!.chapters![payload.chapterName]!
+    const prevNodes = previousState[0].chapters![payload.chapterName]!.sections
+    const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
     // Expect the chapter to be of length prevChapter length + 1
-    expect(Object.keys(chapter).length).toBe(
-      Object.keys(prevChapter).length + 1
-    )
+    expect(Object.keys(sections).length).toBe(Object.keys(prevNodes).length + 1)
 
     // get the section of chapter that was added to the object
-    const sectionKey = Object.keys(chapter)[Object.keys(chapter).length - 1]
+    const sectionKey = Object.keys(sections)[Object.keys(sections).length - 1]
 
     // Expect the pointers to be correct
-    // prev last section ("JaenSection foo-bar-baz-2") -> ptrFrom: "JaenSection foo-bar-baz-1"; ptrTo: newSectionId;
+    // prev last section ("JaenSection foo-bar-baz-2") -> ptrPrev: "JaenSection foo-bar-baz-1"; ptrNext: newSectionId;
 
-    const p1 = chapter['JaenSection foo-bar-baz-2']
-    expect({ptrFrom: p1.ptrFrom, ptrTo: p1.ptrTo}).toEqual(
+    const p1 = sections['JaenSection foo-bar-baz-2']
+    expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
       expect.objectContaining({
-        ptrFrom: 'JaenSection foo-bar-baz-1',
-        ptrTo: sectionKey
+        ptrPrev: 'JaenSection foo-bar-baz-1',
+        ptrNext: sectionKey
       })
     )
 
-    const p2 = chapter[sectionKey]
-    expect({ptrFrom: p2.ptrFrom, ptrTo: p2.ptrTo}).toEqual(
+    const p2 = sections[sectionKey]
+    expect({ptrPrev: p2.ptrPrev, ptrNext: p2.ptrNext}).toEqual(
       expect.objectContaining({
-        ptrFrom: 'JaenSection foo-bar-baz-1',
-        ptrTo: expect.any(null)
+        ptrPrev: 'JaenSection foo-bar-baz-2',
+        ptrNext: null
       })
     )
+
+    // Expect that the tail pointer is correct
+    expect(page!.chapters![payload.chapterName]!.ptrTail).toEqual(sectionKey)
   })
-  test('should add a section before a middle elements of a chapter', () => {
+  test('should add a section between two chapters', () => {
     const payload = {
       pageId: 'JaenPage foo-bar-baz-1',
       chapterName: 'Chapter1',
-      componentName: 'AboutSection',
-      position: {
-        at: 'before',
-        sectionId: 'JaenSection foo-bar-baz-2'
-      }
+      sectionName: 'AboutSection',
+      between: [
+        {
+          id: 'JaenSection foo-bar-baz-1',
+          ptrNext: 'JaenSection foo-bar-baz-2',
+          ptrPrev: null
+        },
+        {
+          id: 'JaenSection foo-bar-baz-2',
+          ptrNext: null,
+          ptrPrev: 'JaenSection foo-bar-baz-1'
+        }
+      ]
     }
 
     const result = reducer(previousState, section_add(payload as any))
@@ -532,95 +560,84 @@ describe('section_add', () => {
     // Expect
     const page = result.find(page => page.id === payload.pageId)
 
-    const prevChapter = previousState[0].chapters![payload.chapterName]!
-    const chapter = page!.chapters![payload.chapterName]!
+    const prevNodes = previousState[0].chapters![payload.chapterName]!.sections
+    const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
     // Expect the chapter to be of length prevChapter length + 1
-    expect(Object.keys(chapter).length).toBe(
-      Object.keys(prevChapter).length + 1
-    )
+    expect(Object.keys(sections).length).toBe(Object.keys(prevNodes).length + 1)
 
     // get the section of chapter that was added to the object
-    const sectionKey = Object.keys(chapter)[Object.keys(chapter).length - 1]
+    const sectionKey = Object.keys(sections)[Object.keys(sections).length - 1]
 
     // Expect the pointers to be correct
 
-    const p1 = chapter['JaenSection foo-bar-baz-1']
-    expect({ptrFrom: p1.ptrFrom, ptrTo: p1.ptrTo}).toEqual(
+    const p1 = sections['JaenSection foo-bar-baz-1']
+    expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
       expect.objectContaining({
-        ptrFrom: expect.any(null),
-        ptrTo: sectionKey
+        ptrPrev: null,
+        ptrNext: sectionKey
       })
     )
 
-    const p2 = chapter[sectionKey]
-    expect({ptrFrom: p2.ptrFrom, ptrTo: p2.ptrTo}).toEqual(
+    const p2 = sections[sectionKey]
+    expect({ptrPrev: p2.ptrPrev, ptrNext: p2.ptrNext}).toEqual(
       expect.objectContaining({
-        ptrFrom: 'JaenSection foo-bar-baz-1',
-        ptrTo: 'JaenSection foo-bar-baz-2'
+        ptrPrev: 'JaenSection foo-bar-baz-1',
+        ptrNext: 'JaenSection foo-bar-baz-2'
       })
     )
 
-    const p3 = chapter['JaenSection foo-bar-baz-2']
-    expect({ptrFrom: p3.ptrFrom, ptrTo: p3.ptrTo}).toEqual(
+    const p3 = sections['JaenSection foo-bar-baz-2']
+    expect({ptrPrev: p3.ptrPrev, ptrNext: p3.ptrNext}).toEqual(
       expect.objectContaining({
-        ptrFrom: sectionKey,
-        ptrTo: expect.any(null)
+        ptrPrev: sectionKey,
+        ptrNext: null
       })
     )
   })
-  test('should add a section after a middle elements of a chapter', () => {
+})
+
+describe('field_write', () => {
+  test('should add a field to a page', () => {
     const payload = {
       pageId: 'JaenPage foo-bar-baz-1',
-      chapterName: 'Chapter2',
-      componentName: 'AboutSection',
-      position: {
-        at: 'after',
-        sectionId: 'JaenSection foo-bar-baz-4'
-      }
+      fieldName: 'foo',
+      value: 'bar'
     }
 
-    const result = reducer(previousState, section_add(payload as any))
+    const result = reducer(previousState, field_write(payload))
 
-    // Expect
+    // Expect the field to be added to the page
     const page = result.find(page => page.id === payload.pageId)
-
-    const prevChapter = previousState[0].chapters![payload.chapterName]!
-    const chapter = page!.chapters![payload.chapterName]!
-
-    //> Conditions
-    // Expect the chapter to be of length prevChapter length + 1
-    expect(Object.keys(chapter).length).toBe(
-      Object.keys(prevChapter).length + 1
-    )
-
-    // get the section of chapter that was added to the object
-    const sectionKey = Object.keys(chapter)[Object.keys(chapter).length - 1]
-
-    // Expect the pointers to be correct
-
-    const p1 = chapter['JaenSection foo-bar-baz-4']
-    expect({ptrFrom: p1.ptrFrom, ptrTo: p1.ptrTo}).toEqual(
+    expect(page!.jaenFields).toEqual(
       expect.objectContaining({
-        ptrFrom: 'JaenSection foo-bar-baz-3',
-        ptrTo: sectionKey
+        [payload.fieldName]: payload.value
       })
     )
+  })
+  test('should add a field to a page section', () => {
+    const payload = {
+      pageId: 'JaenPage foo-bar-baz-1',
+      section: {
+        chapterName: 'Chapter1',
+        sectionName: 'JaenSection foo-bar-baz-1'
+      },
+      fieldName: 'foo',
+      value: 'bar'
+    }
 
-    const p2 = chapter[sectionKey]
-    expect({ptrFrom: p2.ptrFrom, ptrTo: p2.ptrTo}).toEqual(
-      expect.objectContaining({
-        ptrFrom: 'JaenSection foo-bar-baz-4',
-        ptrTo: 'JaenSection foo-bar-baz-5'
-      })
-    )
+    const result = reducer(previousState, field_write(payload))
 
-    const p3 = chapter['JaenSection foo-bar-baz-5']
-    expect({ptrFrom: p3.ptrFrom, ptrTo: p3.ptrTo}).toEqual(
+    // Expect the field to be added to the page
+    const page = result.find(page => page.id === payload.pageId)
+    expect(
+      page!.chapters![payload.section.chapterName]!.sections[
+        payload.section.sectionName
+      ]!.jaenFields
+    ).toEqual(
       expect.objectContaining({
-        ptrFrom: sectionKey,
-        ptrTo: expect.any(null)
+        [payload.fieldName]: payload.value
       })
     )
   })

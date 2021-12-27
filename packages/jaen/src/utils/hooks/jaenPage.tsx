@@ -1,23 +1,23 @@
 import React from 'react'
 
 import {JaenPageContext, JaenPageProvider} from '../providers/JaenPageProvider'
-import {JaenPageOptions, JaenPageProps} from '../types'
+import {JaenPageOptions, JaenPageProps, JaenTemplateOptions} from '../types'
 
 /**
- * @function connectPage Connects a gatsby page with Jaen.
+ * @function connectTemplate Connects a gatsby template with Jaen.
  *
- * @param Component The page or template to wrap
- * @param {JaenPageOptions} pageOptions Configuration for the page
+ * @param Component The template page to wrap
+ * @param {JaenTemplateOptions} templateOptions Configuration for the page
  *
  * Warning: This component must be used in conjunction with the graphql`
- *   query($sitePageId: String!) {
+ *   query($jaenPageId: String!) {
  *     ...JaenPageData
  *   }
  * ``
  *
  * @example
  * ```
- * export default withJaenPage(
+ * export default connectTemplate(
  *   p => {
  *     return (
  *       <>
@@ -27,72 +27,49 @@ import {JaenPageOptions, JaenPageProps} from '../types'
  *     )
  *   },
  *   {
- *     template: 'blog-page',
+ *     templateName: 'blog-page',
  *     displayName: 'Simple Blog Page'
  *   }
  * )
  *
  * export const query = graphql`
- *   query($sitePageId: String!) {
+ *   query($jaenPageId: String!) {
  *     ...JaenPageData
  *   }
  * `
  * ```
  */
-export const connectPage =
-  <P extends JaenPageProps>(
-    Component: React.ComponentType<P>,
-    pageOptions: JaenPageOptions
-  ): React.FC<P> =>
-  props => {
-    console.log(props.data)
-    return (
-      <JaenPageProvider
-        pageOptions={pageOptions}
-        staticJaenPage={props.data.jaenPage}>
-        <Component {...props} />
-      </JaenPageProvider>
-    )
-  }
-
-/**
- * Access the JaenPageContext.
- *
- * @example
- * ```
- * const {jaenPage} = useJaenPageContext()
- * ```
- */
-export const useJaenPageContext = () => {
-  const context = React.useContext(JaenPageContext)
-
-  if (context === undefined) {
-    throw new Error('useJaenPageContext must be within JaenPageContext')
-  }
-
-  return context
+export const connectTemplate = <P extends JaenPageProps>(
+  Component: React.ComponentType<P>,
+  templateOptions: JaenTemplateOptions
+): React.FC<P> => props => {
+  return (
+    <JaenPageProvider
+      templateOptions={templateOptions}
+      staticJaenPage={props.data ? props.data.jaenPage : null}>
+      <Component {...props} />
+    </JaenPageProvider>
+  )
 }
 
 /**
- * Access the JaenTextField.
+ * @function connectPage Connects a gatsby page with Jaen.
  *
- * This is a convenience function for accessing the value of a text field.
- * It extracts the value from the JaenPageContext, thus it is only available
- * when the page is connected with Jaen (@see {@link connectPage}).
+ * @see {@link connectTemplate} for more information.
  *
- * @param {string} name The name of the field.
- * @returns {string} The value of the field.
- *
- * @example
- * ```
- * const title = useJaenTextField('title')
- * ```
+ * Warning: This component must be used to wrap a page, not a template.
  */
-export const useTextField = (name: string): string | undefined => {
-  const {jaenPage} = useJaenPageContext()
-  const field = jaenPage?.jaenFields?.jaenTextFields.find(
-    field => field.name === name
-  )
+export const connectPage = <P extends JaenPageProps>(
+  Component: React.ComponentType<P>,
+  pageOptions: JaenPageOptions
+): React.FC<P> => props => {
+  console.log('props', props)
 
-  return field?.value
+  return (
+    <JaenPageProvider
+      templateOptions={pageOptions}
+      staticJaenPage={props.data ? props.data.jaenPage : null}>
+      <Component {...props} />
+    </JaenPageProvider>
+  )
 }
