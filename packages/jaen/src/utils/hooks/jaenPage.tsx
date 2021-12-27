@@ -1,7 +1,13 @@
 import React from 'react'
 
-import {JaenPageContext, JaenPageProvider} from '../providers/JaenPageProvider'
-import {JaenPageOptions, JaenPageProps, JaenTemplateOptions} from '../types'
+import {JaenPageProvider} from '../providers/JaenPageProvider'
+import {useJaenContext} from '../providers/JaenProvider'
+import {
+  JaenConnection,
+  JaenPageOptions,
+  JaenPageProps,
+  JaenTemplateOptions
+} from '../types'
 
 /**
  * @function connectTemplate Connects a gatsby template with Jaen.
@@ -27,7 +33,7 @@ import {JaenPageOptions, JaenPageProps, JaenTemplateOptions} from '../types'
  *     )
  *   },
  *   {
- *     templateName: 'blog-page',
+ *     name: 'blog-page',
  *     displayName: 'Simple Blog Page'
  *   }
  * )
@@ -41,15 +47,17 @@ import {JaenPageOptions, JaenPageProps, JaenTemplateOptions} from '../types'
  */
 export const connectTemplate = <P extends JaenPageProps>(
   Component: React.ComponentType<P>,
-  templateOptions: JaenTemplateOptions
-): React.FC<P> => props => {
-  return (
-    <JaenPageProvider
-      templateOptions={templateOptions}
-      staticJaenPage={props.data ? props.data.jaenPage : null}>
+  options: JaenTemplateOptions
+) => {
+  const MyComp: JaenConnection<P, JaenTemplateOptions> = props => (
+    <JaenPageProvider staticJaenPage={props.data ? props.data.jaenPage : null}>
       <Component {...props} />
     </JaenPageProvider>
   )
+
+  MyComp.options = options
+
+  return MyComp
 }
 
 /**
@@ -61,15 +69,15 @@ export const connectTemplate = <P extends JaenPageProps>(
  */
 export const connectPage = <P extends JaenPageProps>(
   Component: React.ComponentType<P>,
-  pageOptions: JaenPageOptions
-): React.FC<P> => props => {
-  console.log('props', props)
-
-  return (
-    <JaenPageProvider
-      templateOptions={pageOptions}
-      staticJaenPage={props.data ? props.data.jaenPage : null}>
+  options: JaenPageOptions
+) => {
+  const MyComp: JaenConnection<P, JaenPageOptions> = props => (
+    <JaenPageProvider staticJaenPage={props.data ? props.data.jaenPage : null}>
       <Component {...props} />
     </JaenPageProvider>
   )
+
+  MyComp.options = options
+
+  return MyComp
 }

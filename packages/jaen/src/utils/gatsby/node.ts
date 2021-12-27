@@ -1,13 +1,15 @@
 import {GatsbyNode} from 'gatsby'
 import path from 'path'
 
-import {ConnectedPage, JaenPage, JaenPluginOptions} from '../types'
+import {JaenPage, JaenPluginOptions} from '../types'
 
 export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] = (
   {plugins, actions, loaders, stage},
   pluginOptions: JaenPluginOptions
 ) => {
   const {templates} = pluginOptions
+
+  console.log('options', templates)
 
   actions.setWebpackConfig({
     plugins: [

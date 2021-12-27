@@ -1,21 +1,21 @@
 import {JaenSectionProvider} from '../../../utils/providers/JaenSectionProvider'
-import {ConnectedSection} from '../../../utils/types'
+import {JaenConnection, JaenSectionOptions} from '../../../utils/types'
 
 const SectionField: React.FC<{
   name: string // chapterName
-  sections: ConnectedSection[]
+  sections: JaenConnection<{}, JaenSectionOptions>[]
 }> = ({name, sections}) => {
+  sections.forEach(e => {
+    console.log('Options are ', e.options)
+  })
+
+  const S = sections[0]
+
   return (
-    <>
-      {sections.map(s => (
-        <JaenSectionProvider
-          key={s.sectionOptions.name}
-          chapterName={name}
-          sectionId={s.sectionOptions.name}>
-          {s.element}
-        </JaenSectionProvider>
-      ))}
-    </>
+    <JaenSectionProvider chapterName={name} sectionId="1">
+      <h1>SectionField ({name})</h1>
+      <S />
+    </JaenSectionProvider>
   )
 }
 

@@ -1,14 +1,18 @@
 import {graphql} from 'gatsby'
 import React from 'react'
 
-import {JaenPage, JaenPageOptions, JaenTemplateOptions} from '../types'
+import {JaenPage, JaenTemplateOptions} from '../types'
 
-export const JaenPageContext = React.createContext<
-  {jaenPage: JaenPage | null; staticJaenPage: JaenPage | null} | undefined
->(undefined)
+export interface JaenPageContext {
+  jaenPage: JaenPage | null
+  staticJaenPage: JaenPage | null
+}
+
+export const JaenPageContext = React.createContext<JaenPageContext | undefined>(
+  undefined
+)
 
 export const JaenPageProvider: React.FC<{
-  templateOptions: Omit<JaenTemplateOptions, 'templateName'>
   staticJaenPage: JaenPage | null
 }> = ({children, staticJaenPage}) => {
   const jaenPage = staticJaenPage

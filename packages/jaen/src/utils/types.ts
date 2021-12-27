@@ -1,8 +1,5 @@
 import {PluginOptions, PageProps} from 'gatsby'
 
-import {connectPage} from './hooks/jaenPage'
-import {connectSection} from './hooks/section'
-
 export interface JaenPluginOptions extends PluginOptions {
   plugins: string[]
   templates: {
@@ -16,8 +13,10 @@ export interface JaenPluginOptions extends PluginOptions {
   }
 }
 
-export type ConnectedPage = typeof connectPage
-export type ConnectedSection = typeof connectSection
+export interface JaenConnection<ReactProps, Options>
+  extends React.FC<ReactProps> {
+  options: Options
+}
 
 export interface JaenSection {
   name: string
@@ -101,6 +100,10 @@ export interface JaenPageOptions {
    * Specifies how the JaenPage is displayed in the the UI.
    */
   displayName: string
+  /**
+   * A list of jaen templates for this page.
+   */
+  children: JaenConnection<{}, JaenTemplateOptions>[]
 }
 
 export interface JaenTemplateOptions extends JaenPageOptions {
@@ -109,7 +112,7 @@ export interface JaenTemplateOptions extends JaenPageOptions {
    *
    * @example `ArticlePage`
    */
-  templateName: string
+  name: string
 }
 
 export interface JaenSectionOptions {

@@ -39,20 +39,6 @@ export const JaenSectionProvider: React.FC<JaenSectionType> = ({
 }
 
 /**
- * Access the SectionOptionsContext.
- *
- * @example
- * ```
- * const context = useSectionOptionsContext()
- * ```
- */
-export const useSectionOptionsContext = () => {
-  const context = React.useContext(SectionOptionsContext)
-
-  return context
-}
-
-/**
  * Access the JaenSectionContext.
  *
  * @example

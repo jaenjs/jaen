@@ -1,9 +1,10 @@
 import React from 'react'
 
-import {ConnectedPage, JaenPluginOptions} from '../types'
+import {JaenConnection, JaenPageOptions, JaenPluginOptions} from '../types'
 
 export interface JaenContext {
   templatesPaths: JaenPluginOptions['templates']['paths']
+  templateLoader: (name: string) => Promise<JaenConnection<{}, JaenPageOptions>>
 }
 
 export const JaenContext = React.createContext<JaenContext | undefined>(
@@ -13,8 +14,13 @@ export const JaenContext = React.createContext<JaenContext | undefined>(
 export const JaenProvider: React.FC<{
   templatesPaths: JaenContext['templatesPaths']
 }> = ({children, templatesPaths}) => {
+  const templateLoader = async (name: string) => {
+    //@ts-ignore
+    return import(`${___JAEN_TEMPLATES___}/${templatesPaths[name]}`).default
+  }
+
   return (
-    <JaenContext.Provider value={{templatesPaths}}>
+    <JaenContext.Provider value={{templatesPaths, templateLoader}}>
       {children}
     </JaenContext.Provider>
   )

@@ -1,7 +1,7 @@
-import {SectionOptionsContext} from 'utils/providers/JaenSectionProvider'
+import {ReactNode} from 'react'
 
-import {registry} from '../../registry'
-import {JaenSectionOptions} from '../types'
+import {SectionOptionsContext} from '../providers/JaenSectionProvider'
+import {JaenConnection, JaenSectionOptions} from '../types'
 
 export type ConnectedFC<P> = React.FC<P> & {
   name: string
@@ -16,10 +16,16 @@ export type ConnectedFC<P> = React.FC<P> & {
 export const connectSection = <P extends {}>(
   Component: React.ComponentType<P>,
   options: JaenSectionOptions
-): React.FC<P> => props => {
-  return (
-    <SectionOptionsContext.Provider value={options}>
-      <Component {...props} />
-    </SectionOptionsContext.Provider>
-  )
+) => {
+  const MyComp: JaenConnection<P, JaenSectionOptions> = props => {
+    return (
+      <SectionOptionsContext.Provider value={options}>
+        <Component {...props} />
+      </SectionOptionsContext.Provider>
+    )
+  }
+
+  MyComp.options = options
+
+  return MyComp
 }

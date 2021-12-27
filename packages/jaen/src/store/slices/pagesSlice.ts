@@ -327,7 +327,7 @@ const pagesSlice = createSlice({
 
         if (!chapter.sections[section.sectionId]?.jaenFields) {
           // @ts-ignore - This is a hack to ignore the fact that no head or tail pointer is defined
-          chapter.sections[section.sectionName] = {
+          chapter.sections[section.sectionId] = {
             jaenFields: {}
           }
         }
