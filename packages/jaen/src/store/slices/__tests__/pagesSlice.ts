@@ -536,7 +536,7 @@ describe('section_add', () => {
     // Expect that the tail pointer is correct
     expect(page!.chapters![payload.chapterName]!.ptrTail).toEqual(sectionKey)
   })
-  test('should add a section between two chapters', () => {
+  test('should add a section between two sections', () => {
     const payload = {
       pageId: 'JaenPage foo-bar-baz-1',
       chapterName: 'Chapter1',
@@ -596,6 +596,34 @@ describe('section_add', () => {
       })
     )
   })
+  test('should add a section with a empty state', () => {
+    const payload = {
+      pageId: 'JaenPage foo-bar-baz-1',
+      chapterName: 'Chapter1',
+      sectionName: 'AboutSection',
+      between: [
+        {
+          id: 'JaenSection foo-bar-baz-1',
+          ptrNext: 'JaenSection foo-bar-baz-2',
+          ptrPrev: null
+        },
+        {
+          id: 'JaenSection foo-bar-baz-2',
+          ptrNext: null,
+          ptrPrev: 'JaenSection foo-bar-baz-1'
+        }
+      ]
+    }
+
+    const result = reducer([], section_add(payload as any))
+
+    // Expect three sections to be added
+    const page = result.find(page => page.id === payload.pageId)
+
+    expect(
+      Object.keys(page?.chapters?.[payload.chapterName]!.sections || {}).length
+    ).toBe(3)
+  })
 })
 
 describe('field_write', () => {
@@ -621,7 +649,7 @@ describe('field_write', () => {
       pageId: 'JaenPage foo-bar-baz-1',
       section: {
         chapterName: 'Chapter1',
-        sectionName: 'JaenSection foo-bar-baz-1'
+        sectionId: 'JaenSection foo-bar-baz-1'
       },
       fieldName: 'foo',
       value: 'bar'
@@ -633,7 +661,7 @@ describe('field_write', () => {
     const page = result.find(page => page.id === payload.pageId)
     expect(
       page!.chapters![payload.section.chapterName]!.sections[
-        payload.section.sectionName
+        payload.section.sectionId
       ]!.jaenFields
     ).toEqual(
       expect.objectContaining({

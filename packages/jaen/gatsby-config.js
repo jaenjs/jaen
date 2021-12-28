@@ -7,5 +7,14 @@ require('ts-node').register({
 
 module.exports = {
   jsxRuntime: 'automatic',
-  jsxImportSource: '@emotion/react'
+  jsxImportSource: '@emotion/react',
+  plugins: [
+    '@chakra-ui/gatsby-plugin',
+    {
+      resolve: `gatsby-plugin-compile-es6-packages`,
+      options: {
+        modules: [`@jaenjs/jaen`, `@chakra-ui/gatsby-plugin`]
+      }
+    }
+  ]
 }

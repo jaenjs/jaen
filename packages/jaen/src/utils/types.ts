@@ -119,3 +119,31 @@ export interface JaenSectionOptions {
   displayName: string
   name: string
 }
+
+export interface PopoverProps<RenderFn> {
+  /**
+   * When enabled the field will render the `PopoverSimpleAdd` renderer.
+   * Else, the renderer of `onRenderPopover` will be used to render the popover.
+   *
+   * Warning: If true, this overrides the renderer of `onRenderPopover`!
+   */
+  defaultPopover?: boolean
+  /**
+   * Options for the popover that appears when hovering the field (if editing).
+   */
+  popoverOptions?: Partial<{
+    /**
+     * The header of the rendered popover.
+     * Overrides the default header.
+     *
+     * @default undefined
+     */
+    header: React.ReactNode
+  }>
+  /**
+   * Renders the popover content. Gets called when the field is hovered.
+   *
+   * Warning: Cannot be used together with `defaultPopover`!
+   */
+  onRenderPopover?: RenderFn
+}

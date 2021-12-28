@@ -28,10 +28,17 @@
     "ts-jest": "^27.1.0"
   },
   "dependencies": {
+    "@chakra-ui/gatsby-plugin": "^2.0.2",
+    "@chakra-ui/react": "^1.7.3",
     "@ckeditor/ckeditor5-react": "^3.0.3",
+    "@emotion/react": "^11",
+    "@emotion/styled": "^11",
     "@loadable/component": "^5.15.2",
     "@reduxjs/toolkit": "^1.6.2",
+    "framer-motion": "^5",
     "gatsby": "^4.3.0",
+    "gatsby-plugin-compile-es6-packages": "^2.1.1",
+    "react-in-viewport": "^1.0.0-alpha.20",
     "redux": "^4.1.2",
     "uuid": "^8.3.2"
   }

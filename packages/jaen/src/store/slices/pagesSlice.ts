@@ -177,6 +177,8 @@ const pagesSlice = createSlice({
     ) {
       const {pageId, chapterName, sectionName, between} = action.payload
 
+      console.log('section_Add', pageId, chapterName, sectionName, between)
+
       let pageIndex = state.findIndex(page => page.id === pageId)
 
       // If the page is not found, create it
@@ -194,7 +196,7 @@ const pagesSlice = createSlice({
 
       page.chapters = page.chapters || {}
 
-      if (!page.chapters[chapterName].sections) {
+      if (!page.chapters[chapterName]?.sections) {
         // @ts-ignore - This is a hack to ignore the fact that no head or tail pointer is defined
         page.chapters[chapterName] = {
           sections: {}
@@ -212,53 +214,53 @@ const pagesSlice = createSlice({
         // If the before and after are not defined, add the section without changing
         // the pointers of other sections
 
-        chapter.sections = update(chapter.sections, {
+        chapter.sections = {
+          ...chapter.sections,
           [sectionId]: {
-            $set: {
-              name: sectionName,
-              ptrPrev: null,
-              ptrNext: null,
-              jaenFields: null
-            }
+            name: sectionName,
+            ptrPrev: null,
+            ptrNext: null,
+            jaenFields: null
           }
-        })
+        }
 
         // Set head and tail pointers
         chapter.ptrHead = sectionId
         chapter.ptrTail = sectionId
       } else if (prev && !next) {
         // If the after is defined, add the section before the after
-        chapter.sections = update(chapter.sections, {
-          [prev.id]: {
-            ptrNext: {$set: sectionId}
-          },
+        chapter.sections = {
+          ...chapter.sections,
           [sectionId]: {
-            $set: {
-              name: sectionName,
-              ptrPrev: prev.id,
-              ptrNext: null,
-              jaenFields: null
-            }
+            name: sectionName,
+            ptrPrev: prev.id,
+            ptrNext: null,
+            jaenFields: null
+          },
+          [prev.id]: {
+            ...chapter.sections[prev.id],
+            ptrNext: sectionId
           }
-        })
+        }
 
         // Set head and tail pointers
         chapter.ptrTail = sectionId
       } else if (!prev && next) {
         // If the before is defined, add the section after the before
-        chapter.sections = update(chapter.sections, {
-          [next.id]: {
-            ptrPrev: {$set: sectionId}
-          },
+
+        chapter.sections = {
+          ...chapter.sections,
           [sectionId]: {
-            $set: {
-              name: sectionName,
-              ptrPrev: null,
-              ptrNext: next.id,
-              jaenFields: null
-            }
+            name: sectionName,
+            ptrPrev: null,
+            ptrNext: next.id,
+            jaenFields: null
+          },
+          [next.id]: {
+            ...chapter.sections[next.id],
+            ptrPrev: sectionId
           }
-        })
+        }
 
         // Set head and tail pointers
         chapter.ptrHead = sectionId
@@ -266,22 +268,23 @@ const pagesSlice = createSlice({
         // cannot use else here because of the null check
         // If both before and after are defined, add the section between the before and after
 
-        chapter.sections = update(chapter.sections, {
-          [next.id]: {
-            ptrPrev: {$set: sectionId}
+        chapter.sections = {
+          ...chapter.sections,
+          [sectionId]: {
+            name: sectionName,
+            ptrPrev: prev.id,
+            ptrNext: next.id,
+            jaenFields: null
           },
           [prev.id]: {
-            ptrNext: {$set: sectionId}
+            ...chapter.sections[prev.id],
+            ptrNext: sectionId
           },
-          [sectionId]: {
-            $set: {
-              name: sectionName,
-              ptrPrev: prev.id,
-              ptrNext: next.id,
-              jaenFields: null
-            }
+          [next.id]: {
+            ...chapter.sections[next.id],
+            ptrPrev: sectionId
           }
-        })
+        }
       }
 
       return state
@@ -326,8 +329,8 @@ const pagesSlice = createSlice({
         const chapter = page.chapters[section.chapterName]
 
         if (!chapter.sections[section.sectionId]?.jaenFields) {
-          // @ts-ignore - This is a hack to ignore the fact that no head or tail pointer is defined
           chapter.sections[section.sectionId] = {
+            ...chapter.sections[section.sectionId],
             jaenFields: {}
           }
         }

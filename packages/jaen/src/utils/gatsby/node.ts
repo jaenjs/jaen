@@ -101,7 +101,50 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
         jaenField1: 'jaenField1',
         jaenField2: 'jaenField2'
       },
-      chapters: {},
+      chapters: {
+        chapter1: {
+          ptrHead: 'JaenSection foo-bar-baz-1',
+          ptrTail: 'JaenSection foo-bar-baz-2',
+          sections: {
+            'JaenSection foo-bar-baz-1': {
+              jaenFields: null,
+              name: 'BoxSection',
+              ptrNext: 'JaenSection foo-bar-baz-2',
+              ptrPrev: null // this is the first section of the chapter
+            },
+            'JaenSection foo-bar-baz-2': {
+              jaenFields: null,
+              name: 'BoxSection',
+              ptrNext: null, // this is the last section of the chapter
+              ptrPrev: 'JaenSection foo-bar-baz-1'
+            }
+          }
+        },
+        chapter2: {
+          ptrHead: 'JaenSection foo-bar-baz-3',
+          ptrTail: 'JaenSection foo-bar-baz-5',
+          sections: {
+            'JaenSection foo-bar-baz-3': {
+              jaenFields: null,
+              name: 'BoxSection',
+              ptrNext: 'JaenSection foo-bar-baz-4',
+              ptrPrev: null // this is the first section of the chapter
+            },
+            'JaenSection foo-bar-baz-4': {
+              jaenFields: null,
+              name: 'BoxSection',
+              ptrNext: 'JaenSection foo-bar-baz-5',
+              ptrPrev: 'JaenSection foo-bar-baz-3'
+            },
+            'JaenSection foo-bar-baz-5': {
+              jaenFields: null,
+              name: 'BoxSection',
+              ptrNext: null, // this is the last section of the chapter
+              ptrPrev: 'JaenSection foo-bar-baz-4'
+            }
+          }
+        }
+      },
       templateName: 'BlogPage'
     },
     {

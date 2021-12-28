@@ -19,18 +19,10 @@ export const JaenSectionProvider: React.FC<JaenSectionType> = ({
   chapterName,
   sectionId
 }) => {
-  const jaenSection = useJaenSectionContext()
-
-  let chapterNameChain = chapterName
-
-  if (jaenSection) {
-    chapterNameChain = `${jaenSection.chapterName}.${chapterNameChain}`
-  }
-
   return (
     <JaenSectionContext.Provider
       value={{
-        chapterName: chapterNameChain,
+        chapterName: chapterName,
         sectionId: sectionId
       }}>
       {children}
