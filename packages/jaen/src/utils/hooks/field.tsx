@@ -36,7 +36,10 @@ export interface FieldConnection<T> {
  * ```
  */
 export const connectField = <T, P>(
-  Component: React.ComponentType<P & FieldConnection<T>>
+  Component: React.ComponentType<P & FieldConnection<T>>,
+  options: {
+    fieldType: string
+  }
 ): React.FC<P & JaenFieldProps<T>> =>
   withRedux(props => {
     const dispatch = useAppDispatch()
@@ -59,7 +62,7 @@ export const connectField = <T, P>(
         fields = page.chapters?.[chapterName]?.sections[sectionId]?.jaenFields
       }
 
-      return fields?.[props.name] as T
+      return fields?.[options.fieldType]?.[props.name] as T
     }
 
     const value = useAppSelector<T | undefined>(state => {
@@ -79,6 +82,7 @@ export const connectField = <T, P>(
         field_write({
           pageId: staticJaenPage.id,
           section: sectionContext,
+          fieldType: options.fieldType,
           fieldName: props.name,
           value
         })

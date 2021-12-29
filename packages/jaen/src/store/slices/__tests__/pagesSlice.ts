@@ -854,6 +854,7 @@ describe('field_write', () => {
   test('should add a field to a page', () => {
     const payload = {
       pageId: 'JaenPage foo-bar-baz-1',
+      fieldType: 'text',
       fieldName: 'foo',
       value: 'bar'
     }
@@ -864,7 +865,9 @@ describe('field_write', () => {
     const page = result.find(page => page.id === payload.pageId)
     expect(page!.jaenFields).toEqual(
       expect.objectContaining({
-        [payload.fieldName]: payload.value
+        [payload.fieldType]: {
+          [payload.fieldName]: payload.value
+        }
       })
     )
   })
@@ -875,6 +878,7 @@ describe('field_write', () => {
         chapterName: 'Chapter1',
         sectionId: 'JaenSection foo-bar-baz-1'
       },
+      fieldType: 'text',
       fieldName: 'foo',
       value: 'bar'
     }
@@ -889,7 +893,9 @@ describe('field_write', () => {
       ]!.jaenFields
     ).toEqual(
       expect.objectContaining({
-        [payload.fieldName]: payload.value
+        [payload.fieldType]: {
+          [payload.fieldName]: payload.value
+        }
       })
     )
   })

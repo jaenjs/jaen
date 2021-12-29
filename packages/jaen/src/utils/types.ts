@@ -39,7 +39,9 @@ export type JaenSectionData = JaenSection & JaenData
  */
 export interface JaenData {
   jaenFields: {
-    [name: string]: any
+    [type: string]: {
+      [name: string]: any
+    }
   } | null
 }
 

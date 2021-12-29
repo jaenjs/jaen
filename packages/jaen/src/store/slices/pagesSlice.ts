@@ -405,11 +405,12 @@ const pagesSlice = createSlice({
       action: PayloadAction<{
         pageId: string
         section?: {chapterName: string; sectionId: string}
+        fieldType: string
         fieldName: string
         value: any
       }>
     ) {
-      const {pageId, section, fieldName, value} = action.payload
+      const {pageId, section, fieldType, fieldName, value} = action.payload
 
       let pageIndex = state.findIndex(page => page.id === pageId)
 
@@ -448,10 +449,16 @@ const pagesSlice = createSlice({
         const sectionFields = chapter.sections[section.sectionId].jaenFields
 
         // @ts-ignore
-        sectionFields[fieldName] = value
+        sectionFields[fieldType] = {
+          ...sectionFields?.[fieldType],
+          [fieldName]: value
+        }
       } else {
         page.jaenFields = page.jaenFields || {}
-        page.jaenFields[fieldName] = value
+        page.jaenFields[fieldType] = {
+          ...page.jaenFields[fieldType],
+          [fieldName]: value
+        }
       }
 
       return state

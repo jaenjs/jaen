@@ -10,7 +10,8 @@ const TextField = connectField<string, {rtf?: boolean}>(
       editing={jaenField.isEditing}
       disableToolbar={!rtf}
     />
-  )
+  ),
+  {fieldType: 'IMA:TextField'} // IMA: Internal Managable Attributes
 )
 
 export default TextField
