@@ -1,14 +1,16 @@
 import {connectField} from '../../../utils/hooks/field'
 import Editor from './Editor'
 
-const TextField = connectField<string>(({jaenField, ...rest}) => (
-  <Editor
-    defaultValue={jaenField.staticValue || jaenField.defaultValue}
-    value={jaenField.value}
-    onBlurValue={data => jaenField.onUpdateValue(data)}
-    editing={jaenField.isEditing}
-    disableToolbar
-  />
-))
+const TextField = connectField<string, {rtf?: boolean}>(
+  ({jaenField, rtf = false}) => (
+    <Editor
+      defaultValue={jaenField.staticValue || jaenField.defaultValue}
+      value={jaenField.value}
+      onBlurValue={data => jaenField.onUpdateValue(data)}
+      editing={jaenField.isEditing}
+      disableToolbar={!rtf}
+    />
+  )
+)
 
 export default TextField

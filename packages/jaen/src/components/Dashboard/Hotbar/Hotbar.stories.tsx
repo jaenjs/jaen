@@ -5,7 +5,7 @@ import React from 'react'
 import Component from '.'
 
 export default {
-  title: 'Dashboard/Hotbar',
+  title: 'components/Dashboard/Hotbar',
   component: Component
 } as ComponentMeta<typeof Component>
 

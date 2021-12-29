@@ -3,7 +3,7 @@ import {Story, Meta} from '@storybook/react'
 import PagesTab from '.'
 
 export default {
-  title: 'Dashboard/tabs/Pages',
+  title: 'components/Dashboard/tabs/Pages',
   component: PagesTab
 } as Meta
 

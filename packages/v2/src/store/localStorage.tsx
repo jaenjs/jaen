@@ -30,31 +30,32 @@ export const clearState = () => {
   store.dispatch({type: 'RESET_STATE'})
 }
 
-export const withStorageManager = <P extends object>(
-  Component: React.ComponentType<P>
-): React.FC<P> => props => {
-  const btKey = `${key}:buildTime`
-  const data = useStaticQuery(graphql`
-    query CoreBuildMetadata {
-      siteBuildMetadata {
-        buildTime
+export const withStorageManager =
+  <P extends object>(Component: React.ComponentType<P>): React.FC<P> =>
+  props => {
+    const btKey = `${key}:buildTime`
+
+    // const data = useStaticQuery(graphql`
+    //   query CoreBuildMetadata {
+    //     siteBuildMetadata {
+    //       buildTime
+    //     }
+    //   }
+    // `)
+
+    const buildTime = '' //data.siteBuildMetadata.buildTime
+
+    if (typeof window !== 'undefined') {
+      const storageBuildTime = localStorage.getItem(btKey)
+
+      if (storageBuildTime !== buildTime) {
+        if (storageBuildTime) {
+          clearState()
+        }
+
+        localStorage.setItem(btKey, buildTime)
       }
     }
-  `)
 
-  const buildTime = data.siteBuildMetadata.buildTime
-
-  if (typeof window !== 'undefined') {
-    const storageBuildTime = localStorage.getItem(btKey)
-
-    if (storageBuildTime !== buildTime) {
-      if (storageBuildTime) {
-        clearState()
-      }
-
-      localStorage.setItem(btKey, buildTime)
-    }
+    return <Component {...props} />
   }
-
-  return <Component {...props} />
-}

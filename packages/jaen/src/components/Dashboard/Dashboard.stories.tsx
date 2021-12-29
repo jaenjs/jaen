@@ -4,7 +4,7 @@ import React from 'react'
 import Component from '.'
 
 export default {
-  title: 'Dashboard',
+  title: 'components/Dashboard',
   component: Component
 } as ComponentMeta<typeof Component>
 

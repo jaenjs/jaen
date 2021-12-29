@@ -3,7 +3,8 @@ module.exports = {
   addons: [
     '@snek-at/storybook-addon-chakra-ui',
     '@storybook/addon-links',
-    '@storybook/addon-essentials'
+    '@storybook/addon-essentials',
+    'storybook-addon-gatsby'
   ],
   framework: '@storybook/react',
   core: {builder: 'webpack5'}

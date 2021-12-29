@@ -34,15 +34,15 @@ export const withStorageManager =
   <P extends object>(Component: React.ComponentType<P>): React.FC<P> =>
   props => {
     const btKey = `${key}:buildTime`
-    const data = useStaticQuery(graphql`
-      query CoreBuildMetadata {
-        siteBuildMetadata {
-          buildTime
-        }
-      }
-    `)
+    // const data = useStaticQuery(graphql`
+    //   query CoreBuildMetadata {
+    //     siteBuildMetadata {
+    //       buildTime
+    //     }
+    //   }
+    // `)
 
-    const buildTime = data.siteBuildMetadata.buildTime
+    const buildTime = '' // data.siteBuildMetadata.buildTime
 
     if (typeof window !== 'undefined') {
       const storageBuildTime = localStorage.getItem(btKey)

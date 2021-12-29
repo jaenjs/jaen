@@ -3,7 +3,7 @@ import {Story, Meta} from '@storybook/react'
 import PageTree from '.'
 
 export default {
-  title: 'Dashboard/PageTree',
+  title: 'components/Dashboard/PageTree',
   component: PageTree
 } as Meta
 

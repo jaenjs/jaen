@@ -5,7 +5,7 @@ import React from 'react'
 import Component from '.'
 
 export default {
-  title: 'popovers/SectionManage',
+  title: 'components/popovers/SectionManage',
   component: Component
 } as ComponentMeta<typeof Component>
 

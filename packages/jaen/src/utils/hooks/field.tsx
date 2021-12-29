@@ -35,9 +35,9 @@ export interface FieldConnection<T> {
  * })
  * ```
  */
-export const connectField = <T extends {}>(
-  Component: React.ComponentType<FieldConnection<T>>
-): React.FC<JaenFieldProps<T>> =>
+export const connectField = <T, P>(
+  Component: React.ComponentType<P & FieldConnection<T>>
+): React.FC<P & JaenFieldProps<T>> =>
   withRedux(props => {
     const dispatch = useAppDispatch()
     const {staticJaenPage} = useJaenPageContext()

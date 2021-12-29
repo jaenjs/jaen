@@ -39,6 +39,7 @@ import {
   JaenPage,
   JaenSectionData,
   JaenSectionOptions,
+  JaenSectionWithId,
   PopoverProps
 } from '../../../utils/types'
 
@@ -115,54 +116,55 @@ const SectionField = ({name, displayName, sections}: SectionField) => {
 
   const chapter = deepmerge(staticChapter || {}, dynamicChapter || {})
 
-  console.log('chapter', chapter)
-
-  const handleSectionAppend = React.useCallback(
-    (sectionName: string, id: string, ptrNext: string | null) => {
+  const handleSectionAdd = React.useCallback(
+    (
+      sectionName: string,
+      between: [JaenSectionWithId | null, JaenSectionWithId | null]
+    ) => {
       dispatch(
         section_add({
           pageId: staticJaenPage?.id!, // TODO: Change to static or dynamic slug
           chapterName: name,
           sectionName,
-          between: [
-            {
-              ...chapter.sections[id],
-              id
-            },
-            ptrNext
-              ? {
-                  ...chapter.sections[ptrNext],
-                  id: ptrNext
-                }
-              : null
-          ]
+          between
         })
       )
     },
     []
   )
 
+  const handleSectionAppend = React.useCallback(
+    (sectionName: string, id: string, ptrNext: string | null) => {
+      handleSectionAdd(sectionName, [
+        {
+          ...chapter.sections[id],
+          id
+        },
+        ptrNext
+          ? {
+              ...chapter.sections[ptrNext],
+              id: ptrNext
+            }
+          : null
+      ])
+    },
+    []
+  )
+
   const handleSectionPrepend = React.useCallback(
     (sectionName: string, id: string, ptrPrev: string | null) => {
-      dispatch(
-        section_add({
-          pageId: staticJaenPage?.id!, // TODO: Change to static or dynamic slug
-          chapterName: name,
-          sectionName,
-          between: [
-            ptrPrev
-              ? {
-                  ...chapter.sections[ptrPrev],
-                  id: ptrPrev
-                }
-              : null,
-            {
-              ...chapter.sections[id],
-              id
+      handleSectionAdd(sectionName, [
+        ptrPrev
+          ? {
+              ...chapter.sections[ptrPrev],
+              id: ptrPrev
             }
-          ]
-        })
-      )
+          : null,
+        {
+          ...chapter.sections[id],
+          id
+        }
+      ])
     },
     []
   )
@@ -187,7 +189,7 @@ const SectionField = ({name, displayName, sections}: SectionField) => {
             name: s.options.name,
             displayName: s.options.displayName
           }))}
-          onSelect={name => alert(name)}>
+          onSelect={name => handleSectionAdd(name, [null, null])}>
           <Box>
             <Skeleton h="100" />
           </Box>
