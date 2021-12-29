@@ -4,7 +4,8 @@ import reducer, {
   page_updateOrCreate,
   page_markForDeletion,
   section_add,
-  field_write
+  field_write,
+  section_remove
 } from '../pagesSlice'
 
 const previousState: JaenPagesState[] = [
@@ -623,6 +624,229 @@ describe('section_add', () => {
     expect(
       Object.keys(page?.chapters?.[payload.chapterName]!.sections || {}).length
     ).toBe(3)
+  })
+})
+
+describe('seciton_remove', () => {
+  test('should remove a section between (null, section)', () => {
+    const payload: any = {
+      pageId: 'JaenPage foo-bar-baz-1',
+      chapterName: 'Chapter1',
+      sectionId: 'JaenSection foo-bar-baz-1',
+      between: [
+        null,
+        {
+          id: 'JaenSection foo-bar-baz-2',
+          ptrNext: null,
+          ptrPrev: 'JaenSection foo-bar-baz-1'
+        }
+      ]
+    }
+
+    const result = reducer(previousState, section_remove(payload))
+
+    // Expect the section to be marked as deleted
+    const page = result.find(page => page.id === payload.pageId)
+    const section = page!.chapters![payload.chapterName]!.sections[
+      payload.sectionId
+    ]
+
+    expect(section.deleted).toBe(true)
+
+    // Expect the pointers to be correct
+    // - between[1]: ptrNext: null; ptrPrev: null
+
+    const p1 = page!.chapters![payload.chapterName]!.sections[
+      payload.between[1].id
+    ]
+
+    expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
+      expect.objectContaining({
+        ptrPrev: null,
+        ptrNext: null
+      })
+    )
+
+    // Expect the head and tail pointer to be correct
+    expect(page!.chapters![payload.chapterName]!.ptrHead).toEqual(
+      payload.between[1].id
+    )
+
+    expect(page!.chapters![payload.chapterName]!.ptrTail).toEqual(
+      payload.between[1].id
+    )
+  })
+  test('should remove a section between (section, null)', () => {
+    const payload: any = {
+      pageId: 'JaenPage foo-bar-baz-1',
+      chapterName: 'Chapter1',
+      sectionId: 'JaenSection foo-bar-baz-2',
+      between: [
+        {
+          id: 'JaenSection foo-bar-baz-1',
+          ptrNext: 'JaenSection foo-bar-baz-2',
+          ptrPrev: null
+        },
+        null
+      ]
+    }
+
+    const result = reducer(previousState, section_remove(payload))
+
+    // Expect the section to be marked as deleted
+    const page = result.find(page => page.id === payload.pageId)
+    const section = page!.chapters![payload.chapterName]!.sections[
+      payload.sectionId
+    ]
+
+    expect(section.deleted).toBe(true)
+
+    // Expect the pointers to be correct
+    // - between[0]: ptrNext: null; ptrPrev: null
+
+    const p1 = page!.chapters![payload.chapterName]!.sections[
+      payload.between[0].id
+    ]
+
+    expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
+      expect.objectContaining({
+        ptrPrev: null,
+        ptrNext: null
+      })
+    )
+
+    // Expect the head and tail pointer to be correct
+    expect(page!.chapters![payload.chapterName]!.ptrHead).toEqual(
+      payload.between[0].id
+    )
+
+    expect(page!.chapters![payload.chapterName]!.ptrTail).toEqual(
+      payload.between[0].id
+    )
+  })
+  test('should remove a section between (section, section)', () => {
+    const payload: any = {
+      pageId: 'JaenPage foo-bar-baz-1',
+      chapterName: 'Chapter2',
+      sectionId: 'JaenSection foo-bar-baz-4',
+      between: [
+        {
+          id: 'JaenSection foo-bar-baz-3',
+          ptrNext: 'JaenSection foo-bar-baz-4',
+          ptrPrev: null
+        },
+        {
+          id: 'JaenSection foo-bar-baz-5',
+          ptrNext: null,
+          ptrPrev: 'JaenSection foo-bar-baz-4'
+        }
+      ]
+    }
+
+    const result = reducer(previousState, section_remove(payload))
+
+    // Expect the section to be marked as deleted
+    const page = result.find(page => page.id === payload.pageId)
+    const section = page!.chapters![payload.chapterName]!.sections[
+      payload.sectionId
+    ]
+
+    expect(section.deleted).toBe(true)
+
+    // Expect the pointers to be correct
+    // - between[0]: ptrNext: "JaenSection foo-bar-baz-5"; ptrPrev: null
+    // - between[1]: ptrNext: null; ptrPrev: "JaenSection foo-bar-baz-5"
+
+    const p1 = page!.chapters![payload.chapterName]!.sections[
+      payload.between[0].id
+    ]
+
+    expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
+      expect.objectContaining({
+        ptrPrev: null,
+        ptrNext: payload.between[1].id
+      })
+    )
+
+    const p2 = page!.chapters![payload.chapterName]!.sections[
+      payload.between[1].id
+    ]
+
+    expect({ptrPrev: p2.ptrPrev, ptrNext: p2.ptrNext}).toEqual(
+      expect.objectContaining({
+        ptrPrev: payload.between[0].id,
+        ptrNext: null
+      })
+    )
+
+    // Expect the head and tail pointer to be correct
+    expect(page!.chapters![payload.chapterName]!.ptrHead).toEqual(
+      payload.between[0].id
+    )
+
+    expect(page!.chapters![payload.chapterName]!.ptrTail).toEqual(
+      payload.between[1].id
+    )
+  })
+  test('should remove a section between (section, section) with empty state', () => {
+    const payload: any = {
+      pageId: 'JaenPage foo-bar-baz-1',
+      chapterName: 'Chapter2',
+      sectionId: 'JaenSection foo-bar-baz-4',
+      between: [
+        {
+          id: 'JaenSection foo-bar-baz-3',
+          ptrNext: 'JaenSection foo-bar-baz-4',
+          ptrPrev: null
+        },
+        {
+          id: 'JaenSection foo-bar-baz-5',
+          ptrNext: null,
+          ptrPrev: 'JaenSection foo-bar-baz-4'
+        }
+      ]
+    }
+
+    const result = reducer([], section_remove(payload))
+
+    // Expect the section to be marked as deleted
+    const page = result.find(page => page.id === payload.pageId)
+    const section = page!.chapters![payload.chapterName]!.sections[
+      payload.sectionId
+    ]
+
+    expect(section.deleted).toBe(true)
+
+    // Expect the pointers to be correct
+    // - between[0]: ptrNext: "JaenSection foo-bar-baz-5"; ptrPrev: null
+    // - between[1]: ptrNext: null; ptrPrev: "JaenSection foo-bar-baz-5"
+
+    const p1 = page!.chapters![payload.chapterName]!.sections[
+      payload.between[0].id
+    ]
+
+    expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
+      expect.objectContaining({
+        ptrPrev: null,
+        ptrNext: payload.between[1].id
+      })
+    )
+
+    const p2 = page!.chapters![payload.chapterName]!.sections[
+      payload.between[1].id
+    ]
+
+    expect({ptrPrev: p2.ptrPrev, ptrNext: p2.ptrNext}).toEqual(
+      expect.objectContaining({
+        ptrPrev: payload.between[0].id,
+        ptrNext: null
+      })
+    )
+
+    // Expect the head and tail pointer to be correct
+    expect(page!.chapters![payload.chapterName]!.ptrHead).toEqual(undefined)
+
+    expect(page!.chapters![payload.chapterName]!.ptrTail).toEqual(undefined)
   })
 })
 

@@ -2,6 +2,7 @@ import {createSlice, PayloadAction, DeepPartial} from '@reduxjs/toolkit'
 import update from 'immutability-helper'
 import {v4 as uuidv4} from 'uuid'
 
+import {omitSingle} from '../../utils/helpers'
 import {JaenPage, JaenSection, JaenSectionWithId} from '../../utils/types'
 
 export interface JaenPagesState extends Omit<Partial<JaenPage>, 'sections'> {
@@ -289,6 +290,115 @@ const pagesSlice = createSlice({
 
       return state
     },
+    section_remove(
+      state,
+      action: PayloadAction<{
+        pageId: string
+        chapterName: string
+        sectionId: string
+        between: [JaenSectionWithId | null, JaenSectionWithId | null]
+      }>
+    ) {
+      // find the page
+      let pageIndex = state.findIndex(page => page.id === action.payload.pageId)
+
+      // If the page is not found, add it to the state
+      if (pageIndex === -1) {
+        state = update(state, {
+          $push: [{id: action.payload.pageId, children: []}]
+        })
+
+        pageIndex = state.length - 1
+      }
+
+      // If the chapter is not found, add it to the state
+      const page = state[pageIndex]
+      page.chapters = page.chapters || {}
+
+      if (!page.chapters[action.payload.chapterName]?.sections) {
+        // @ts-ignore - This is a hack to ignore the fact that no head or tail pointer is defined
+        page.chapters[action.payload.chapterName] = {
+          sections: {}
+        }
+      }
+
+      const chapter = page.chapters[action.payload.chapterName]
+
+      // Remove the section from the chapter
+      chapter.sections = {
+        ...chapter.sections,
+        [action.payload.sectionId]: {
+          ...chapter.sections[action.payload.sectionId],
+          deleted: true
+        }
+      }
+
+      //> It is required to rearrange the pointers of the between sections
+      let [prev, next] = action.payload.between
+
+      const prevWithoutId = prev && (omitSingle('id', prev) as JaenSection)
+      const nextWithoutId = next && (omitSingle('id', next) as JaenSection)
+
+      console.log(prevWithoutId, nextWithoutId)
+
+      if (prev && !next) {
+        // If next is not defined:
+        // - set the prev section's next pointer to null
+        // - set the tail pointer to the prev section's id
+
+        chapter.sections = {
+          ...chapter.sections,
+          [prev.id]: {
+            ...chapter.sections[prev.id],
+            ...prevWithoutId,
+            ptrNext: null
+          }
+        }
+
+        chapter.ptrTail = prev.id
+      } else if (!prev && next) {
+        // If prev is not defined:
+        // - set the next section's prev pointer to null
+        // - set the head pointer to the next section's id
+
+        chapter.sections = {
+          ...chapter.sections,
+          [next.id]: {
+            ...chapter.sections[next.id],
+            ...nextWithoutId,
+            ptrPrev: null
+          }
+        }
+
+        chapter.ptrHead = next.id
+      } else if (prev && next) {
+        // If both prev and next are defined:
+        // - set the prev section's next pointer to the next section's id
+        // - set the next section's prev pointer to the prev section's id
+
+        chapter.sections = {
+          ...chapter.sections,
+          [prev.id]: {
+            ...chapter.sections[prev.id],
+            ...prevWithoutId,
+            ptrNext: next.id
+          },
+          [next.id]: {
+            ...chapter.sections[next.id],
+            ...nextWithoutId,
+            ptrPrev: prev.id
+          }
+        }
+      } else {
+        // If both prev and next are not defined:
+        // - set the head and tail pointers to null
+
+        chapter.ptrHead = null
+        chapter.ptrTail = null
+      }
+
+      return state
+    },
 
     field_write(
       state,
@@ -353,6 +463,7 @@ export const {
   page_updateOrCreate,
   page_markForDeletion,
   section_add,
+  section_remove,
   field_write
 } = pagesSlice.actions
 export default pagesSlice.reducer

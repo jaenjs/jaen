@@ -22,6 +22,7 @@ export interface JaenSection {
   name: string
   ptrNext: string | null
   ptrPrev: string | null
+  deleted?: true
 }
 
 export interface JaenSectionWithId extends JaenSection {

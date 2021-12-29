@@ -36,7 +36,7 @@ export type Props = {
   id: string
   ptrNext: string | null
   ptrPrev: string | null
-  onDelete: (id: string) => void
+  onDelete: (id: string, ptrPrev: string | null, ptrNext: string | null) => void
   onAppend: (id: string, ptrNext: string | null) => void
   onPrepend: (id: string, ptrPrev: string | null) => void
 }
@@ -93,7 +93,7 @@ const SectionManagePopover = React.memo<Props>(
                   <IconButton
                     aria-label="Delete section"
                     icon={<DeleteIcon />}
-                    onClick={() => onDelete(id)}
+                    onClick={() => onDelete(id, ptrPrev, ptrNext)}
                   />
                 </HStack>
               </Box>

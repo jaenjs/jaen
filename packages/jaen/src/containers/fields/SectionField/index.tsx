@@ -26,7 +26,7 @@ import * as React from 'react'
 import SectionAddPopover from '../../../components/popovers/SectionAdd'
 import SectionManagePopover from '../../../components/popovers/SectionManage'
 import {useAppDispatch, useAppSelector} from '../../../store'
-import {section_add} from '../../../store/slices/pagesSlice'
+import {section_add, section_remove} from '../../../store/slices/pagesSlice'
 import {withRedux} from '../../../store/withRedux'
 import {merge} from '../../../utils/merge'
 import {useJaenPageContext} from '../../../utils/providers/JaenPageProvider'
@@ -55,8 +55,6 @@ const SectionField = ({name, displayName, sections}: SectionField) => {
   if (jaenSection) {
     name = `${jaenSection.chapterName}.${name}`
   }
-
-  console.log('chapterName', name)
 
   const dispatch = useAppDispatch()
 
@@ -91,6 +89,7 @@ const SectionField = ({name, displayName, sections}: SectionField) => {
       return page?.chapters?.[name]
     },
     (l, r) => {
+      console.log(l, r)
       if (!l || !r) {
         return false
       }
@@ -105,9 +104,9 @@ const SectionField = ({name, displayName, sections}: SectionField) => {
 
       for (const key in l.sections) {
         // TODO: check if the section is deleted
-        // if (l.sections[key].deleted !== r.sections[key].deleted) {
-        //   return false
-        // }
+        if (l.sections[key].deleted !== r.sections[key].deleted) {
+          return false
+        }
       }
 
       return true
@@ -148,7 +147,7 @@ const SectionField = ({name, displayName, sections}: SectionField) => {
           : null
       ])
     },
-    []
+    [chapter.sections]
   )
 
   const handleSectionPrepend = React.useCallback(
@@ -166,13 +165,28 @@ const SectionField = ({name, displayName, sections}: SectionField) => {
         }
       ])
     },
+    [chapter.sections]
+  )
+
+  const handleSectionDelete = React.useCallback(
+    (
+      id: string,
+      between: [JaenSectionWithId | null, JaenSectionWithId | null]
+    ) => {
+      dispatch(
+        section_remove({
+          pageId: staticJaenPage?.id!,
+          sectionId: id,
+          chapterName: name,
+          between
+        })
+      )
+    },
     []
   )
 
   const renderedSections = () => {
     const rendered = []
-
-    console.log('rerender sections')
 
     let ptrHead = chapter.ptrHead
 
@@ -216,7 +230,22 @@ const SectionField = ({name, displayName, sections}: SectionField) => {
             onPrepend={(id, ptrPrev) =>
               handleSectionPrepend(section.name, id, ptrPrev)
             }
-            onDelete={() => null}
+            onDelete={(id, ptrPrev, ptrNext) =>
+              handleSectionDelete(id, [
+                ptrPrev
+                  ? {
+                      ...chapter.sections[ptrPrev],
+                      id: ptrPrev
+                    }
+                  : null,
+                ptrNext
+                  ? {
+                      ...chapter.sections[ptrNext],
+                      id: ptrNext
+                    }
+                  : null
+              ])
+            }
             trigger={
               <Box>
                 <JaenSectionProvider
