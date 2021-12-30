@@ -14,4 +14,6 @@ type ComponentProps = React.ComponentProps<typeof Component>
 const Template: Story<ComponentProps> = args => <Component {...args} />
 
 export const Dashboard: Story<ComponentProps> = Template.bind({})
-Dashboard.args = {}
+Dashboard.args = {
+  isOpen: true
+}

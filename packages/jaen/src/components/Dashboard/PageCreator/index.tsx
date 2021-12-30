@@ -205,6 +205,9 @@ export const PageCreator = ({
               templates={templates}
               onSelect={templateName => updateValues({templateName})}
             />
+            <FormHelperText>
+              Select the template to use for this page.
+            </FormHelperText>
           </FormControl>
         </ModalBody>
 

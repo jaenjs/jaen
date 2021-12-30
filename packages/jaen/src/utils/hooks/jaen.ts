@@ -1,7 +1,7 @@
 import {graphql, useStaticQuery} from 'gatsby'
 import React from 'react'
 
-import {store, RootState} from '../../store'
+import {store, RootState, useAppSelector} from '../../store'
 import {JaenPage} from '../types'
 
 /**
@@ -16,31 +16,66 @@ export const useJaenPageTree = () => {
     }
   }
 
-  const data = useStaticQuery<QueryData>(graphql`
-    query {
-      allJaenPage {
-        nodes {
-          id
-          parent {
+  let data: QueryData
+
+  try {
+    data = useStaticQuery<QueryData>(graphql`
+      query {
+        allJaenPage {
+          nodes {
             id
-          }
-          children {
-            id
-          }
-          jaenPageMetadata {
-            title
-            isBlogPost
-            image
-            description
-            datePublished
-            canonical
+            parent {
+              id
+            }
+            children {
+              id
+            }
+            jaenPageMetadata {
+              title
+              isBlogPost
+              image
+              description
+              datePublished
+              canonical
+            }
           }
         }
       }
+    `)
+  } catch {
+    data = {
+      allJaenPage: {
+        nodes: []
+      }
     }
-  `)
+  }
 
-  const pages = store.getState()?.pages
+  const pages = useAppSelector(
+    state => state.pages,
+    (r, l) => {
+      if (!l || !r) {
+        return false
+      }
+
+      const shouldUpdate = l.length !== r.length
+
+      if (shouldUpdate) {
+        return false
+      }
+
+      for (let i = 0; i < l.length; i++) {
+        if (l[i].deleted !== r[i].deleted) {
+          return false
+        }
+
+        if (l[i].parent !== r[i].parent) {
+          return false
+        }
+      }
+
+      return true
+    }
+  )
 
   console.log(data.allJaenPage.nodes, pages)
 

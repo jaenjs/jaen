@@ -59,7 +59,11 @@ type PageTreeProps = {
   onItemSelect: (id: string | null) => void
   onItemCreate: (parentId: string | null, values: CreateValues) => void
   onItemDelete: (id: string) => void
-  onItemMove: (id: string, newParentId: string | null) => void
+  onItemMove: (
+    id: string,
+    oldParentId: string | null,
+    newParentId: string | null
+  ) => void
 }
 
 const PADDING_PER_LEVEL = 16
@@ -166,6 +170,8 @@ const PageTree: React.FC<PageTreeProps> = ({
   }
 
   React.useEffect(() => {
+    console.log('rerender', items)
+
     setTree(TreeConverter(items))
   }, [items])
 
@@ -327,6 +333,8 @@ const PageTree: React.FC<PageTreeProps> = ({
 
       props.onItemMove(
         movedItemId,
+        // @ts-ignore
+        tree.items[movedItemId].parent,
         dstId === tree.rootId.toString() ? null : dstId
       )
     }

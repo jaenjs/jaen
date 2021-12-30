@@ -89,7 +89,6 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
       return page?.chapters?.[name]
     },
     (l, r) => {
-      console.log(l, r)
       if (!l || !r) {
         return false
       }

@@ -1,7 +1,8 @@
 import {GatsbyBrowser} from 'gatsby'
-import {JaenPluginOptions} from 'utils/types'
 
+import {Dashboard} from '../../containers/dashboard/index'
 import {JaenProvider} from '../providers/JaenProvider'
+import {JaenPluginOptions} from '../types'
 
 export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
   {element},
@@ -9,5 +10,12 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
 ) => {
   const {templates} = pluginOptions
 
-  return <JaenProvider templatesPaths={templates.paths}>{element}</JaenProvider>
+  return (
+    <JaenProvider templatesPaths={templates.paths}>
+      <>
+        <Dashboard />
+        {element}
+      </>
+    </JaenProvider>
+  )
 }
