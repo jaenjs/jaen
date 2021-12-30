@@ -82,7 +82,10 @@ const Template: Story = args => (
     rootItemIds={['SitePage /test', '1-1', '1-2']}
     defaultSelection={'1-1'}
     height={500}
-    templates={['HomePage']}
+    templates={[
+      {name: 'page', displayName: 'Page'},
+      {name: 'blog', displayName: 'Blog'}
+    ]}
     onItemSelect={() => {}}
     onItemCreate={() => {}}
     onItemDelete={() => {}}

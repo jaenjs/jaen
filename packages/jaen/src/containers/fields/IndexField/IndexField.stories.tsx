@@ -1,3 +1,4 @@
+import {Box} from '@chakra-ui/react'
 import {Story, ComponentMeta} from '@storybook/react'
 import React from 'react'
 
@@ -5,16 +6,20 @@ import Component from '.'
 import {JaenPageProvider} from '../../../utils/providers/JaenPageProvider'
 
 export default {
-  title: 'containers/fields/TextField',
+  title: 'containers/fields/SectionField',
   component: Component,
   decorators: [
     Story => (
       <JaenPageProvider
         staticJaenPage={{
-          id: `JaenPage jaen-page-1}`,
+          id: `JaenPage jaen-page-1`,
           slug: 'jaen-page-1',
           parent: null,
-          children: [],
+          children: [
+            {
+              id: `JaenPage jaen-page-2`
+            }
+          ],
           jaenPageMetadata: {
             title: 'Jaen Page 1',
             description: 'Jaen Page 1 description',
@@ -23,11 +28,7 @@ export default {
             datePublished: '2020-01-01',
             isBlogPost: false
           },
-          jaenFields: {
-            'IMA:TextField': {
-              'rich-text-field-1': '<p>this is a stored rtf value</p>'
-            }
-          },
+          jaenFields: null,
           chapters: {},
           templateName: 'BlogPage'
         }}>
@@ -43,14 +44,4 @@ type ComponentProps = React.ComponentProps<typeof Component>
 const Template: Story<ComponentProps> = args => <Component {...args} />
 
 export const Basic: Story<ComponentProps> = Template.bind({})
-Basic.args = {
-  name: 'text-field',
-  defaultValue: 'defaultValue'
-}
-
-export const RichText: Story<ComponentProps> = Template.bind({})
-RichText.args = {
-  name: 'rich-text-field-1',
-  defaultValue: '<p>richtext2<p>',
-  rtf: true
-}
+Basic.args = {}

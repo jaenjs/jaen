@@ -43,13 +43,13 @@ import {
   PopoverProps
 } from '../../../utils/types'
 
-interface SectionField {
+export interface SectionFieldProps {
   name: string // chapterName
   displayName: string
   sections: JaenConnection<{}, JaenSectionOptions>[]
 }
 
-const SectionField = ({name, displayName, sections}: SectionField) => {
+const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
   const jaenSection = useJaenSectionContext()
 
   if (jaenSection) {

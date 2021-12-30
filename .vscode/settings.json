@@ -1,0 +1,7 @@
+{
+  "cSpell.words": ["chakra"],
+  "editor.rulers": [80, 120],
+  "[git-commit]": {
+    "editor.rulers": [72, 80]
+  }
+}

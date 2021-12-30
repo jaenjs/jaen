@@ -72,7 +72,7 @@ export function ContextMenu<T extends HTMLElement = HTMLElement>(
     <>
       {props.children(targetRef)}
       {isRendered && (
-        <Portal {...props.portalProps}>
+        <Portal {...props.portalProps} appendToParentPortal={true}>
           <div onContextMenu={onContextMenuHandler}>
             <Menu
               isOpen={isDeferredOpen}

@@ -34,6 +34,7 @@ import * as React from 'react'
 
 import {ContextMenu} from '../../ContextMenu'
 import {FileIcon, FolderCloseIcon, FolderOpenIcon} from '../../icons'
+import {CreateValues, PageCreator, Templates} from '../PageCreator'
 import {resolveChildSlugs, titleToSlug, TreeConverter} from './treeconverter'
 
 export type Items = {
@@ -52,17 +53,11 @@ export type Items = {
 
 type PageTreeProps = {
   items: Items
-  rootItemIds: string[]
   defaultSelection: string
   height: number | string
-  templates: string[]
+  templates: Templates
   onItemSelect: (id: string | null) => void
-  onItemCreate: (
-    parentId: string | null,
-    title: string,
-    slug: string,
-    template: string
-  ) => void
+  onItemCreate: (parentId: string | null, values: CreateValues) => void
   onItemDelete: (id: string) => void
   onItemMove: (id: string, newParentId: string | null) => void
 }
@@ -78,7 +73,6 @@ const PreTextIcon = styled.span`
 
 const PageTree: React.FC<PageTreeProps> = ({
   items,
-  rootItemIds,
   defaultSelection,
   ...props
 }) => {
@@ -92,7 +86,84 @@ const PageTree: React.FC<PageTreeProps> = ({
 
   const [selectedItem, selectItem] = React.useState<string>(defaultSelection)
 
-  const addPageDisclousure = useDisclosure()
+  const pageCreatorDisclosure = useDisclosure()
+
+  const handleItemCreate = (values: CreateValues) => {
+    // Check if the slug is already taken of a sibling
+    const {title, slug, templateName} = values
+
+    const relativeParentId = selectedItem || tree.rootId
+
+    const siblings = tree.items[relativeParentId].children
+
+    const slugTaken = siblings.some(
+      siblingId => tree.items[siblingId]?.data?.slug === slug
+    )
+
+    if (!slugTaken) {
+      props.onItemCreate(relativeParentId.toString(), values)
+
+      // Close the modal
+      pageCreatorDisclosure.onClose()
+
+      // Add the new item to the tree
+      const newItemId = `${relativeParentId}/${slug}`
+
+      const newItem = {
+        id: newItemId,
+        data: {
+          title,
+          slug,
+          locked: false,
+          templateName
+        },
+        children: [],
+        parent: relativeParentId
+      }
+
+      tree.items[newItemId] = newItem
+
+      // Update parent children
+      tree.items[relativeParentId].children.push(newItemId)
+      console.log(
+        '🚀 ~ file: index.tsx ~ line 128 ~ handleItemCreate ~ tree',
+        tree
+      )
+
+      setTree(tree)
+
+      return true
+    }
+
+    return false
+  }
+
+  const handleItemDelete = (id: string) => {
+    props.onItemDelete(id)
+
+    // Remove the item from the tree
+    const item = tree.items[id]
+    console.log(
+      '🚀 ~ file: index.tsx ~ line 146 ~ handleItemDelete ~ item',
+      item
+    )
+
+    if (item) {
+      const parentId: string = (item as any).parent || tree.rootId
+
+      // Remove the item from the parent children
+      tree.items[parentId].children = tree.items[parentId].children.filter(
+        childId => childId !== id
+      )
+
+      // Remove the item from the tree
+      delete tree.items[id]
+
+      selectItem(defaultSelection)
+
+      setTree(tree)
+    }
+  }
 
   React.useEffect(() => {
     setTree(TreeConverter(items))
@@ -186,7 +257,7 @@ const PageTree: React.FC<PageTreeProps> = ({
       )
     }
 
-    const MotionBox = motion<BoxProps>(ItemBox)
+    const MotionBox = motion(ItemBox)
 
     const renderedItem = (
       <MotionBox
@@ -238,8 +309,9 @@ const PageTree: React.FC<PageTreeProps> = ({
       return
     }
 
-    const movedItemId =
-      tree.items[source.parentId].children[source.index].toString()
+    const movedItemId = tree.items[source.parentId].children[
+      source.index
+    ].toString()
 
     const dstId = destination.parentId.toString()
 
@@ -261,42 +333,51 @@ const PageTree: React.FC<PageTreeProps> = ({
   }
 
   return (
-    <ContextMenu<HTMLDivElement>
-      renderMenu={() => (
-        <MenuList>
-          <MenuGroup title="Page">
-            <MenuItem
-              icon={<AddIcon />}
-              onClick={() => addPageDisclousure.onOpen()}>
-              Add
-            </MenuItem>
-            {!items[selectedItem].data.locked && (
-              <>
-                <MenuItem
-                  icon={<DeleteIcon />}
-                  onClick={() => props.onItemDelete(selectedItem)}>
-                  Delete
-                </MenuItem>
-              </>
-            )}
-          </MenuGroup>
-        </MenuList>
-      )}>
-      {ref => (
-        <Box ref={ref} overflowX={"hidden"}>
-          <Tree
-            tree={tree}
-            renderItem={renderItem}
-            onExpand={onExpand}
-            onCollapse={onCollapse}
-            onDragEnd={onDragEnd}
-            offsetPerLevel={PADDING_PER_LEVEL}
-            isDragEnabled
-            isNestingEnabled
-          />
-        </Box>
-      )}
-    </ContextMenu>
+    <>
+      <ContextMenu<HTMLDivElement>
+        renderMenu={() => (
+          <MenuList zIndex="popover">
+            <MenuGroup title="Page">
+              <MenuItem
+                icon={<AddIcon />}
+                onClick={() => pageCreatorDisclosure.onOpen()}>
+                Add
+              </MenuItem>
+              {!tree.items[selectedItem].data.locked && (
+                <>
+                  <MenuItem
+                    icon={<DeleteIcon />}
+                    onClick={() => handleItemDelete(selectedItem)}>
+                    Delete
+                  </MenuItem>
+                </>
+              )}
+            </MenuGroup>
+          </MenuList>
+        )}>
+        {ref => (
+          <Box ref={ref} overflowX={'hidden'}>
+            <Tree
+              tree={tree}
+              renderItem={renderItem}
+              onExpand={onExpand}
+              onCollapse={onCollapse}
+              onDragEnd={onDragEnd}
+              offsetPerLevel={PADDING_PER_LEVEL}
+              isDragEnabled
+              isNestingEnabled
+            />
+          </Box>
+        )}
+      </ContextMenu>
+      <PageCreator
+        finalFocusRef={null as any}
+        templates={props.templates}
+        isOpen={pageCreatorDisclosure.isOpen}
+        onClose={pageCreatorDisclosure.onClose}
+        onCreate={handleItemCreate}
+      />
+    </>
   )
 }
 
