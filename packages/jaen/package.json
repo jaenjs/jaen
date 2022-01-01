@@ -39,6 +39,7 @@
     "framer-motion": "^5",
     "gatsby": "^4.3.0",
     "gatsby-plugin-compile-es6-packages": "^2.1.1",
+    "react-hook-form": "^7.22.5",
     "react-in-viewport": "^1.0.0-alpha.20",
     "redux": "^4.1.2",
     "uuid": "^8.3.2"

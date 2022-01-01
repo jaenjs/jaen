@@ -15,25 +15,27 @@ const Template: Story<ComponentProps> = args => <PageCreator {...args} />
 
 export const Basic: Story<ComponentProps> = Template.bind({})
 Basic.args = {
+  values: {
+    slug: '',
+    title: '',
+    templateName: ''
+  },
   templates: [
     {name: 'page', displayName: 'Page'},
     {name: 'blog', displayName: 'Blog'}
   ],
-  onCreate: values => {
-    console.log('🚀 ~ file: PageCreator.stories.tsx ~ line 23 ~ values', values)
+  onSubmit: values => {
+    console.log('🚀 ~ file: PageCreator.stories.tsx ~ line 43 ~ values', values)
+  },
+  externalValidation: (valueName, value) => {
+    const siblingsSlugs = ['slug-1', 'slug-2', 'slug-3']
 
-    return true
+    if (valueName === 'slug' && siblingsSlugs.includes(value)) {
+      return 'This slug is already in use.'
+    }
   },
   isOpen: true,
   onClose: () => {
     console.log('Closing modal')
-  }
-}
-
-export const ErrorOnCreate: Story<ComponentProps> = Template.bind({})
-ErrorOnCreate.args = {
-  ...Basic.args,
-  onCreate: () => {
-    return false
   }
 }

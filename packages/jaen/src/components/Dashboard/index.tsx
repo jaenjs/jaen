@@ -19,7 +19,7 @@ import {
 import {FocusableElement} from '@chakra-ui/utils'
 import * as React from 'react'
 
-import PageContent from './PageContent'
+import {ContentValues, PageContent} from './PageContent'
 import {CreateValues} from './PageCreator'
 import PageTree from './PageTree'
 import SidebarWithHeader from './SidebarWithHeader'
@@ -43,7 +43,7 @@ const Dashboard: React.FC<{
     oldParentId: string | null,
     newParentId: string | null
   ) => void
-  onPageUpdate: (id: string, values: CreateValues) => void
+  onPageUpdate: (id: string, values: ContentValues) => void
 }> = ({
   isOpen,
   onClose,
@@ -157,7 +157,18 @@ const Dashboard: React.FC<{
             </Box>
 
             <Box flex="1">
-              <PageContent />
+              <PageContent
+                template={{
+                  name: 'page',
+                  displayName: 'Page'
+                }}
+                values={{
+                  slug: '',
+                  title: '',
+                  description: ''
+                }}
+                onSubmit={() => {}}
+              />
             </Box>
           </Flex>
         </SidebarWithHeader>

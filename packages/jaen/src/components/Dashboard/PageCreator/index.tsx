@@ -17,16 +17,26 @@ import {
 } from '@chakra-ui/react'
 import {template} from 'lodash'
 import * as React from 'react'
+import {Controller, useForm} from 'react-hook-form'
+
+import {FormProps} from '../../../utils/types'
 
 export type Templates = {name: string; displayName: string}[]
 
 type TemplateSelectorProps = {
+  selectedTemplate: string
   templates: Templates
   onSelect: (templateName: string) => void
 }
 
-const TemplateSelector = ({templates, onSelect}: TemplateSelectorProps) => {
-  const [selectedTemplate, setSelectedTemplate] = React.useState<string>('')
+const TemplateSelector = ({
+  selectedTemplate,
+  templates,
+  onSelect
+}: TemplateSelectorProps) => {
+  // const [selectedTemplate, setSelectedTemplate] = React.useState<string>(
+  //   props.selectedTemplate
+  // )
 
   const handleSelect = (templateName: string) => {
     let newSelectedTemplate = templateName
@@ -36,7 +46,7 @@ const TemplateSelector = ({templates, onSelect}: TemplateSelectorProps) => {
       newSelectedTemplate = ''
     }
 
-    setSelectedTemplate(newSelectedTemplate)
+    // setSelectedTemplate(newSelectedTemplate)
     onSelect(newSelectedTemplate)
   }
 
@@ -62,12 +72,11 @@ export type CreateValues = {
   templateName: string
 }
 
-type PageCreatorProps = {
+interface PageCreatorProps extends FormProps<CreateValues> {
   templates: TemplateSelectorProps['templates']
   finalFocusRef: React.RefObject<any>
   isOpen: boolean
   onClose: () => void
-  onCreate: (values: CreateValues) => boolean
 }
 
 /**
@@ -79,87 +88,37 @@ export const PageCreator = ({
   finalFocusRef,
   isOpen,
   onClose,
-  onCreate
+  ...form
 }: PageCreatorProps) => {
   const initialFocusRef = React.useRef<any>()
 
   const toast = useToast()
 
-  const [errors, setErrors] = React.useState<{uniqueSlugRequired: boolean}>({
-    uniqueSlugRequired: false
+  const {
+    register,
+    reset,
+    handleSubmit,
+    control,
+    formState: {errors, isSubmitting, isDirty, isValid}
+  } = useForm<CreateValues>({
+    defaultValues: form.values
   })
 
-  const [values, setValues] = React.useState<CreateValues>({
-    slug: '',
-    title: '',
-    templateName: ''
-  })
+  const onSubmit = (values: CreateValues) => {
+    form.onSubmit(values)
 
-  React.useEffect(() => {
-    setValues({
-      slug: '',
-      title: '',
-      templateName: ''
+    reset()
+
+    toast({
+      title: 'Page created',
+      description: `Page "${values.title}" created`,
+      status: 'success'
     })
-    setErrors({
-      uniqueSlugRequired: false
-    })
-  }, [isOpen])
-
-  const cleanedValues = React.useMemo(() => {
-    const cleanTitle = values.title.replace(/\s{2,}/g, ' ').trim()
-    // replace two consecutive spaces with one
-    const cleanSlug = values.slug
-      .replace(/\s+/g, '-')
-      .replace(/-{2,}/g, '-')
-      .toLowerCase()
-      .trim()
-
-    const cleanTemplateName = values.templateName.trim()
-
-    return {
-      slug: cleanSlug,
-      title: cleanTitle,
-      templateName: cleanTemplateName
-    }
-  }, [values])
-
-  const updateValues = (newValues: Partial<CreateValues>) => {
-    // newValues.title = newValues?.title?.replace(/\s{2,}/g, ' ')
-    // newValues.slug = newValues?.slug
-    //   ?.replace(/\s+/g, '-')
-    //   .replace(/-{2,}/g, '-')
-    //   .toLowerCase()
-
-    // newValues.templateName = newValues?.templateName?.trim()
-
-    setValues({...values, ...newValues})
   }
 
-  const handleChange = (name: keyof CreateValues) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    updateValues({[name]: event.target.value})
-  }
-
-  const validate = () => {
-    const {slug, title, templateName} = values
-    return !!(slug && title && templateName)
-  }
-
-  const handleSubmit = () => {
-    if (validate()) {
-      if (onCreate(cleanedValues)) {
-        onClose()
-        toast({
-          title: 'Page created',
-          description: `Page "${cleanedValues.title}" created`,
-          status: 'success'
-        })
-      } else {
-        setErrors({uniqueSlugRequired: true})
-      }
-    }
+  const onCancel = () => {
+    reset()
+    onClose()
   }
 
   return (
@@ -170,57 +129,100 @@ export const PageCreator = ({
       onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Create a page</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody pb={6}>
-          <FormControl>
-            <FormLabel>Title</FormLabel>
-            <Input
-              ref={finalFocusRef}
-              placeholder="Title"
-              value={values['title']}
-              onChange={handleChange('title')}
-            />
-          </FormControl>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <ModalHeader>Create a page</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <FormControl isInvalid={!!errors.title}>
+              <FormLabel>Title</FormLabel>
+              <Input
+                placeholder="Title"
+                {...register('title', {
+                  required: 'This is required',
+                  minLength: {
+                    value: 4,
+                    message: 'Minimum length should be 4'
+                  }
+                })}
+              />
+              <FormErrorMessage>{errors.title?.message}</FormErrorMessage>
+            </FormControl>
 
-          <FormControl mt={4} isInvalid={errors.uniqueSlugRequired}>
-            <FormLabel>Slug</FormLabel>
-            <Input
-              placeholder="the-slug"
-              value={values['slug']}
-              onChange={handleChange('slug')}
-            />
-            {!errors.uniqueSlugRequired ? (
-              <FormHelperText>
-                Make sure the slug is unique between siblings.
-              </FormHelperText>
-            ) : (
-              <FormErrorMessage>Slug already exists.</FormErrorMessage>
-            )}
-          </FormControl>
+            <FormControl mt={4} isInvalid={!!errors.slug}>
+              <FormLabel>Slug</FormLabel>
+              <Input
+                // id="slug"
+                placeholder="the-slug"
+                {...register('slug', {
+                  required: 'This is required',
+                  minLength: {
+                    value: 4,
+                    message: 'Minimum length should be 4'
+                  },
+                  pattern: {
+                    value: /^[a-z0-9-]+$/,
+                    message:
+                      'Only lowercase letters, numbers and hyphens are allowed'
+                  },
+                  validate: (value: string) => {
+                    const {externalValidation} = form
 
-          <FormControl mt={4}>
-            <FormLabel>Template</FormLabel>
-            <TemplateSelector
-              templates={templates}
-              onSelect={templateName => updateValues({templateName})}
-            />
-            <FormHelperText>
-              Select the template to use for this page.
-            </FormHelperText>
-          </FormControl>
-        </ModalBody>
+                    if (externalValidation) {
+                      const validation = externalValidation('slug', value)
 
-        <ModalFooter>
-          <Button
-            colorScheme="blue"
-            mr={3}
-            disabled={!validate()}
-            onClick={handleSubmit}>
-            Create
-          </Button>
-          <Button onClick={onClose}>Cancel</Button>
-        </ModalFooter>
+                      if (validation) {
+                        return validation
+                      }
+                    }
+                  }
+                })}
+              />
+              {!errors.slug && (
+                <FormHelperText>
+                  Make sure the slug is unique between siblings.
+                </FormHelperText>
+              )}
+              <FormErrorMessage>{errors.slug?.message}</FormErrorMessage>
+            </FormControl>
+            <FormControl mt={4} isInvalid={true}>
+              <FormLabel>Template</FormLabel>
+              <Controller
+                control={control}
+                name="templateName"
+                rules={{required: 'Please select a template'}}
+                render={({field: {value, onChange}}) => (
+                  <TemplateSelector
+                    selectedTemplate={value}
+                    templates={templates}
+                    onSelect={templateName => {
+                      onChange(templateName)
+                    }}
+                  />
+                )}
+              />
+              {!errors.templateName && (
+                <FormHelperText>
+                  Select the template to use for this page.
+                </FormHelperText>
+              )}
+              <FormErrorMessage>
+                {errors.templateName?.message}
+              </FormErrorMessage>
+            </FormControl>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button
+              colorScheme="blue"
+              mr={3}
+              isLoading={isSubmitting}
+              disabled={!isDirty}
+              type="submit">
+              Create
+            </Button>
+            <Button onClick={onCancel}>Cancel</Button>
+          </ModalFooter>
+        </form>
       </ModalContent>
     </Modal>
   )

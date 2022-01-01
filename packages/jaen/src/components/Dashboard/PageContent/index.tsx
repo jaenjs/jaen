@@ -9,81 +9,199 @@ import {
   Text,
   Heading,
   InputGroup,
-  InputLeftElement
+  InputLeftElement,
+  FormControl,
+  FormLabel,
+  Textarea,
+  Skeleton,
+  Flex,
+  Spacer,
+  Button,
+  ButtonGroup,
+  VStack,
+  useToast,
+  FormHelperText,
+  FormErrorMessage,
+  Badge,
+  Img
 } from '@chakra-ui/react'
 import * as React from 'react'
+import {useForm} from 'react-hook-form'
+
+import {FormProps} from '../../../utils/types'
+
+export type ContentValues = {
+  title: string
+  slug: string
+  description: string
+}
+
+export interface PageContentProps extends FormProps<ContentValues> {
+  template: {
+    name: string
+    displayName: string
+  }
+}
 
 /**
  * Component for displaying a page content.
  *
  * It includes Accordion that can be used to expand/collapse the page content.
  */
-const PageContent: React.FC = () => {
-  type Values = {
-    slug: string
-    title: string
-  }
+export const PageContent = (props: PageContentProps) => {
+  const toast = useToast()
 
-  const [values, setValues] = React.useState<Values>({
-    slug: 'a',
-    title: 'A title'
+  const [defaultValues, setDefaultValues] = React.useState<ContentValues>(
+    props.values
+  )
+
+  React.useEffect(() => {
+    setDefaultValues(props.values)
+  }, [props.values])
+
+  const {
+    register,
+    reset,
+    handleSubmit,
+    formState: {errors, isSubmitting, isDirty, isValid}
+  } = useForm<ContentValues>({
+    defaultValues
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValues({...values, [e.target.name]: e.target.value})
+  const onSubmit = (values: ContentValues) => {
+    props.onSubmit(values)
+
+    setDefaultValues(values)
+    reset(values)
+
+    toast({
+      title: 'Saved',
+      description: 'Your changes have been saved.',
+      status: 'success',
+      duration: 5000
+    })
   }
 
-  const generateInput = (name: keyof Values) => (
-    <Input name={name} value={values[name]} onChange={handleChange} />
-  )
-
-  // labledInput should be used to generate inputs that are wrapped in a Box with a label.
-  // Box should have a border and padding.
-  const labeledInput = (name: keyof Values) => (
-    <Box borderWidth="1px" borderRadius="lg" overflow="hidden" p={2} m={1}>
-      <Text fontSize="sm" my={1} fontWeight={"semibold"}>{name.toUpperCase()}</Text>
-      {generateInput(name)}
-      
-    </Box>
-  )
+  const onReset = () => {
+    reset(defaultValues)
+  }
 
   return (
-    <Accordion defaultIndex={0}>
-      <AccordionItem>
-        <h2>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-              General
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-        </h2>
-        <AccordionPanel pb={4}>
-          <Box>
-            {labeledInput('slug')}
-            {labeledInput('title')}
-          </Box>
-        </AccordionPanel>
-      </AccordionItem>
+    <Flex flexDirection={'column'}>
+      <Heading as={'h3'} size={'lg'} mb="4">
+        Content <Badge>{props.template.displayName}</Badge>
+      </Heading>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Accordion defaultIndex={0}>
+          <AccordionItem>
+            <h2>
+              <AccordionButton>
+                <Box flex="1" textAlign="left">
+                  General
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+            </h2>
+            <AccordionPanel pb={4}>
+              <Box>
+                <FormControl isInvalid={!!errors.title}>
+                  <FormLabel>Title</FormLabel>
+                  <Input
+                    // id="title"
+                    placeholder="Title"
+                    {...register('title', {
+                      required: 'This is required',
+                      minLength: {
+                        value: 4,
+                        message: 'Minimum length should be 4'
+                      }
+                    })}
+                  />
+                  <FormErrorMessage>{errors.title?.message}</FormErrorMessage>
+                </FormControl>
+                <FormControl mt={4} isInvalid={!!errors.slug}>
+                  <FormLabel>Slug</FormLabel>
+                  <Input
+                    // id="slug"
+                    placeholder="the-slug"
+                    {...register('slug', {
+                      required: 'This is required',
+                      minLength: {
+                        value: 4,
+                        message: 'Minimum length should be 4'
+                      },
+                      pattern: {
+                        value: /^[a-z0-9-]+$/,
+                        message:
+                          'Only lowercase letters, numbers and hyphens are allowed'
+                      },
+                      validate: (value: string) => {
+                        const {externalValidation} = props
 
-      <AccordionItem>
-        <h2>
-          <AccordionButton>
-            <Box flex="1" textAlign="left">
-              Section 2 title
-            </Box>
-            <AccordionIcon />
-          </AccordionButton>
-        </h2>
-        <AccordionPanel pb={4}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
-          minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-          aliquip ex ea commodo consequat.
-        </AccordionPanel>
-      </AccordionItem>
-    </Accordion>
+                        if (externalValidation) {
+                          const validation = externalValidation('slug', value)
+
+                          if (validation) {
+                            return validation
+                          }
+                        }
+                      }
+                    })}
+                  />
+                  {!errors.slug && (
+                    <FormHelperText>
+                      Make sure the slug is unique between siblings.
+                    </FormHelperText>
+                  )}
+                  <FormErrorMessage>{errors.slug?.message}</FormErrorMessage>
+                </FormControl>
+                <FormControl mt={4}>
+                  <FormLabel>Description</FormLabel>
+                  <Textarea
+                    // id="description"
+                    placeholder="This is a sample description used for this page."
+                    {...register('description', {})}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Image</FormLabel>
+                  <Img
+                    boxSize="200px"
+                    src="https://bit.ly/dan-abramov"
+                    alt="Dan Abramov"
+                  />
+                </FormControl>
+              </Box>
+            </AccordionPanel>
+          </AccordionItem>
+
+          <AccordionItem>
+            <h2>
+              <AccordionButton>
+                <Box flex="1" textAlign="left">
+                  Fields
+                </Box>
+                <AccordionIcon />
+              </AccordionButton>
+            </h2>
+            <AccordionPanel pb={4}>
+              <Skeleton h="200"></Skeleton>
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
+
+        <Spacer flex="1" />
+        <ButtonGroup isDisabled={!isDirty}>
+          <Button
+            colorScheme="blue"
+            mr={4}
+            isLoading={isSubmitting}
+            type="submit">
+            Save
+          </Button>
+          <Button onClick={onReset}>Cancel</Button>
+        </ButtonGroup>
+      </form>
+    </Flex>
   )
 }
-
-export default PageContent

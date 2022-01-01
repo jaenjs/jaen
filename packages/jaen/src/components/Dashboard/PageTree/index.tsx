@@ -98,48 +98,34 @@ const PageTree: React.FC<PageTreeProps> = ({
 
     const relativeParentId = selectedItem || tree.rootId
 
-    const siblings = tree.items[relativeParentId].children
+    props.onItemCreate(relativeParentId.toString(), values)
 
-    const slugTaken = siblings.some(
-      siblingId => tree.items[siblingId]?.data?.slug === slug
-    )
+    // Close the modal
+    pageCreatorDisclosure.onClose()
 
-    if (!slugTaken) {
-      props.onItemCreate(relativeParentId.toString(), values)
+    // Add the new item to the tree
+    const newItemId = `${relativeParentId}/${slug}`
 
-      // Close the modal
-      pageCreatorDisclosure.onClose()
-
-      // Add the new item to the tree
-      const newItemId = `${relativeParentId}/${slug}`
-
-      const newItem = {
-        id: newItemId,
-        data: {
-          title,
-          slug,
-          locked: false,
-          templateName
-        },
-        children: [],
-        parent: relativeParentId
-      }
-
-      tree.items[newItemId] = newItem
-
-      // Update parent children
-      tree.items[relativeParentId].children.push(newItemId)
-      console.log(
-        '🚀 ~ file: index.tsx ~ line 128 ~ handleItemCreate ~ tree',
-        tree
-      )
-
-      setTree(tree)
-
-      return true
+    const newItem = {
+      id: newItemId,
+      data: {
+        title,
+        slug,
+        locked: false,
+        templateName
+      },
+      children: [],
+      parent: relativeParentId
     }
 
-    return false
+    const newTree = {...tree}
+
+    newTree.items[newItemId] = newItem
+
+    // Update parent children
+    newTree.items[relativeParentId].children.push(newItemId)
+
+    setTree(newTree)
   }
 
   const handleItemDelete = (id: string) => {
@@ -147,10 +133,6 @@ const PageTree: React.FC<PageTreeProps> = ({
 
     // Remove the item from the tree
     const item = tree.items[id]
-    console.log(
-      '🚀 ~ file: index.tsx ~ line 146 ~ handleItemDelete ~ item',
-      item
-    )
 
     if (item) {
       const parentId: string = (item as any).parent || tree.rootId
@@ -170,8 +152,6 @@ const PageTree: React.FC<PageTreeProps> = ({
   }
 
   React.useEffect(() => {
-    console.log('rerender', items)
-
     setTree(TreeConverter(items))
   }, [items])
 
@@ -315,9 +295,8 @@ const PageTree: React.FC<PageTreeProps> = ({
       return
     }
 
-    const movedItemId = tree.items[source.parentId].children[
-      source.index
-    ].toString()
+    const movedItemId =
+      tree.items[source.parentId].children[source.index].toString()
 
     const dstId = destination.parentId.toString()
 
@@ -327,6 +306,9 @@ const PageTree: React.FC<PageTreeProps> = ({
         .indexOf(tree.items[movedItemId].data.slug) === -1
     ) {
       const newTree = moveItemOnTree(tree, source, destination)
+
+      // @ts-ignore
+      newTree.items[movedItemId].parent = destination.parentId
 
       setTree(mutateTree(newTree, destination.parentId, {isExpanded: true}))
       handleSelectItem(movedItemId)
@@ -380,10 +362,30 @@ const PageTree: React.FC<PageTreeProps> = ({
       </ContextMenu>
       <PageCreator
         finalFocusRef={null as any}
+        values={{
+          title: '',
+          slug: '',
+          templateName: ''
+        }}
         templates={props.templates}
         isOpen={pageCreatorDisclosure.isOpen}
         onClose={pageCreatorDisclosure.onClose}
-        onCreate={handleItemCreate}
+        onSubmit={handleItemCreate}
+        externalValidation={(name, value) => {
+          if (name === 'slug') {
+            const relativeParentId = selectedItem || tree.rootId
+
+            const siblings = tree.items[relativeParentId].children
+
+            const slugTaken = siblings.some(
+              siblingId => tree.items[siblingId]?.data?.slug === value
+            )
+
+            if (slugTaken) {
+              return 'Slug is already taken'
+            }
+          }
+        }}
       />
     </>
   )

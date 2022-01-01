@@ -150,3 +150,12 @@ export interface PopoverProps<RenderFn> {
    */
   onRenderPopover?: RenderFn
 }
+
+export interface FormProps<Values> {
+  values: Values
+  onSubmit: (values: Values) => void
+  externalValidation?: (
+    valueName: keyof Values,
+    value: string
+  ) => string | undefined
+}
