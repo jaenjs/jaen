@@ -18,7 +18,7 @@ Basic.args = {
   values: {
     slug: '',
     title: '',
-    templateName: ''
+    template: {name: '', displayName: ''}
   },
   templates: [
     {name: 'page', displayName: 'Page'},

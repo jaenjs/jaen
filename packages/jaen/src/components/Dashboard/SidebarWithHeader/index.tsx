@@ -24,47 +24,40 @@ import {
   useBreakpointValue,
   Button,
   Divider,
-  ButtonGroup
+  ButtonGroup,
+  IconProps
 } from '@chakra-ui/react'
 import React, {ReactNode} from 'react'
 import {ReactText} from 'react'
 import {IconType} from 'react-icons'
-import {
-  FiFile,
-  FiFolder,
-  FiTrash,
-  FiHome,
-  FiTrendingUp,
-  FiCompass,
-  FiStar,
-  FiSettings,
-  FiMenu,
-  FiBell,
-  FiChevronLeft,
-  FiChevronDown
-} from 'react-icons/fi'
+import {FiTrash, FiMenu, FiBell, FiChevronDown} from 'react-icons/fi'
 
-interface LinkItemProps {
+export interface LinkItemProps {
   name: string
   icon: IconType
+  onClick: () => void
 }
-const LinkItems: Array<LinkItemProps> = [
-  {name: 'Pages', icon: FiFile},
-  {name: 'Files', icon: FiFolder},
-  {name: 'Settings', icon: FiSettings}
-]
 
-export default function SidebarWithHeader({
-  children,
-  onCloseDashboard
-}: {
-  children: ReactNode
+export interface SidebarWithHeaderProps {
+  sidebarItems: SidebarProps['sidebarItems']
+  defaultSidebarItem?: SidebarItemKeys
+  onSidebarItemClick: (id: SidebarItemKeys | null) => void
   onCloseDashboard: () => void
-}) {
+}
+
+export const SidebarWithHeader: React.FC<SidebarWithHeaderProps> = ({
+  sidebarItems,
+  children,
+  onSidebarItemClick,
+  onCloseDashboard
+}) => {
+  console.log('🚀 ~ file: index.tsx ~ line 54 ~ sidebarItems', sidebarItems)
   const {isOpen, onOpen, onClose} = useDisclosure()
   return (
     <Box minH="100vh" bg={useColorModeValue('gray.100', 'gray.900')}>
       <SidebarContent
+        sidebarItems={sidebarItems}
+        onSidebarItemClick={onSidebarItemClick}
         onClose={() => onClose}
         display={{base: 'none', md: 'block'}}
       />
@@ -77,7 +70,11 @@ export default function SidebarWithHeader({
         onOverlayClick={onClose}
         size="full">
         <DrawerContent>
-          <SidebarContent onClose={onClose} />
+          <SidebarContent
+            sidebarItems={sidebarItems}
+            onSidebarItemClick={onSidebarItemClick}
+            onClose={onClose}
+          />
         </DrawerContent>
       </Drawer>
       <Nav onOpen={onOpen} onCloseDashboard={onCloseDashboard} />
@@ -88,11 +85,42 @@ export default function SidebarWithHeader({
   )
 }
 
+export default SidebarWithHeader
+
+export type SidebarItemKeys = keyof SidebarProps['sidebarItems']
+
 interface SidebarProps extends BoxProps {
+  sidebarItems: {
+    [id: string]: {
+      name: string
+      icon: any
+    }
+  }
+  defaultSidebarItem?: SidebarItemKeys
+  onSidebarItemClick: (id: SidebarItemKeys | null) => void
   onClose: () => void
 }
 
-const SidebarContent = ({onClose, ...rest}: SidebarProps) => {
+const SidebarContent = ({
+  onClose,
+  onSidebarItemClick,
+  sidebarItems,
+  ...rest
+}: SidebarProps) => {
+  console.log('🚀 ~ file: index.tsx ~ line 109 ~ sidebarItems', sidebarItems)
+  const [selectedItem, setSelectedItem] = React.useState<
+    keyof SidebarProps['sidebarItems'] | null
+  >(null)
+
+  const selectItem = (id: string | null) => {
+    if (id === selectedItem) {
+      id = null
+    }
+
+    setSelectedItem(id)
+    onSidebarItemClick(id)
+  }
+
   return (
     <Box
       transition="3s ease"
@@ -109,11 +137,19 @@ const SidebarContent = ({onClose, ...rest}: SidebarProps) => {
         </Text>
         <CloseButton display={{base: 'flex', md: 'none'}} onClick={onClose} />
       </Flex>
-      {LinkItems.map(link => (
-        <NavItem key={link.name} icon={link.icon}>
-          {link.name}
-        </NavItem>
-      ))}
+
+      {Object.keys(sidebarItems).map(id => {
+        const {name, icon} = sidebarItems[id]
+        return (
+          <NavItem
+            key={id}
+            icon={icon}
+            onClick={() => selectItem(id)}
+            selected={selectedItem === id}>
+            {name}
+          </NavItem>
+        )
+      })}
 
       <Spacer />
       <a onClick={onClose}>Leave dashboard</a>
@@ -122,12 +158,20 @@ const SidebarContent = ({onClose, ...rest}: SidebarProps) => {
 }
 
 interface NavItemProps extends FlexProps {
-  icon: IconType
+  selected: boolean
+  icon: any
   children: ReactText
+  onClick: () => void
 }
-const NavItem = ({icon, children, ...rest}: NavItemProps) => {
+const NavItem = ({
+  selected,
+  icon,
+  children,
+  onClick,
+  ...rest
+}: NavItemProps) => {
   return (
-    <Link href="#" style={{textDecoration: 'none'}}>
+    <Box style={{textDecoration: 'none'}} onClick={onClick}>
       <Flex
         align="center"
         p="4"
@@ -139,6 +183,8 @@ const NavItem = ({icon, children, ...rest}: NavItemProps) => {
           bg: 'cyan.400',
           color: 'white'
         }}
+        bg={selected ? 'cyan.400' : undefined}
+        color={selected ? 'white' : undefined}
         {...rest}>
         {icon && (
           <Icon
@@ -152,7 +198,7 @@ const NavItem = ({icon, children, ...rest}: NavItemProps) => {
         )}
         {children}
       </Flex>
-    </Link>
+    </Box>
   )
 }
 

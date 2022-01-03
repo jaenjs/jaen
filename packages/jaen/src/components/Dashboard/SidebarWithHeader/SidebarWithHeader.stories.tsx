@@ -1,3 +1,4 @@
+import {Button} from '@chakra-ui/react'
 import {Story, ComponentMeta} from '@storybook/react'
 import React from 'react'
 import {FiFile} from 'react-icons/fi'
@@ -5,7 +6,7 @@ import {FiFile} from 'react-icons/fi'
 import Component from '.'
 
 export default {
-  title: 'components/Dashboard',
+  title: 'components/Dashboard/SidebarWithHeader',
   component: Component
 } as ComponentMeta<typeof Component>
 
@@ -14,19 +15,14 @@ type ComponentProps = React.ComponentProps<typeof Component>
 // Create a template for the component
 const Template: Story<ComponentProps> = args => <Component {...args} />
 
-export const Dashboard: Story<ComponentProps> = Template.bind({})
-Dashboard.args = {
-  isOpen: true,
-  tabs: {
-    pages: {
+export const SidebarWithHeader: Story<ComponentProps> = Template.bind({})
+SidebarWithHeader.args = {
+  sidebarItems: {
+    'tab-1': {
       name: 'Pages',
-      icon: FiFile,
-      element: <p>Pages tab</p>
-    },
-    files: {
-      name: 'Files',
-      icon: FiFile,
-      element: <p>Files tab</p>
+      icon: FiFile
     }
-  }
+  },
+  children: <>SidebarWithHeader</>,
+  onCloseDashboard: () => null
 }

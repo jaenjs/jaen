@@ -1,7 +1,7 @@
 import {GatsbyNode} from 'gatsby'
 import path from 'path'
 
-import {JaenPage, JaenPluginOptions} from '../types'
+import {JaenPage, JaenPluginOptions, JaenTemplate} from '../types'
 
 export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] = (
   {plugins, actions, loaders, stage},
@@ -33,16 +33,22 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] = (
   }
 }
 
-export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] = ({
-  actions,
-  schema
-}) => {
-  actions.createTypes(`
+export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] =
+  ({actions, schema}) => {
+    actions.createTypes(`
+
+      type JaenTemplate implements Node {
+        id: String!
+        name: String!
+        displayName: String!
+      }
+
       type JaenPage implements Node {
         id: ID!
         jaenPageMetadata: JaenPageMetadata!
         jaenFields: JSON
         chapters: JSON
+        template: JaenTemplate @link
       }
 
       type JaenPageMetadata {
@@ -54,7 +60,7 @@ export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] 
         isBlogPost: Boolean
       }
       `)
-}
+  }
 
 export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
   actions,
@@ -62,6 +68,18 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
   createContentDigest
 }) => {
   const {createNode} = actions
+
+  const dummyTemplates = [
+    {
+      name: 'BlogPage',
+      displayName: 'Blog',
+      children: [
+        {
+          id: 'BlogPage'
+        }
+      ]
+    }
+  ]
 
   const dummyJaenPages: JaenPage[] = [
     {
@@ -78,11 +96,13 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
         isBlogPost: false
       },
       jaenFields: {
-        jaenField1: 'jaenField1',
-        jaenField2: 'jaenField2'
+        text: {
+          jaenField1: 'jaenField1',
+          jaenField2: 'jaenField2'
+        }
       },
       chapters: {},
-      templateName: 'BlogPage'
+      template: 'BlogPage' as any
     },
     {
       id: `JaenPage ${createNodeId('jaen-page-2')}`,
@@ -98,8 +118,10 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
         isBlogPost: false
       },
       jaenFields: {
-        jaenField1: 'jaenField1',
-        jaenField2: 'jaenField2'
+        text: {
+          jaenField1: 'jaenField1',
+          jaenField2: 'jaenField2'
+        }
       },
       chapters: {
         chapter1: {
@@ -145,7 +167,7 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
           }
         }
       },
-      templateName: 'BlogPage'
+      template: 'BlogPage' as any
     },
     {
       id: `JaenPage ${createNodeId('jaen-page-2-1')}`,
@@ -163,17 +185,35 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
         isBlogPost: false
       },
       jaenFields: {
-        jaenField1: 'jaenField1',
-        jaenField2: 'jaenField2'
+        text: {
+          jaenField1: 'jaenField1',
+          jaenField2: 'jaenField2'
+        }
       },
       chapters: {},
-      templateName: 'BlogPage'
+      template: 'BlogPage' as any
     }
   ]
+
+  dummyTemplates.forEach(jaenTemplate => {
+    const node = {
+      id: jaenTemplate.name,
+      ...jaenTemplate,
+      children: jaenTemplate.children.map(child => child.id),
+      internal: {
+        type: 'JaenTemplate',
+        content: JSON.stringify(jaenTemplate),
+        contentDigest: createContentDigest(jaenTemplate)
+      }
+    }
+
+    createNode(node)
+  })
 
   dummyJaenPages.forEach(jaenPage => {
     const node = {
       ...jaenPage,
+      template: jaenPage.template || null,
       parent: jaenPage.parent ? jaenPage.parent.id : null,
       children: jaenPage.children.map(child => child.id),
       internal: {
@@ -218,7 +258,10 @@ export const createPages: GatsbyNode['createPages'] = async (
             }
             jaenFields
             chapters
-            templateName
+            template {
+              name
+              displayName
+            }
           }
         }
       }
@@ -236,11 +279,11 @@ export const createPages: GatsbyNode['createPages'] = async (
 
   jaenPages.forEach(({node}) => {
     const {slug} = node
-    const {templateName} = node
+    const {template} = node
     const {rootDir, paths} = pluginOptions.templates
 
-    if (templateName) {
-      const pageTemplatePath = paths[templateName]
+    if (template?.name) {
+      const pageTemplatePath = paths[template?.name]
 
       createPage({
         path: node.slug,
@@ -284,7 +327,7 @@ export const onCreatePage: GatsbyNode['onCreatePage'] = ({
         },
         jaenFields: null,
         chapters: {},
-        templateName: null
+        template: null
       }
 
       createNode({

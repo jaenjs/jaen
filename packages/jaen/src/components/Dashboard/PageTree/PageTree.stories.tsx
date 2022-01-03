@@ -1,11 +1,19 @@
-import {Story, Meta} from '@storybook/react'
+import {Box} from '@chakra-ui/react'
+import {Story, ComponentMeta} from '@storybook/react'
 
-import PageTree from '.'
+import Component from '.'
 
 export default {
   title: 'components/Dashboard/PageTree',
-  component: PageTree
-} as Meta
+  component: Component,
+  decorators: [
+    Story => (
+      <Box w="200px" h="100vh" bg="blue.100">
+        <Story />
+      </Box>
+    )
+  ]
+} as ComponentMeta<typeof Component>
 
 const treeExample = {
   'SitePage /test': {
@@ -13,7 +21,8 @@ const treeExample = {
     children: [],
     data: {
       title: 'root',
-      slug: 'root'
+      slug: 'root',
+      template: null
     },
     parent: null
   },
@@ -23,8 +32,8 @@ const treeExample = {
     data: {
       title: 'First parent',
       slug: 'root1',
-      locked: true,
-      hasChanges: true
+      hasChanges: true,
+      template: null
     },
     parent: null
   },
@@ -33,7 +42,8 @@ const treeExample = {
     children: [],
     data: {
       title: 'Second parent',
-      slug: 'root2'
+      slug: 'root2',
+      template: null
     },
     parent: null
   },
@@ -42,7 +52,12 @@ const treeExample = {
     children: [],
     data: {
       title: 'Child one',
-      slug: 'root3'
+      slug: 'root3',
+      template: {
+        name: 'BlogPage',
+        displayName: 'Blog',
+        children: [{name: 'BlogPage', displayName: 'Blog'}]
+      }
     },
     parent: '1-1'
   },
@@ -52,7 +67,8 @@ const treeExample = {
     data: {
       title: 'Child two',
       slug: 'root4',
-      hasChanges: true
+      hasChanges: true,
+      template: null
     },
     parent: '1-1'
   },
@@ -61,7 +77,8 @@ const treeExample = {
     children: [],
     data: {
       title: 'Child three',
-      slug: 'root4'
+      slug: 'root4',
+      template: null
     },
     parent: '1-2'
   },
@@ -70,30 +87,50 @@ const treeExample = {
     children: [],
     data: {
       title: 'Child four',
-      slug: 'root4'
+      slug: 'root4',
+      template: null
     },
     parent: '1-2'
   }
 }
 
-const Template: Story = args => (
-  <PageTree
-    items={treeExample}
-    rootItemIds={['SitePage /test', '1-1', '1-2']}
-    defaultSelection={'1-1'}
-    height={500}
-    templates={[
-      {name: 'page', displayName: 'Page'},
-      {name: 'blog', displayName: 'Blog'}
-    ]}
-    onItemSelect={() => {}}
-    onItemCreate={() => {}}
-    onItemDelete={() => {}}
-    onItemMove={() => {}}
-    {...args}
-  />
-)
+type ComponentProps = React.ComponentProps<typeof Component>
+
+// Create a template for the component
+const Template: Story<ComponentProps> = args => <Component {...args} />
 
 export const Primary = Template.bind({})
 
-Primary.args = {}
+Primary.args = {
+  items: treeExample,
+  defaultSelection: '1-1',
+  templates: [
+    {
+      name: 'page',
+      displayName: 'Page',
+      children: [{name: 'blog', displayName: 'Blog'}]
+    },
+    {
+      name: 'blog',
+      displayName: 'Blog',
+      children: [{name: 'blog', displayName: 'Blog'}]
+    }
+  ],
+  creatorFallbackTemplates: [
+    {
+      name: 'page',
+      displayName: 'Page'
+    }
+  ],
+  onItemSelect: () => {},
+  onItemCreate: () => {},
+  onItemDelete: () => {},
+  onItemMove: () => {}
+}
+
+export const Empty = Template.bind({})
+
+Empty.args = {
+  ...Primary.args,
+  items: {}
+}

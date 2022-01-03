@@ -19,13 +19,15 @@ import {template} from 'lodash'
 import * as React from 'react'
 import {Controller, useForm} from 'react-hook-form'
 
-import {FormProps} from '../../../utils/types'
-
-export type Templates = {name: string; displayName: string}[]
+import {
+  FormProps,
+  JaenTemplateWithoutChildren,
+  JaenTemplate
+} from '../../../utils/types'
 
 type TemplateSelectorProps = {
   selectedTemplate: string
-  templates: Templates
+  templates: JaenTemplateWithoutChildren[]
   onSelect: (templateName: string) => void
 }
 
@@ -56,7 +58,9 @@ const TemplateSelector = ({
         <Button
           key={key}
           variant="outline"
-          colorScheme={selectedTemplate === name ? 'blue' : 'gray'}
+          colorScheme={
+            selectedTemplate && selectedTemplate === name ? 'blue' : 'gray'
+          }
           mr={2}
           onClick={() => handleSelect(name)}>
           {displayName}
@@ -69,7 +73,7 @@ const TemplateSelector = ({
 export type CreateValues = {
   slug: string
   title: string
-  templateName: string
+  template: JaenTemplateWithoutChildren
 }
 
 interface PageCreatorProps extends FormProps<CreateValues> {
@@ -105,6 +109,19 @@ export const PageCreator = ({
   })
 
   const onSubmit = (values: CreateValues) => {
+    // update template displayName
+    values.template = templates.find(
+      e => e.name === values.template.name
+    ) as JaenTemplate
+    console.log(
+      '🚀 ~ file: index.tsx ~ line 111 ~ onSubmit ~  e.name',
+      templates
+    )
+    console.log(
+      '🚀 ~ file: index.tsx ~ line 112 ~ onSubmit ~ values.template',
+      values.template
+    )
+
     form.onSubmit(values)
 
     reset()
@@ -184,11 +201,11 @@ export const PageCreator = ({
               )}
               <FormErrorMessage>{errors.slug?.message}</FormErrorMessage>
             </FormControl>
-            <FormControl mt={4} isInvalid={true}>
+            <FormControl mt={4} isInvalid={!!errors.template?.name}>
               <FormLabel>Template</FormLabel>
               <Controller
                 control={control}
-                name="templateName"
+                name="template.name"
                 rules={{required: 'Please select a template'}}
                 render={({field: {value, onChange}}) => (
                   <TemplateSelector
@@ -200,13 +217,13 @@ export const PageCreator = ({
                   />
                 )}
               />
-              {!errors.templateName && (
+              {!errors.template?.name && (
                 <FormHelperText>
                   Select the template to use for this page.
                 </FormHelperText>
               )}
               <FormErrorMessage>
-                {errors.templateName?.message}
+                {errors.template?.name?.message}
               </FormErrorMessage>
             </FormControl>
           </ModalBody>

@@ -1,18 +1,23 @@
+import deepmerge from 'deepmerge'
 import {graphql, useStaticQuery} from 'gatsby'
 import React from 'react'
+import {useJaenContext} from 'utils/providers/JaenProvider'
 
 import {store, RootState, useAppSelector} from '../../store'
-import {JaenPage} from '../types'
+import {JaenPage, JaenTemplate} from '../types'
+
+export type TreeNode = Pick<
+  JaenPage,
+  'id' | 'parent' | 'children' | 'slug' | 'jaenPageMetadata' | 'template'
+>
 
 /**
  * Access the PageTree of the JaenContext and Static.
  */
-export const useJaenPageTree = () => {
-  //const {jaen} = useJaenContext()
-
+export const useJaenPageTree = (): TreeNode[] => {
   type QueryData = {
     allJaenPage: {
-      nodes: Pick<JaenPage, 'id' | 'parent' | 'children'>[]
+      nodes: TreeNode[]
     }
   }
 
@@ -24,6 +29,7 @@ export const useJaenPageTree = () => {
         allJaenPage {
           nodes {
             id
+            slug
             parent {
               id
             }
@@ -38,6 +44,10 @@ export const useJaenPageTree = () => {
               datePublished
               canonical
             }
+            template {
+              name
+              displayName
+            }
           }
         }
       }
@@ -50,34 +60,56 @@ export const useJaenPageTree = () => {
     }
   }
 
-  const pages = useAppSelector(
-    state => state.pages,
-    (r, l) => {
-      if (!l || !r) {
-        return false
-      }
+  const pages = useAppSelector(state =>
+    state.pages.map(e => ({
+      id: e.id,
+      parent: e.parent,
+      children: e.children,
+      jaenPageMetadata: e.jaenPageMetadata,
+      template: e.template
+    }))
+  ) as TreeNode[]
 
-      const shouldUpdate = l.length !== r.length
+  const merged = deepmerge(data.allJaenPage.nodes, pages)
+  console.log('🚀 ~ file: jaen.ts ~ line 74 ~ merged', merged)
 
-      if (shouldUpdate) {
-        return false
-      }
+  return merged
+}
 
-      for (let i = 0; i < l.length; i++) {
-        if (l[i].deleted !== r[i].deleted) {
-          return false
-        }
-
-        if (l[i].parent !== r[i].parent) {
-          return false
-        }
-      }
-
-      return true
+/**
+ * Access the JaenTemplates
+ */
+export const useJaenTemplates = (): JaenTemplate[] => {
+  type QueryData = {
+    allJaenTemplate: {
+      nodes: JaenTemplate[]
     }
-  )
+  }
 
-  console.log(data.allJaenPage.nodes, pages)
+  let data: QueryData
 
-  return data.allJaenPage.nodes
+  try {
+    data = useStaticQuery<QueryData>(graphql`
+      query {
+        allJaenTemplate {
+          nodes {
+            name
+            displayName
+            children: childrenJaenTemplate {
+              name
+              displayName
+            }
+          }
+        }
+      }
+    `)
+  } catch {
+    data = {
+      allJaenTemplate: {
+        nodes: []
+      }
+    }
+  }
+
+  return data.allJaenTemplate.nodes
 }

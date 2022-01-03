@@ -28,19 +28,16 @@ import {
 import * as React from 'react'
 import {useForm} from 'react-hook-form'
 
-import {FormProps} from '../../../utils/types'
+import {FormProps, JaenTemplate} from '../../../utils/types'
 
 export type ContentValues = {
   title: string
   slug: string
-  description: string
+  description?: string
 }
 
 export interface PageContentProps extends FormProps<ContentValues> {
-  template: {
-    name: string
-    displayName: string
-  }
+  template: JaenTemplate | null
 }
 
 /**
@@ -89,7 +86,7 @@ export const PageContent = (props: PageContentProps) => {
   return (
     <Flex flexDirection={'column'}>
       <Heading as={'h3'} size={'lg'} mb="4">
-        Content <Badge>{props.template.displayName}</Badge>
+        Content {props.template && <Badge>{props.template.displayName}</Badge>}
       </Heading>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Accordion defaultIndex={0}>

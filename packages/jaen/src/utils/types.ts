@@ -18,6 +18,17 @@ export interface JaenConnection<ReactProps, Options>
   options: Options
 }
 
+export interface JaenTemplate {
+  name: string
+  displayName: string
+  children: {
+    name: string
+    displayName: string
+  }[]
+}
+
+export type JaenTemplateWithoutChildren = Omit<JaenTemplate, 'children'>
+
 export interface JaenSection {
   name: string
   ptrNext: string | null
@@ -89,9 +100,9 @@ export interface JaenPage extends JaenData {
    * Unique identifier of the page component name (e.g. `JaenPageHome`).
    * - Must be unique across all pages.
    * - Used to determine the component to render.
-   * - Possible templateNames are specified in the `gatsby-config.js` file.
+   * - Possible JaenTemplateWithoutChildren are specified in the `gatsby-config.js` file.
    */
-  templateName: string | null
+  template: JaenTemplateWithoutChildren | null
 }
 
 export interface JaenPageProps extends Omit<PageProps, 'data'> {

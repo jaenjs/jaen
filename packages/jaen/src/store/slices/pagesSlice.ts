@@ -33,6 +33,7 @@ const pagesSlice = createSlice({
         },
         parent = null,
         children = [],
+        template,
         fromId
       } = action.payload
 
@@ -108,7 +109,8 @@ const pagesSlice = createSlice({
               jaenFields,
               jaenPageMetadata,
               parent,
-              children
+              children,
+              template
             }
           ]
         })

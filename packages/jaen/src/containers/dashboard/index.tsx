@@ -1,4 +1,6 @@
 import {Button, useDisclosure} from '@chakra-ui/react'
+import {ContentValues} from 'components/Dashboard/PageContent'
+import PagesTab from 'components/Dashboard/tabs/Pages'
 import * as React from 'react'
 
 import {default as Component} from '../../components/Dashboard'
@@ -10,6 +12,7 @@ import {
 } from '../../store/slices/pagesSlice'
 import {withRedux} from '../../store/withRedux'
 import {useJaenPageTree} from '../../utils/hooks/jaen'
+import {PagesContainer} from './tabs/Pages'
 
 export const Dashboard = withRedux(() => {
   const dispatch = useAppDispatch()
@@ -21,44 +24,6 @@ export const Dashboard = withRedux(() => {
   const handleDiscardChanges = React.useCallback(() => {}, [])
 
   const handlePublish = React.useCallback(() => {}, [])
-
-  const handlePageCreate = React.useCallback(
-    (parentId: string | null, values: CreateValues) => {
-      dispatch(
-        page_updateOrCreate({
-          parent: parentId ? {id: parentId} : null,
-          slug: values.slug,
-          jaenPageMetadata: {
-            title: values.title
-          },
-          templateName: values.templateName
-        })
-      )
-    },
-    []
-  )
-
-  const handlePageDelete = React.useCallback((id: string) => {
-    dispatch(page_markForDeletion(id))
-  }, [])
-
-  const handlePageMove = React.useCallback(
-    (id: string, oldParentId: string | null, newParentId: string | null) => {
-      dispatch(
-        page_updateOrCreate({
-          id,
-          parent: newParentId ? {id: newParentId} : null,
-          fromId: oldParentId || undefined
-        })
-      )
-    },
-    []
-  )
-
-  const handlePageUpdate = React.useCallback(
-    (id: string, values: CreateValues) => {},
-    []
-  )
 
   useJaenPageTree()
 
@@ -77,10 +42,13 @@ export const Dashboard = withRedux(() => {
         onEditingMode={handleEditingMode}
         onDiscardChanges={handleDiscardChanges}
         onPublish={handlePublish}
-        onPageCreate={handlePageCreate}
-        onPageDelete={handlePageDelete}
-        onPageMove={handlePageMove}
-        onPageUpdate={handlePageUpdate}
+        tabs={{
+          pages: {
+            name: 'Pages',
+            icon: '',
+            element: <PagesContainer />
+          }
+        }}
       />
     </>
   )

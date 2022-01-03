@@ -32,18 +32,19 @@ import styled from '@emotion/styled'
 import {motion} from 'framer-motion'
 import * as React from 'react'
 
+import {JaenTemplate, JaenTemplateWithoutChildren} from '../../../utils/types'
 import {ContextMenu} from '../../ContextMenu'
 import {FileIcon, FolderCloseIcon, FolderOpenIcon} from '../../icons'
-import {CreateValues, PageCreator, Templates} from '../PageCreator'
+import {CreateValues, PageCreator} from '../PageCreator'
 import {resolveChildSlugs, titleToSlug, TreeConverter} from './treeconverter'
 
 export type Items = {
   [id: string]: {
-    data: Partial<{
+    data: {
       title: string
       slug: string
-      locked?: boolean
-    }>
+      template: JaenTemplateWithoutChildren | null
+    }
     isRootItem?: true
     children: string[]
     parent: string | null
@@ -51,11 +52,11 @@ export type Items = {
   }
 }
 
-type PageTreeProps = {
+export type PageTreeProps = {
   items: Items
-  defaultSelection: string
-  height: number | string
-  templates: Templates
+  defaultSelection?: string
+  templates: JaenTemplate[]
+  creatorFallbackTemplates: JaenTemplate['children']
   onItemSelect: (id: string | null) => void
   onItemCreate: (parentId: string | null, values: CreateValues) => void
   onItemDelete: (id: string) => void
@@ -77,7 +78,8 @@ const PreTextIcon = styled.span`
 
 const PageTree: React.FC<PageTreeProps> = ({
   items,
-  defaultSelection,
+  templates,
+  creatorFallbackTemplates,
   ...props
 }) => {
   const greyOverlay = useColorModeValue('gray.50', 'gray.700')
@@ -87,45 +89,74 @@ const PageTree: React.FC<PageTreeProps> = ({
 
   // convert items to a set
   const [tree, setTree] = React.useState(TreeConverter(items))
+  console.log('🚀 ~ file: index.tsx ~ line 92 ~ tree', tree)
 
-  const [selectedItem, selectItem] = React.useState<string>(defaultSelection)
+  const defaultSelection = React.useMemo(() => {
+    if (props.defaultSelection && tree.items[props.defaultSelection]) {
+      return props.defaultSelection
+    }
+
+    return tree.rootId.toString()
+  }, [tree.rootId, props.defaultSelection])
+
+  const [selectedItem, setSelectedItem] =
+    React.useState<string>(defaultSelection)
+  console.log('🚀 ~ file: index.tsx ~ line 102 ~ selectedItem', selectedItem)
+
+  const creatorTemplates = React.useMemo(
+    () =>
+      templates.find(
+        template =>
+          template.name === tree.items[selectedItem]?.data?.template?.name
+      )?.children || creatorFallbackTemplates,
+    [
+      templates,
+      creatorFallbackTemplates,
+      tree.items[selectedItem]?.data?.template
+    ]
+  )
 
   const pageCreatorDisclosure = useDisclosure()
 
   const handleItemCreate = (values: CreateValues) => {
     // Check if the slug is already taken of a sibling
-    const {title, slug, templateName} = values
+    const {title, slug, template} = values
+    console.log(
+      '🚀 ~ file: index.tsx ~ line 106 ~ handleItemCreate ~ values',
+      values
+    )
 
-    const relativeParentId = selectedItem || tree.rootId
+    const parentId = selectedItem !== tree.rootId ? selectedItem : null
 
-    props.onItemCreate(relativeParentId.toString(), values)
+    props.onItemCreate(parentId, values)
 
     // Close the modal
     pageCreatorDisclosure.onClose()
 
     // Add the new item to the tree
-    const newItemId = `${relativeParentId}/${slug}`
+    // const newItemId = `${selectedItem}/${slug}`
 
-    const newItem = {
-      id: newItemId,
-      data: {
-        title,
-        slug,
-        locked: false,
-        templateName
-      },
-      children: [],
-      parent: relativeParentId
-    }
+    // const newItem = {
+    //   id: newItemId,
+    //   data: {
+    //     title,
+    //     slug,
+    //     template
+    //   },
+    //   children: [],
+    //   parent: selectedItem
+    // }
 
     const newTree = {...tree}
 
-    newTree.items[newItemId] = newItem
+    // newTree.items[newItemId] = newItem
 
     // Update parent children
-    newTree.items[relativeParentId].children.push(newItemId)
+    newTree.items[selectedItem].isExpanded = true
+    // newTree.items[selectedItem].children.push(newItemId)
 
     setTree(newTree)
+    // handleSelectItem(newItemId)
   }
 
   const handleItemDelete = (id: string) => {
@@ -145,7 +176,7 @@ const PageTree: React.FC<PageTreeProps> = ({
       // Remove the item from the tree
       delete tree.items[id]
 
-      selectItem(defaultSelection)
+      handleSelectItem(parentId)
 
       setTree(tree)
     }
@@ -156,13 +187,20 @@ const PageTree: React.FC<PageTreeProps> = ({
   }, [items])
 
   const handleSelectItem = (id?: string | null) => {
-    const finalId = id || defaultSelection
-    selectItem(finalId)
-    props.onItemSelect(finalId)
+    setSelectedItem(id || defaultSelection)
+    props.onItemSelect(id || null)
+  }
+
+  const handleContainerClick = (event: React.MouseEvent) => {
+    event.preventDefault()
+
+    if (event.target === event.currentTarget) {
+      handleClick(event, null)
+    }
   }
 
   const handleClick = (event: React.MouseEvent, id: string | null) => {
-    event.stopPropagation()
+    //event.stopPropagation()
 
     handleSelectItem(id)
   }
@@ -223,7 +261,7 @@ const PageTree: React.FC<PageTreeProps> = ({
 
     //> ItemInfo and call
     const GenerateItemBadges = () => {
-      const isLocked = !!item.data.locked
+      const isLocked = !item.data.template
       const hasChanges = item.data.hasChanges
 
       return (
@@ -250,7 +288,8 @@ const PageTree: React.FC<PageTreeProps> = ({
         bg={isSelected ? greyOverlay : 'transparent'}
         whileHover={{scale: 1.005}}
         p={2}
-        onClick={handleItemBoxClick}>
+        onClick={handleItemBoxClick}
+        onContextMenu={handleItemBoxClick}>
         <Flex>
           <Box flex={1}>
             {getIcon(item, onExpand, onCollapse)}
@@ -333,7 +372,7 @@ const PageTree: React.FC<PageTreeProps> = ({
                 onClick={() => pageCreatorDisclosure.onOpen()}>
                 Add
               </MenuItem>
-              {!tree.items[selectedItem].data.locked && (
+              {tree.items[selectedItem]?.data?.template && (
                 <>
                   <MenuItem
                     icon={<DeleteIcon />}
@@ -346,7 +385,12 @@ const PageTree: React.FC<PageTreeProps> = ({
           </MenuList>
         )}>
         {ref => (
-          <Box ref={ref} overflowX={'hidden'}>
+          <Box
+            ref={ref}
+            overflowX={'hidden'}
+            h="100%"
+            onClick={handleContainerClick}
+            onContextMenu={handleContainerClick}>
             <Tree
               tree={tree}
               renderItem={renderItem}
@@ -365,17 +409,18 @@ const PageTree: React.FC<PageTreeProps> = ({
         values={{
           title: '',
           slug: '',
-          templateName: ''
+          template: {
+            name: '',
+            displayName: ''
+          }
         }}
-        templates={props.templates}
+        templates={creatorTemplates}
         isOpen={pageCreatorDisclosure.isOpen}
         onClose={pageCreatorDisclosure.onClose}
         onSubmit={handleItemCreate}
         externalValidation={(name, value) => {
           if (name === 'slug') {
-            const relativeParentId = selectedItem || tree.rootId
-
-            const siblings = tree.items[relativeParentId].children
+            const siblings = tree.items[selectedItem].children
 
             const slugTaken = siblings.some(
               siblingId => tree.items[siblingId]?.data?.slug === value
