@@ -4,7 +4,7 @@ import {Story, ComponentMeta} from '@storybook/react'
 import Component from '.'
 
 export default {
-  title: 'components/Dashboard/PageTree',
+  title: 'components/Dashboard/tabs/pages/PageTree',
   component: Component,
   decorators: [
     Story => (

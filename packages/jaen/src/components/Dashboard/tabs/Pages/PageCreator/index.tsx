@@ -23,7 +23,7 @@ import {
   FormProps,
   JaenTemplateWithoutChildren,
   JaenTemplate
-} from '../../../utils/types'
+} from '../../../../../utils/types'
 
 type TemplateSelectorProps = {
   selectedTemplate: string

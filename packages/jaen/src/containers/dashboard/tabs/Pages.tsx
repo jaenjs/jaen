@@ -1,17 +1,18 @@
 import * as React from 'react'
 
-import {ContentValues} from '../../../components/Dashboard/PageContent'
-import {CreateValues} from '../../../components/Dashboard/PageCreator'
 import PagesTab from '../../../components/Dashboard/tabs/Pages'
+import {ContentValues} from '../../../components/Dashboard/tabs/Pages/PageContent'
+import {CreateValues} from '../../../components/Dashboard/tabs/Pages/PageCreator'
 import {useAppDispatch} from '../../../store'
 import {
   page_markForDeletion,
   page_updateOrCreate
 } from '../../../store/slices/pagesSlice'
+import {withRedux} from '../../../store/withRedux'
 import {useJaenPageTree, useJaenTemplates} from '../../../utils/hooks/jaen'
 import {JaenTemplate} from '../../../utils/types'
 
-export const PagesContainer = () => {
+export const PagesContainer = withRedux(() => {
   const dispatch = useAppDispatch()
   const pageTree = useJaenPageTree()
   const jaenTemplates = useJaenTemplates()
@@ -88,7 +89,8 @@ export const PagesContainer = () => {
               title: v.jaenPageMetadata.title,
               slug: v.slug,
               template: v.template,
-              hasChanges: false
+              hasChanges: false,
+              deleted: v.deleted
             },
             parent: v.parent?.id || null
           }
@@ -120,4 +122,4 @@ export const PagesContainer = () => {
       onItemSelect={id => null}
     />
   )
-}
+})

@@ -1,11 +1,10 @@
 import {Box, Divider, Flex} from '@chakra-ui/layout'
-import {CreateValues} from 'components/Dashboard/PageCreator'
+import {CreateValues} from 'components/Dashboard/tabs/Pages/PageCreator'
 import * as React from 'react'
 
-import {TreeNode} from '../../../../utils/hooks/jaen'
-import {JaenTemplateOptions, JaenPage} from '../../../../utils/types'
-import {ContentValues, PageContent} from '../../PageContent'
-import PageTree, {Items, PageTreeProps} from '../../PageTree'
+import {TreeNode} from '../../../../utils/hooks/jaen/useJaenPageTree'
+import {ContentValues, PageContent} from './PageContent'
+import PageTree, {Items, PageTreeProps} from './PageTree'
 
 export interface PagesTabProps extends PageTreeProps {
   getPage: (id: string) => TreeNode

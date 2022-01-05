@@ -39,7 +39,7 @@ export const store = configureStore({
     getDefaultMiddleware({
       thunk: {extraArgument: {}}
     }).concat([]),
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: true || process.env.NODE_ENV !== 'production',
   preloadedState: persistedState
 })
 

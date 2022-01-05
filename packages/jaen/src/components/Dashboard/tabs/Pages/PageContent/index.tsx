@@ -28,7 +28,7 @@ import {
 import * as React from 'react'
 import {useForm} from 'react-hook-form'
 
-import {FormProps, JaenTemplate} from '../../../utils/types'
+import {FormProps, JaenTemplate} from '../../../../../utils/types'
 
 export type ContentValues = {
   title: string

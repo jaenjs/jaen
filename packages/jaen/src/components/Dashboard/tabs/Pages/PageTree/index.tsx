@@ -31,10 +31,13 @@ import {
 import styled from '@emotion/styled'
 import {motion} from 'framer-motion'
 import * as React from 'react'
+import {FaFile, FaFolderMinus, FaFolderPlus} from 'react-icons/fa'
 
-import {JaenTemplate, JaenTemplateWithoutChildren} from '../../../utils/types'
-import {ContextMenu} from '../../ContextMenu'
-import {FileIcon, FolderCloseIcon, FolderOpenIcon} from '../../icons'
+import {
+  JaenTemplate,
+  JaenTemplateWithoutChildren
+} from '../../../../../utils/types'
+import {ContextMenu} from '../../../../ContextMenu'
 import {CreateValues, PageCreator} from '../PageCreator'
 import {resolveChildSlugs, titleToSlug, TreeConverter} from './treeconverter'
 
@@ -133,30 +136,30 @@ const PageTree: React.FC<PageTreeProps> = ({
     // Close the modal
     pageCreatorDisclosure.onClose()
 
-    // Add the new item to the tree
-    // const newItemId = `${selectedItem}/${slug}`
+    //Add the new item to the tree
+    const newItemId = `${selectedItem}/${slug}`
 
-    // const newItem = {
-    //   id: newItemId,
-    //   data: {
-    //     title,
-    //     slug,
-    //     template
-    //   },
-    //   children: [],
-    //   parent: selectedItem
-    // }
+    const newItem = {
+      id: newItemId,
+      data: {
+        title,
+        slug,
+        template
+      },
+      children: [],
+      parent: selectedItem
+    }
 
     const newTree = {...tree}
 
-    // newTree.items[newItemId] = newItem
+    newTree.items[newItemId] = newItem
 
-    // Update parent children
+    //Update parent children
     newTree.items[selectedItem].isExpanded = true
-    // newTree.items[selectedItem].children.push(newItemId)
+    newTree.items[selectedItem].children.push(newItemId)
 
     setTree(newTree)
-    // handleSelectItem(newItemId)
+    //handleSelectItem(newItemId)
   }
 
   const handleItemDelete = (id: string) => {
@@ -210,20 +213,24 @@ const PageTree: React.FC<PageTreeProps> = ({
     onExpand: (itemId: ItemId) => void,
     onCollapse: (itemId: ItemId) => void
   ) => {
-    if (item.children && item.children.length > 0) {
+    const hasChildren = item.children.some(
+      childId => tree.items[childId] && !tree.items[childId].data.deleted
+    )
+
+    if (hasChildren) {
       return item.isExpanded ? (
         <PreTextIcon onClick={() => onCollapse(item.id)}>
-          <FolderOpenIcon />
+          <FaFolderMinus />
         </PreTextIcon>
       ) : (
         <PreTextIcon onClick={() => onExpand(item.id)}>
-          <FolderCloseIcon />
+          <FaFolderPlus />
         </PreTextIcon>
       )
     }
     return (
       <PreTextIcon>
-        <FileIcon />
+        <FaFile />
       </PreTextIcon>
     )
   }
@@ -303,6 +310,8 @@ const PageTree: React.FC<PageTreeProps> = ({
 
     // Framer Motion wrapper for the item
 
+    console.log('adad', item.data)
+
     return (
       <div
         ref={provided.innerRef}
@@ -313,7 +322,7 @@ const PageTree: React.FC<PageTreeProps> = ({
           top: 'auto !important',
           left: 'auto !important'
         }}>
-        {!(item as any).deleted && renderedItem}
+        {!(item.data as any).deleted && renderedItem}
       </div>
     )
   }
@@ -339,23 +348,32 @@ const PageTree: React.FC<PageTreeProps> = ({
 
     const dstId = destination.parentId.toString()
 
-    if (
-      tree.items[dstId].children
-        .map(child => tree.items[child.toString()].data.slug)
-        .indexOf(tree.items[movedItemId].data.slug) === -1
-    ) {
+    const newSlug = tree.items[movedItemId].data.slug
+
+    const validSlug = !tree.items[dstId].children.some(childId => {
+      const {slug, deleted} = tree.items[childId].data
+
+      if (slug === newSlug && !deleted) {
+        return true
+      }
+    })
+
+    if (validSlug) {
       const newTree = moveItemOnTree(tree, source, destination)
 
       // @ts-ignore
-      newTree.items[movedItemId].parent = destination.parentId
+      //newTree.items[movedItemId].parent = destination.parentId
 
-      setTree(mutateTree(newTree, destination.parentId, {isExpanded: true}))
+      setTree(mutateTree(tree, destination.parentId, {isExpanded: true}))
       handleSelectItem(movedItemId)
 
       props.onItemMove(
         movedItemId,
         // @ts-ignore
-        tree.items[movedItemId].parent,
+        tree.items[movedItemId].parent === tree.rootId.toString()
+          ? null
+          : // @ts-ignore
+            tree.items[movedItemId].parent,
         dstId === tree.rootId.toString() ? null : dstId
       )
     }

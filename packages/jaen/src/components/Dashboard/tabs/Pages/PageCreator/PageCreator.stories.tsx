@@ -4,7 +4,7 @@ import React from 'react'
 import {PageCreator} from '.'
 
 export default {
-  title: 'components/PageCreator',
+  title: 'components/Dashboard/tabs/pages/PageCreator',
   component: PageCreator
 } as ComponentMeta<typeof PageCreator>
 

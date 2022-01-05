@@ -4,7 +4,7 @@ import React from 'react'
 import {PageContent} from '.'
 
 export default {
-  title: 'components/Dashboard/PageContent',
+  title: 'components/Dashboard/tabs/pages/PageContent',
   component: PageContent
 } as ComponentMeta<typeof PageContent>
 

@@ -1,10 +1,10 @@
 import {Button, useDisclosure} from '@chakra-ui/react'
-import {ContentValues} from 'components/Dashboard/PageContent'
 import PagesTab from 'components/Dashboard/tabs/Pages'
+import {ContentValues} from 'components/Dashboard/tabs/Pages/PageContent'
 import * as React from 'react'
 
 import {default as Component} from '../../components/Dashboard'
-import {CreateValues} from '../../components/Dashboard/PageCreator'
+import {CreateValues} from '../../components/Dashboard/tabs/Pages/PageCreator'
 import {useAppDispatch} from '../../store'
 import {
   page_markForDeletion,

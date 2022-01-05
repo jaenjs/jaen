@@ -28,14 +28,16 @@ const pagesSlice = createSlice({
         id,
         slug,
         jaenFields = null,
-        jaenPageMetadata = {
-          title: 'New Page'
-        },
-        parent = null,
-        children = [],
+        jaenPageMetadata,
+        parent,
+        children,
         template,
         fromId
       } = action.payload
+      console.log(
+        '🚀 ~ file: pagesSlice.ts ~ line 37 ~ page_updateOrCreate ~ action.payload',
+        action.payload
+      )
 
       const parentId = parent?.id || null
 
@@ -46,40 +48,38 @@ const pagesSlice = createSlice({
 
         const toBeAddedData = {
           id,
-          slug,
-          jaenFields,
-          jaenPageMetadata,
-          parent,
-          children
+          ...(slug && {slug}),
+          ...(jaenFields !== undefined && {jaenFields}),
+          ...(jaenPageMetadata && {jaenPageMetadata}),
+          ...(parent !== undefined && {parent}),
+          ...(children && {children})
         }
+
+        console.log(
+          '🚀 ~ file: pagesSlice.ts ~ line 50 ~ page_updateOrCreate ~ toBeAddedData',
+          toBeAddedData
+        )
 
         // If the page is not found, push a new one to the state
         if (pageIndex === -1) {
-          state = update(state, {
-            $push: [toBeAddedData]
-          })
+          state.push(toBeAddedData as any)
         } else {
           // Update the page
-          state = update(state, {
-            [pageIndex]: {
-              $merge: {
-                ...toBeAddedData
-              }
-            }
-          })
+
+          state[pageIndex] = {
+            ...state[pageIndex],
+            ...toBeAddedData
+          }
         }
 
-        const parentId = parent?.id
         // If `fromId` then remove the page from the fromPage children
-        if (fromId && parentId) {
+        if (fromId && (parentId || parentId === null)) {
           // Update the from page
           let fromIndex = state.findIndex(page => page.id === fromId)
 
           // If the fromIndex is not found, add the fromPage to the state and set the from index
           if (fromIndex === -1) {
-            state = update(state, {
-              $push: [{id: fromId, children: []}]
-            })
+            state.push({id: fromId, children: []})
             fromIndex = state.length - 1
           }
 
@@ -87,9 +87,11 @@ const pagesSlice = createSlice({
           const fromChildren = fromPage.children.filter(
             child => child.id !== id
           )
-          state = update(state, {
-            [fromIndex]: {children: {$set: fromChildren}}
-          })
+
+          state[fromIndex] = {
+            ...state[fromIndex],
+            children: fromChildren
+          }
         }
       } else {
         // If `fromId` is defined, throw an error because a page move is not supported on creation.
@@ -99,20 +101,23 @@ const pagesSlice = createSlice({
 
         // Generate a new id in the pattern of `JaenPage {uuid}`
         id = `JaenPage ${uuidv4()}`
+        console.log(
+          '🚀 ~ file: pagesSlice.ts ~ line 102 ~ page_updateOrCreate ~ id',
+          id,
+          slug
+        )
 
         // Create the page
-        state = update(state, {
-          $push: [
-            {
-              id,
-              slug,
-              jaenFields,
-              jaenPageMetadata,
-              parent,
-              children,
-              template
-            }
-          ]
+        state.push({
+          id,
+          slug,
+          jaenFields: jaenFields || null,
+          jaenPageMetadata: jaenPageMetadata || {
+            title: 'New Page'
+          },
+          parent: parent || null,
+          children: children || [],
+          template
         })
       }
 
@@ -122,13 +127,9 @@ const pagesSlice = createSlice({
 
         // If the parent is not found, add the parent to the state and set the parent index
         if (parentIndex === -1) {
-          state = update(state, {
-            $push: [
-              {
-                id: parentId,
-                children: []
-              }
-            ]
+          state.push({
+            id: parentId,
+            children: []
           })
 
           // Update the parent index to the newly added parent
@@ -139,9 +140,11 @@ const pagesSlice = createSlice({
 
         const parentPage = state[parentIndex]
         const newParentChildren = [...parentPage.children, {id}]
-        state = update(state, {
-          [parentIndex]: {children: {$set: newParentChildren}}
-        })
+
+        state[parentIndex] = {
+          ...state[parentIndex],
+          children: newParentChildren
+        }
 
         if (parentIndex !== -1) {
         } else {

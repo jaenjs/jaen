@@ -1,15 +1,13 @@
 import deepmerge from 'deepmerge'
 import {graphql, useStaticQuery} from 'gatsby'
-import React from 'react'
-import {useJaenContext} from 'utils/providers/JaenProvider'
 
-import {store, RootState, useAppSelector} from '../../store'
-import {JaenPage, JaenTemplate} from '../types'
+import {useAppSelector} from '../../../store'
+import {JaenPage} from '../../types'
 
 export type TreeNode = Pick<
   JaenPage,
   'id' | 'parent' | 'children' | 'slug' | 'jaenPageMetadata' | 'template'
->
+> & {deleted?: true}
 
 /**
  * Access the PageTree of the JaenContext and Static.
@@ -63,53 +61,18 @@ export const useJaenPageTree = (): TreeNode[] => {
   const pages = useAppSelector(state =>
     state.pages.map(e => ({
       id: e.id,
+      slug: e.slug,
       parent: e.parent,
       children: e.children,
       jaenPageMetadata: e.jaenPageMetadata,
-      template: e.template
+      template: e.template,
+      deleted: e.deleted
     }))
   ) as TreeNode[]
 
   const merged = deepmerge(data.allJaenPage.nodes, pages)
+
   console.log('🚀 ~ file: jaen.ts ~ line 74 ~ merged', merged)
 
   return merged
-}
-
-/**
- * Access the JaenTemplates
- */
-export const useJaenTemplates = (): JaenTemplate[] => {
-  type QueryData = {
-    allJaenTemplate: {
-      nodes: JaenTemplate[]
-    }
-  }
-
-  let data: QueryData
-
-  try {
-    data = useStaticQuery<QueryData>(graphql`
-      query {
-        allJaenTemplate {
-          nodes {
-            name
-            displayName
-            children: childrenJaenTemplate {
-              name
-              displayName
-            }
-          }
-        }
-      }
-    `)
-  } catch {
-    data = {
-      allJaenTemplate: {
-        nodes: []
-      }
-    }
-  }
-
-  return data.allJaenTemplate.nodes
 }
