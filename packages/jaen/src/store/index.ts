@@ -15,6 +15,7 @@ import {
   useStore
 } from 'react-redux'
 
+import {useDeepEqualSelector} from '../utils/hooks/useDeepEqualSelector'
 import {loadState, saveState} from './localStorage'
 import pagesSlice from './slices/pagesSlice'
 
@@ -58,4 +59,6 @@ export type AppDispatch = typeof store.dispatch
 
 export const useAppDispatch = () => useDispatch<AppDispatch>()
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
+export const useAppDeepEqualSelector =
+  useDeepEqualSelector as TypedUseSelectorHook<RootState>
 export const useAppState = () => useStore().getState() as RootState

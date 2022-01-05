@@ -1,7 +1,7 @@
 import deepmerge from 'deepmerge'
 import {graphql, useStaticQuery} from 'gatsby'
 
-import {useAppSelector} from '../../../store'
+import {useAppDeepEqualSelector, useAppSelector} from '../../../store'
 import {JaenPage} from '../../types'
 
 export type TreeNode = Pick<
@@ -58,7 +58,7 @@ export const useJaenPageTree = (): TreeNode[] => {
     }
   }
 
-  const pages = useAppSelector(state =>
+  const pages = useAppDeepEqualSelector(state =>
     Object.keys(state.pages).map(id => {
       const {slug, parent, children, jaenPageMetadata, template, deleted} =
         state.pages[id]
@@ -83,16 +83,12 @@ export const useJaenPageTree = (): TreeNode[] => {
     )
     .map(({id}) => {
       const p1 = data.allJaenPage.nodes.find(e => e.id === id)
-      console.log('🚀 ~ file: useJaenPageTree.tsx ~ line 85 ~ .map ~ p1', p1)
+      // console.log('🚀 ~ file: useJaenPageTree.tsx ~ line 85 ~ .map ~ p1', p1)
       const p2 = pages.find(e => e.id === id)
-      console.log('🚀 ~ file: useJaenPageTree.tsx ~ line 87 ~ .map ~ p2', p2)
+      // console.log('🚀 ~ file: useJaenPageTree.tsx ~ line 87 ~ .map ~ p2', p2)
 
       return deepmerge(p1 || {}, p2 || {})
     })
-  console.log(
-    '🚀 ~ file: useJaenPageTree.tsx ~ line 83 ~ merged ~ merged',
-    merged
-  )
 
   return merged
 }
