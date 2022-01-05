@@ -78,16 +78,18 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
     {}
   )
 
-  const {staticJaenPage} = useJaenPageContext()
+  const {staticJaenPage, jaenPageId} = useJaenPageContext()
+
+  if (!jaenPageId) {
+    throw new Error(
+      'JaenPage id is undefined! connectField must be used within a JaenPage'
+    )
+  }
 
   const staticChapter = staticJaenPage?.chapters?.[name]
 
   const dynamicChapter = useAppSelector(
-    state => {
-      const page = state.pages.find(p => p.id === staticJaenPage?.id)
-
-      return page?.chapters?.[name]
-    },
+    state => state.pages[jaenPageId]?.chapters?.[name],
     (l, r) => {
       if (!l || !r) {
         return false
@@ -121,7 +123,7 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
     ) => {
       dispatch(
         section_add({
-          pageId: staticJaenPage?.id!, // TODO: Change to static or dynamic slug
+          pageId: jaenPageId,
           chapterName: name,
           sectionName,
           between
@@ -174,7 +176,7 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
     ) => {
       dispatch(
         section_remove({
-          pageId: staticJaenPage?.id!,
+          pageId: jaenPageId,
           sectionId: id,
           chapterName: name,
           between

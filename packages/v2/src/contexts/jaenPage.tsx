@@ -143,19 +143,21 @@ type JaenPageProps = PageProps<JaenPageQueryProps>
  * `
  * ```
  */
-export const withJaenPage = <P extends JaenPageProps>(
-  Component: React.ComponentType<P>,
-  pageOptions: JaenPageOptions
-): React.FC<P> => props => {
-  console.log(props)
-  return (
-    <JaenPageProvider
-      pageOptions={pageOptions}
-      staticJaenPage={props.data.jaenPage}>
-      <Component {...props} />
-    </JaenPageProvider>
-  )
-}
+export const withJaenPage =
+  <P extends JaenPageProps>(
+    Component: React.ComponentType<P>,
+    pageOptions: JaenPageOptions
+  ): React.FC<P> =>
+  props => {
+    console.log(props)
+    return (
+      <JaenPageProvider
+        pageOptions={pageOptions}
+        staticJaenPage={props.data.jaenPage}>
+        <Component {...props} />
+      </JaenPageProvider>
+    )
+  }
 
 export const pageQuery = graphql`
   fragment JaenPageData on Query {

@@ -4,7 +4,7 @@ import React from 'react'
 import {JaenPage, JaenTemplateOptions} from '../types'
 
 export interface JaenPageContext {
-  jaenPage: JaenPage | null
+  jaenPageId: string
   staticJaenPage: JaenPage | null
 }
 
@@ -12,13 +12,13 @@ export const JaenPageContext = React.createContext<JaenPageContext | undefined>(
   undefined
 )
 
-export const JaenPageProvider: React.FC<{
-  staticJaenPage: JaenPage | null
-}> = ({children, staticJaenPage}) => {
-  const jaenPage = staticJaenPage
-
+export const JaenPageProvider: React.FC<JaenPageContext> = ({
+  children,
+  jaenPageId,
+  staticJaenPage
+}) => {
   return (
-    <JaenPageContext.Provider value={{jaenPage, staticJaenPage}}>
+    <JaenPageContext.Provider value={{jaenPageId, staticJaenPage}}>
       {children}
     </JaenPageContext.Provider>
   )

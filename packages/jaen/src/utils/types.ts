@@ -106,7 +106,8 @@ export interface JaenPage extends JaenData {
 }
 
 export interface JaenPageProps extends Omit<PageProps, 'data'> {
-  data?: PageProps<{jaenPage: JaenPage | null}>['data']
+  jaenPageId: string
+  data?: PageProps<{staticJaenPage: JaenPage | null}>['data']
 }
 
 export interface JaenPageOptions {

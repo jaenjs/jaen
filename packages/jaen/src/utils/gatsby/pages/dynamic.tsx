@@ -4,21 +4,23 @@ import * as React from 'react'
 
 import {useAppSelector} from '../../../store'
 import {withRedux} from '../../../store/withRedux'
+import {usePromiseEffect} from '../../hooks/usePromiseEffect'
 import {JaenPageProvider} from '../../providers/JaenPageProvider'
 import {useJaenContext} from '../../providers/JaenProvider'
 import {JaenConnection, JaenPageOptions} from '../../types'
 
-const Dynamic = (props: Partial<PageProps & {jaenPageId: string}>) => {
+const Dynamic = ({
+  jaenPageId,
+  ...props
+}: Partial<PageProps & {jaenPageId: string}>) => {
   const {templateLoader} = useJaenContext()
 
-  const [Component, setComponent] = React.useState<JaenConnection<
-    PageProps,
-    JaenPageOptions
-  > | null>(null)
-
-  const template = useAppSelector(
-    state => state.pages[props.jaenPageId!]?.template
+  console.log(
+    '🚀 ~ file: dynamic.tsx ~ line 12 ~ Dynamic ~ jaenPageId',
+    jaenPageId
   )
+
+  const template = useAppSelector(state => state.pages[jaenPageId!]?.template)
 
   if (!template) {
     throw Error(
@@ -26,14 +28,8 @@ const Dynamic = (props: Partial<PageProps & {jaenPageId: string}>) => {
     )
   }
 
-  React.useEffect(() => {
-    const loadTemplate = async () => {
-      const Component = await templateLoader(template.name)
-
-      setComponent(Component)
-    }
-
-    loadTemplate()
+  const {value: Component} = usePromiseEffect(async () => {
+    return await templateLoader('BlogPage' || template.name)
   }, [template])
 
   if (!Component) {
@@ -45,9 +41,11 @@ const Dynamic = (props: Partial<PageProps & {jaenPageId: string}>) => {
   }
 
   return (
-    <JaenPageProvider staticJaenPage={null}>
-      {<Component {...(props as PageProps)} />}
-    </JaenPageProvider>
+    <Component
+      jaenPageId={jaenPageId!}
+      {...(props as PageProps)}
+      data={{...props.data, staticJaenPage: null}}
+    />
   )
 }
 

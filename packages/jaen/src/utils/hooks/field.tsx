@@ -43,30 +43,37 @@ export const connectField = <T, P>(
 ): React.FC<P & JaenFieldProps<T>> =>
   withRedux(props => {
     const dispatch = useAppDispatch()
-    const {staticJaenPage} = useJaenPageContext()
 
-    if (!staticJaenPage) {
-      throw new Error('connectField must be used within a JaenPage')
+    const {staticJaenPage, jaenPageId} = useJaenPageContext()
+
+    if (!jaenPageId) {
+      throw new Error(
+        'JaenPage id is undefined! connectField must be used within a JaenPage'
+      )
     }
 
     const sectionContext = useJaenSectionContext()
 
-    function getPageField<T>(page: JaenPage | JaenPageState): T | undefined {
-      let fields
+    function getPageField<T>(
+      page: JaenPage | JaenPageState | null
+    ): T | undefined {
+      if (page) {
+        let fields
 
-      if (!sectionContext) {
-        fields = page.jaenFields
-      } else {
-        const {chapterName, sectionId} = sectionContext
+        if (!sectionContext) {
+          fields = page.jaenFields
+        } else {
+          const {chapterName, sectionId} = sectionContext
 
-        fields = page.chapters?.[chapterName]?.sections[sectionId]?.jaenFields
+          fields = page.chapters?.[chapterName]?.sections[sectionId]?.jaenFields
+        }
+
+        return fields?.[options.fieldType]?.[props.name] as T
       }
-
-      return fields?.[options.fieldType]?.[props.name] as T
     }
 
     const value = useAppSelector<T | undefined>(state => {
-      const page = state.pages[staticJaenPage.id]
+      const page = state.pages[jaenPageId]
 
       if (page) {
         return getPageField(page)
@@ -80,7 +87,7 @@ export const connectField = <T, P>(
     const handleUpdateValue = (value: T) => {
       dispatch(
         field_write({
-          pageId: staticJaenPage.id,
+          pageId: jaenPageId,
           section: sectionContext,
           fieldType: options.fieldType,
           fieldName: props.name,
