@@ -1,4 +1,4 @@
-import {Button, useDisclosure} from '@chakra-ui/react'
+import {ChakraProvider, Button, useDisclosure} from '@chakra-ui/react'
 import PagesTab from 'components/Dashboard/tabs/Pages'
 import {ContentValues} from 'components/Dashboard/tabs/Pages/PageContent'
 import * as React from 'react'
@@ -28,7 +28,7 @@ export const Dashboard = withRedux(() => {
   useJaenPageTree()
 
   return (
-    <>
+    <ChakraProvider>
       <Button
         variant="solid"
         colorScheme="blue"
@@ -50,6 +50,6 @@ export const Dashboard = withRedux(() => {
           }
         }}
       />
-    </>
+    </ChakraProvider>
   )
 })

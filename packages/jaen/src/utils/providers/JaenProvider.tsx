@@ -1,3 +1,4 @@
+import {Router} from '@reach/router'
 import React from 'react'
 
 import {JaenConnection, JaenPageOptions, JaenPluginOptions} from '../types'

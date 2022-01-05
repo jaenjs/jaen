@@ -294,6 +294,17 @@ export const createPages: GatsbyNode['createPages'] = async (
       })
     }
   })
+
+  // Dynamic routing pages
+
+  // stepPage.matchPath is a special key that's used for matching pages
+  // only on the client.
+  createPage({
+    path: '/_',
+    matchPath: '/_/*',
+    component: require.resolve('./pages/_.tsx'),
+    context: {}
+  })
 }
 
 export const onCreatePage: GatsbyNode['onCreatePage'] = ({
@@ -305,6 +316,8 @@ export const onCreatePage: GatsbyNode['onCreatePage'] = ({
 }) => {
   const {createPage, deletePage, createNode} = actions
   const {path, context} = page
+
+  let stepPage = page
 
   // Check if the page has a `jaenPageId` in its context.
   // If not it means it's not a JaenPage and we must create one.
@@ -342,7 +355,9 @@ export const onCreatePage: GatsbyNode['onCreatePage'] = ({
       })
     }
 
-    deletePage(page)
-    createPage({...page, context: {...context, jaenPageId}})
+    stepPage = {...stepPage, context: {...context, jaenPageId}}
   }
+
+  deletePage(page)
+  createPage(stepPage)
 }
