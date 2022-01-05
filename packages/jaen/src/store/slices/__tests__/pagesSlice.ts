@@ -8,9 +8,8 @@ import reducer, {
   section_remove
 } from '../pagesSlice'
 
-const previousState: JaenPagesState[] = [
-  {
-    id: 'JaenPage foo-bar-baz-1',
+const previousState: JaenPagesState = {
+  'JaenPage foo-bar-baz-1': {
     parent: null,
     children: [],
     slug: 'test',
@@ -67,8 +66,7 @@ const previousState: JaenPagesState[] = [
       }
     }
   },
-  {
-    id: 'JaenPage foo-bar-baz-2',
+  'JaenPage foo-bar-baz-2': {
     parent: null,
     children: [
       {
@@ -86,8 +84,7 @@ const previousState: JaenPagesState[] = [
       canonical: 'test'
     }
   },
-  {
-    id: 'JaenPage foo-bar-baz-2-1',
+  'JaenPage foo-bar-baz-2-1': {
     parent: {
       id: 'JaenPage foo-bar-baz-2'
     },
@@ -102,8 +99,7 @@ const previousState: JaenPagesState[] = [
       canonical: 'test'
     }
   },
-  {
-    id: 'JaenPage foo-bar-baz-2-2',
+  'JaenPage foo-bar-baz-2-2': {
     parent: {
       id: 'JaenPage foo-bar-baz-2'
     },
@@ -118,20 +114,20 @@ const previousState: JaenPagesState[] = [
       canonical: 'test'
     }
   }
-]
+}
 
 test('should return the initial state', () => {
-  expect(reducer(undefined, {} as any)).toEqual([])
+  expect(reducer(undefined, {} as any)).toEqual({})
 })
 
 describe('page_updateOrCreate', () => {
   test('should handle a page creation with a empty payload', () => {
-    const result = reducer([], page_updateOrCreate({}))
+    const result = reducer({}, page_updateOrCreate({}))
 
     // Expect the result to be not bigger than length 1
-    expect(result.length).toBe(1)
+    expect(Object.keys(result).length).toBe(1)
 
-    expect(result[0]).toEqual(
+    expect(result[Object.keys(result)[Object.keys(result).length - 1]]).toEqual(
       expect.objectContaining({
         id: expect.any(String),
         children: [],
@@ -153,14 +149,14 @@ describe('page_updateOrCreate', () => {
     }
 
     const result = reducer(
-      [],
+      {},
       page_updateOrCreate({
         slug: 'test',
         jaenPageMetadata
       })
     )
 
-    expect(result[result.length - 1]).toEqual(
+    expect(result[Object.keys(result)[Object.keys(result).length - 1]]).toEqual(
       expect.objectContaining({
         id: expect.any(String),
         children: [],
@@ -176,20 +172,22 @@ describe('page_updateOrCreate', () => {
       previousState,
       page_updateOrCreate({
         slug: 'test',
-        parent: {id: previousState[0].id},
+        parent: {id: 'JaenPage foo-bar-baz-1'},
         jaenPageMetadata: DEFAULT_PAGE_METADATA
       })
     )
 
     // Expect that the result is one bigger than the previous state
-    expect(result.length).toBe(previousState.length + 1)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState).length + 1
+    )
 
-    const parentPage = result[0]
-    const addedPage = result[result.length - 1]
+    const parentPage = result['JaenPage foo-bar-baz-1']
+    const addedId = Object.keys(result)[Object.keys(result).length - 1]
 
     // Expect that addedPage.id is in the children of the parentPage
     expect(parentPage.children).toEqual(
-      expect.arrayContaining([expect.objectContaining({id: addedPage.id})])
+      expect.arrayContaining([expect.objectContaining({id: addedId})])
     )
   })
   test('should create a page with a parent (state does not contain parent page)', () => {
@@ -199,35 +197,37 @@ describe('page_updateOrCreate', () => {
       jaenPageMetadata: DEFAULT_PAGE_METADATA
     }
 
-    const result = reducer([], page_updateOrCreate(payload))
+    const result = reducer({}, page_updateOrCreate(payload))
 
     // Expect that the result is two bigger
-    expect(result.length).toBe(2)
+    expect(Object.keys(result).length).toBe(2)
 
-    const parentPage = result[1] // The second page is the parentPage
-    const addedPage = result[0] // The first page is the added page
+    const parentPage = result['JaenPage foo-bar-baz-1']
+
+    const addedId = Object.keys(result)[0]
+    const addedPage = result[addedId]
 
     // Expect that addedPage.id is in the children of the parentPage
     expect(parentPage.children).toEqual(
-      expect.arrayContaining([expect.objectContaining({id: addedPage.id})])
+      expect.arrayContaining([expect.objectContaining({id: addedId})])
     )
 
     // Expect that the parentPage is the actual parent of the addedPage
-    expect(addedPage.parent?.id).toEqual(parentPage.id)
+    expect(addedPage.parent?.id).toEqual('JaenPage foo-bar-baz-1')
   })
   test('should handle a slug update (state contains page)', () => {
     const payload = {
       slug: 'test-2',
-      id: previousState[0].id
+      id: 'JaenPage foo-bar-baz-1'
     }
 
     const result = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is not bigger than the previous state
-    expect(result.length).toBe(previousState.length)
+    expect(Object.keys(result).length).toBe(Object.keys(previousState).length)
 
     // Expect the slug to be updated
-    expect(result[0].slug).toBe(payload.slug)
+    expect(result[payload.id].slug).toBe(payload.slug)
   })
   test('should handle a slug update (state does not contain page)', () => {
     const payload = {
@@ -235,17 +235,17 @@ describe('page_updateOrCreate', () => {
       id: 'JaenPage foo-bar-baz-2'
     }
 
-    const result = reducer([], page_updateOrCreate(payload))
+    const result = reducer({}, page_updateOrCreate(payload))
 
     // Expect the result to be length 1
-    expect(result.length).toBe(1)
+    expect(Object.keys(result).length).toBe(1)
 
     // Expect the slug to be updated
-    expect(result[0].slug).toBe(payload.slug)
+    expect(result['JaenPage foo-bar-baz-2'].slug).toBe(payload.slug)
   })
   test('should handle a jaenPageMetadata update', () => {
     const payload = {
-      id: previousState[0].id,
+      id: 'JaenPage foo-bar-baz-1',
       jaenPageMetadata: {
         title: 'This is a updated title',
         isBlogPost: false,
@@ -259,10 +259,10 @@ describe('page_updateOrCreate', () => {
     const result = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is not bigger than the previous state
-    expect(result.length).toBe(previousState.length)
+    expect(Object.keys(result).length).toBe(Object.keys(previousState).length)
 
     // Expect the jaenPageMetadata to be updated
-    expect(result[0].jaenPageMetadata).toEqual(
+    expect(result['JaenPage foo-bar-baz-1'].jaenPageMetadata).toEqual(
       expect.objectContaining(payload.jaenPageMetadata)
     )
   })
@@ -275,64 +275,72 @@ describe('page_updateOrCreate', () => {
     const result = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is one bigger than the previous state
-    expect(result.length).toBe(previousState.length + 1)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState).length + 1
+    )
 
     // Expect the slug to be updated
-    expect(result[result.length - 1].slug).toBe(payload.slug)
+    expect(result['JaenPage foo-bar-baz-3'].slug).toBe(payload.slug)
   })
   test('should handle a page move to a new parent (state includes page, old parent and new parent)', () => {
     const payload = {
-      id: previousState[2].id,
-      parent: {id: previousState[0].id},
-      fromId: previousState[1].id
+      id: 'JaenPage foo-bar-baz-2-1',
+      parent: {id: 'JaenPage foo-bar-baz-1'},
+      fromId: 'JaenPage foo-bar-baz-2'
     }
 
     const result = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is not bigger than the previous state
-    expect(result.length).toBe(previousState.length)
+    expect(Object.keys(result).length).toBe(Object.keys(previousState).length)
 
     // Expect the parent to be updated
-    expect(result[0].children).toEqual(
+    expect(result['JaenPage foo-bar-baz-1'].children).toEqual(
       expect.arrayContaining([expect.objectContaining({id: payload.id})])
     )
 
     // Expect the old parent to be updated
-    expect(result[1].children).toEqual(
+    expect(result['JaenPage foo-bar-baz-2'].children).toEqual(
       expect.not.arrayContaining([expect.objectContaining({id: payload.id})])
     )
 
     // Expect the page to be updated
-    expect(result[2].parent?.id).toEqual(payload.parent.id)
+    expect(result['JaenPage foo-bar-baz-2-1'].parent?.id).toEqual(
+      payload.parent.id
+    )
   })
   test('should handle a page move to a new parent (state includes page, old parent)', () => {
     const payload = {
-      id: previousState[2].id,
+      id: 'JaenPage foo-bar-baz-2-1',
       parent: {id: 'JaenPage foo-bar-baz-new-parent'},
-      fromId: previousState[1].id
+      fromId: 'JaenPage foo-bar-baz-2'
     }
 
     const result = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is one bigger than the previous state
-    expect(result.length).toBe(previousState.length + 1)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState).length + 1
+    )
 
     // Expect the parent to be updated
-    expect(result[result.length - 1].children).toEqual(
+    expect(result['JaenPage foo-bar-baz-new-parent'].children).toEqual(
       expect.arrayContaining([expect.objectContaining({id: payload.id})])
     )
 
     // Expect the old parent to be updated
-    expect(result[1].children).toEqual(
+    expect(result['JaenPage foo-bar-baz-2'].children).toEqual(
       expect.not.arrayContaining([expect.objectContaining({id: payload.id})])
     )
 
     // Expect the page to be updated
-    expect(result[2].parent?.id).toEqual(payload.parent.id)
+    expect(result['JaenPage foo-bar-baz-2-1'].parent?.id).toEqual(
+      payload.parent.id
+    )
   })
   test('should handle a page move to a new parent (state includes page)', () => {
     const payload = {
-      id: previousState[2].id,
+      id: 'JaenPage foo-bar-baz-2-1',
       parent: {id: 'JaenPage foo-bar-baz-new-parent'},
       fromId: 'JaenPage foo-bar-baz-old-parent'
     }
@@ -340,11 +348,13 @@ describe('page_updateOrCreate', () => {
     const result = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is two bigger than the previous state
-    expect(result.length).toBe(previousState.length + 2)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState).length + 2
+    )
 
     // Find parentPage and oldParentPage in the result
-    const parentPage = result.find(page => page.id === payload.parent.id)
-    const oldParentPage = result.find(page => page.id === payload.fromId)
+    const parentPage = result[payload.parent.id]
+    const oldParentPage = result[payload.fromId]
 
     // Expect the parent to be defined
     expect(parentPage).toBeDefined()
@@ -365,7 +375,9 @@ describe('page_updateOrCreate', () => {
     }
 
     // Expect the page to be updated
-    expect(result[2].parent?.id).toEqual(payload.parent.id)
+    expect(result['JaenPage foo-bar-baz-2-1'].parent?.id).toEqual(
+      payload.parent.id
+    )
   })
   test('should handle a page move to a new parent', () => {
     const payload = {
@@ -375,15 +387,16 @@ describe('page_updateOrCreate', () => {
     }
 
     const result = reducer(previousState, page_updateOrCreate(payload))
-    console.log('🚀 ~ file: pagesSlice.ts ~ line 378 ~ test ~ result', result)
 
     // Expect that the result is three bigger than the previous state
-    expect(result.length).toBe(previousState.length + 3)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState).length + 3
+    )
 
     // Find page,  parentPage and oldParentPage in the result
-    const page = result.find(page => page.id === payload.id)
-    const parentPage = result.find(page => page.id === payload.parent.id)
-    const oldParentPage = result.find(page => page.id === payload.fromId)
+    const page = result[payload.id]
+    const parentPage = result[payload.parent.id]
+    const oldParentPage = result[payload.fromId]
 
     // Expect the page to be defined
     expect(page).toBeDefined()
@@ -415,14 +428,15 @@ describe('page_updateOrCreate', () => {
     }
 
     const result = reducer(previousState, page_updateOrCreate(payload))
-    console.log('🚀 ~ file: pagesSlice.ts ~ line 417 ~ test ~ result', result)
 
     // Expect that the result is three bigger than the previous state
-    expect(result.length).toBe(previousState.length + 2)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState).length + 2
+    )
 
     // Find page,  parentPage and oldParentPage in the result
-    const page = result.find(page => page.id === payload.id)
-    const oldParentPage = result.find(page => page.id === payload.fromId)
+    const page = result[payload.id]
+    const oldParentPage = result[payload.fromId]
 
     expect(page?.parent).toBe(null)
     // Expect the old parent to be defined
@@ -442,26 +456,26 @@ describe('page_updateOrCreate', () => {
 
 describe('page_markForDeletion', () => {
   test('should delete a page (state includes page)', () => {
-    const result = reducer(
-      previousState,
-      page_markForDeletion(previousState[0].id)
-    )
+    const payload = 'JaenPage foo-bar-baz-1'
+    const result = reducer(previousState, page_markForDeletion(payload))
 
     // Expect the result length to be the same as the previous state
-    expect(result.length).toBe(previousState.length)
+    expect(Object.keys(result).length).toBe(Object.keys(previousState).length)
 
     // Expect the page to be marked as deleted
-    expect(result[0].deleted).toBe(true)
+    expect(result[payload].deleted).toBe(true)
   })
   test('should delete a page (state does not include page)', () => {
     const payload = 'JaenPage foo-bar-baz-marked-as-deleted'
     const result = reducer(previousState, page_markForDeletion(payload))
 
     // Expect the result length to be one one bigger than the previous state
-    expect(result.length).toBe(previousState.length + 1)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState).length + 1
+    )
 
     // Find the page in the result
-    const page = result.find(page => page.id === payload)
+    const page = result[payload]
 
     // Expect the page to be defined
     expect(page).toBeDefined()
@@ -492,9 +506,10 @@ describe('section_add', () => {
     const result = reducer(previousState, section_add(payload as any))
 
     // Expect
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
 
-    const prevNodes = previousState[0].chapters![payload.chapterName]!.sections
+    const prevNodes =
+      previousState[payload.pageId].chapters![payload.chapterName]!.sections
     const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
@@ -542,9 +557,10 @@ describe('section_add', () => {
     const result = reducer(previousState, section_add(payload as any))
 
     // Expect
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
 
-    const prevNodes = previousState[0].chapters![payload.chapterName]!.sections
+    const prevNodes =
+      previousState[payload.pageId].chapters![payload.chapterName]!.sections
     const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
@@ -598,9 +614,10 @@ describe('section_add', () => {
     const result = reducer(previousState, section_add(payload as any))
 
     // Expect
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
 
-    const prevNodes = previousState[0].chapters![payload.chapterName]!.sections
+    const prevNodes =
+      previousState[payload.pageId].chapters![payload.chapterName]!.sections
     const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
@@ -655,10 +672,10 @@ describe('section_add', () => {
       ]
     }
 
-    const result = reducer([], section_add(payload as any))
+    const result = reducer({}, section_add(payload as any))
 
     // Expect three sections to be added
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
 
     expect(
       Object.keys(page?.chapters?.[payload.chapterName]!.sections || {}).length
@@ -685,7 +702,7 @@ describe('seciton_remove', () => {
     const result = reducer(previousState, section_remove(payload))
 
     // Expect the section to be marked as deleted
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
     const section =
       page!.chapters![payload.chapterName]!.sections[payload.sectionId]
 
@@ -731,7 +748,7 @@ describe('seciton_remove', () => {
     const result = reducer(previousState, section_remove(payload))
 
     // Expect the section to be marked as deleted
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
     const section =
       page!.chapters![payload.chapterName]!.sections[payload.sectionId]
 
@@ -781,7 +798,7 @@ describe('seciton_remove', () => {
     const result = reducer(previousState, section_remove(payload))
 
     // Expect the section to be marked as deleted
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
     const section =
       page!.chapters![payload.chapterName]!.sections[payload.sectionId]
 
@@ -839,10 +856,10 @@ describe('seciton_remove', () => {
       ]
     }
 
-    const result = reducer([], section_remove(payload))
+    const result = reducer({}, section_remove(payload))
 
     // Expect the section to be marked as deleted
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
     const section =
       page!.chapters![payload.chapterName]!.sections[payload.sectionId]
 
@@ -891,7 +908,7 @@ describe('field_write', () => {
     const result = reducer(previousState, field_write(payload))
 
     // Expect the field to be added to the page
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
     expect(page!.jaenFields).toEqual(
       expect.objectContaining({
         [payload.fieldType]: {
@@ -915,7 +932,7 @@ describe('field_write', () => {
     const result = reducer(previousState, field_write(payload))
 
     // Expect the field to be added to the page
-    const page = result.find(page => page.id === payload.pageId)
+    const page = result[payload.pageId]
     expect(
       page!.chapters![payload.section.chapterName]!.sections[
         payload.section.sectionId

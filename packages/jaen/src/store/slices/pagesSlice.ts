@@ -5,8 +5,8 @@ import {v4 as uuidv4} from 'uuid'
 import {omitSingle} from '../../utils/helpers'
 import {JaenPage, JaenSection, JaenSectionWithId} from '../../utils/types'
 
-export interface JaenPagesState extends Omit<Partial<JaenPage>, 'sections'> {
-  id: JaenPage['id']
+export interface JaenPageState
+  extends Omit<Partial<JaenPage>, 'sections' | 'id'> {
   children: {id: string; deleted?: true}[]
   chapters?: JaenPage['chapters']
   deleted?: true
@@ -17,7 +17,11 @@ export interface PagePayload extends Partial<JaenPage> {
   fromId?: string
 }
 
-const initialState = [] as JaenPagesState[]
+export interface JaenPagesState {
+  [pageId: string]: JaenPageState
+}
+
+const initialState: JaenPagesState = {}
 
 const pagesSlice = createSlice({
   name: 'pages',
@@ -34,18 +38,12 @@ const pagesSlice = createSlice({
         template,
         fromId
       } = action.payload
-      console.log(
-        '🚀 ~ file: pagesSlice.ts ~ line 37 ~ page_updateOrCreate ~ action.payload',
-        action.payload
-      )
 
       const parentId = parent?.id || null
 
       // Check if the page is being updated or created
       if (id) {
         // Update the page
-        const pageIndex = state.findIndex(page => page.id === id)
-
         const toBeAddedData = {
           id,
           ...(slug && {slug}),
@@ -55,42 +53,20 @@ const pagesSlice = createSlice({
           ...(children && {children})
         }
 
-        console.log(
-          '🚀 ~ file: pagesSlice.ts ~ line 50 ~ page_updateOrCreate ~ toBeAddedData',
-          toBeAddedData
-        )
-
-        // If the page is not found, push a new one to the state
-        if (pageIndex === -1) {
-          state.push(toBeAddedData as any)
-        } else {
-          // Update the page
-
-          state[pageIndex] = {
-            ...state[pageIndex],
-            ...toBeAddedData
-          }
+        state[id] = {
+          ...state[id],
+          ...toBeAddedData
         }
 
         // If `fromId` then remove the page from the fromPage children
         if (fromId && (parentId || parentId === null)) {
           // Update the from page
-          let fromIndex = state.findIndex(page => page.id === fromId)
-
           // If the fromIndex is not found, add the fromPage to the state and set the from index
-          if (fromIndex === -1) {
-            state.push({id: fromId, children: []})
-            fromIndex = state.length - 1
-          }
 
-          const fromPage = state[fromIndex]
-          const fromChildren = fromPage.children.filter(
-            child => child.id !== id
-          )
-
-          state[fromIndex] = {
-            ...state[fromIndex],
-            children: fromChildren
+          state[fromId] = {
+            ...state[fromId],
+            children:
+              state[fromId]?.children.filter(child => child.id !== id) || []
           }
         }
       } else {
@@ -108,8 +84,7 @@ const pagesSlice = createSlice({
         )
 
         // Create the page
-        state.push({
-          id,
+        state[id] = {
           slug,
           jaenFields: jaenFields || null,
           jaenPageMetadata: jaenPageMetadata || {
@@ -118,36 +93,16 @@ const pagesSlice = createSlice({
           parent: parent || null,
           children: children || [],
           template
-        })
+        }
       }
 
       // Add the page to the new parents' children
       if (parentId) {
-        let parentIndex = state.findIndex(page => page.id === parentId)
-
-        // If the parent is not found, add the parent to the state and set the parent index
-        if (parentIndex === -1) {
-          state.push({
-            id: parentId,
-            children: []
-          })
-
-          // Update the parent index to the newly added parent
-          parentIndex = state.length - 1
-        }
-
-        // Then update the parent's children
-
-        const parentPage = state[parentIndex]
-        const newParentChildren = [...parentPage.children, {id}]
-
-        state[parentIndex] = {
-          ...state[parentIndex],
-          children: newParentChildren
-        }
-
-        if (parentIndex !== -1) {
-        } else {
+        state[parentId] = {
+          ...state[parentId],
+          children: state[parentId]?.children
+            ? [...state[parentId]?.children, {id}]
+            : [{id}]
         }
       }
 
@@ -155,18 +110,11 @@ const pagesSlice = createSlice({
     },
     page_markForDeletion(state, action: PayloadAction<string>) {
       const id = action.payload
-      const index = state.findIndex(page => page.id === id)
 
-      // If the page is found, mark it as deleted
-      if (index !== -1) {
-        state = update(state, {
-          [index]: {deleted: {$set: true}}
-        })
-      } else {
-        // If the page is not found, add it to the state
-        state = update(state, {
-          $push: [{id, children: [], deleted: true}]
-        })
+      state[id] = {
+        ...state[id],
+        deleted: true,
+        children: state[id]?.children || []
       }
 
       return state
@@ -183,22 +131,13 @@ const pagesSlice = createSlice({
     ) {
       const {pageId, chapterName, sectionName, between} = action.payload
 
-      console.log('section_Add', pageId, chapterName, sectionName, between)
-
-      let pageIndex = state.findIndex(page => page.id === pageId)
-
-      // If the page is not found, create it
-      if (pageIndex === -1) {
-        state = update(state, {
-          $push: [{id: pageId, children: []}]
-        })
-
-        pageIndex = state.length - 1
+      // Create the page if not found
+      state[pageId] = {
+        ...state[pageId],
+        children: state[pageId]?.children || []
       }
 
-      const page = state[pageIndex]
-
-      // If the page is found, add the section
+      const page = state[pageId]
 
       page.chapters = page.chapters || {}
 
@@ -304,47 +243,42 @@ const pagesSlice = createSlice({
         between: [JaenSectionWithId | null, JaenSectionWithId | null]
       }>
     ) {
+      const {pageId, chapterName, sectionId, between} = action.payload
+
       // find the page
-      let pageIndex = state.findIndex(page => page.id === action.payload.pageId)
-
-      // If the page is not found, add it to the state
-      if (pageIndex === -1) {
-        state = update(state, {
-          $push: [{id: action.payload.pageId, children: []}]
-        })
-
-        pageIndex = state.length - 1
+      // Create the page if not found
+      state[pageId] = {
+        ...state[pageId],
+        children: state[pageId]?.children || []
       }
 
-      // If the chapter is not found, add it to the state
-      const page = state[pageIndex]
+      const page = state[pageId]
+
       page.chapters = page.chapters || {}
 
-      if (!page.chapters[action.payload.chapterName]?.sections) {
+      if (!page.chapters[chapterName]?.sections) {
         // @ts-ignore - This is a hack to ignore the fact that no head or tail pointer is defined
-        page.chapters[action.payload.chapterName] = {
+        page.chapters[chapterName] = {
           sections: {}
         }
       }
 
-      const chapter = page.chapters[action.payload.chapterName]
+      const chapter = page.chapters[chapterName]
 
       // Remove the section from the chapter
       chapter.sections = {
         ...chapter.sections,
-        [action.payload.sectionId]: {
-          ...chapter.sections[action.payload.sectionId],
+        [sectionId]: {
+          ...chapter.sections[sectionId],
           deleted: true
         }
       }
 
       //> It is required to rearrange the pointers of the between sections
-      let [prev, next] = action.payload.between
+      let [prev, next] = between
 
       const prevWithoutId = prev && (omitSingle('id', prev) as JaenSection)
       const nextWithoutId = next && (omitSingle('id', next) as JaenSection)
-
-      console.log(prevWithoutId, nextWithoutId)
 
       if (prev && !next) {
         // If next is not defined:
@@ -417,18 +351,14 @@ const pagesSlice = createSlice({
     ) {
       const {pageId, section, fieldType, fieldName, value} = action.payload
 
-      let pageIndex = state.findIndex(page => page.id === pageId)
-
-      // If the page is not found, create it
-      if (pageIndex === -1) {
-        state = update(state, {
-          $push: [{id: pageId, children: []}]
-        })
-
-        pageIndex = state.length - 1
+      // find the page
+      // Create the page if not found
+      state[pageId] = {
+        ...state[pageId],
+        children: state[pageId]?.children || []
       }
 
-      const page = state[pageIndex]
+      const page = state[pageId]
 
       // If the page is found, add the field
 

@@ -113,14 +113,6 @@ export const PageCreator = ({
     values.template = templates.find(
       e => e.name === values.template.name
     ) as JaenTemplate
-    console.log(
-      '🚀 ~ file: index.tsx ~ line 111 ~ onSubmit ~  e.name',
-      templates
-    )
-    console.log(
-      '🚀 ~ file: index.tsx ~ line 112 ~ onSubmit ~ values.template',
-      values.template
-    )
 
     form.onSubmit(values)
 

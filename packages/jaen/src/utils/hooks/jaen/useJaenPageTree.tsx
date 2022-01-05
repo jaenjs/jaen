@@ -59,20 +59,27 @@ export const useJaenPageTree = (): TreeNode[] => {
   }
 
   const pages = useAppSelector(state =>
-    state.pages.map(e => ({
-      id: e.id,
-      slug: e.slug,
-      parent: e.parent,
-      children: e.children,
-      jaenPageMetadata: e.jaenPageMetadata,
-      template: e.template,
-      deleted: e.deleted
-    }))
+    Object.keys(state.pages).map(id => {
+      const page = state.pages[id]
+
+      return {
+        id,
+        slug: page.slug,
+        parent: page.parent,
+        children: page.children,
+        jaenPageMetadata: page.jaenPageMetadata,
+        template: page.template,
+        deleted: page.deleted
+      }
+    })
   ) as TreeNode[]
 
-  const merged = deepmerge(data.allJaenPage.nodes, pages)
+  const merged = data.allJaenPage.nodes.concat(pages).map(({id}) => {
+    const p1 = data.allJaenPage.nodes.find(e => e.id === id)
+    const p2 = pages.find(e => e.id === id)
 
-  console.log('🚀 ~ file: jaen.ts ~ line 74 ~ merged', merged)
+    return deepmerge(p1 || {}, p2 || {})
+  })
 
   return merged
 }

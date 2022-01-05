@@ -51,7 +51,6 @@ export const SidebarWithHeader: React.FC<SidebarWithHeaderProps> = ({
   onSidebarItemClick,
   onCloseDashboard
 }) => {
-  console.log('🚀 ~ file: index.tsx ~ line 54 ~ sidebarItems', sidebarItems)
   const {isOpen, onOpen, onClose} = useDisclosure()
   return (
     <Box minH="100vh" bg={useColorModeValue('gray.100', 'gray.900')}>
@@ -107,7 +106,6 @@ const SidebarContent = ({
   sidebarItems,
   ...rest
 }: SidebarProps) => {
-  console.log('🚀 ~ file: index.tsx ~ line 109 ~ sidebarItems', sidebarItems)
   const [selectedItem, setSelectedItem] = React.useState<
     keyof SidebarProps['sidebarItems'] | null
   >(null)

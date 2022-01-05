@@ -1,7 +1,7 @@
 import {JaenPage} from 'utils/types'
 
 import {useAppDispatch, useAppSelector} from '../../store'
-import {field_write, JaenPagesState} from '../../store/slices/pagesSlice'
+import {field_write, JaenPageState} from '../../store/slices/pagesSlice'
 import {withRedux} from '../../store/withRedux'
 import {useJaenPageContext} from '../providers/JaenPageProvider'
 import {useJaenSectionContext} from '../providers/JaenSectionProvider'
@@ -51,7 +51,7 @@ export const connectField = <T, P>(
 
     const sectionContext = useJaenSectionContext()
 
-    function getPageField<T>(page: JaenPage | JaenPagesState): T | undefined {
+    function getPageField<T>(page: JaenPage | JaenPageState): T | undefined {
       let fields
 
       if (!sectionContext) {
@@ -66,7 +66,7 @@ export const connectField = <T, P>(
     }
 
     const value = useAppSelector<T | undefined>(state => {
-      const page = state.pages.find(p => p.id === staticJaenPage.id)
+      const page = state.pages[staticJaenPage.id]
 
       if (page) {
         return getPageField(page)

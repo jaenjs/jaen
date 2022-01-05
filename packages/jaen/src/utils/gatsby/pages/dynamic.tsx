@@ -17,7 +17,7 @@ const Dynamic = (props: Partial<PageProps & {jaenPageId: string}>) => {
   > | null>(null)
 
   const template = useAppSelector(
-    state => state.pages.find(p => p.id === props.jaenPageId)?.template
+    state => state.pages[props.jaenPageId!]?.template
   )
 
   if (!template) {
