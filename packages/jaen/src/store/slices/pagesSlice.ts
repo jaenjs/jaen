@@ -18,10 +18,13 @@ export interface PagePayload extends Partial<JaenPage> {
 }
 
 export interface JaenPagesState {
-  [pageId: string]: JaenPageState
+  pages: {[pageId: string]: JaenPageState}
+  latestAddedPageId?: string
 }
 
-const initialState: JaenPagesState = {}
+const initialState: JaenPagesState = {
+  pages: {}
+}
 
 const pagesSlice = createSlice({
   name: 'pages',
@@ -53,8 +56,8 @@ const pagesSlice = createSlice({
           ...(children && {children})
         }
 
-        state[id] = {
-          ...state[id],
+        state.pages[id] = {
+          ...state.pages[id],
           ...toBeAddedData
         }
 
@@ -63,10 +66,11 @@ const pagesSlice = createSlice({
           // Update the from page
           // If the fromIndex is not found, add the fromPage to the state and set the from index
 
-          state[fromId] = {
-            ...state[fromId],
+          state.pages[fromId] = {
+            ...state.pages[fromId],
             children:
-              state[fromId]?.children.filter(child => child.id !== id) || []
+              state.pages[fromId]?.children.filter(child => child.id !== id) ||
+              []
           }
         }
       } else {
@@ -77,14 +81,9 @@ const pagesSlice = createSlice({
 
         // Generate a new id in the pattern of `JaenPage {uuid}`
         id = `JaenPage ${uuidv4()}`
-        console.log(
-          '🚀 ~ file: pagesSlice.ts ~ line 102 ~ page_updateOrCreate ~ id',
-          id,
-          slug
-        )
 
         // Create the page
-        state[id] = {
+        state.pages[id] = {
           slug,
           jaenFields: jaenFields || null,
           jaenPageMetadata: jaenPageMetadata || {
@@ -94,14 +93,16 @@ const pagesSlice = createSlice({
           children: children || [],
           template
         }
+
+        state.latestAddedPageId = id
       }
 
       // Add the page to the new parents' children
       if (parentId) {
-        state[parentId] = {
-          ...state[parentId],
-          children: state[parentId]?.children
-            ? [...state[parentId]?.children, {id}]
+        state.pages[parentId] = {
+          ...state.pages[parentId],
+          children: state.pages[parentId]?.children
+            ? [...state.pages[parentId]?.children, {id}]
             : [{id}]
         }
       }
@@ -111,10 +112,10 @@ const pagesSlice = createSlice({
     page_markForDeletion(state, action: PayloadAction<string>) {
       const id = action.payload
 
-      state[id] = {
-        ...state[id],
+      state.pages[id] = {
+        ...state.pages[id],
         deleted: true,
-        children: state[id]?.children || []
+        children: state.pages[id]?.children || []
       }
 
       return state
@@ -132,12 +133,12 @@ const pagesSlice = createSlice({
       const {pageId, chapterName, sectionName, between} = action.payload
 
       // Create the page if not found
-      state[pageId] = {
-        ...state[pageId],
-        children: state[pageId]?.children || []
+      state.pages[pageId] = {
+        ...state.pages[pageId],
+        children: state.pages[pageId]?.children || []
       }
 
-      const page = state[pageId]
+      const page = state.pages[pageId]
 
       page.chapters = page.chapters || {}
 
@@ -247,12 +248,12 @@ const pagesSlice = createSlice({
 
       // find the page
       // Create the page if not found
-      state[pageId] = {
-        ...state[pageId],
-        children: state[pageId]?.children || []
+      state.pages[pageId] = {
+        ...state.pages[pageId],
+        children: state.pages[pageId]?.children || []
       }
 
-      const page = state[pageId]
+      const page = state.pages[pageId]
 
       page.chapters = page.chapters || {}
 
@@ -353,12 +354,12 @@ const pagesSlice = createSlice({
 
       // find the page
       // Create the page if not found
-      state[pageId] = {
-        ...state[pageId],
-        children: state[pageId]?.children || []
+      state.pages[pageId] = {
+        ...state.pages[pageId],
+        children: state.pages[pageId]?.children || []
       }
 
-      const page = state[pageId]
+      const page = state.pages[pageId]
 
       // If the page is found, add the field
 

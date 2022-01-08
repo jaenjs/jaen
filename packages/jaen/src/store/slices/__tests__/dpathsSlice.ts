@@ -1,0 +1,63 @@
+import {TreeNode} from '../../../utils/types'
+import reducer, {updateForPage} from '../dpathsSlice'
+
+const jaenPageTree: TreeNode[] = [
+  {
+    id: '1',
+    slug: 'root',
+    children: [
+      {
+        id: '2'
+      }
+    ],
+    parent: null,
+    jaenPageMetadata: {
+      title: 'Root'
+    },
+    template: null
+  },
+  {
+    id: '2',
+    slug: 'contact',
+    children: [
+      {
+        id: '3'
+      }
+    ],
+    parent: {id: '1'},
+    jaenPageMetadata: {
+      title: 'Root'
+    },
+    template: null
+  },
+  {
+    id: '3',
+    slug: 'subcontact',
+    children: [],
+    parent: {id: '2'},
+    jaenPageMetadata: {
+      title: 'Root'
+    },
+    template: null
+  }
+]
+
+describe('updateForPage', () => {
+  test('should handle dynamic path generation for a pageId', () => {
+    const state = {dynamicPaths: {}}
+
+    const action = updateForPage({
+      jaenPageTree,
+      pageId: '3',
+      create: true
+    })
+
+    const newState = reducer(state, action)
+
+    expect(newState).toEqual({
+      dynamicPaths: {
+        '/contact/subcontact': '3'
+      }
+    })
+  })
+})

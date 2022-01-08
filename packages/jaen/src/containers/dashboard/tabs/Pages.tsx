@@ -1,21 +1,67 @@
+import {navigate} from 'gatsby'
 import * as React from 'react'
 
 import PagesTab from '../../../components/Dashboard/tabs/Pages'
 import {ContentValues} from '../../../components/Dashboard/tabs/Pages/PageContent'
 import {CreateValues} from '../../../components/Dashboard/tabs/Pages/PageCreator'
-import {useAppDispatch} from '../../../store'
+import {
+  store,
+  useAppDispatch,
+  useAppSelector,
+  useAppState
+} from '../../../store'
+import {updateForPage} from '../../../store/slices/dpathsSlice'
 import {
   page_markForDeletion,
   page_updateOrCreate
 } from '../../../store/slices/pagesSlice'
 import {withRedux} from '../../../store/withRedux'
+import {generateOriginPath} from '../../../utils/helpers'
 import {useJaenPageTree, useJaenTemplates} from '../../../utils/hooks/jaen'
-import {JaenTemplate} from '../../../utils/types'
 
 export const PagesContainer = withRedux(() => {
+  console.log('🚀 ~ file: pages.tsx ~ line 31 ~ PagesContainer ~ withRedux')
   const dispatch = useAppDispatch()
   const pageTree = useJaenPageTree()
   const jaenTemplates = useJaenTemplates()
+
+  const latestAddedPageId = useAppSelector(
+    state => state.pages.latestAddedPageId
+  )
+
+  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] = React.useState<{
+    pageId: string
+    create: boolean
+  } | null>(null)
+
+  console.log(
+    '🚀 ~ file: Pages.tsx ~ line 186 ~ PagesContainer ~ shouldUpdateDpathsFor',
+    shouldUpdateDpathsFor
+  )
+
+  React.useEffect(() => {
+    if (shouldUpdateDpathsFor) {
+      const {pageId, create} = shouldUpdateDpathsFor
+
+      dispatch(
+        updateForPage({
+          jaenPageTree: pageTree,
+          pageId,
+          create
+        })
+      )
+
+      setShouldUpdateDpathsFor(null)
+    }
+  }, [pageTree])
+
+  React.useEffect(() => {
+    return () => {
+      if (latestAddedPageId) {
+        setShouldUpdateDpathsFor({pageId: latestAddedPageId, create: true})
+      }
+    }
+  }, [latestAddedPageId])
 
   const handlePageGet = React.useCallback(
     id => {
@@ -46,11 +92,15 @@ export const PagesContainer = withRedux(() => {
   )
 
   const handlePageDelete = React.useCallback((id: string) => {
+    // shouldUpdateDpathsFor = {pageId: id, create: false}
+    setShouldUpdateDpathsFor({pageId: id, create: false})
+
     dispatch(page_markForDeletion(id))
   }, [])
 
   const handlePageMove = React.useCallback(
     (id: string, oldParentId: string | null, newParentId: string | null) => {
+      setShouldUpdateDpathsFor({pageId: id, create: true})
       dispatch(
         page_updateOrCreate({
           id,
@@ -63,7 +113,8 @@ export const PagesContainer = withRedux(() => {
   )
 
   const handlePageUpdate = React.useCallback(
-    (id: string, values: ContentValues) =>
+    (id: string, values: ContentValues) => {
+      setShouldUpdateDpathsFor({pageId: id, create: true})
       dispatch(
         page_updateOrCreate({
           id,
@@ -73,8 +124,29 @@ export const PagesContainer = withRedux(() => {
             description: values.description
           }
         })
-      ),
+      )
+    },
     []
+  )
+
+  const handlePageNavigate = React.useCallback(
+    (id: string) => {
+      // Check if the page is a dynamic or static page.
+      // Navigate to /_/:path if dynamic, else to /:path
+
+      let path = generateOriginPath(pageTree, pageTree.find(p => p.id === id)!)
+
+      const dynamicPaths = store.getState()?.dpaths.dynamicPaths
+
+      if (path) {
+        if (dynamicPaths && path in dynamicPaths) {
+          path = `/_${path}`
+        }
+
+        navigate(path)
+      }
+    },
+    [pageTree]
   )
 
   const treeItems = React.useMemo(
@@ -99,10 +171,6 @@ export const PagesContainer = withRedux(() => {
       ),
     [pageTree]
   )
-  console.log(
-    '🚀 ~ file: Pages.tsx ~ line 91 ~ PagesContainer ~ treeItems',
-    treeItems
-  )
 
   return (
     <PagesTab
@@ -120,6 +188,7 @@ export const PagesContainer = withRedux(() => {
       onItemMove={handlePageMove}
       onPageUpdate={handlePageUpdate}
       onItemSelect={id => null}
+      onItemDoubleClick={handlePageNavigate}
     />
   )
 })

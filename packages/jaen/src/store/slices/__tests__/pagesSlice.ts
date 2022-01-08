@@ -9,127 +9,138 @@ import reducer, {
 } from '../pagesSlice'
 
 const previousState: JaenPagesState = {
-  'JaenPage foo-bar-baz-1': {
-    parent: null,
-    children: [],
-    slug: 'test',
-    jaenPageMetadata: {
-      title: 'test',
-      isBlogPost: true,
-      image: 'test',
-      description: 'test',
-      datePublished: 'test',
-      canonical: 'test'
-    },
-    chapters: {
-      Chapter1: {
-        ptrHead: 'JaenSection foo-bar-baz-1',
-        ptrTail: 'JaenSection foo-bar-baz-2',
-        sections: {
-          'JaenSection foo-bar-baz-1': {
-            jaenFields: null,
-            name: 'AboutSection',
-            ptrNext: 'JaenSection foo-bar-baz-2',
-            ptrPrev: null // this is the first section of the chapter
-          },
-          'JaenSection foo-bar-baz-2': {
-            jaenFields: null,
-            name: 'AboutSection',
-            ptrNext: null, // this is the last section of the chapter
-            ptrPrev: 'JaenSection foo-bar-baz-1'
-          }
-        }
+  pages: {
+    'JaenPage foo-bar-baz-1': {
+      parent: null,
+      children: [],
+      slug: 'test',
+      jaenPageMetadata: {
+        title: 'test',
+        isBlogPost: true,
+        image: 'test',
+        description: 'test',
+        datePublished: 'test',
+        canonical: 'test'
       },
-      Chapter2: {
-        ptrHead: 'JaenSection foo-bar-baz-3',
-        ptrTail: 'JaenSection foo-bar-baz-5',
-        sections: {
-          'JaenSection foo-bar-baz-3': {
-            jaenFields: null,
-            name: 'AboutSection',
-            ptrNext: 'JaenSection foo-bar-baz-4',
-            ptrPrev: null // this is the first section of the chapter
-          },
-          'JaenSection foo-bar-baz-4': {
-            jaenFields: null,
-            name: 'AboutSection',
-            ptrNext: 'JaenSection foo-bar-baz-5',
-            ptrPrev: 'JaenSection foo-bar-baz-3'
-          },
-          'JaenSection foo-bar-baz-5': {
-            jaenFields: null,
-            name: 'AboutSection',
-            ptrNext: null, // this is the last section of the chapter
-            ptrPrev: 'JaenSection foo-bar-baz-4'
+      chapters: {
+        Chapter1: {
+          ptrHead: 'JaenSection foo-bar-baz-1',
+          ptrTail: 'JaenSection foo-bar-baz-2',
+          sections: {
+            'JaenSection foo-bar-baz-1': {
+              jaenFields: null,
+              name: 'AboutSection',
+              ptrNext: 'JaenSection foo-bar-baz-2',
+              ptrPrev: null // this is the first section of the chapter
+            },
+            'JaenSection foo-bar-baz-2': {
+              jaenFields: null,
+              name: 'AboutSection',
+              ptrNext: null, // this is the last section of the chapter
+              ptrPrev: 'JaenSection foo-bar-baz-1'
+            }
+          }
+        },
+        Chapter2: {
+          ptrHead: 'JaenSection foo-bar-baz-3',
+          ptrTail: 'JaenSection foo-bar-baz-5',
+          sections: {
+            'JaenSection foo-bar-baz-3': {
+              jaenFields: null,
+              name: 'AboutSection',
+              ptrNext: 'JaenSection foo-bar-baz-4',
+              ptrPrev: null // this is the first section of the chapter
+            },
+            'JaenSection foo-bar-baz-4': {
+              jaenFields: null,
+              name: 'AboutSection',
+              ptrNext: 'JaenSection foo-bar-baz-5',
+              ptrPrev: 'JaenSection foo-bar-baz-3'
+            },
+            'JaenSection foo-bar-baz-5': {
+              jaenFields: null,
+              name: 'AboutSection',
+              ptrNext: null, // this is the last section of the chapter
+              ptrPrev: 'JaenSection foo-bar-baz-4'
+            }
           }
         }
       }
-    }
-  },
-  'JaenPage foo-bar-baz-2': {
-    parent: null,
-    children: [
-      {
-        id: 'JaenPage foo-bar-baz-2-1'
+    },
+    'JaenPage foo-bar-baz-2': {
+      parent: null,
+      children: [
+        {
+          id: 'JaenPage foo-bar-baz-2-1'
+        },
+        {id: 'JaenPage foo-bar-baz-2-2'}
+      ],
+      slug: 'test-2',
+      jaenPageMetadata: {
+        title: 'test',
+        isBlogPost: true,
+        image: 'test',
+        description: 'test',
+        datePublished: 'test',
+        canonical: 'test'
+      }
+    },
+    'JaenPage foo-bar-baz-2-1': {
+      parent: {
+        id: 'JaenPage foo-bar-baz-2'
       },
-      {id: 'JaenPage foo-bar-baz-2-2'}
-    ],
-    slug: 'test-2',
-    jaenPageMetadata: {
-      title: 'test',
-      isBlogPost: true,
-      image: 'test',
-      description: 'test',
-      datePublished: 'test',
-      canonical: 'test'
-    }
-  },
-  'JaenPage foo-bar-baz-2-1': {
-    parent: {
-      id: 'JaenPage foo-bar-baz-2'
+      children: [],
+      slug: 'test-2',
+      jaenPageMetadata: {
+        title: 'test',
+        isBlogPost: true,
+        image: 'test',
+        description: 'test',
+        datePublished: 'test',
+        canonical: 'test'
+      }
     },
-    children: [],
-    slug: 'test-2',
-    jaenPageMetadata: {
-      title: 'test',
-      isBlogPost: true,
-      image: 'test',
-      description: 'test',
-      datePublished: 'test',
-      canonical: 'test'
-    }
-  },
-  'JaenPage foo-bar-baz-2-2': {
-    parent: {
-      id: 'JaenPage foo-bar-baz-2'
-    },
-    children: [],
-    slug: 'test-2',
-    jaenPageMetadata: {
-      title: 'test',
-      isBlogPost: true,
-      image: 'test',
-      description: 'test',
-      datePublished: 'test',
-      canonical: 'test'
+    'JaenPage foo-bar-baz-2-2': {
+      parent: {
+        id: 'JaenPage foo-bar-baz-2'
+      },
+      children: [],
+      slug: 'test-2',
+      jaenPageMetadata: {
+        title: 'test',
+        isBlogPost: true,
+        image: 'test',
+        description: 'test',
+        datePublished: 'test',
+        canonical: 'test'
+      }
     }
   }
 }
 
+const emptyState: JaenPagesState = {
+  pages: {}
+}
+
 test('should return the initial state', () => {
-  expect(reducer(undefined, {} as any)).toEqual({})
+  expect(reducer(undefined, {} as any)).toEqual({
+    pages: {}
+  })
 })
 
 describe('page_updateOrCreate', () => {
   test('should handle a page creation with a empty payload', () => {
-    const result = reducer({}, page_updateOrCreate({}))
+    const result = reducer(emptyState, page_updateOrCreate({}))
 
     // Expect the result to be not bigger than length 1
-    expect(Object.keys(result).length).toBe(1)
+    expect(Object.keys(result.pages).length).toBe(1)
 
-    expect(result[Object.keys(result)[Object.keys(result).length - 1]]).toEqual(
+    expect(
+      result.pages[
+        Object.keys(result.pages)[Object.keys(result.pages).length - 1]
+      ]
+    ).toEqual(
       expect.objectContaining({
-        id: expect.any(String),
         children: [],
         parent: null,
         slug: undefined,
@@ -148,8 +159,8 @@ describe('page_updateOrCreate', () => {
       canonical: 'test'
     }
 
-    const result = reducer(
-      {},
+    const {pages: result} = reducer(
+      emptyState,
       page_updateOrCreate({
         slug: 'test',
         jaenPageMetadata
@@ -158,7 +169,6 @@ describe('page_updateOrCreate', () => {
 
     expect(result[Object.keys(result)[Object.keys(result).length - 1]]).toEqual(
       expect.objectContaining({
-        id: expect.any(String),
         children: [],
         parent: null,
         slug: 'test',
@@ -168,7 +178,7 @@ describe('page_updateOrCreate', () => {
     )
   })
   test('should create a page with a parent (state contains parent page)', () => {
-    const result = reducer(
+    const {pages: result} = reducer(
       previousState,
       page_updateOrCreate({
         slug: 'test',
@@ -179,7 +189,7 @@ describe('page_updateOrCreate', () => {
 
     // Expect that the result is one bigger than the previous state
     expect(Object.keys(result).length).toBe(
-      Object.keys(previousState).length + 1
+      Object.keys(previousState.pages).length + 1
     )
 
     const parentPage = result['JaenPage foo-bar-baz-1']
@@ -197,7 +207,7 @@ describe('page_updateOrCreate', () => {
       jaenPageMetadata: DEFAULT_PAGE_METADATA
     }
 
-    const result = reducer({}, page_updateOrCreate(payload))
+    const {pages: result} = reducer(emptyState, page_updateOrCreate(payload))
 
     // Expect that the result is two bigger
     expect(Object.keys(result).length).toBe(2)
@@ -221,10 +231,12 @@ describe('page_updateOrCreate', () => {
       id: 'JaenPage foo-bar-baz-1'
     }
 
-    const result = reducer(previousState, page_updateOrCreate(payload))
+    const {pages: result} = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is not bigger than the previous state
-    expect(Object.keys(result).length).toBe(Object.keys(previousState).length)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState.pages).length
+    )
 
     // Expect the slug to be updated
     expect(result[payload.id].slug).toBe(payload.slug)
@@ -235,7 +247,7 @@ describe('page_updateOrCreate', () => {
       id: 'JaenPage foo-bar-baz-2'
     }
 
-    const result = reducer({}, page_updateOrCreate(payload))
+    const {pages: result} = reducer(emptyState, page_updateOrCreate(payload))
 
     // Expect the result to be length 1
     expect(Object.keys(result).length).toBe(1)
@@ -256,10 +268,12 @@ describe('page_updateOrCreate', () => {
       }
     }
 
-    const result = reducer(previousState, page_updateOrCreate(payload))
+    const {pages: result} = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is not bigger than the previous state
-    expect(Object.keys(result).length).toBe(Object.keys(previousState).length)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState.pages).length
+    )
 
     // Expect the jaenPageMetadata to be updated
     expect(result['JaenPage foo-bar-baz-1'].jaenPageMetadata).toEqual(
@@ -272,11 +286,11 @@ describe('page_updateOrCreate', () => {
       slug: 'updated-slug'
     }
 
-    const result = reducer(previousState, page_updateOrCreate(payload))
+    const {pages: result} = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is one bigger than the previous state
     expect(Object.keys(result).length).toBe(
-      Object.keys(previousState).length + 1
+      Object.keys(previousState.pages).length + 1
     )
 
     // Expect the slug to be updated
@@ -289,10 +303,12 @@ describe('page_updateOrCreate', () => {
       fromId: 'JaenPage foo-bar-baz-2'
     }
 
-    const result = reducer(previousState, page_updateOrCreate(payload))
+    const {pages: result} = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is not bigger than the previous state
-    expect(Object.keys(result).length).toBe(Object.keys(previousState).length)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState.pages).length
+    )
 
     // Expect the parent to be updated
     expect(result['JaenPage foo-bar-baz-1'].children).toEqual(
@@ -316,11 +332,11 @@ describe('page_updateOrCreate', () => {
       fromId: 'JaenPage foo-bar-baz-2'
     }
 
-    const result = reducer(previousState, page_updateOrCreate(payload))
+    const {pages: result} = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is one bigger than the previous state
     expect(Object.keys(result).length).toBe(
-      Object.keys(previousState).length + 1
+      Object.keys(previousState.pages).length + 1
     )
 
     // Expect the parent to be updated
@@ -345,11 +361,11 @@ describe('page_updateOrCreate', () => {
       fromId: 'JaenPage foo-bar-baz-old-parent'
     }
 
-    const result = reducer(previousState, page_updateOrCreate(payload))
+    const {pages: result} = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is two bigger than the previous state
     expect(Object.keys(result).length).toBe(
-      Object.keys(previousState).length + 2
+      Object.keys(previousState.pages).length + 2
     )
 
     // Find parentPage and oldParentPage in the result
@@ -386,11 +402,11 @@ describe('page_updateOrCreate', () => {
       fromId: 'JaenPage foo-bar-baz-old-parent'
     }
 
-    const result = reducer(previousState, page_updateOrCreate(payload))
+    const {pages: result} = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is three bigger than the previous state
     expect(Object.keys(result).length).toBe(
-      Object.keys(previousState).length + 3
+      Object.keys(previousState.pages).length + 3
     )
 
     // Find page,  parentPage and oldParentPage in the result
@@ -427,11 +443,11 @@ describe('page_updateOrCreate', () => {
       fromId: 'JaenPage foo-bar-baz-old-parent'
     }
 
-    const result = reducer(previousState, page_updateOrCreate(payload))
+    const {pages: result} = reducer(previousState, page_updateOrCreate(payload))
 
     // Expect that the result is three bigger than the previous state
     expect(Object.keys(result).length).toBe(
-      Object.keys(previousState).length + 2
+      Object.keys(previousState.pages).length + 2
     )
 
     // Find page,  parentPage and oldParentPage in the result
@@ -457,21 +473,29 @@ describe('page_updateOrCreate', () => {
 describe('page_markForDeletion', () => {
   test('should delete a page (state includes page)', () => {
     const payload = 'JaenPage foo-bar-baz-1'
-    const result = reducer(previousState, page_markForDeletion(payload))
+    const {pages: result} = reducer(
+      previousState,
+      page_markForDeletion(payload)
+    )
 
     // Expect the result length to be the same as the previous state
-    expect(Object.keys(result).length).toBe(Object.keys(previousState).length)
+    expect(Object.keys(result).length).toBe(
+      Object.keys(previousState.pages).length
+    )
 
     // Expect the page to be marked as deleted
     expect(result[payload].deleted).toBe(true)
   })
   test('should delete a page (state does not include page)', () => {
     const payload = 'JaenPage foo-bar-baz-marked-as-deleted'
-    const result = reducer(previousState, page_markForDeletion(payload))
+    const {pages: result} = reducer(
+      previousState,
+      page_markForDeletion(payload)
+    )
 
     // Expect the result length to be one one bigger than the previous state
     expect(Object.keys(result).length).toBe(
-      Object.keys(previousState).length + 1
+      Object.keys(previousState.pages).length + 1
     )
 
     // Find the page in the result
@@ -503,13 +527,14 @@ describe('section_add', () => {
       ]
     }
 
-    const result = reducer(previousState, section_add(payload as any))
+    const {pages: result} = reducer(previousState, section_add(payload as any))
 
     // Expect
     const page = result[payload.pageId]
 
     const prevNodes =
-      previousState[payload.pageId].chapters![payload.chapterName]!.sections
+      previousState.pages[payload.pageId].chapters![payload.chapterName]!
+        .sections
     const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
@@ -554,13 +579,14 @@ describe('section_add', () => {
       ]
     }
 
-    const result = reducer(previousState, section_add(payload as any))
+    const {pages: result} = reducer(previousState, section_add(payload as any))
 
     // Expect
     const page = result[payload.pageId]
 
     const prevNodes =
-      previousState[payload.pageId].chapters![payload.chapterName]!.sections
+      previousState.pages[payload.pageId].chapters![payload.chapterName]!
+        .sections
     const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
@@ -611,13 +637,14 @@ describe('section_add', () => {
       ]
     }
 
-    const result = reducer(previousState, section_add(payload as any))
+    const {pages: result} = reducer(previousState, section_add(payload as any))
 
     // Expect
     const page = result[payload.pageId]
 
     const prevNodes =
-      previousState[payload.pageId].chapters![payload.chapterName]!.sections
+      previousState.pages[payload.pageId].chapters![payload.chapterName]!
+        .sections
     const sections = page!.chapters![payload.chapterName]!.sections
 
     //> Conditions
@@ -672,7 +699,7 @@ describe('section_add', () => {
       ]
     }
 
-    const result = reducer({}, section_add(payload as any))
+    const {pages: result} = reducer(emptyState, section_add(payload as any))
 
     // Expect three sections to be added
     const page = result[payload.pageId]
@@ -699,7 +726,7 @@ describe('seciton_remove', () => {
       ]
     }
 
-    const result = reducer(previousState, section_remove(payload))
+    const {pages: result} = reducer(previousState, section_remove(payload))
 
     // Expect the section to be marked as deleted
     const page = result[payload.pageId]
@@ -745,7 +772,7 @@ describe('seciton_remove', () => {
       ]
     }
 
-    const result = reducer(previousState, section_remove(payload))
+    const {pages: result} = reducer(previousState, section_remove(payload))
 
     // Expect the section to be marked as deleted
     const page = result[payload.pageId]
@@ -795,7 +822,7 @@ describe('seciton_remove', () => {
       ]
     }
 
-    const result = reducer(previousState, section_remove(payload))
+    const {pages: result} = reducer(previousState, section_remove(payload))
 
     // Expect the section to be marked as deleted
     const page = result[payload.pageId]
@@ -856,7 +883,7 @@ describe('seciton_remove', () => {
       ]
     }
 
-    const result = reducer({}, section_remove(payload))
+    const {pages: result} = reducer(emptyState, section_remove(payload))
 
     // Expect the section to be marked as deleted
     const page = result[payload.pageId]
@@ -905,7 +932,7 @@ describe('field_write', () => {
       value: 'bar'
     }
 
-    const result = reducer(previousState, field_write(payload))
+    const {pages: result} = reducer(previousState, field_write(payload))
 
     // Expect the field to be added to the page
     const page = result[payload.pageId]
@@ -929,7 +956,7 @@ describe('field_write', () => {
       value: 'bar'
     }
 
-    const result = reducer(previousState, field_write(payload))
+    const {pages: result} = reducer(previousState, field_write(payload))
 
     // Expect the field to be added to the page
     const page = result[payload.pageId]

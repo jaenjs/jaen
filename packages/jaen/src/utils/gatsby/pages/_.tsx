@@ -7,7 +7,7 @@ const _ = ({}) => (
   <>
     {'Dynamic Routing'}
     <Router>
-      <Dynamic path="/_/:jaenPageId" />
+      <Dynamic path="/_/*" />
     </Router>
     <Link to="/_/Page Test">click to redirect to page test</Link>
   </>

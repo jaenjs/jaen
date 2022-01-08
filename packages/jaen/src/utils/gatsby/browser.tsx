@@ -11,11 +11,9 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
   const {templates} = pluginOptions
 
   return (
-    <JaenProvider templatesPaths={templates.paths}>
-      <>
-        <Dashboard />
-        {element}
-      </>
-    </JaenProvider>
+    <>
+      <Dashboard />
+      <JaenProvider templatesPaths={templates.paths}>{element}</JaenProvider>
+    </>
   )
 }

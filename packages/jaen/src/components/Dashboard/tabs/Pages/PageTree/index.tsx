@@ -61,6 +61,7 @@ export type PageTreeProps = {
   templates: JaenTemplate[]
   creatorFallbackTemplates: JaenTemplate['children']
   onItemSelect: (id: string | null) => void
+  onItemDoubleClick: (id: string) => void
   onItemCreate: (parentId: string | null, values: CreateValues) => void
   onItemDelete: (id: string) => void
   onItemMove: (
@@ -92,7 +93,6 @@ const PageTree: React.FC<PageTreeProps> = ({
 
   // convert items to a set
   const [tree, setTree] = React.useState(TreeConverter(items))
-  console.log('🚀 ~ file: index.tsx ~ line 92 ~ tree', tree)
 
   const defaultSelection = React.useMemo(() => {
     if (props.defaultSelection && tree.items[props.defaultSelection]) {
@@ -104,7 +104,6 @@ const PageTree: React.FC<PageTreeProps> = ({
 
   const [selectedItem, setSelectedItem] =
     React.useState<string>(defaultSelection)
-  console.log('🚀 ~ file: index.tsx ~ line 102 ~ selectedItem', selectedItem)
 
   const creatorTemplates = React.useMemo(
     () =>
@@ -124,10 +123,6 @@ const PageTree: React.FC<PageTreeProps> = ({
   const handleItemCreate = (values: CreateValues) => {
     // Check if the slug is already taken of a sibling
     const {title, slug, template} = values
-    console.log(
-      '🚀 ~ file: index.tsx ~ line 106 ~ handleItemCreate ~ values',
-      values
-    )
 
     const parentId = selectedItem !== tree.rootId ? selectedItem : null
 
@@ -206,6 +201,16 @@ const PageTree: React.FC<PageTreeProps> = ({
     //event.stopPropagation()
 
     handleSelectItem(id)
+
+    // switch (event.detail) {
+    //   case 1:
+    //     handleSelectItem(id)
+    //   case 2:
+    //     if (id) {
+    //       alert('ad')
+    //       props.onItemDoubleClick(id)
+    //     }
+    // }
   }
 
   const getIcon = (
@@ -296,6 +301,7 @@ const PageTree: React.FC<PageTreeProps> = ({
         whileHover={{scale: 1.005}}
         p={2}
         onClick={handleItemBoxClick}
+        onDoubleClick={() => props.onItemDoubleClick(id)}
         onContextMenu={handleItemBoxClick}>
         <Flex>
           <Box flex={1}>
@@ -309,8 +315,6 @@ const PageTree: React.FC<PageTreeProps> = ({
     )
 
     // Framer Motion wrapper for the item
-
-    console.log('adad', item.data)
 
     return (
       <div

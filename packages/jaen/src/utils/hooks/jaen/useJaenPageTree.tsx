@@ -1,28 +1,28 @@
 import deepmerge from 'deepmerge'
 import {graphql, useStaticQuery} from 'gatsby'
+import * as React from 'react'
 
-import {useAppDeepEqualSelector, useAppSelector} from '../../../store'
-import {JaenPage} from '../../types'
+import {
+  RootState,
+  store,
+  useAppDeepEqualSelector,
+  useAppSelector
+} from '../../../store'
+import {JaenPage, TreeNode} from '../../types'
 
-export type TreeNode = Pick<
-  JaenPage,
-  'id' | 'parent' | 'children' | 'slug' | 'jaenPageMetadata' | 'template'
-> & {deleted?: true}
+export {TreeNode}
 
-/**
- * Access the PageTree of the JaenContext and Static.
- */
-export const useJaenPageTree = (): TreeNode[] => {
-  type QueryData = {
-    allJaenPage: {
-      nodes: TreeNode[]
-    }
+type QueryData = {
+  allJaenPage: {
+    nodes: TreeNode[]
   }
+}
 
-  let data: QueryData
+const useStaticData = () => {
+  let staticData: QueryData
 
   try {
-    data = useStaticQuery<QueryData>(graphql`
+    staticData = useStaticQuery<QueryData>(graphql`
       query {
         allJaenPage {
           nodes {
@@ -50,45 +50,80 @@ export const useJaenPageTree = (): TreeNode[] => {
         }
       }
     `)
-  } catch {
-    data = {
+  } catch (e) {
+    staticData = {
       allJaenPage: {
         nodes: []
       }
     }
   }
 
-  const pages = useAppDeepEqualSelector(state =>
-    Object.keys(state.pages).map(id => {
-      const {slug, parent, children, jaenPageMetadata, template, deleted} =
-        state.pages[id]
+  return staticData
+}
 
-      return {
-        id,
-        ...(slug && {slug}),
-        ...(parent !== undefined && {parent}),
-        ...(children && {children}),
-        ...(jaenPageMetadata && {jaenPageMetadata}),
-        ...(template && {template}),
-        ...(deleted && {deleted})
-      }
-    })
-  ) as TreeNode[]
+const getStatePages = (state: RootState) =>
+  Object.keys(state.pages.pages).map(id => {
+    const {slug, parent, children, jaenPageMetadata, template, deleted} =
+      state.pages.pages[id]
 
-  const merged = data.allJaenPage.nodes
+    return {
+      id,
+      ...(slug && {slug}),
+      ...(parent !== undefined && {parent}),
+      ...(children && {children}),
+      ...(jaenPageMetadata && {jaenPageMetadata}),
+      ...(template && {template}),
+      ...(deleted && {deleted})
+    }
+  })
+
+const mergeStaticWithStatePages = (
+  staticPages: TreeNode[],
+  statePages: JaenPage[]
+): TreeNode[] =>
+  staticPages
     .concat(
-      pages.filter(
-        item => data.allJaenPage.nodes.findIndex(n => n.id === item.id) === -1
+      statePages.filter(
+        item => staticPages.findIndex(n => n.id === item.id) === -1
       )
     )
     .map(({id}) => {
-      const p1 = data.allJaenPage.nodes.find(e => e.id === id)
-      // console.log('🚀 ~ file: useJaenPageTree.tsx ~ line 85 ~ .map ~ p1', p1)
-      const p2 = pages.find(e => e.id === id)
-      // console.log('🚀 ~ file: useJaenPageTree.tsx ~ line 87 ~ .map ~ p2', p2)
+      const p1 = staticPages.find(e => e.id === id)
+      const p2 = statePages.find(e => e.id === id)
 
       return deepmerge(p1 || {}, p2 || {})
     })
 
-  return merged
+/**
+ * Access the PageTree of the JaenContext and Static.
+ */
+export const useJaenPageTree = (): TreeNode[] => {
+  const staticData = useStaticData()
+  const pages = useAppDeepEqualSelector(state =>
+    getStatePages(state)
+  ) as TreeNode[]
+
+  const mergeData = React.useMemo(
+    () => mergeStaticWithStatePages(staticData.allJaenPage.nodes, pages as any),
+    [staticData, pages]
+  )
+
+  console.log(
+    '🚀 ~ file: useJaenPageTree.tsx ~ line 125 ~ mergeData',
+    mergeData
+  )
+
+  return mergeData
+
+  const [data, setData] = React.useState<TreeNode[]>(mergeData)
+
+  React.useEffect(() => {
+    setData(mergeData)
+    console.log(
+      '🚀 ~ file: useJaenPageTree.tsx ~ line 99 ~ React.useEffect ~ mergeData',
+      mergeData
+    )
+  }, [mergeData])
+
+  return data
 }

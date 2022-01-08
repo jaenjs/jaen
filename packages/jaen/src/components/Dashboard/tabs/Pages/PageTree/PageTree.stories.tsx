@@ -123,6 +123,7 @@ Primary.args = {
     }
   ],
   onItemSelect: () => {},
+  onItemDoubleClick: () => alert('double clicked'),
   onItemCreate: () => {},
   onItemDelete: () => {},
   onItemMove: () => {}

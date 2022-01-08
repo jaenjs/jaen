@@ -115,5 +115,6 @@ PagesTab.args = {
       displayName: '',
       children: []
     }
-  })
+  }),
+  onItemDoubleClick: () => alert('double clicked')
 }

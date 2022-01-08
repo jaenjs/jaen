@@ -13,6 +13,7 @@ export default {
   decorators: [
     Story => (
       <JaenPageProvider
+        jaenPageId="JaenPage jaen-page-1"
         staticJaenPage={{
           id: `JaenPage jaen-page-1`,
           slug: 'jaen-page-1',
@@ -47,7 +48,10 @@ export default {
               }
             }
           },
-          templateName: 'BlogPage'
+          template: {
+            name: 'BlogPage',
+            displayName: "'BlogPage'"
+          }
         }}>
         <Story />
       </JaenPageProvider>

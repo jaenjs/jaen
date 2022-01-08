@@ -1,4 +1,6 @@
+import {AddIcon, DeleteIcon, ViewIcon} from '@chakra-ui/icons'
 import {Box, Divider, Flex} from '@chakra-ui/layout'
+import {ButtonGroup, IconButton} from '@chakra-ui/react'
 import {CreateValues} from 'components/Dashboard/tabs/Pages/PageCreator'
 import * as React from 'react'
 
@@ -45,11 +47,35 @@ const PagesTab = (props: PagesTabProps) => {
       <Flex>
         <Box h="500" w="25%">
           <>
+            <ButtonGroup size="sm">
+              <IconButton
+                aria-label="Add a subpage to the selected page"
+                icon={<AddIcon />}
+                disabled
+              />
+              <IconButton
+                aria-label="Delete the selected page"
+                icon={<DeleteIcon />}
+                onClick={() => {
+                  props.onItemDelete(selection!.id)
+
+                  setSelection(null)
+                }}
+                disabled={!selection?.template}
+              />
+              <IconButton
+                aria-label="Navigate to the page"
+                icon={<ViewIcon />}
+                onClick={() => props.onItemDoubleClick(selection?.id!)}
+                disabled={!selection}
+              />
+            </ButtonGroup>
             <PageTree
               items={props.items}
               templates={props.templates}
               creatorFallbackTemplates={props.creatorFallbackTemplates}
               onItemSelect={onSelect}
+              onItemDoubleClick={props.onItemDoubleClick}
               onItemCreate={props.onItemCreate}
               onItemDelete={props.onItemDelete}
               onItemMove={props.onItemMove}

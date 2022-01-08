@@ -17,9 +17,11 @@ import {
 
 import {useDeepEqualSelector} from '../utils/hooks/useDeepEqualSelector'
 import {loadState, saveState} from './localStorage'
+import dpathsSlice from './slices/dpathsSlice'
 import pagesSlice from './slices/pagesSlice'
 
 const combinedReducer = combineReducers({
+  dpaths: dpathsSlice,
   pages: pagesSlice
 })
 

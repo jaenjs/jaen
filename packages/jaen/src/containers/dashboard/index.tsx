@@ -25,8 +25,6 @@ export const Dashboard = withRedux(() => {
 
   const handlePublish = React.useCallback(() => {}, [])
 
-  useJaenPageTree()
-
   return (
     <ChakraProvider>
       <Button

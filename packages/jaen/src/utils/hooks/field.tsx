@@ -73,7 +73,7 @@ export const connectField = <T, P>(
     }
 
     const value = useAppSelector<T | undefined>(state => {
-      const page = state.pages[jaenPageId]
+      const page = state.pages.pages[jaenPageId]
 
       if (page) {
         return getPageField(page)

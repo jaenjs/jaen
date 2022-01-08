@@ -1,6 +1,9 @@
 import {Router} from '@reach/router'
+import {navigate} from 'gatsby'
 import React from 'react'
 
+import {useAppSelector} from '../../store'
+import {withRedux} from '../../store/withRedux'
 import {
   JaenConnection,
   JaenPageOptions,
@@ -19,25 +22,48 @@ export const JaenContext = React.createContext<JaenContext | undefined>(
   undefined
 )
 
+export const useDynamicRedirect = () => {
+  const windowPathname =
+    typeof window !== 'undefined' ? window.location.pathname : ''
+
+  const dynamicPaths = useAppSelector(state => state.dpaths.dynamicPaths)
+
+  React.useEffect(() => {
+    const withoutTrailingSlash = windowPathname.replace(/\/$/, '')
+
+    const pageId = dynamicPaths[withoutTrailingSlash]
+
+    if (pageId) {
+      const withDynamicPrefix = `/_${withoutTrailingSlash}`
+
+      navigate(withDynamicPrefix)
+    }
+  }, [windowPathname])
+}
+
 export const JaenProvider: React.FC<{
   templatesPaths: JaenContext['templatesPaths']
-}> = ({children, templatesPaths}) => {
-  console.log(
-    '🚀 ~ file: JaenProvider.tsx ~ line 18 ~ templatesPaths',
-    templatesPaths
-  )
+}> = withRedux(({children, templatesPaths}) => {
   const templateLoader = async (name: string) => {
     //@ts-ignore
     return (await import(`${___JAEN_TEMPLATES___}/${templatesPaths[name]}`))
       .default
   }
 
+  console.log('🚀 ~ file: jaen.tsx ~ line: 62 ~ JaenProvider ~ JaenProvider')
+
+  useDynamicRedirect()
+
   return (
-    <JaenContext.Provider value={{templatesPaths, templateLoader}}>
+    <JaenContext.Provider
+      value={{
+        templatesPaths,
+        templateLoader
+      }}>
       {children}
     </JaenContext.Provider>
   )
-}
+})
 
 /**
  * Access the JaenContext.

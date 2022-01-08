@@ -89,7 +89,7 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
   const staticChapter = staticJaenPage?.chapters?.[name]
 
   const dynamicChapter = useAppSelector(
-    state => state.pages[jaenPageId]?.chapters?.[name],
+    state => state.pages.pages[jaenPageId]?.chapters?.[name],
     (l, r) => {
       if (!l || !r) {
         return false
