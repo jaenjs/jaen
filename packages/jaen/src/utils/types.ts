@@ -43,7 +43,7 @@ export interface JaenSectionWithId extends JaenSection {
 export type JaenSectionData = JaenSection & JaenData
 
 /**
- * This interace is used to define how a JaenData should look like.
+ * This interface is used to define how a JaenData should look like.
  *
  * It contains the following properties:
  * - `jaenFields`: All the fields that are used in the section.

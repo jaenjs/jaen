@@ -121,6 +121,7 @@ export const PageContent = (props: PageContentProps) => {
                   <Input
                     // id="slug"
                     placeholder="the-slug"
+                    disabled={!props.template}
                     {...register('slug', {
                       required: 'This is required',
                       minLength: {

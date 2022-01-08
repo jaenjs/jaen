@@ -95,6 +95,7 @@ const PagesTab = (props: PagesTabProps) => {
                 description: selection.jaenPageMetadata.description
               }}
               onSubmit={handlePageUpdate}
+              ext
             />
           ) : (
             <p>Select a page to view its content.</p>
