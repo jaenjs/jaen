@@ -1,1 +1,1 @@
-export * from './src/utils/gatsby/browser'
+export * from './src/internal/gatsby/browser'

@@ -1,1 +1,1 @@
-module.exports = require('./src/utils/gatsby/node')
+module.exports = require('./src/internal/gatsby/node')

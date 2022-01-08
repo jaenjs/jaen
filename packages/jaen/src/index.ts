@@ -1,4 +1,2 @@
-export {connectPage, connectTemplate} from './utils/hooks/jaenPage'
-export {connectSection} from './utils/hooks/section'
-
-export {Field} from './containers/fields'
+export {connectField, Field} from './fields'
+export {connectPage, connectSection, connectTemplate} from './internal/page'
