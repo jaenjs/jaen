@@ -44,7 +44,7 @@ export const useJaenPageContext = () => {
 
 export const pageQuery = graphql`
   fragment JaenPageData on Query {
-    jaenPage(id: {eq: $jaenPageId}) {
+    staticJaenPage: jaenPage(id: {eq: $jaenPageId}) {
       id
       jaenFields
       jaenPageMetadata {

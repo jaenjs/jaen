@@ -46,15 +46,15 @@ describe('generateOriginPath', () => {
   test('should generate paths for a page', () => {
     const path = generateOriginPath(jaenPageTree, jaenPageTree[0])
 
-    expect(path).toBe('/')
+    expect(path).toBe('/root')
 
     const path2 = generateOriginPath(jaenPageTree, jaenPageTree[1])
 
-    expect(path2).toBe('/contact')
+    expect(path2).toBe('/root/contact')
 
     const path3 = generateOriginPath(jaenPageTree, jaenPageTree[2])
 
-    expect(path3).toBe('/contact/subcontact')
+    expect(path3).toBe('/root/contact/subcontact')
   })
 })
 
@@ -64,22 +64,22 @@ describe('generatePagePaths', () => {
     const paths = generatePagePaths(jaenPageTree, pageId)
 
     expect(paths).toEqual({
-      '/': '1',
-      '/contact': '2',
-      '/contact/subcontact': '3'
+      '/root': '1',
+      '/root/contact': '2',
+      '/root/contact/subcontact': '3'
     })
 
     const paths2 = generatePagePaths(jaenPageTree, '2')
 
     expect(paths2).toEqual({
-      '/contact': '2',
-      '/contact/subcontact': '3'
+      '/root/contact': '2',
+      '/root/contact/subcontact': '3'
     })
 
     const paths3 = generatePagePaths(jaenPageTree, '3')
 
     expect(paths3).toEqual({
-      '/contact/subcontact': '3'
+      '/root/contact/subcontact': '3'
     })
   })
 })

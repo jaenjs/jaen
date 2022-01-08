@@ -56,7 +56,7 @@ describe('updateForPage', () => {
 
     expect(newState).toEqual({
       dynamicPaths: {
-        '/contact/subcontact': '3'
+        '/root/contact/subcontact': '3'
       }
     })
   })

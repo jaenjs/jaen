@@ -56,16 +56,26 @@ export const PagesContainer = withRedux(() => {
   }, [pageTree])
 
   React.useEffect(() => {
-    return () => {
-      if (latestAddedPageId) {
-        setShouldUpdateDpathsFor({pageId: latestAddedPageId, create: true})
-      }
+    console.log('latestAddedPageId', latestAddedPageId)
+    if (latestAddedPageId) {
+      dispatch(
+        updateForPage({
+          jaenPageTree: pageTree,
+          pageId: latestAddedPageId,
+          create: true
+        })
+      )
     }
   }, [latestAddedPageId])
 
   const handlePageGet = React.useCallback(
     id => {
-      const jaenPage = pageTree.find(p => p.id === id)
+      let jaenPage = pageTree.find(p => p.id === id)
+
+      // TODO: Remove workaround
+      if (!jaenPage) {
+        jaenPage = pageTree.find(p => p.id === latestAddedPageId)
+      }
 
       if (!jaenPage) {
         throw Error(`PagesContainer:getPage cannot get jaenPage with id ${id}`)
@@ -133,8 +143,28 @@ export const PagesContainer = withRedux(() => {
     (id: string) => {
       // Check if the page is a dynamic or static page.
       // Navigate to /_/:path if dynamic, else to /:path
+      let node = pageTree.find(p => p.id === id)
 
-      let path = generateOriginPath(pageTree, pageTree.find(p => p.id === id)!)
+      if (!node) {
+        node = pageTree.find(p => p.id === latestAddedPageId)!
+      }
+
+      console.log(
+        '🚀 ~ file: Pages.tsx ~ line 150 ~ PagesContainer ~ node',
+        node
+      )
+
+      let path = generateOriginPath(pageTree, node)
+      console.log(
+        '🚀 ~ file: Pages.tsx ~ line 158 ~ PagesContainer ~ path',
+        path
+      )
+
+      // if (path === '/') {
+      //   path += node.slug
+      // } else {
+      //   path += '/' + node.slug
+      // }
 
       const dynamicPaths = store.getState()?.dpaths.dynamicPaths
 

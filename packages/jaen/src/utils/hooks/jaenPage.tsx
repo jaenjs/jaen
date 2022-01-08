@@ -49,13 +49,16 @@ export const connectTemplate = <P extends JaenPageProps>(
   Component: React.ComponentType<P>,
   options: JaenTemplateOptions
 ) => {
-  const MyComp: JaenConnection<P, JaenTemplateOptions> = props => (
-    <JaenPageProvider
-      jaenPageId={props.jaenPageId}
-      staticJaenPage={props.data ? props.data.staticJaenPage : null}>
-      <Component {...props} />
-    </JaenPageProvider>
-  )
+  const MyComp: JaenConnection<P, JaenTemplateOptions> = props => {
+    return (
+      <JaenPageProvider
+        // @ts-ignore
+        jaenPageId={props.pageContext.jaenPageId}
+        staticJaenPage={props.data ? props.data.staticJaenPage : null}>
+        <Component {...props} />
+      </JaenPageProvider>
+    )
+  }
 
   MyComp.options = options
 
@@ -75,7 +78,8 @@ export const connectPage = <P extends JaenPageProps>(
 ) => {
   const MyComp: JaenConnection<P, JaenPageOptions> = props => (
     <JaenPageProvider
-      jaenPageId={props.jaenPageId}
+      // @ts-ignore
+      jaenPageId={props.pageContext.jaenPageId}
       staticJaenPage={props.data ? props.data.staticJaenPage : null}>
       <Component {...props} />
     </JaenPageProvider>

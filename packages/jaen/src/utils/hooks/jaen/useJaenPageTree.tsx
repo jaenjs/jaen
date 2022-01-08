@@ -24,7 +24,7 @@ const useStaticData = () => {
   try {
     staticData = useStaticQuery<QueryData>(graphql`
       query {
-        allJaenPage {
+        allJaenPage(filter: {id: {ne: "JaenPage /"}}) {
           nodes {
             id
             slug

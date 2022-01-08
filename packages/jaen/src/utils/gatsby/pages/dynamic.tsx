@@ -4,10 +4,11 @@ import * as React from 'react'
 
 import {useAppSelector} from '../../../store'
 import {withRedux} from '../../../store/withRedux'
+import {useJaenTemplates, useJaenPageTree} from '../../hooks/jaen'
 import {usePromiseEffect} from '../../hooks/usePromiseEffect'
 import {JaenPageProvider} from '../../providers/JaenPageProvider'
 import {useJaenContext} from '../../providers/JaenProvider'
-import {JaenConnection, JaenPageOptions} from '../../types'
+import {JaenConnection, JaenPageOptions, JaenPageProps} from '../../types'
 
 const Dynamic = ({...props}: Partial<PageProps>) => {
   const dynamicPaths = useAppSelector(state => state.dpaths.dynamicPaths)
@@ -21,7 +22,7 @@ const Dynamic = ({...props}: Partial<PageProps>) => {
     throw new Error('Something went wrong while preparing a dynamic page')
   }
 
-  const pageId = React.useMemo(() => dynamicPaths[path], [path])
+  const {pageId, templateName} = React.useMemo(() => dynamicPaths[path], [path])
 
   const {templateLoader} = useJaenContext()
 
@@ -31,18 +32,10 @@ const Dynamic = ({...props}: Partial<PageProps>) => {
 
     if (!(path in dynamicPaths)) {
       const newPath = Object.keys(dynamicPaths).find(
-        path => dynamicPaths[path] === pageId
-      )
-      console.log(
-        '🚀 ~ file: dynamic.tsx ~ line 40 ~ React.useEffect ~ newPath',
-        newPath
+        path => dynamicPaths[path]?.pageId === pageId
       )
 
       if (newPath) {
-        console.log(
-          '🚀 ~ file: dynamic.tsx ~ line 44 ~ React.useEffect ~ newPath',
-          newPath
-        )
         // Page has been moved, update to the new path
         navigate(`/_${newPath}`)
       } else {
@@ -52,7 +45,7 @@ const Dynamic = ({...props}: Partial<PageProps>) => {
     }
   }, [dynamicPaths])
 
-  const template = useAppSelector(state => state.pages.pages[pageId]?.template)
+  const template = useJaenTemplates().find(t => t.name === templateName)
 
   if (!template) {
     throw Error(
@@ -62,7 +55,7 @@ const Dynamic = ({...props}: Partial<PageProps>) => {
 
   const {value: Component} = usePromiseEffect(async () => {
     // TODO: Remove this hack to ignore incorrect template names
-    return await templateLoader('BlogPage' || template.name)
+    return await templateLoader(templateName)
   }, [template])
 
   if (!Component) {
@@ -75,8 +68,8 @@ const Dynamic = ({...props}: Partial<PageProps>) => {
 
   return (
     <Component
-      jaenPageId={pageId}
-      {...(props as PageProps)}
+      {...(props as any)}
+      pageContext={{...props.pageContext, jaenPageId: pageId}}
       data={{...props.data, staticJaenPage: null}}
     />
   )

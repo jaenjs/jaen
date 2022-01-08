@@ -1,7 +1,8 @@
 import {AddIcon, DeleteIcon, ViewIcon} from '@chakra-ui/icons'
 import {Box, Divider, Flex} from '@chakra-ui/layout'
-import {ButtonGroup, IconButton} from '@chakra-ui/react'
+import {Button, ButtonGroup, IconButton} from '@chakra-ui/react'
 import {CreateValues} from 'components/Dashboard/tabs/Pages/PageCreator'
+import {navigate} from 'gatsby'
 import * as React from 'react'
 
 import {TreeNode} from '../../../../utils/hooks/jaen/useJaenPageTree'
@@ -43,9 +44,9 @@ const PagesTab = (props: PagesTabProps) => {
 
   return (
     <div>
-      <h1>PagesTab</h1>
+      <Button onClick={() => navigate('/')}>Site</Button>
       <Flex>
-        <Box h="500" w="25%">
+        <Box h="70vh" w="35%">
           <>
             <ButtonGroup size="sm">
               <IconButton
@@ -85,18 +86,16 @@ const PagesTab = (props: PagesTabProps) => {
         <Divider orientation="vertical" />
         <Box flex={1}>
           {selection ? (
-            <>
-              <PageContent
-                key={selection.id}
-                template={selectedTemplate}
-                values={{
-                  title: selection.jaenPageMetadata.title,
-                  slug: selection.slug,
-                  description: selection.jaenPageMetadata.description
-                }}
-                onSubmit={handlePageUpdate}
-              />
-            </>
+            <PageContent
+              key={selection.id}
+              template={selectedTemplate}
+              values={{
+                title: selection.jaenPageMetadata.title,
+                slug: selection.slug,
+                description: selection.jaenPageMetadata.description
+              }}
+              onSubmit={handlePageUpdate}
+            />
           ) : (
             <p>Select a page to view its content.</p>
           )}

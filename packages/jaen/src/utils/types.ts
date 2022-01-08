@@ -110,10 +110,10 @@ export type TreeNode = Pick<
   'id' | 'parent' | 'children' | 'slug' | 'jaenPageMetadata' | 'template'
 > & {deleted?: true}
 
-export interface JaenPageProps extends Omit<PageProps, 'data'> {
-  jaenPageId: string
-  data?: PageProps<{staticJaenPage: JaenPage | null}>['data']
-}
+export type JaenPageProps = PageProps<
+  {staticJaenPage: JaenPage | null},
+  {jaenPageId: string}
+>
 
 export interface JaenPageOptions {
   /**

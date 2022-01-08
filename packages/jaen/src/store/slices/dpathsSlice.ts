@@ -4,7 +4,12 @@ import {generatePagePaths} from '../../utils/helpers'
 import {TreeNode} from '../../utils/types'
 
 export interface DpathsState {
-  dynamicPaths: {[path: string]: string}
+  dynamicPaths: {
+    [path: string]: {
+      pageId: string
+      templateName: string
+    }
+  }
 }
 
 const initialState: DpathsState = {
@@ -26,8 +31,10 @@ const dpathsSlice = createSlice({
       const {jaenPageTree, pageId, create} = action.payload
 
       const dynamicIds = Object.fromEntries(
-        Object.entries(state.dynamicPaths).map(([k, v]) => [v, k])
+        Object.entries(state.dynamicPaths).map(([k, v]) => [v.pageId, k])
       )
+
+      const node = jaenPageTree.find(node => node.id === pageId)
 
       const paths = generatePagePaths(jaenPageTree, pageId)
 
@@ -40,7 +47,10 @@ const dpathsSlice = createSlice({
         }
 
         if (create) {
-          state.dynamicPaths[path] = pageId
+          state.dynamicPaths[path] = {
+            pageId,
+            templateName: node?.template?.name!
+          }
         }
       }
     }

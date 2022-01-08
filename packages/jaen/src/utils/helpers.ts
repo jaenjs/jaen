@@ -6,20 +6,16 @@ export const omitSingle = (key: string, {[key]: _, ...obj}) => obj
 export const generateOriginPath = (
   jaenPageTree: TreeNode[],
   node: TreeNode,
-  path = ''
+  path = `/${node.slug}`
 ): string | undefined => {
   const parentId = node.parent?.id
   const parent = jaenPageTree.find(n => n.id === parentId)
 
   if (parent) {
-    return generateOriginPath(
-      jaenPageTree,
-      parent,
-      path ? `${node.slug}/${path}` : node.slug
-    )
-  } else {
-    return `/${path}`
+    return generateOriginPath(jaenPageTree, parent, `/${parent.slug}${path}`)
   }
+
+  return path
 }
 
 export const generatePagePaths = (jaenPageTree: TreeNode[], pageId: string) => {
