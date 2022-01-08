@@ -1,4 +1,3 @@
-import {store} from '../store'
 import {TreeNode} from './hooks/jaen/useJaenPageTree'
 
 export const omitSingle = (key: string, {[key]: _, ...obj}) => obj

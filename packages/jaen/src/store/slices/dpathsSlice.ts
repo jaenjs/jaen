@@ -1,7 +1,7 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit'
 
-import {generatePagePaths} from '../../utils/helpers'
-import {TreeNode} from '../../utils/types'
+import {generatePagePaths} from '@src/utils/helpers'
+import {TreeNode} from '@src/utils/types'
 
 export interface DpathsState {
   dynamicPaths: {

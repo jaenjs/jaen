@@ -38,6 +38,7 @@
     "@reduxjs/toolkit": "^1.6.2",
     "framer-motion": "^5",
     "gatsby": "^4.3.0",
+    "gatsby-plugin-alias-imports": "^1.0.5",
     "gatsby-plugin-compile-es6-packages": "^2.1.1",
     "react-hook-form": "^7.22.5",
     "react-in-viewport": "^1.0.0-alpha.20",

@@ -1,10 +1,11 @@
 import {Box} from '@chakra-ui/react'
-import {Story, ComponentMeta} from '@storybook/react'
+import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
 
+import {connectSection} from '@src/utils/hooks/section'
+import {JaenPageProvider} from '@src/utils/providers/JaenPageProvider'
+
 import Component from '.'
-import {connectSection} from '../../../utils/hooks/section'
-import {JaenPageProvider} from '../../../utils/providers/JaenPageProvider'
 import TextField from '../TextField'
 
 export default {

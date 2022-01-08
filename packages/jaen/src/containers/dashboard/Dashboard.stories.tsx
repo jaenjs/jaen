@@ -1,8 +1,9 @@
-import {Story, ComponentMeta} from '@storybook/react'
+import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
 
+import {JaenProvider} from '@src/utils/providers/JaenProvider'
+
 import {Dashboard} from '.'
-import {JaenProvider} from '../../utils/providers/JaenProvider'
 
 export default {
   title: 'containers/Dashboard',

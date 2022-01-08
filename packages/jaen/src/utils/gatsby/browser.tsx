@@ -1,7 +1,8 @@
 import {GatsbyBrowser} from 'gatsby'
 
+import {JaenProvider} from '@src/utils/providers/JaenProvider'
+
 import {Dashboard} from '../../containers/dashboard/index'
-import {JaenProvider} from '../providers/JaenProvider'
 import {JaenPluginOptions} from '../types'
 
 export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (

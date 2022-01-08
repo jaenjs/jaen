@@ -1,34 +1,30 @@
 import {
   Accordion,
-  AccordionItem,
   AccordionButton,
-  AccordionPanel,
   AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  Badge,
   Box,
-  Input,
-  Text,
-  Heading,
-  InputGroup,
-  InputLeftElement,
-  FormControl,
-  FormLabel,
-  Textarea,
-  Skeleton,
-  Flex,
-  Spacer,
   Button,
   ButtonGroup,
-  VStack,
-  useToast,
-  FormHelperText,
+  Flex,
+  FormControl,
   FormErrorMessage,
-  Badge,
-  Img
+  FormHelperText,
+  FormLabel,
+  Heading,
+  Img,
+  Input,
+  Skeleton,
+  Spacer,
+  Textarea,
+  useToast
 } from '@chakra-ui/react'
 import * as React from 'react'
 import {useForm} from 'react-hook-form'
 
-import {FormProps, JaenTemplate} from '../../../../../utils/types'
+import {FormProps, JaenTemplate} from '@src/utils/types'
 
 export type ContentValues = {
   title: string

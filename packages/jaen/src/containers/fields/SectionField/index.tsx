@@ -1,47 +1,23 @@
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  AddIcon,
-  DeleteIcon,
-  DragHandleIcon,
-  CopyIcon
-} from '@chakra-ui/icons'
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverHeader,
-  PopoverBody,
-  PopoverArrow,
-  PopoverCloseButton,
-  PopoverAnchor,
-  Box,
-  ButtonGroup,
-  IconButton,
-  Skeleton
-} from '@chakra-ui/react'
+import {Box, Skeleton} from '@chakra-ui/react'
 import deepmerge from 'deepmerge'
 import * as React from 'react'
 
-import SectionAddPopover from '../../../components/popovers/SectionAdd'
-import SectionManagePopover from '../../../components/popovers/SectionManage'
-import {useAppDispatch, useAppSelector} from '../../../store'
-import {section_add, section_remove} from '../../../store/slices/pagesSlice'
-import {withRedux} from '../../../store/withRedux'
-import {merge} from '../../../utils/merge'
-import {useJaenPageContext} from '../../../utils/providers/JaenPageProvider'
+import SectionAddPopover from '@src/components/popovers/SectionAdd'
+import SectionManagePopover from '@src/components/popovers/SectionManage'
+import {useAppDispatch, useAppSelector} from '@src/store'
+import {section_add, section_remove} from '@src/store/slices/pagesSlice'
+import {withRedux} from '@src/store/withRedux'
+import {useJaenPageContext} from '@src/utils/providers/JaenPageProvider'
 import {
   JaenSectionProvider,
   useJaenSectionContext
-} from '../../../utils/providers/JaenSectionProvider'
+} from '@src/utils/providers/JaenSectionProvider'
 import {
   JaenConnection,
-  JaenPage,
   JaenSectionData,
   JaenSectionOptions,
-  JaenSectionWithId,
-  PopoverProps
-} from '../../../utils/types'
+  JaenSectionWithId
+} from '@src/utils/types'
 
 export interface SectionFieldProps {
   name: string // chapterName

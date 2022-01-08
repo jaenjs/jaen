@@ -1,7 +1,7 @@
 import {graphql} from 'gatsby'
 import React from 'react'
 
-import {JaenPage, JaenTemplateOptions} from '../types'
+import {JaenPage} from '../types'
 
 export interface JaenPageContext {
   jaenPageId: string

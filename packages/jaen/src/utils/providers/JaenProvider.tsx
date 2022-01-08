@@ -1,14 +1,14 @@
-import {Router} from '@reach/router'
 import {navigate} from 'gatsby'
 import React from 'react'
 
-import {useAppSelector} from '../../store'
-import {withRedux} from '../../store/withRedux'
+import {useAppSelector} from '@src/store'
+import {withRedux} from '@src/store/withRedux'
+
 import {
   JaenConnection,
   JaenPageOptions,
-  JaenPluginOptions,
-  JaenPageProps
+  JaenPageProps,
+  JaenPluginOptions
 } from '../types'
 
 export interface JaenContext {

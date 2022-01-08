@@ -1,8 +1,9 @@
-import {Story, ComponentMeta} from '@storybook/react'
+import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
 
+import {JaenPageProvider} from '@src/utils/providers/JaenPageProvider'
+
 import Component from '.'
-import {JaenPageProvider} from '../../../utils/providers/JaenPageProvider'
 
 export default {
   title: 'containers/fields/TextField',

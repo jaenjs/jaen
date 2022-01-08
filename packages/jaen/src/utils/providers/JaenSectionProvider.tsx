@@ -1,5 +1,6 @@
 import React from 'react'
-import {JaenSectionOptions} from 'utils/types'
+
+import {JaenSectionOptions} from '@src/utils/types'
 
 export type JaenSectionType = {
   chapterName: string

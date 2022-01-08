@@ -1,4 +1,5 @@
-import {connectField} from '../../../utils/hooks/field'
+import {connectField} from '@src/utils/hooks/field'
+
 import Editor from './Editor'
 
 const TextField = connectField<string, {rtf?: boolean}>(

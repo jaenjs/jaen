@@ -2,13 +2,11 @@ import {Center, CircularProgress} from '@chakra-ui/react'
 import {navigate, PageProps} from 'gatsby'
 import * as React from 'react'
 
-import {useAppSelector} from '../../../store'
-import {withRedux} from '../../../store/withRedux'
-import {useJaenTemplates, useJaenPageTree} from '../../hooks/jaen'
-import {usePromiseEffect} from '../../hooks/usePromiseEffect'
-import {JaenPageProvider} from '../../providers/JaenPageProvider'
-import {useJaenContext} from '../../providers/JaenProvider'
-import {JaenConnection, JaenPageOptions, JaenPageProps} from '../../types'
+import {useAppSelector} from '@src/store'
+import {withRedux} from '@src/store/withRedux'
+import {useJaenTemplates} from '@src/utils/hooks/jaen'
+import {usePromiseEffect} from '@src/utils/hooks/usePromiseEffect'
+import {useJaenContext} from '@src/utils/providers/JaenProvider'
 
 const Dynamic = ({...props}: Partial<PageProps>) => {
   const dynamicPaths = useAppSelector(state => state.dpaths.dynamicPaths)

@@ -1,6 +1,5 @@
-import {ReactNode} from 'react'
+import {SectionOptionsContext} from '@src/utils/providers/JaenSectionProvider'
 
-import {SectionOptionsContext} from '../providers/JaenSectionProvider'
 import {JaenConnection, JaenSectionOptions} from '../types'
 
 export type ConnectedFC<P> = React.FC<P> & {

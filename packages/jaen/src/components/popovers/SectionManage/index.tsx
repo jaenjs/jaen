@@ -1,29 +1,18 @@
+import {ChevronLeftIcon, ChevronRightIcon, DeleteIcon} from '@chakra-ui/icons'
 import {
-  DeleteIcon,
-  CopyIcon,
-  SmallAddIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@chakra-ui/icons'
-import {
+  Box,
+  Flex,
+  HStack,
+  IconButton,
   Popover,
-  PopoverTrigger,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
   PopoverContent,
   PopoverHeader,
-  PopoverBody,
-  PopoverFooter,
-  PopoverArrow,
-  PopoverCloseButton,
-  PopoverAnchor,
-  Button,
-  Flex,
-  IconButton,
+  PopoverTrigger,
   Spacer,
-  VStack,
-  Divider,
-  Text,
-  Box,
-  HStack
+  Text
 } from '@chakra-ui/react'
 import * as React from 'react'
 

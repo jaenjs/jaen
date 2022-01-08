@@ -1,10 +1,10 @@
 import {JaenPage} from 'utils/types'
 
-import {useAppDispatch, useAppSelector} from '../../store'
-import {field_write, JaenPageState} from '../../store/slices/pagesSlice'
-import {withRedux} from '../../store/withRedux'
-import {useJaenPageContext} from '../providers/JaenPageProvider'
-import {useJaenSectionContext} from '../providers/JaenSectionProvider'
+import {useAppDispatch, useAppSelector} from '@src/store'
+import {field_write, JaenPageState} from '@src/store/slices/pagesSlice'
+import {withRedux} from '@src/store/withRedux'
+import {useJaenPageContext} from '@src/utils/providers/JaenPageProvider'
+import {useJaenSectionContext} from '@src/utils/providers/JaenSectionProvider'
 
 export interface JaenFieldProps<T> {
   name: string

@@ -1,5 +1,5 @@
-import {DependencyList} from 'react'
 import * as React from 'react'
+import {DependencyList} from 'react'
 
 type PromiseState<T> =
   | {status: 'idle' | 'pending'; value: null; error: null}

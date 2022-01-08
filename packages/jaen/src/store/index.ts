@@ -7,18 +7,16 @@
  * Use of this source code is governed by an EUPL-1.2 license that can be found
  * in the LICENSE file at https://snek.at/license
  */
-import {configureStore, combineReducers} from '@reduxjs/toolkit'
+import { combineReducers, configureStore } from '@reduxjs/toolkit'
+import { useDeepEqualSelector } from '@src/utils/hooks/useDeepEqualSelector'
 import {
-  useDispatch,
-  useSelector,
-  TypedUseSelectorHook,
-  useStore
+  TypedUseSelectorHook, useDispatch,
+  useSelector, useStore
 } from 'react-redux'
-
-import {useDeepEqualSelector} from '../utils/hooks/useDeepEqualSelector'
-import {loadState, saveState} from './localStorage'
+import { loadState, saveState } from './localStorage'
 import dpathsSlice from './slices/dpathsSlice'
 import pagesSlice from './slices/pagesSlice'
+
 
 const combinedReducer = combineReducers({
   dpaths: dpathsSlice,

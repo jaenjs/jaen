@@ -1,9 +1,8 @@
-import {createSlice, PayloadAction, DeepPartial} from '@reduxjs/toolkit'
-import update from 'immutability-helper'
+import {createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {v4 as uuidv4} from 'uuid'
 
-import {omitSingle} from '../../utils/helpers'
-import {JaenPage, JaenSection, JaenSectionWithId} from '../../utils/types'
+import {omitSingle} from '@src/utils/helpers'
+import {JaenPage, JaenSection, JaenSectionWithId} from '@src/utils/types'
 
 export interface JaenPageState
   extends Omit<Partial<JaenPage>, 'sections' | 'id'> {

@@ -1,23 +1,18 @@
 import {navigate} from 'gatsby'
 import * as React from 'react'
 
-import PagesTab from '../../../components/Dashboard/tabs/Pages'
-import {ContentValues} from '../../../components/Dashboard/tabs/Pages/PageContent'
-import {CreateValues} from '../../../components/Dashboard/tabs/Pages/PageCreator'
-import {
-  store,
-  useAppDispatch,
-  useAppSelector,
-  useAppState
-} from '../../../store'
-import {updateForPage} from '../../../store/slices/dpathsSlice'
+import PagesTab from '@src/components/Dashboard/tabs/Pages'
+import {ContentValues} from '@src/components/Dashboard/tabs/Pages/PageContent'
+import {CreateValues} from '@src/components/Dashboard/tabs/Pages/PageCreator'
+import {store, useAppDispatch, useAppSelector} from '@src/store'
+import {updateForPage} from '@src/store/slices/dpathsSlice'
 import {
   page_markForDeletion,
   page_updateOrCreate
-} from '../../../store/slices/pagesSlice'
-import {withRedux} from '../../../store/withRedux'
-import {generateOriginPath} from '../../../utils/helpers'
-import {useJaenPageTree, useJaenTemplates} from '../../../utils/hooks/jaen'
+} from '@src/store/slices/pagesSlice'
+import {withRedux} from '@src/store/withRedux'
+import {generateOriginPath} from '@src/utils/helpers'
+import {useJaenPageTree, useJaenTemplates} from '@src/utils/hooks/jaen'
 
 export const PagesContainer = withRedux(() => {
   console.log('🚀 ~ file: pages.tsx ~ line 31 ~ PagesContainer ~ withRedux')

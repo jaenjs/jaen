@@ -1,11 +1,7 @@
 import {Drawer, DrawerContent, DrawerOverlay} from '@chakra-ui/react'
 import * as React from 'react'
-import {IconType} from 'react-icons'
 
-import SidebarWithHeader, {
-  LinkItemProps,
-  SidebarItemKeys
-} from './SidebarWithHeader'
+import SidebarWithHeader, {SidebarItemKeys} from './SidebarWithHeader'
 
 const Dashboard: React.FC<{
   tabs: {

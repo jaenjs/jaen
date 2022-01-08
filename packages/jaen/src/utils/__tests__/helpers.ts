@@ -1,5 +1,6 @@
+import {TreeNode} from '@src/utils/hooks/jaen/useJaenPageTree'
+
 import {generateOriginPath, generatePagePaths} from '../helpers'
-import {TreeNode} from '../hooks/jaen/useJaenPageTree'
 
 const jaenPageTree: TreeNode[] = [
   {

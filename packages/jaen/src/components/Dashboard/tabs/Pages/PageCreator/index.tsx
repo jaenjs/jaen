@@ -1,29 +1,27 @@
 import {
+  Button,
+  FormControl,
+  FormErrorMessage,
+  FormHelperText,
+  FormLabel,
+  Input,
   Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
   ModalBody,
   ModalCloseButton,
-  Input,
-  FormControl,
-  FormLabel,
-  Button,
-  FormHelperText,
-  FormErrorMessage,
-  toast,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   useToast
 } from '@chakra-ui/react'
-import {template} from 'lodash'
 import * as React from 'react'
 import {Controller, useForm} from 'react-hook-form'
 
 import {
   FormProps,
-  JaenTemplateWithoutChildren,
-  JaenTemplate
-} from '../../../../../utils/types'
+  JaenTemplate,
+  JaenTemplateWithoutChildren
+} from '@src/utils/types'
 
 type TemplateSelectorProps = {
   selectedTemplate: string

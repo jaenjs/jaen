@@ -1,4 +1,4 @@
-import {PluginOptions, PageProps} from 'gatsby'
+import {PageProps, PluginOptions} from 'gatsby'
 
 export interface JaenPluginOptions extends PluginOptions {
   plugins: string[]

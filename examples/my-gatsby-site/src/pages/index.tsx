@@ -3,10 +3,10 @@ import {Wrap} from '@chakra-ui/layout'
 import {Box} from '@chakra-ui/layout'
 import {Button, Skeleton} from '@chakra-ui/react'
 import {BlockContainer, fields, renderer} from '@jaenjs/jaen'
+import {Navbar, Hero, Footer, BlogCard} from '@src/components'
 import * as React from 'react'
 
 import {PricingBlock} from '../blocks'
-import {Navbar, Hero, Footer, BlogCard} from '../components'
 
 // markup
 const IndexPage: React.FC = () => {

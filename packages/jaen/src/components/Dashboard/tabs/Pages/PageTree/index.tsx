@@ -29,14 +29,11 @@ import {
   BoxProps
 } from '@chakra-ui/react'
 import styled from '@emotion/styled'
+import {JaenTemplate, JaenTemplateWithoutChildren} from '@src/utils/types'
 import {motion} from 'framer-motion'
 import * as React from 'react'
 import {FaFile, FaFolderMinus, FaFolderPlus} from 'react-icons/fa'
 
-import {
-  JaenTemplate,
-  JaenTemplateWithoutChildren
-} from '../../../../../utils/types'
 import {ContextMenu} from '../../../../ContextMenu'
 import {CreateValues, PageCreator} from '../PageCreator'
 import {resolveChildSlugs, titleToSlug, TreeConverter} from './treeconverter'

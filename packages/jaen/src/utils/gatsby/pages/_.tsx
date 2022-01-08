@@ -1,5 +1,5 @@
 import {Router} from '@reach/router'
-import {Link, PageProps} from 'gatsby'
+import {Link} from 'gatsby'
 
 import Dynamic from './dynamic'
 

@@ -1,9 +1,9 @@
-import {Box} from '@chakra-ui/react'
+import { Box } from '@chakra-ui/react'
 import styled from '@emotion/styled'
 import loadable from '@loadable/component'
 import * as React from 'react'
-
 import './style.css'
+
 
 const EditorWrapper = styled(Box)`
   width: 100%;

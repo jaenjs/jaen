@@ -1,5 +1,3 @@
-import {useStaticQuery, graphql} from 'gatsby'
-
 import {RootState, store} from './index'
 
 const key = 'jaen'

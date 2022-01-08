@@ -1,21 +1,12 @@
-import {ChakraProvider, Button, useDisclosure} from '@chakra-ui/react'
-import PagesTab from 'components/Dashboard/tabs/Pages'
-import {ContentValues} from 'components/Dashboard/tabs/Pages/PageContent'
+import {Button, ChakraProvider, useDisclosure} from '@chakra-ui/react'
 import * as React from 'react'
 
-import {default as Component} from '../../components/Dashboard'
-import {CreateValues} from '../../components/Dashboard/tabs/Pages/PageCreator'
-import {useAppDispatch} from '../../store'
-import {
-  page_markForDeletion,
-  page_updateOrCreate
-} from '../../store/slices/pagesSlice'
-import {withRedux} from '../../store/withRedux'
-import {useJaenPageTree} from '../../utils/hooks/jaen'
+import {default as Component} from '@src/components/Dashboard'
+import {withRedux} from '@src/store/withRedux'
+
 import {PagesContainer} from './tabs/Pages'
 
 export const Dashboard = withRedux(() => {
-  const dispatch = useAppDispatch()
   const {isOpen, onClose, onOpen} = useDisclosure()
 
   // useCallback for performance

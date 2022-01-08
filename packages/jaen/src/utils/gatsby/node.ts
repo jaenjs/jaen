@@ -1,7 +1,7 @@
 import {GatsbyNode} from 'gatsby'
 import path from 'path'
 
-import {JaenPage, JaenPluginOptions, JaenTemplate} from '../types'
+import {JaenPage, JaenPluginOptions} from '../types'
 
 export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] = (
   {plugins, actions, loaders, stage},
@@ -9,9 +9,14 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] = (
 ) => {
   const {templates} = pluginOptions
 
-  console.log('options', templates)
-
+  console.log('options', templates, path.resolve(__dirname, '../../../', 'src'))
   actions.setWebpackConfig({
+    resolve: {
+      modules: [path.resolve(__dirname, '../../../', 'src'), 'node_modules'],
+      alias: {
+        '@src': path.resolve(__dirname, '../../../', 'src')
+      }
+    },
     plugins: [
       plugins.define({
         ___JAEN_TEMPLATES___: JSON.stringify(templates.rootDir)

@@ -1,10 +1,10 @@
 import {DEFAULT_PAGE_METADATA} from '../../../constants'
 import reducer, {
-  JaenPagesState,
-  page_updateOrCreate,
-  page_markForDeletion,
-  section_add,
   field_write,
+  JaenPagesState,
+  page_markForDeletion,
+  page_updateOrCreate,
+  section_add,
   section_remove
 } from '../pagesSlice'
 

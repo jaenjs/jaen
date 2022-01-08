@@ -1,5 +1,5 @@
 import {Selector} from '@reduxjs/toolkit'
-import {useSelector, shallowEqual} from 'react-redux'
+import {useSelector} from 'react-redux'
 
 /**
  * This hook uses JSON.stringify to perform a equality check.

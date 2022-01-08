@@ -2,12 +2,8 @@ import deepmerge from 'deepmerge'
 import {graphql, useStaticQuery} from 'gatsby'
 import * as React from 'react'
 
-import {
-  RootState,
-  store,
-  useAppDeepEqualSelector,
-  useAppSelector
-} from '../../../store'
+import {RootState, useAppDeepEqualSelector} from '@src/store'
+
 import {JaenPage, TreeNode} from '../../types'
 
 export {TreeNode}
@@ -114,16 +110,4 @@ export const useJaenPageTree = (): TreeNode[] => {
   )
 
   return mergeData
-
-  const [data, setData] = React.useState<TreeNode[]>(mergeData)
-
-  React.useEffect(() => {
-    setData(mergeData)
-    console.log(
-      '🚀 ~ file: useJaenPageTree.tsx ~ line 99 ~ React.useEffect ~ mergeData',
-      mergeData
-    )
-  }, [mergeData])
-
-  return data
 }

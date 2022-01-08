@@ -1,13 +1,13 @@
 import {AddIcon, DeleteIcon, ViewIcon} from '@chakra-ui/icons'
 import {Box, Divider, Flex} from '@chakra-ui/layout'
 import {Button, ButtonGroup, IconButton} from '@chakra-ui/react'
-import {CreateValues} from 'components/Dashboard/tabs/Pages/PageCreator'
 import {navigate} from 'gatsby'
 import * as React from 'react'
 
-import {TreeNode} from '../../../../utils/hooks/jaen/useJaenPageTree'
+import {TreeNode} from '@src/utils/hooks/jaen/useJaenPageTree'
+
 import {ContentValues, PageContent} from './PageContent'
-import PageTree, {Items, PageTreeProps} from './PageTree'
+import PageTree, {PageTreeProps} from './PageTree'
 
 export interface PagesTabProps extends PageTreeProps {
   getPage: (id: string) => TreeNode
@@ -95,7 +95,6 @@ const PagesTab = (props: PagesTabProps) => {
                 description: selection.jaenPageMetadata.description
               }}
               onSubmit={handlePageUpdate}
-              ext
             />
           ) : (
             <p>Select a page to view its content.</p>

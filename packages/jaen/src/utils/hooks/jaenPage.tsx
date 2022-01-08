@@ -1,7 +1,7 @@
 import React from 'react'
 
-import {JaenPageProvider} from '../providers/JaenPageProvider'
-import {useJaenContext} from '../providers/JaenProvider'
+import {JaenPageProvider} from '@src/utils/providers/JaenPageProvider'
+
 import {
   JaenConnection,
   JaenPageOptions,

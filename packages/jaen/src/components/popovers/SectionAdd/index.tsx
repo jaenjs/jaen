@@ -1,12 +1,12 @@
 import {
+  Button,
   Popover,
-  PopoverTrigger,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
   PopoverContent,
   PopoverHeader,
-  PopoverBody,
-  PopoverArrow,
-  PopoverCloseButton,
-  Button
+  PopoverTrigger
 } from '@chakra-ui/react'
 import * as React from 'react'
 

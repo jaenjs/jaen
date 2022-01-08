@@ -1,11 +1,11 @@
 import {
-  useEventListener,
-  Portal,
   Menu,
   MenuButton,
-  PortalProps,
   MenuButtonProps,
-  MenuProps
+  MenuProps,
+  Portal,
+  PortalProps,
+  useEventListener
 } from '@chakra-ui/react'
 import * as React from 'react'
 import {MutableRefObject, useCallback, useEffect, useRef, useState} from 'react'
