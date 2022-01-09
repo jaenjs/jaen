@@ -1,22 +1,26 @@
 import {Button, ChakraProvider, useDisclosure} from '@chakra-ui/react'
 import * as React from 'react'
 
-import {withRedux} from '@src/internal/store/'
+import * as publish from '@src/internal/publish'
+import {withRedux} from '@src/internal/store'
 
 import {default as Component} from './components'
+import PublishAlert from './components/PublishAlert'
 import {PagesContainer} from './tabs/Pages'
 
 export const Dashboard = withRedux(() => {
   const {isOpen, onClose, onOpen} = useDisclosure()
 
-  const publishModal = useDisclosure()
+  const publishAlert = useDisclosure()
 
   // useCallback for performance
   const handleEditingMode = React.useCallback(() => {}, [])
 
   const handleDiscardChanges = React.useCallback(() => {}, [])
 
-  const handlePublish = React.useCallback(() => {}, [])
+  const handlePublish = React.useCallback(() => {
+    publishAlert.onOpen()
+  }, [])
 
   return (
     <ChakraProvider>
@@ -27,6 +31,7 @@ export const Dashboard = withRedux(() => {
         onClick={() => onOpen()}>
         Dashboard
       </Button>
+      <PublishAlert onConfirm={publish.run} {...publishAlert} />
       <Component
         isOpen={isOpen}
         onClose={onClose}

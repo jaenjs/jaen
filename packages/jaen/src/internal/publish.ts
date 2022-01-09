@@ -25,7 +25,7 @@ const getSnekFinderData = (): DataType['snekFinder'] | undefined => {
   return undefined
 }
 
-export const run = (): Promise<number> => {
+export const run = async (): Promise<boolean> => {
   const data: DataType = {
     pages: getPagesData(),
     snekFinder: getSnekFinderData()
@@ -36,7 +36,7 @@ export const run = (): Promise<number> => {
   // Simulate a slow process.
   return new Promise(resolve => {
     setTimeout(() => {
-      resolve(1)
+      resolve(true)
     }, 1000)
   })
 }
