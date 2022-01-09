@@ -44,15 +44,18 @@ export interface SidebarWithHeaderProps {
 export const SidebarWithHeader: React.FC<SidebarWithHeaderProps> = ({
   hotbar,
   sidebarItems,
+  defaultSidebarItem,
   children,
   onSidebarItemClick,
   onCloseDashboard
 }) => {
   const {isOpen, onOpen, onClose} = useDisclosure()
+
   return (
     <Box minH="100vh" bg={useColorModeValue('gray.100', 'gray.900')}>
       <SidebarContent
         sidebarItems={sidebarItems}
+        defaultSidebarItem={defaultSidebarItem}
         onSidebarItemClick={onSidebarItemClick}
         onClose={() => onClose}
         display={{base: 'none', md: 'block'}}
@@ -105,11 +108,12 @@ const SidebarContent = ({
   onClose,
   onSidebarItemClick,
   sidebarItems,
+  defaultSidebarItem,
   ...rest
 }: SidebarProps) => {
   const [selectedItem, setSelectedItem] = React.useState<
     keyof SidebarProps['sidebarItems'] | null
-  >(null)
+  >(defaultSidebarItem || null)
 
   const selectItem = (id: string | null) => {
     if (id === selectedItem) {

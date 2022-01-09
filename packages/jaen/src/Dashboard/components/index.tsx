@@ -36,16 +36,18 @@ const Dashboard: React.FC<{
 }> = ({tabs, isOpen, onClose, onEditingMode, onDiscardChanges, onPublish}) => {
   const btnRef = React.useRef<any>(null)
 
-  const [selectedTab, setSelectedTab] = React.useState<SidebarItemKeys | null>(
-    null
-  )
-
   const sidebarItems = React.useMemo(
     () =>
       Object.fromEntries(
         Object.entries(tabs).map(([k, {element, ...v}]) => [k, v])
       ),
     [tabs]
+  )
+
+  const defaultSidebarItem = React.useMemo(() => Object.keys(tabs)[0], [tabs])
+
+  const [selectedTab, setSelectedTab] = React.useState<SidebarItemKeys | null>(
+    defaultSidebarItem
   )
 
   return (
@@ -60,7 +62,7 @@ const Dashboard: React.FC<{
       <DrawerContent>
         <SidebarWithHeader
           onCloseDashboard={onClose}
-          defaultSidebarItem={Object.keys(sidebarItems)[0]}
+          defaultSidebarItem={defaultSidebarItem}
           sidebarItems={sidebarItems}
           onSidebarItemClick={id => setSelectedTab(id)}
           hotbar={{
