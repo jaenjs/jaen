@@ -11,7 +11,7 @@ const TextField = connectField<string, {rtf?: boolean}>(
       disableToolbar={!rtf}
     />
   ),
-  {fieldType: 'IMA:TextField'} // IMA: Internal Managable Attributes
+  {fieldType: 'IMA:TextField'}
 )
 
 export default TextField

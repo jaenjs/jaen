@@ -1,8 +1,8 @@
-import { Button } from '@chakra-ui/react'
-import { ComponentMeta, Story } from '@storybook/react'
+import {Button} from '@chakra-ui/react'
+import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
-import Component from '.'
 
+import Component from '.'
 
 export default {
   title: 'Dashboard/components/Hotbar',

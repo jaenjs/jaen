@@ -9,6 +9,8 @@ import {PagesContainer} from './tabs/Pages'
 export const Dashboard = withRedux(() => {
   const {isOpen, onClose, onOpen} = useDisclosure()
 
+  const publishModal = useDisclosure()
+
   // useCallback for performance
   const handleEditingMode = React.useCallback(() => {}, [])
 

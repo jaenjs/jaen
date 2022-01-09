@@ -1,5 +1,13 @@
-import {Drawer, DrawerContent, DrawerOverlay} from '@chakra-ui/react'
+import {
+  Button,
+  ButtonGroup,
+  Drawer,
+  DrawerContent,
+  DrawerOverlay,
+  IconButton
+} from '@chakra-ui/react'
 import * as React from 'react'
+import {FiTrash} from 'react-icons/fi'
 
 import SidebarWithHeader, {SidebarItemKeys} from './SidebarWithHeader'
 
@@ -21,6 +29,9 @@ const Dashboard: React.FC<{
    * The callback to be called when the user clicks the discard button.
    */
   onDiscardChanges: () => void
+  /**
+   * The callback to be called when the user clicks the publish button.
+   */
   onPublish: () => void
 }> = ({tabs, isOpen, onClose, onEditingMode, onDiscardChanges, onPublish}) => {
   const btnRef = React.useRef<any>(null)
@@ -51,7 +62,23 @@ const Dashboard: React.FC<{
           onCloseDashboard={onClose}
           defaultSidebarItem={Object.keys(sidebarItems)[0]}
           sidebarItems={sidebarItems}
-          onSidebarItemClick={id => setSelectedTab(id)}>
+          onSidebarItemClick={id => setSelectedTab(id)}
+          hotbar={{
+            startItems: [
+              <ButtonGroup isAttached variant="outline">
+                <Button mr="-px">Edit</Button>
+                <IconButton
+                  aria-label="Add to friends"
+                  icon={<FiTrash color="orange" />}
+                />
+              </ButtonGroup>
+            ],
+            endItems: [
+              <Button variant="outline" onClick={() => onPublish()}>
+                Publish
+              </Button>
+            ]
+          }}>
           {selectedTab ? tabs[selectedTab].element : <p>Default tab.</p>}
         </SidebarWithHeader>
       </DrawerContent>

@@ -1,10 +1,12 @@
-import {Flex, Box, Spacer, HStack} from '@chakra-ui/react'
+import {Box, Flex, HStack, Spacer} from '@chakra-ui/react'
 import * as React from 'react'
 
-const Hotbar: React.FC<{
+export interface HotbarProps {
   startItems: JSX.Element[]
   endItems: JSX.Element[]
-}> = ({startItems, endItems}) => {
+}
+
+const Hotbar: React.FC<HotbarProps> = ({startItems, endItems}) => {
   return (
     <Flex>
       <HStack>
@@ -21,8 +23,5 @@ const Hotbar: React.FC<{
     </Flex>
   )
 }
-
-// Get type of Hotbar props
-export type HotbarProps = React.ComponentProps<typeof Hotbar>
 
 export default Hotbar

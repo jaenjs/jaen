@@ -1,8 +1,6 @@
 import {
   Box,
   BoxProps,
-  Button,
-  ButtonGroup,
   CloseButton,
   Divider,
   Drawer,
@@ -25,7 +23,9 @@ import {
 } from '@chakra-ui/react'
 import React, {ReactText} from 'react'
 import {IconType} from 'react-icons'
-import {FiBell, FiChevronDown, FiMenu, FiTrash} from 'react-icons/fi'
+import {FiBell, FiChevronDown, FiMenu} from 'react-icons/fi'
+
+import Hotbar, {HotbarProps} from '../Hotbar'
 
 export interface LinkItemProps {
   name: string
@@ -37,10 +37,12 @@ export interface SidebarWithHeaderProps {
   sidebarItems: SidebarProps['sidebarItems']
   defaultSidebarItem?: SidebarItemKeys
   onSidebarItemClick: (id: SidebarItemKeys | null) => void
+  hotbar: MobileProps['hotbar']
   onCloseDashboard: () => void
 }
 
 export const SidebarWithHeader: React.FC<SidebarWithHeaderProps> = ({
+  hotbar,
   sidebarItems,
   children,
   onSidebarItemClick,
@@ -71,7 +73,11 @@ export const SidebarWithHeader: React.FC<SidebarWithHeaderProps> = ({
           />
         </DrawerContent>
       </Drawer>
-      <Nav onOpen={onOpen} onCloseDashboard={onCloseDashboard} />
+      <Nav
+        onOpen={onOpen}
+        onCloseDashboard={onCloseDashboard}
+        hotbar={hotbar}
+      />
       <Box ml={{base: 0, md: 60}} p="4">
         {children}
       </Box>
@@ -196,24 +202,14 @@ const NavItem = ({
 }
 
 interface MobileProps extends FlexProps {
+  hotbar: HotbarProps
   onOpen: () => void
   onCloseDashboard: () => void
 }
-const Nav = ({onOpen, onCloseDashboard, ...rest}: MobileProps) => {
+const Nav = ({hotbar, onOpen, onCloseDashboard, ...rest}: MobileProps) => {
   const closeButton = <CloseButton onClick={onCloseDashboard} />
 
-  const hotbar = (
-    <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
-      <ButtonGroup isAttached variant="outline">
-        <Button mr="-px">Edit</Button>
-        <IconButton
-          aria-label="Add to friends"
-          icon={<FiTrash color="orange" />}
-        />
-      </ButtonGroup>
-      <Button variant="outline">Publish</Button>
-    </Flex>
-  )
+  const hotbarElement = <Hotbar {...hotbar} />
 
   const mobile = (
     <Flex
@@ -254,7 +250,7 @@ const Nav = ({onOpen, onCloseDashboard, ...rest}: MobileProps) => {
       borderBottomColor={useColorModeValue('gray.200', 'gray.700')}
       {...rest}>
       <Box>
-        {hotbar}
+        {hotbarElement}
         <Divider />
       </Box>
       <Spacer />
