@@ -2,7 +2,7 @@ import {createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {v4 as uuidv4} from 'uuid'
 
 import {JaenPage, JaenSection, JaenSectionWithId} from '@src/internal/types'
-import {omitSingle} from '@src/utils/helper'
+import {omitSingle} from '@src/internal/utils/helper'
 
 export interface JaenPageState
   extends Omit<Partial<JaenPage>, 'sections' | 'id'> {

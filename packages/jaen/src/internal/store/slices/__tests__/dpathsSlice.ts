@@ -1,8 +1,8 @@
-import {TreeNode} from '@src/utils/types'
+import type {TreeJaenPage} from '@src/internal/types'
 
 import reducer, {updateForPage} from '../dpathsSlice'
 
-const jaenPageTree: TreeNode[] = [
+const jaenPageTree: TreeJaenPage[] = [
   {
     id: '1',
     slug: 'root',

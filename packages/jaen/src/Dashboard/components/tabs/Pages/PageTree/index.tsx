@@ -24,7 +24,7 @@ import {motion} from 'framer-motion'
 import * as React from 'react'
 import {FaFile, FaFolderMinus, FaFolderPlus} from 'react-icons/fa'
 
-import {ContextMenu} from '@src/components'
+import {ContextMenu} from '@src/internal/components'
 import {JaenTemplate, JaenTemplateWithoutChildren} from '@src/internal/types'
 
 import {CreateValues, PageCreator} from '../PageCreator'

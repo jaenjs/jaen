@@ -4,7 +4,7 @@ import * as React from 'react'
 
 import {useJaenContext, useJaenTemplates} from '@src/internal/root'
 import {useAppSelector, withRedux} from '@src/internal/store'
-import {usePromiseEffect} from '@src/utils/hooks'
+import {usePromiseEffect} from '@src/internal/utils/hooks'
 
 const Dynamic = ({...props}: Partial<PageProps>) => {
   const dynamicPaths = useAppSelector(state => state.dpaths.dynamicPaths)

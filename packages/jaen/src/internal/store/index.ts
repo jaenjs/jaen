@@ -15,7 +15,7 @@ import {
   useStore
 } from 'react-redux'
 
-import {useDeepEqualSelector} from '@src/utils/hooks'
+import {useDeepEqualSelector} from '@src/internal/utils/hooks'
 
 import dpathsSlice from './slices/dpathsSlice'
 import pagesSlice from './slices/pagesSlice'
