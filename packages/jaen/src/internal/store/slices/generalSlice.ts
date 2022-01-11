@@ -3,7 +3,7 @@ import {createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {generatePagePaths} from '@src/internal/root/paths'
 import {TreeJaenPage} from '@src/internal/types'
 
-export interface DpathsState {
+export interface GeneralState {
   dynamicPaths: {
     [path: string]: {
       pageId: string
@@ -12,11 +12,11 @@ export interface DpathsState {
   }
 }
 
-const initialState: DpathsState = {
+const initialState: GeneralState = {
   dynamicPaths: {}
 }
 
-const dpathsSlice = createSlice({
+const generalSlice = createSlice({
   name: 'dpaths',
   initialState,
   reducers: {
@@ -57,6 +57,6 @@ const dpathsSlice = createSlice({
   }
 })
 
-export const {updateForPage} = dpathsSlice.actions
+export const {updateForPage} = generalSlice.actions
 
-export default dpathsSlice.reducer
+export default generalSlice.reducer

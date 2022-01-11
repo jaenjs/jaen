@@ -25,7 +25,7 @@ export const useDynamicRedirect = () => {
   const windowPathname =
     typeof window !== 'undefined' ? window.location.pathname : ''
 
-  const dynamicPaths = useAppSelector(state => state.dpaths.dynamicPaths)
+  const dynamicPaths = useAppSelector(state => state.general.dynamicPaths)
 
   React.useEffect(() => {
     const withoutTrailingSlash = windowPathname.replace(/\/$/, '')

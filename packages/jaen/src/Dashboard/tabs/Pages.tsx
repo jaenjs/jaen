@@ -9,7 +9,7 @@ import {
   useAppSelector,
   withRedux
 } from '@src/internal/store'
-import {updateForPage} from '@src/internal/store/slices/dpathsSlice'
+import {updateForPage} from '@src/internal/store/slices/generalSlice'
 import {
   page_markForDeletion,
   page_updateOrCreate
@@ -166,7 +166,7 @@ export const PagesContainer = withRedux(() => {
       //   path += '/' + node.slug
       // }
 
-      const dynamicPaths = store.getState()?.dpaths.dynamicPaths
+      const dynamicPaths = store.getState()?.general.dynamicPaths
 
       if (path) {
         if (dynamicPaths && path in dynamicPaths) {

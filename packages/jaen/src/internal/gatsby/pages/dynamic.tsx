@@ -7,12 +7,11 @@ import {useAppSelector, withRedux} from '@src/internal/store'
 import {usePromiseEffect} from '@src/internal/utils/hooks'
 
 const Dynamic = ({...props}: Partial<PageProps>) => {
-  const dynamicPaths = useAppSelector(state => state.dpaths.dynamicPaths)
+  const dynamicPaths = useAppSelector(state => state.general.dynamicPaths)
 
-  const path = React.useMemo(
-    () => props.location?.pathname.split('/_')[1],
-    [props.location?.pathname]
-  )
+  const path = React.useMemo(() => props.location?.pathname.split('/_')[1], [
+    props.location?.pathname
+  ])
 
   if (!path) {
     throw new Error('Something went wrong while preparing a dynamic page')

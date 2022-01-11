@@ -1,6 +1,6 @@
 import type {TreeJaenPage} from '@src/internal/types'
 
-import reducer, {updateForPage} from '../dpathsSlice'
+import reducer, {updateForPage} from '../generalSlice'
 
 const jaenPageTree: TreeJaenPage[] = [
   {
