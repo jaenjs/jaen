@@ -4,6 +4,7 @@ import {generatePagePaths} from '@src/internal/root/paths'
 import {TreeJaenPage} from '@src/internal/types'
 
 export interface GeneralState {
+  isEditing: boolean
   dynamicPaths: {
     [path: string]: {
       pageId: string
@@ -13,14 +14,18 @@ export interface GeneralState {
 }
 
 const initialState: GeneralState = {
+  isEditing: false,
   dynamicPaths: {}
 }
 
 const generalSlice = createSlice({
-  name: 'dpaths',
+  name: 'general',
   initialState,
   reducers: {
-    updateForPage(
+    setEditing: (state, action: PayloadAction<boolean>) => {
+      state.isEditing = action.payload
+    },
+    updateDynamicPaths(
       state,
       action: PayloadAction<{
         jaenPageTree: TreeJaenPage[]
@@ -57,6 +62,6 @@ const generalSlice = createSlice({
   }
 })
 
-export const {updateForPage} = generalSlice.actions
+export const {setEditing, updateDynamicPaths} = generalSlice.actions
 
 export default generalSlice.reducer

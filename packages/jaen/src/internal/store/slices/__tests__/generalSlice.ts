@@ -1,6 +1,10 @@
 import type {TreeJaenPage} from '@src/internal/types'
 
-import reducer, {updateForPage} from '../generalSlice'
+import reducer, {
+  GeneralState,
+  setEditing,
+  updateDynamicPaths
+} from '../generalSlice'
 
 const jaenPageTree: TreeJaenPage[] = [
   {
@@ -43,21 +47,31 @@ const jaenPageTree: TreeJaenPage[] = [
   }
 ]
 
-describe('updateForPage', () => {
-  test('should handle dynamic path generation for a pageId', () => {
-    const state = {dynamicPaths: {}}
+const previousState: GeneralState = {isEditing: false, dynamicPaths: {}}
 
-    const action = updateForPage({
+describe('setEditing', () => {
+  it('should set isEditing', () => {
+    const newEM = !previousState.isEditing
+    const nextState = reducer(previousState, setEditing(newEM))
+
+    expect(nextState.isEditing).toBe(newEM)
+  })
+})
+
+describe('updateDynamicPaths', () => {
+  test('should handle dynamic path generation for a pageId', () => {
+    const action = updateDynamicPaths({
       jaenPageTree,
       pageId: '3',
       create: true
     })
 
-    const newState = reducer(state, action)
+    const newState = reducer(previousState, action)
 
-    expect(newState).toEqual({
-      dynamicPaths: {
-        '/root/contact/subcontact': '3'
+    expect(newState.dynamicPaths).toEqual({
+      '/root/contact/subcontact': {
+        pageId: '3',
+        templateName: undefined
       }
     })
   })

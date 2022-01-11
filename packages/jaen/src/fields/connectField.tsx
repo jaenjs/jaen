@@ -79,7 +79,7 @@ export const connectField = <T, P>(
 
     const staticValue = getPageField<T>(staticJaenPage)
 
-    const isEditing = true
+    const isEditing = useAppSelector(state => state.general.isEditing)
 
     const handleUpdateValue = (value: T) => {
       dispatch(

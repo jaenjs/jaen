@@ -1,6 +1,7 @@
 import {
   Button,
   ButtonGroup,
+  Circle,
   Drawer,
   DrawerContent,
   DrawerOverlay,
@@ -20,6 +21,7 @@ const Dashboard: React.FC<{
     }
   }
   isOpen: boolean
+  isEditing: boolean
   onClose: () => void
   /**
    * The callback to be called when the user clicks the editing button.
@@ -33,7 +35,15 @@ const Dashboard: React.FC<{
    * The callback to be called when the user clicks the publish button.
    */
   onPublish: () => void
-}> = ({tabs, isOpen, onClose, onEditingMode, onDiscardChanges, onPublish}) => {
+}> = ({
+  tabs,
+  isEditing,
+  isOpen,
+  onClose,
+  onEditingMode,
+  onDiscardChanges,
+  onPublish
+}) => {
   const btnRef = React.useRef<any>(null)
 
   const sidebarItems = React.useMemo(
@@ -68,7 +78,17 @@ const Dashboard: React.FC<{
           hotbar={{
             startItems: [
               <ButtonGroup isAttached variant="outline">
-                <Button mr="-px">Edit</Button>
+                <Button
+                  mr="-px"
+                  leftIcon={
+                    <Circle
+                      size="4"
+                      bg={isEditing ? 'orange' : 'gray.300'}
+                      color="white"></Circle>
+                  }
+                  onClick={onEditingMode}>
+                  Edit
+                </Button>
                 <IconButton
                   aria-label="Add to friends"
                   icon={<FiTrash color="orange" />}

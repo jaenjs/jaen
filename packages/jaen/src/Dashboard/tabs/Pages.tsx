@@ -9,7 +9,7 @@ import {
   useAppSelector,
   withRedux
 } from '@src/internal/store'
-import {updateForPage} from '@src/internal/store/slices/generalSlice'
+import {updateDynamicPaths} from '@src/internal/store/slices/generalSlice'
 import {
   page_markForDeletion,
   page_updateOrCreate
@@ -44,7 +44,7 @@ export const PagesContainer = withRedux(() => {
       const {pageId, create} = shouldUpdateDpathsFor
 
       dispatch(
-        updateForPage({
+        updateDynamicPaths({
           jaenPageTree: pageTree,
           pageId,
           create
@@ -59,7 +59,7 @@ export const PagesContainer = withRedux(() => {
     console.log('latestAddedPageId', latestAddedPageId)
     if (latestAddedPageId) {
       dispatch(
-        updateForPage({
+        updateDynamicPaths({
           jaenPageTree: pageTree,
           pageId: latestAddedPageId,
           create: true
