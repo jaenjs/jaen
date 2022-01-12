@@ -3,9 +3,14 @@ import * as React from 'react'
 
 import * as publish from '@src/internal/publish'
 import {useAppDispatch, useAppSelector, withRedux} from '@src/internal/store'
-import {setEditing} from '@src/internal/store/slices/generalSlice'
+import {
+  discardDynamicPaths,
+  setEditing
+} from '@src/internal/store/slices/generalSlice'
+import {discardAllChanges} from '@src/internal/store/slices/pagesSlice'
 
 import {default as Component} from './components'
+import DiscardAlert from './components/DiscardAlert'
 import PublishAlert from './components/PublishAlert'
 import {PagesContainer} from './tabs/Pages'
 
@@ -15,6 +20,7 @@ export const Dashboard = withRedux(() => {
 
   const toast = useToast()
   const publishAlert = useDisclosure()
+  const discardAlert = useDisclosure()
   const isEditing = useAppSelector(state => state.general.isEditing)
 
   // useCallback for performance
@@ -32,11 +38,29 @@ export const Dashboard = withRedux(() => {
     })
   }, [dispatch, isEditing, toast])
 
-  const handleDiscardChanges = React.useCallback(() => {}, [])
+  const handleDiscardChanges = React.useCallback(() => {
+    discardAlert.onOpen()
+  }, [])
 
   const handlePublish = React.useCallback(() => {
     publishAlert.onOpen()
   }, [])
+
+  const handlePublishConfirm = React.useCallback(async () => {
+    dispatch(setEditing(false))
+    return publish.run()
+  }, [])
+
+  const handleDiscardConfirm = async (): Promise<boolean> => {
+    // Simulate a long running operation
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    dispatch(setEditing(false))
+    dispatch(discardDynamicPaths())
+    dispatch(discardAllChanges())
+
+    return true
+  }
 
   return (
     <ChakraProvider>
@@ -47,7 +71,8 @@ export const Dashboard = withRedux(() => {
         onClick={() => onOpen()}>
         Dashboard
       </Button>
-      <PublishAlert onConfirm={publish.run} {...publishAlert} />
+      <PublishAlert onConfirm={handlePublishConfirm} {...publishAlert} />
+      <DiscardAlert onConfirm={handleDiscardConfirm} {...discardAlert} />
       <Component
         isOpen={isOpen}
         onClose={onClose}

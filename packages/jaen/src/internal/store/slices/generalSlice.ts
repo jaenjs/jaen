@@ -58,10 +58,17 @@ const generalSlice = createSlice({
           }
         }
       }
+    },
+    discardDynamicPaths(state) {
+      state.dynamicPaths = {}
     }
   }
 })
 
-export const {setEditing, updateDynamicPaths} = generalSlice.actions
+export const {
+  setEditing,
+  updateDynamicPaths,
+  discardDynamicPaths
+} = generalSlice.actions
 
 export default generalSlice.reducer

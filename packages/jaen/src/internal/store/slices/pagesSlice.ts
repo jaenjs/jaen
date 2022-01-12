@@ -397,6 +397,23 @@ const pagesSlice = createSlice({
       }
 
       return state
+    },
+
+    discardAllChanges(state) {
+      state.pages = {}
+      state.latestAddedPageId = undefined
+      return state
+    },
+
+    discardChanges(state, action: PayloadAction<{pageId: string}>) {
+      const {pageId} = action.payload
+      delete state.pages[pageId]
+
+      if (state.latestAddedPageId === pageId) {
+        state.latestAddedPageId = undefined
+      }
+
+      return state
     }
   }
 })
@@ -406,6 +423,8 @@ export const {
   page_markForDeletion,
   section_add,
   section_remove,
-  field_write
+  field_write,
+  discardAllChanges,
+  discardChanges
 } = pagesSlice.actions
 export default pagesSlice.reducer

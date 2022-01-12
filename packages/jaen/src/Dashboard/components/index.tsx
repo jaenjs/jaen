@@ -7,8 +7,9 @@ import {
   DrawerOverlay,
   IconButton
 } from '@chakra-ui/react'
+import {navigate} from 'gatsby'
 import * as React from 'react'
-import {FiTrash} from 'react-icons/fi'
+import {FiEye, FiTrash} from 'react-icons/fi'
 
 import SidebarWithHeader, {SidebarItemKeys} from './SidebarWithHeader'
 
@@ -77,6 +78,9 @@ const Dashboard: React.FC<{
           onSidebarItemClick={id => setSelectedTab(id)}
           hotbar={{
             startItems: [
+              <Button leftIcon={<FiEye />} onClick={() => navigate('/')}>
+                Home
+              </Button>,
               <ButtonGroup isAttached variant="outline">
                 <Button
                   mr="-px"
@@ -84,7 +88,8 @@ const Dashboard: React.FC<{
                     <Circle
                       size="4"
                       bg={isEditing ? 'orange' : 'gray.300'}
-                      color="white"></Circle>
+                      color="white"
+                    />
                   }
                   onClick={onEditingMode}>
                   Edit
@@ -92,6 +97,7 @@ const Dashboard: React.FC<{
                 <IconButton
                   aria-label="Add to friends"
                   icon={<FiTrash color="orange" />}
+                  onClick={onDiscardChanges}
                 />
               </ButtonGroup>
             ],

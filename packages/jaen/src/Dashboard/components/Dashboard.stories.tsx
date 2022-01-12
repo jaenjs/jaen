@@ -1,6 +1,6 @@
 import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
-import {FiFile} from 'react-icons/fi'
+import {FiFile, FiSettings} from 'react-icons/fi'
 
 import Component from '.'
 
@@ -27,6 +27,11 @@ Dashboard.args = {
       name: 'Files',
       icon: FiFile,
       element: <p>Files tab</p>
+    },
+    settings: {
+      name: 'Settings',
+      icon: FiSettings,
+      element: <p>Settings tab</p>
     }
   }
 }
