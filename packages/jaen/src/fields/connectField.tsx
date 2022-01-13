@@ -3,19 +3,19 @@ import {useAppDispatch, useAppSelector, withRedux} from '@src/internal/store'
 import {field_write, JaenPageState} from '@src/internal/store/slices/pagesSlice'
 import {JaenPage} from '@src/internal/types'
 
-export interface JaenFieldProps<T> {
+export interface JaenFieldProps<IDefaultValue> {
   name: string
-  defaultValue: T
+  defaultValue: IDefaultValue
   style?: React.CSSProperties
-  styleClassName?: string
+  className?: string
 }
 
-export interface FieldConnection<T> {
-  jaenField: JaenFieldProps<T> & {
-    staticValue?: T
-    value?: T
+export interface FieldConnection<IValue, IDefaultValue> {
+  jaenField: JaenFieldProps<IDefaultValue> & {
+    staticValue?: IValue
+    value?: IValue
     isEditing: boolean
-    onUpdateValue: (value: T) => void
+    onUpdateValue: (value: IValue) => void
   }
 }
 
@@ -27,17 +27,19 @@ export interface FieldConnection<T> {
  * @example
  * ```
  * const T = connectField<string>(props => {
- *   const {name, defaultValue, style, styleClassName} = props.jaenField
+ *   const {name, defaultValue, style, className} = props.jaenField
  *   return null
  * })
  * ```
  */
-export const connectField = <T, P>(
-  Component: React.ComponentType<P & FieldConnection<T>>,
+export const connectField = <IValue, IDefaultValue = IValue, IProps = {}>(
+  Component: React.ComponentType<
+    IProps & FieldConnection<IValue, IDefaultValue>
+  >,
   options: {
     fieldType: string
   }
-): React.FC<P & JaenFieldProps<T>> =>
+): React.FC<IProps & JaenFieldProps<IDefaultValue>> =>
   withRedux(props => {
     const dispatch = useAppDispatch()
 
@@ -69,7 +71,7 @@ export const connectField = <T, P>(
       }
     }
 
-    const value = useAppSelector<T | undefined>(state => {
+    const value = useAppSelector<IValue | undefined>(state => {
       const page = state.pages.pages[jaenPageId]
 
       if (page) {
@@ -77,11 +79,11 @@ export const connectField = <T, P>(
       }
     })
 
-    const staticValue = getPageField<T>(staticJaenPage)
+    const staticValue = getPageField<IValue>(staticJaenPage)
 
     const isEditing = useAppSelector(state => state.general.isEditing)
 
-    const handleUpdateValue = (value: T) => {
+    const handleUpdateValue = (value: IValue) => {
       dispatch(
         field_write({
           pageId: jaenPageId,
@@ -103,7 +105,7 @@ export const connectField = <T, P>(
           isEditing: isEditing,
           onUpdateValue: handleUpdateValue,
           style: props.style,
-          styleClassName: props.styleClassName
+          className: props.className
         }}
         {...props}
       />
