@@ -4,14 +4,14 @@ import React from 'react'
 import Component from '.'
 
 export default {
-  title: 'fields/TextField',
+  title: 'fields/ImageField',
   component: Component,
   decorators: [
     Story => (
       <JaenPageProvider
         jaenPageId="JaenPage jaen-page-1"
         staticJaenPage={{
-          id: `JaenPage jaen-page-1}`,
+          id: `JaenPage jaen-page-1`,
           slug: 'jaen-page-1',
           parent: null,
           children: [],
@@ -48,13 +48,7 @@ const Template: Story<ComponentProps> = args => <Component {...args} />
 
 export const Basic: Story<ComponentProps> = Template.bind({})
 Basic.args = {
-  name: 'text-field',
-  defaultValue: 'defaultValue'
-}
-
-export const RichText: Story<ComponentProps> = Template.bind({})
-RichText.args = {
-  name: 'rich-text-field-1',
-  defaultValue: '<p>richtext2<p>',
-  rtf: true
+  name: 'image-field',
+  width: 500,
+  height: 300
 }

@@ -69,6 +69,8 @@ export const JaenImage = (props: JaenImageProps) => {
     alt: props.image.alt,
     imgClassName: props.imgClassName,
     imgStyle: props.imgStyle,
+    width: props.image.width,
+    height: props.image.height,
     onLoad: props.onLoad,
     onError: props.onError,
     onStartLoad: props.onStartLoad
@@ -85,7 +87,11 @@ export const JaenImage = (props: JaenImageProps) => {
     const isLoaded = Boolean(props.image.internalImageUrl)
 
     imageElement = (
-      <Skeleton isLoaded={isLoaded} className={props.className}>
+      <Skeleton
+        isLoaded={isLoaded}
+        height={imgElementProps.height}
+        width={imgElementProps.width}
+        className={props.className}>
         <Image
           {...wrapperElementProps}
           {...imgElementProps}
