@@ -1,6 +1,4 @@
-import {Button, ChakraProvider, useDisclosure, useToast} from '@chakra-ui/react'
-import * as React from 'react'
-
+import {Button, useDisclosure, useToast} from '@chakra-ui/react'
 import * as publish from '@src/internal/publish'
 import {useAppDispatch, useAppSelector, withRedux} from '@src/internal/store'
 import {
@@ -8,10 +6,11 @@ import {
   setEditing
 } from '@src/internal/store/slices/generalSlice'
 import {discardAllChanges} from '@src/internal/store/slices/pagesSlice'
-
+import * as React from 'react'
 import {default as Component} from './components'
 import DiscardAlert from './components/DiscardAlert'
 import PublishAlert from './components/PublishAlert'
+import {FilesContainer} from './tabs/Files'
 import {PagesContainer} from './tabs/Pages'
 
 export const Dashboard = withRedux(() => {
@@ -63,7 +62,7 @@ export const Dashboard = withRedux(() => {
   }
 
   return (
-    <ChakraProvider>
+    <>
       <Button
         variant="solid"
         colorScheme="blue"
@@ -85,9 +84,14 @@ export const Dashboard = withRedux(() => {
             name: 'Pages',
             icon: '',
             element: <PagesContainer />
+          },
+          files: {
+            name: 'Files',
+            icon: '',
+            element: <FilesContainer />
           }
         }}
       />
-    </ChakraProvider>
+    </>
   )
 })

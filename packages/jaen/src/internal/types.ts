@@ -1,4 +1,5 @@
 import type {PageProps, PluginOptions} from 'gatsby'
+import {IGatsbyImageData} from 'gatsby-plugin-image'
 
 export interface JaenPluginOptions extends PluginOptions {
   plugins: string[]
@@ -80,6 +81,12 @@ export interface JaenPage extends JaenData {
     datePublished?: string
     canonical?: string
   }
+  jaenFiles: {
+    file: {
+      id: string
+      gatsbyImageData: IGatsbyImageData
+    }
+  }[]
   parent: {
     id: string
   } | null

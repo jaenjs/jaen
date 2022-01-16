@@ -20,7 +20,7 @@
     "@chakra-ui/react": "^1.6.7",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
-    "@jaenjs/jaen": "^2.0.0",
+    "@jaenjs/jaen": "^3.0.0",
     "electron": "^16.0.2",
     "framer-motion": "^4",
     "gatsby": "^4.2.0",

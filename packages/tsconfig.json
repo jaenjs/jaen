@@ -3,5 +3,5 @@
     "composite": true
   },
   "files": [],
-  "references": [{"path": "jaen"}]
+  "references": [{"path": "jaen"}, {"path": "snek-finder"}]
 }

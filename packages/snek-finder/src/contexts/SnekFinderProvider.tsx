@@ -1,6 +1,5 @@
 import update from 'immutability-helper'
 import * as React from 'react'
-
 import {Backend} from '../backends/backend'
 import Finder from '../components/organisms/Finder'
 import {
@@ -53,7 +52,6 @@ export const SnekFinderProvider: React.FC<{
 }> = ({backend, initData, rootFileId, children}) => {
   const [isOpen, setIsOpen] = React.useState(false)
   const [mode, setMode] = React.useState<FinderMode>('browser')
-  const [defaultItem, setDefaultItem] = React.useState<string | null>(null)
   const [data, setData] = React.useState<FinderData>(initData)
 
   const [openFile, setOpenFile] = React.useState<{
@@ -82,8 +80,6 @@ export const SnekFinderProvider: React.FC<{
   React.useEffect(() => {
     const fn = async () => {
       const {data} = await backend.readIndex()
-
-      alert(JSON.stringify(data))
 
       setData(data || initData)
     }

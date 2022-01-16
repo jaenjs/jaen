@@ -1,7 +1,18 @@
 import {GatsbyNode} from 'gatsby'
 import path from 'path'
-
 import {JaenPage, JaenPluginOptions} from '../types'
+import {processPage} from './helper/imaFields'
+
+export const onCreateBabelConfig: GatsbyNode['onCreateBabelConfig'] = ({
+  actions
+}) => {
+  actions.setBabelPlugin({
+    name: '@babel/plugin-transform-react-jsx',
+    options: {
+      runtime: 'automatic'
+    }
+  })
+}
 
 export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] = (
   {plugins, actions, loaders, stage},
@@ -9,7 +20,6 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] = (
 ) => {
   const {templates} = pluginOptions
 
-  console.log('options', templates, path.resolve(__dirname, '../../../', 'src'))
   actions.setWebpackConfig({
     resolve: {
       modules: [path.resolve(__dirname, '../../../', 'src'), 'node_modules'],
@@ -38,9 +48,11 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] = (
   }
 }
 
-export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] =
-  ({actions, schema}) => {
-    actions.createTypes(`
+export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] = ({
+  actions,
+  schema
+}) => {
+  actions.createTypes(`
 
       type JaenTemplate implements Node {
         id: String!
@@ -54,6 +66,11 @@ export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] 
         jaenFields: JSON
         chapters: JSON
         template: JaenTemplate @link
+        jaenFiles: [JaenFile!]!
+      }
+
+      type JaenFile {
+        file: File! @link(from: "file___NODE")
       }
 
       type JaenPageMetadata {
@@ -65,12 +82,15 @@ export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] 
         isBlogPost: Boolean
       }
       `)
-  }
+}
 
 export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
   actions,
   createNodeId,
-  createContentDigest
+  createContentDigest,
+  cache,
+  store,
+  reporter
 }) => {
   const {createNode} = actions
 
@@ -101,11 +121,12 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
         isBlogPost: false
       },
       jaenFields: {
-        text: {
+        'IMA:TextField': {
           jaenField1: 'jaenField1',
           jaenField2: 'jaenField2'
         }
       },
+      jaenFiles: undefined as any,
       chapters: {},
       template: 'BlogPage' as any
     },
@@ -123,11 +144,13 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
         isBlogPost: false
       },
       jaenFields: {
-        text: {
+        'IMA:TextField': {
           jaenField1: 'jaenField1',
           jaenField2: 'jaenField2'
         }
       },
+      jaenFiles: undefined as any,
+
       chapters: {
         chapter1: {
           ptrHead: 'JaenSection foo-bar-baz-1',
@@ -190,11 +213,17 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
         isBlogPost: false
       },
       jaenFields: {
-        text: {
+        'IMA:TextField': {
           jaenField1: 'jaenField1',
           jaenField2: 'jaenField2'
+        },
+        'IMA:ImageField': {
+          jaenField3: {
+            internalImageUrl: 'https://via.placeholder.com/300x200'
+          }
         }
       },
+      jaenFiles: undefined as any,
       chapters: {},
       template: 'BlogPage' as any
     }
@@ -215,7 +244,21 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async ({
     createNode(node)
   })
 
-  dummyJaenPages.forEach(jaenPage => {
+  dummyJaenPages.forEach(async jaenPage => {
+    //> Process IMA fields in page and its chapters
+
+    await processPage({
+      page: jaenPage,
+      createNodeId,
+      createNode,
+      cache,
+      store,
+      reporter
+    })
+
+    // @ts-ignore
+    console.log('JAENPAGE', jaenPage)
+
     const node = {
       ...jaenPage,
       template: jaenPage.template || null,
@@ -280,8 +323,6 @@ export const createPages: GatsbyNode['createPages'] = async (
 
   const jaenPages = result.data.allJaenPage.edges
 
-  console.log(jaenPages)
-
   jaenPages.forEach(({node}) => {
     const {slug} = node
     const {template} = node
@@ -344,6 +385,7 @@ export const onCreatePage: GatsbyNode['onCreatePage'] = ({
           isBlogPost: false
         },
         jaenFields: null,
+        jaenFiles: [],
         chapters: {},
         template: null
       }
@@ -352,6 +394,7 @@ export const onCreatePage: GatsbyNode['onCreatePage'] = ({
         ...jaenPage,
         parent: null,
         children: [],
+        jaenFiles: [],
         internal: {
           type: 'JaenPage',
           content: JSON.stringify(jaenPage),

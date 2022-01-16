@@ -17,6 +17,7 @@ import {
   Textarea,
   useToast
 } from '@chakra-ui/react'
+import {useSnekFinder} from '@jaenjs/snek-finder'
 import {useForm} from 'react-hook-form'
 
 type FormData = {
@@ -51,6 +52,8 @@ export const UpdateModal = ({
     defaultValues: data
   })
 
+  const finder = useSnekFinder()
+
   const handleDelete = () => {
     onDelete()
 
@@ -77,6 +80,12 @@ export const UpdateModal = ({
     })
 
     onClose()
+  }
+
+  const handleImageClick = () => {
+    finder.toggle.open({
+      finderMode: 'selector'
+    })
   }
 
   return (
@@ -115,7 +124,13 @@ export const UpdateModal = ({
                   </FormErrorMessage>
                 </FormControl>
               </Box>
-              <Image h="300px" w="300px" objectFit={'cover'} src={data.image} />
+              <Image
+                h="300px"
+                w="300px"
+                objectFit={'cover'}
+                src={data.image}
+                onClick={handleImageClick}
+              />
             </Flex>
           </ModalBody>
 

@@ -1,7 +1,6 @@
 import {Image, Skeleton} from '@chakra-ui/react'
 import {
   GatsbyImage,
-  getImage,
   IGatsbyImageData,
   Layout,
   StaticImage
@@ -119,11 +118,4 @@ export const JaenImage = (props: JaenImageProps) => {
   }
 
   return <>{imageElement}</>
-}
-export function useJaenPageImage(options: {
-  id: string
-}): IGatsbyImageData | undefined {
-  const {id} = options
-
-  return getImage('' as any)
 }

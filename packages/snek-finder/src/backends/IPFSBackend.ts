@@ -15,7 +15,7 @@ export class IPFSBackend extends Backend {
   }
 
   async upload(file: File) {
-    const {cid} = await ipfs.add({path: file.name, content: file.stream()})
+    const {cid} = await ipfs.add({content: file.stream().read()})
 
     return `https://cloudflare-ipfs.com/ipfs/${cid.toString()}`
   }

@@ -1,7 +1,7 @@
 {
   "name": "@jaenjs/jaen",
   "version": "3.0.0",
-  "main": "src/index.js",
+  "main": "index.js",
   "types": "src/index.ts",
   "license": "EUPL-1.2",
   "scripts": {
@@ -41,11 +41,14 @@
     "uuid": "^8.3.2"
   },
   "dependencies": {
+    "@atlaskit/tree": "^8.4.0",
     "@chakra-ui/gatsby-plugin": "^2.0.2",
     "@chakra-ui/react": "^1.7.4",
+    "@ckeditor/ckeditor5-build-balloon": "^31.1.0",
     "@ckeditor/ckeditor5-react": "^3.0.3",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
+    "@jaenjs/snek-finder": "^1.0.0",
     "@loadable/component": "^5.15.2",
     "@reduxjs/toolkit": "^1.6.2",
     "framer-motion": "^5",
@@ -59,6 +62,7 @@
     "react": "^17.0.2",
     "react-hook-form": "^7.22.5",
     "react-in-viewport": "^1.0.0-alpha.20",
+    "react-redux": "^7.2.6",
     "redux": "^4.1.2",
     "uuid": "^8.3.2"
   }

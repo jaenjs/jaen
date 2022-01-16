@@ -1,11 +1,20 @@
 import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
 
+import {withSnekFinder} from '@src/internal/root/hooks/withSnekFinder'
+
 import Component from '.'
 
 export default {
   title: 'fields/ImageField/components/UpdateModal',
-  component: Component
+  component: Component,
+  decorators: [
+    Story => {
+      const Component = withSnekFinder(Story)
+
+      return <Component />
+    }
+  ]
 } as ComponentMeta<typeof Component>
 
 type ComponentProps = React.ComponentProps<typeof Component>

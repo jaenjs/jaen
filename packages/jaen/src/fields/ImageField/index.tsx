@@ -1,14 +1,17 @@
-import {useDisclosure} from '@chakra-ui/react'
+import {Box, useDisclosure} from '@chakra-ui/react'
+import {useSnekFinder} from '@jaenjs/snek-finder'
 import {getSrc, IGatsbyImageData} from 'gatsby-plugin-image'
 import React from 'react'
+
+import {useJaenPageImage} from '@src/internal/page'
+import {withSnekFinder} from '@src/internal/root/hooks/withSnekFinder'
 
 import {connectField} from '../connectField'
 import {
   JaenImage,
   JaenImageData,
   JaenImageProps,
-  StaticImageElementType,
-  useJaenPageImage
+  StaticImageElementType
 } from './JaenImage'
 import UpdateModal from './components/UpdateModal'
 
@@ -24,7 +27,7 @@ export type ImageFieldProps = Partial<
     'imgClassName' | 'imgStyle' | 'onError' | 'onLoad' | 'onStartLoad'
   >
 
-const TextField = connectField<
+const ImageField = connectField<
   ImageFieldData,
   StaticImageElementType,
   ImageFieldProps
@@ -78,6 +81,18 @@ const TextField = connectField<
       })
     }
 
+    const finder = useSnekFinder()
+
+    const handleBoxClick = () => {
+      if (updateable) {
+        updateDisclosure.onOpen()
+      } else {
+        finder.toggle.open({
+          finderMode: 'selector'
+        })
+      }
+    }
+
     return (
       <>
         {updateable && (
@@ -99,21 +114,23 @@ const TextField = connectField<
           />
         )}
 
-        <JaenImage
-          image={{
-            title: value.title || 'A Jaen Image',
-            alt: value.alt || 'A Jaen Image',
-            internalImageUrl: value.internalImageUrl,
-            layout: value.layout || layout,
-            width,
-            height,
-            gatsbyImage
-          }}
-          className={jaenField.className}
-          style={jaenField.style}
-          imgClassName={imgClassName}
-          imgStyle={imgStyle}
-        />
+        <Box onClick={handleBoxClick}>
+          <JaenImage
+            image={{
+              title: value.title || 'A Jaen Image',
+              alt: value.alt || 'A Jaen Image',
+              internalImageUrl: value.internalImageUrl,
+              layout: value.layout || layout,
+              width,
+              height,
+              gatsbyImage
+            }}
+            className={jaenField.className}
+            style={jaenField.style}
+            imgClassName={imgClassName}
+            imgStyle={imgStyle}
+          />
+        </Box>
       </>
     )
   },
@@ -122,4 +139,4 @@ const TextField = connectField<
   }
 )
 
-export default TextField
+export default withSnekFinder(ImageField)

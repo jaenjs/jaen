@@ -1,7 +1,6 @@
+import {JaenPage} from '@src/internal/types'
 import {graphql} from 'gatsby'
 import React from 'react'
-
-import {JaenPage} from '@src/internal/types'
 
 export interface JaenPageContext {
   jaenPageId: string
@@ -42,7 +41,10 @@ export const useJaenPageContext = () => {
   return context
 }
 
-export const pageQuery = graphql`
+/**
+ * @type {Fragment}
+ */
+export const JaenPageData = graphql`
   fragment JaenPageData on Query {
     staticJaenPage: jaenPage(id: {eq: $jaenPageId}) {
       id
@@ -54,6 +56,14 @@ export const pageQuery = graphql`
         description
         datePublished
         canonical
+      }
+      jaenFiles {
+        file {
+          id
+          childImageSharp {
+            gatsbyImageData(placeholder: BLURRED, formats: [AUTO, WEBP, AVIF])
+          }
+        }
       }
       chapters
     }

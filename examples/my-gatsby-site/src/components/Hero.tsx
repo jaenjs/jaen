@@ -7,7 +7,7 @@ import {
   Text,
   useBreakpointValue
 } from '@chakra-ui/react'
-import {fields} from '@jaenjs/jaen'
+import {Field} from '@jaenjs/jaen'
 
 export default function SplitScreen() {
   return (
@@ -28,25 +28,25 @@ export default function SplitScreen() {
                 bg: 'blue.400',
                 zIndex: -1
               }}>
-              <fields.TextField
-                fieldName="heading1"
+              <Field.Text
+                name="heading1"
                 rtf={false}
-                initValue="<span>Freelance</span>"
+                defaultValue="<span>Freelance</span>"
               />
             </Text>
 
             <Text color={'blue.400'} as={'span'}>
-              <fields.TextField
-                fieldName="heading2"
+              <Field.Text
+                name="heading2"
                 rtf={false}
-                initValue="<span>Design Projects</span>"
+                defaultValue="<span>Design Projects</span>"
               />
             </Text>
           </Heading>
           <Text fontSize={{base: 'md', lg: 'lg'}} color={'gray.500'}>
-            <fields.TextField
-              fieldName="text"
-              initValue="<p>The project board is an exclusive resource for contract work. It's
+            <Field.Text
+              name="text"
+              defaultValue="<p>The project board is an exclusive resource for contract work. It's
             perfect for freelancers, agencies, and moonlighters.</p>"
             />
           </Text>
