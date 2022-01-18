@@ -1,19 +1,17 @@
 import {Box, useDisclosure} from '@chakra-ui/react'
 import {useSnekFinder} from '@jaenjs/snek-finder'
-import {getSrc, IGatsbyImageData} from 'gatsby-plugin-image'
-import React from 'react'
-
 import {useJaenPageImage} from '@src/internal/page'
 import {withSnekFinder} from '@src/internal/root/hooks/withSnekFinder'
-
+import {getSrc, IGatsbyImageData} from 'gatsby-plugin-image'
+import React from 'react'
 import {connectField} from '../connectField'
+import UpdateModal from './components/UpdateModal'
 import {
   JaenImage,
   JaenImageData,
   JaenImageProps,
   StaticImageElementType
 } from './JaenImage'
-import UpdateModal from './components/UpdateModal'
 
 export interface ImageFieldData extends JaenImageData {
   imageId?: string
