@@ -51,7 +51,16 @@ interface FinderUpdateAction extends FinderAction {
   type: 'UPDATE'
 }
 
+interface FinderSelectorSelectAction extends FinderAction {
+  type: 'SELECTOR_SELECT'
+  payload: {
+    uuid: string
+    item: FinderFileItem
+  }
+}
+
 export type SnekFinderAction =
   | FinderAddAction
   | FinderDeleteAction
   | FinderUpdateAction
+  | FinderSelectorSelectAction

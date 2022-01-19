@@ -1,9 +1,9 @@
 import {Button} from '@chakra-ui/react'
 import {Meta} from '@storybook/react'
-
 import OSGBackend from './backends/OSGBackend'
 import {FinderData} from './components/organisms/Finder/types'
-import SnekFinderProvider, {useSnekFinder} from './contexts/SnekFinderProvider'
+import {SnekFinderProvider} from './SnekFinderProvider'
+import {useSnekFinder} from './useSnekFinder'
 
 //> Story without component
 
@@ -36,16 +36,30 @@ export default {
   ]
 } as Meta
 
-export const Trigger = () => {
-  const {toggle} = useSnekFinder()
+export const ToggleSelector = () => {
+  const {finderElement, toggleSelector} = useSnekFinder({
+    onAction: action => {
+      console.log('action', action)
+      if (action.type === 'SELECTOR_SELECT') {
+        toggleSelector()
+      }
+    },
+    mode: 'selector'
+  })
 
   return (
-    <Button onClick={() => toggle.open({finderMode: 'selector'})}>Open</Button>
+    <>
+      {finderElement}
+      <Button onClick={() => toggleSelector()}>Open</Button>
+    </>
   )
 }
 
 export const Element = () => {
-  const finder = useSnekFinder()
+  const {finderElement} = useSnekFinder({
+    onAction: action => console.log('action', action),
+    mode: 'browser'
+  })
 
-  return finder.element
+  return finderElement
 }

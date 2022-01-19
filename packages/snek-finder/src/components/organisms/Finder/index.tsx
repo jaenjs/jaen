@@ -22,7 +22,6 @@ import {FaFolder} from '@react-icons/all-files/fa/FaFolder'
 import update from 'immutability-helper'
 import {MouseEvent, useEffect, useState} from 'react'
 import {useDropzone} from 'react-dropzone'
-
 import {MimeTypes} from '../../../common/mimeTypes'
 import {fileToBase64} from '../../../common/toBase64'
 import {isValidHttpUrl} from '../../../common/url'
@@ -39,7 +38,6 @@ import {
   FinderData,
   FinderFileItem,
   FinderFolderItem,
-  FinderItem,
   FinderMode,
   MimeType,
   SnekFinderAction
@@ -48,7 +46,7 @@ import {
 export type SnekFinderProps = {
   mode?: FinderMode
   onSelectorClose?: () => void
-  onSelectorSelect?: (item: FinderItem) => void
+  onSelectorSelect?: (action: SnekFinderAction) => void
   data: FinderData
   rootUUID: string
   onItemOpen: (uuid: string) => void
@@ -311,11 +309,17 @@ const Finder: React.FC<SnekFinderProps> = ({mode = 'browser', ...props}) => {
     } else {
       if (mode === 'selector') {
         if (props.onSelectorSelect) {
-          const url = (item as FinderFileItem).src
+          const fileItem = item as FinderFileItem
           // check if url is valid
 
-          if (isValidHttpUrl(url)) {
-            props.onSelectorSelect(item)
+          if (isValidHttpUrl(fileItem.src)) {
+            props.onSelectorSelect({
+              type: 'SELECTOR_SELECT',
+              payload: {
+                uuid,
+                item: fileItem
+              }
+            })
           }
         }
       } else {

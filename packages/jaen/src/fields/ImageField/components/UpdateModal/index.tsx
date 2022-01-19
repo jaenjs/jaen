@@ -18,6 +18,7 @@ import {
   useToast
 } from '@chakra-ui/react'
 import {useSnekFinder} from '@jaenjs/snek-finder'
+import * as React from 'react'
 import {useForm} from 'react-hook-form'
 
 type FormData = {
@@ -43,16 +44,37 @@ export const UpdateModal = ({
 }: UpdateModalProps) => {
   const toast = useToast()
 
+  console.log('data', data)
+
+  const [defaultValues, setDefaultValues] = React.useState(data)
+
+  React.useEffect(() => {
+    setDefaultValues(data)
+    reset(data)
+  }, [data])
+
   const {
     register,
     reset,
     handleSubmit,
     formState: {errors, isSubmitting, isDirty}
   } = useForm<FormData>({
-    defaultValues: data
+    defaultValues
   })
 
-  const finder = useSnekFinder()
+  const finder = useSnekFinder({
+    mode: 'selector',
+    onAction: action => {
+      if (action.type === 'SELECTOR_SELECT') {
+        console.log(action.payload.item)
+        onUpdate({
+          image: action.payload.item.src,
+          title: action.payload.item.name,
+          description: action.payload.item.description || ''
+        })
+      }
+    }
+  })
 
   const handleDelete = () => {
     onDelete()
@@ -83,13 +105,12 @@ export const UpdateModal = ({
   }
 
   const handleImageClick = () => {
-    finder.toggle.open({
-      finderMode: 'selector'
-    })
+    finder.toggleSelector()
   }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size={'3xl'}>
+      {finder.finderElement}
       <ModalOverlay />
       <ModalContent>
         <form onSubmit={handleSubmit(onSubmit)}>

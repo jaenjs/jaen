@@ -44,6 +44,8 @@ const ImageField = connectField<
       internalImageUrl: jaenField?.value?.internalImageUrl
     }
 
+    console.log(value, jaenField.value)
+
     let gatsbyImage: IGatsbyImageData | undefined
 
     if (jaenField.staticValue) {
@@ -79,20 +81,30 @@ const ImageField = connectField<
       })
     }
 
-    const finder = useSnekFinder()
+    const finder = useSnekFinder({
+      mode: 'selector',
+      onAction: action => {
+        if (action.type === 'SELECTOR_SELECT') {
+          handleUpdateValue({
+            internalImageUrl: action.payload.item.src,
+            title: action.payload.item.name,
+            alt: action.payload.item.description
+          })
+        }
+      }
+    })
 
     const handleBoxClick = () => {
       if (updateable) {
         updateDisclosure.onOpen()
       } else {
-        finder.toggle.open({
-          finderMode: 'selector'
-        })
+        finder.toggleSelector()
       }
     }
 
     return (
       <>
+        {finder.finderElement}
         {updateable && (
           <UpdateModal
             {...updateDisclosure}
