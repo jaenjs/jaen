@@ -5,6 +5,12 @@ import * as React from 'react'
 import {IJaenPage, ITreeJaenPage} from 'types'
 import {IJaenTemplate} from '../../../types'
 type QueryData = {
+  allFile: {
+    nodes: Array<{
+      name: string
+      relativePath: string
+    }>
+  }
   allJaenPage: {
     nodes: ITreeJaenPage[]
   }
@@ -13,12 +19,18 @@ type QueryData = {
   }
 }
 
-const useStaticData = () => {
+export const useStaticData = () => {
   let staticData: QueryData
 
   try {
     staticData = useStaticQuery<QueryData>(graphql`
       query {
+        allFile(filter: {sourceInstanceName: {eq: "templates"}}) {
+          nodes {
+            name
+            relativePath
+          }
+        }
         allJaenPage(filter: {id: {ne: "JaenPage /"}}) {
           nodes {
             id
@@ -57,6 +69,9 @@ const useStaticData = () => {
     `)
   } catch (e) {
     staticData = {
+      allFile: {
+        nodes: []
+      },
       allJaenPage: {
         nodes: []
       },

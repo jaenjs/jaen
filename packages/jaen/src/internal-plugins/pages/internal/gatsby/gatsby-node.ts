@@ -2,11 +2,23 @@ import {GatsbyNode as GatsbyNodeType} from 'gatsby'
 import path from 'path'
 import {IJaenPage} from '../../types'
 import {processPage} from '../services/imaProcess'
+import {sourceTemplates} from './gatsby-config'
 
 const GatsbyNode: GatsbyNodeType = {}
 
-GatsbyNode.onCreateWebpackConfig = ({plugins, actions, loaders, stage}) => {
+GatsbyNode.onCreateWebpackConfig = ({
+  plugins,
+  actions,
+  loaders,
+  stage,
+  getNodesByType
+}) => {
   actions.setWebpackConfig({
+    plugins: [
+      plugins.define({
+        ___JAEN_TEMPLATES___: JSON.stringify(sourceTemplates)
+      })
+    ],
     resolve: {
       alias: {
         '@internal': path.resolve(__dirname, '../../', 'internal')
@@ -252,6 +264,8 @@ GatsbyNode.sourceNodes = async ({
 
     createNode(node)
   })
+
+  //> Fetch template files and proccess them
 }
 
 GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
