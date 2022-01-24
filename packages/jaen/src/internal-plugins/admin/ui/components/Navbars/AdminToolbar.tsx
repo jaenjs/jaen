@@ -27,8 +27,7 @@ export default function AdminToolbar() {
       <Flex
         bg={useColorModeValue('gray.800', 'gray.800')}
         color={useColorModeValue('white', 'white')}
-        minH={'20px'}
-        py={{base: 2}}
+        py={{base: 1}}
         px={{base: 4}}
         borderBottom={1}
         borderStyle={'solid'}
@@ -55,7 +54,7 @@ export default function AdminToolbar() {
                 transition="all 0.3s"
                 _focus={{boxShadow: 'none'}}>
                 <HStack>
-                  <Text fontSize="sm">Emilia Clarke</Text>
+                  <Text fontSize="xs">Emilia Clarke</Text>
 
                   <Box display={{base: 'none', md: 'flex'}}>
                     <FiChevronDown />

@@ -1,10 +1,9 @@
 import {Center, CircularProgress} from '@chakra-ui/react'
-import {navigate, PageProps} from 'gatsby'
-import * as React from 'react'
-
 import {useJaenContext, useJaenTemplates} from '@src/internal/root'
 import {useAppSelector, withRedux} from '@src/internal/store'
 import {usePromiseEffect} from '@src/internal/utils/hooks'
+import {navigate, PageProps} from 'gatsby'
+import * as React from 'react'
 
 const Dynamic = ({...props}: Partial<PageProps>) => {
   const dynamicPaths = useAppSelector(state => state.general.dynamicPaths)
@@ -32,7 +31,7 @@ const Dynamic = ({...props}: Partial<PageProps>) => {
 
       if (newPath) {
         // Page has been moved, update to the new path
-        navigate(`/_${newPath}`)
+        navigate(`/_#${newPath}`)
       } else {
         // Page has been deleted, redirect to the parent page
         navigate('/')

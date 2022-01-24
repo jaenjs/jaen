@@ -1,6 +1,3 @@
-import {navigate} from 'gatsby'
-import * as React from 'react'
-
 import {useJaenPageTree, useJaenTemplates} from '@src/internal/root'
 import {withSnekFinder} from '@src/internal/root/hooks/withSnekFinder'
 import {generateOriginPath} from '@src/internal/root/paths'
@@ -15,7 +12,8 @@ import {
   page_markForDeletion,
   page_updateOrCreate
 } from '@src/internal/store/slices/pagesSlice'
-
+import {navigate} from 'gatsby'
+import * as React from 'react'
 import PagesTab from '../components/tabs/Pages'
 import {ContentValues} from '../components/tabs/Pages/PageContent'
 import {CreateValues} from '../components/tabs/Pages/PageCreator'
@@ -174,7 +172,7 @@ export const PagesContainer = withSnekFinder(
 
         if (path) {
           if (dynamicPaths && path in dynamicPaths) {
-            path = `/_${path}`
+            path = `/_#${path}`
           }
 
           navigate(path)

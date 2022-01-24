@@ -2,17 +2,16 @@ import {Center, CircularProgress} from '@chakra-ui/react'
 import {useAppSelector, withRedux} from '@internal/redux'
 import {useJaenTemplates, useSiteContext} from '@internal/services/site'
 import {usePromiseEffect} from '@internal/utils/hooks/usePromiseEffect'
+import {RouteComponentProps} from '@reach/router'
 import {navigate, PageProps} from 'gatsby'
 import * as React from 'react'
 
-const Dynamic = ({...props}: Partial<PageProps>) => {
+const Dynamic = (props: RouteComponentProps & Partial<PageProps>) => {
   const dynamicPaths = useAppSelector(
     state => state.internal.routing.dynamicPaths
   )
 
-  const path = React.useMemo(() => props.location?.pathname.split('/_')[1], [
-    props.location?.pathname
-  ])
+  const path = props.location?.hash?.substring(1)
 
   if (typeof window === 'undefined') {
     return <>dynamic</>
@@ -37,7 +36,7 @@ const Dynamic = ({...props}: Partial<PageProps>) => {
 
       if (newPath) {
         // Page has been moved, update to the new path
-        navigate(`/_${newPath}`)
+        navigate(`/_#${newPath}`)
       } else {
         // Page has been deleted, redirect to the parent page
         navigate('/')

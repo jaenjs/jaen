@@ -160,7 +160,7 @@ export const PagesContainer = withRedux(() => {
 
       if (path) {
         if (dynamicPaths && path in dynamicPaths) {
-          path = `/_${path}`
+          path = `/_#${path}`
         }
 
         navigate(path)

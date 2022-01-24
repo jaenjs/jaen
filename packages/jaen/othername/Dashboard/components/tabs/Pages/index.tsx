@@ -1,10 +1,8 @@
 import {AddIcon, DeleteIcon, ViewIcon} from '@chakra-ui/icons'
 import {Box, Divider, Flex} from '@chakra-ui/layout'
 import {ButtonGroup, IconButton} from '@chakra-ui/react'
-import * as React from 'react'
-
 import {TreeJaenPage} from '@src/internal/types'
-
+import * as React from 'react'
 import {ContentValues, PageContent} from './PageContent'
 import PageTree, {PageTreeProps} from './PageTree'
 
