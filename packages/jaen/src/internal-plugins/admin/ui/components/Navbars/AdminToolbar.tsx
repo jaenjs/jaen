@@ -1,11 +1,7 @@
 import {
   Box,
-  Button,
-  ButtonGroup,
-  Circle,
   Flex,
   HStack,
-  IconButton,
   Menu,
   MenuButton,
   MenuDivider,
@@ -16,13 +12,15 @@ import {
   useColorModeValue
 } from '@chakra-ui/react'
 import {FiChevronDown} from '@react-icons/all-files/fi/FiChevronDown'
-import {FiHome} from '@react-icons/all-files/fi/FiHome'
-import {FiTrash} from '@react-icons/all-files/fi/FiTrash'
 import {Link} from 'gatsby'
+import {usePluginStore} from 'react-pluggable'
+import {RendererPlacements} from '../../../AdminPlugin'
 import {SearchBar} from './SearchBar/SearchBar'
+
 export default function AdminToolbar() {
-  // check if current path is /jaen/admin, if so lower the z-index
-  const isAdmin = window.location.pathname.includes('/jaen/admin')
+  const pluginStore = usePluginStore()
+
+  const Renderer = pluginStore.executeFunction('Renderer.getRendererComponent')
 
   return (
     <Box position={'sticky'} top="0" zIndex={'banner'}>
@@ -43,31 +41,7 @@ export default function AdminToolbar() {
 
           <Flex display={{base: 'none', md: 'flex'}} ml={10}>
             <HStack spacing={2}>
-              <Button size="xs" variant={'darkghost'} leftIcon={<FiHome />}>
-                <Link to="/">AGT Guntrade</Link>
-              </Button>
-              <ButtonGroup isAttached variant="outline" size="xs">
-                <Button
-                  mr="-px"
-                  variant={'darkghost'}
-                  leftIcon={
-                    <Circle
-                      size="4"
-                      bg={true ? 'orange' : 'gray.300'}
-                      color="white"
-                    />
-                  }>
-                  Edit
-                </Button>
-                <IconButton
-                  variant={'darkghost'}
-                  aria-label="Add to friends"
-                  icon={<FiTrash color="orange" />}
-                />
-              </ButtonGroup>
-              <Button size="xs" variant={'darkghost'}>
-                Publish
-              </Button>
+              {Renderer && <Renderer placement={RendererPlacements.TOOLBAR} />}
             </HStack>
           </Flex>
         </Flex>

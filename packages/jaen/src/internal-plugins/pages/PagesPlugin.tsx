@@ -7,6 +7,7 @@ import {AdminFunctions} from '../admin/AdminPlugin'
 import {IPagesMigration, IPagesMigrationBase} from './types'
 import {FilesContainer} from './ui/tabs/Files'
 import {PagesContainer} from './ui/tabs/Pages'
+import {EditButtonGroup, HomeButton, PublishButton} from './ui/toolbar'
 
 const Test = () => {
   return (
@@ -46,11 +47,11 @@ class PagesPlugin implements IJaenPlugin {
     // Do not change this because it is used in the migrations
     // When changing this, the migrations based on this plugin will not be
     // executed anymore.
-    return 'PagesPlugin'
+    return 'JaenPages@0.0.1'
   }
 
   getDependencies(): string[] {
-    return []
+    return ['JaenAdmin@0.0.1']
   }
 
   init(pluginStore: PluginStore): void {
@@ -93,6 +94,15 @@ class PagesPlugin implements IJaenPlugin {
       component: null,
       layout: ''
     })
+
+    this.pluginStore.executeFunction(
+      AdminFunctions.addToolbarItem,
+      <>
+        <HomeButton />
+        <EditButtonGroup />
+        <PublishButton />
+      </>
+    )
   }
 
   deactivate(): void {

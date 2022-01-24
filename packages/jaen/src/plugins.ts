@@ -21,9 +21,9 @@ export interface IJaenPlugin extends IPlugin {
 
 export const migrationPlugins: IJaenPlugin[] = [new PagesPlugin()]
 export const plugins: IPlugin[] = [
+  new RendererPlugin(),
   new AdminPlugin(),
-  ...migrationPlugins,
-  new RendererPlugin()
+  ...migrationPlugins
 ]
 
 for (const plugin of plugins) {

@@ -1,6 +1,6 @@
-import {IJaenPage} from '@types'
 import {graphql} from 'gatsby'
 import React from 'react'
+import {IJaenPage} from '../../../types'
 
 export interface JaenPageContext {
   jaenPageId: string

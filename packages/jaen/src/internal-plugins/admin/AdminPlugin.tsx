@@ -1,9 +1,27 @@
 import {IPlugin, PluginStore} from 'react-pluggable'
-import {IRoute} from './routes'
+
+export interface IRoute {
+  name: string
+  path: string
+  layout: string
+  icon?: string
+  component?: React.ComponentType
+  category?: string
+  views?: IRoute[]
+  collapse?: boolean
+  secondaryNavbar?: boolean
+}
+
+export enum RendererPlacements {
+  TOOLBAR = 'toolbar',
+  TOOLBAR_MENU = 'toolbar-menu'
+}
 
 export enum AdminFunctions {
   getRoutes = 'Admin.getRoutes',
-  addRoute = 'Admin.addRoute'
+  addRoute = 'Admin.addRoute',
+  addToolbarItem = 'Admin.addToolbarItem',
+  addToolbarMenuItem = 'Admin.addToolbarMenuItem'
 }
 
 class AdminPlugin implements IPlugin {
@@ -11,15 +29,21 @@ class AdminPlugin implements IPlugin {
   routes: IRoute[] = []
 
   getPluginName(): string {
-    return 'JaenAdmin'
+    return 'JaenAdmin@0.0.1'
   }
 
   getDependencies(): string[] {
-    return []
+    return ['Renderer@1.0.0']
   }
 
   init(pluginStore: PluginStore): void {
     this.pluginStore = pluginStore
+  }
+
+  addRendererFunction(afn: AdminFunctions, placement: RendererPlacements) {
+    this.pluginStore.addFunction(afn, (item: JSX.Element) => {
+      this.pluginStore.executeFunction('Renderer.add', placement, () => item)
+    })
   }
 
   activate(): void {
@@ -30,6 +54,15 @@ class AdminPlugin implements IPlugin {
     this.pluginStore.addFunction(AdminFunctions.getRoutes, () => {
       return this.routes
     })
+
+    this.addRendererFunction(
+      AdminFunctions.addToolbarItem,
+      RendererPlacements.TOOLBAR
+    )
+    this.addRendererFunction(
+      AdminFunctions.addToolbarMenuItem,
+      RendererPlacements.TOOLBAR_MENU
+    )
   }
 
   deactivate(): void {

@@ -107,15 +107,19 @@ const mergeStaticWithStatePages = (
   staticPages
     .concat(
       statePages.filter(
-        item => staticPages.findIndex(n => n.id === item.id) === -1
+        item =>
+          staticPages.findIndex(
+            n => n.id === item.id && !['JaenPage /'].includes(n.id)
+          ) === -1
       )
     )
     .map(({id}) => {
       const p1 = staticPages.find(e => e.id === id)
       const p2 = statePages.find(e => e.id === id)
-
-      return deepmerge(p1 || {}, p2 || {})
+      const m = deepmerge(p1 || {}, p2 || {})
+      return m
     })
+    .filter(p => ['JaenPage /'].indexOf(p.id) === -1)
 
 /**
  * Access the PageTree of the JaenContext and Static.
