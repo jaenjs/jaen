@@ -43,6 +43,7 @@ const ImageViewer: React.FC<ImageViewerProps> = props => {
           {({zoomIn, zoomOut, resetTransform, ...rest}) => (
             <>
               <Flex
+                zIndex={999}
                 direction="column"
                 overflow="hidden"
                 left={0}
@@ -57,8 +58,7 @@ const ImageViewer: React.FC<ImageViewerProps> = props => {
                   pb={3}
                   pt={3}
                   pr={2}
-                  h={'7.5vh'}
-                  zIndex={999}>
+                  h={'7.5vh'}>
                   <Flex width="100%">
                     <Spacer />
                     <HStack>

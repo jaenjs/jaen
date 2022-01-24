@@ -1,8 +1,5 @@
-require('ts-node').register({
-  compilerOptions: {
-    module: 'commonjs',
-    target: 'esnext'
-  }
-})
+const {useGatsbyNode} = require('gatsby-plugin-ts-config')
 
-module.exports = require('./src/internal/gatsby/node.ts')
+// All of the same usage patterns for `useGatsbyConfig` are valid for `useGatsbyNode`
+// as well
+module.exports = useGatsbyNode(() => require('./src/gatsby/gatsby-node'))

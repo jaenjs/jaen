@@ -1,2 +1,7 @@
-export {connectField, Field} from './fields'
-export {connectPage, connectSection, connectTemplate} from './internal/page'
+export * from './internal-plugins/pages'
+export {migrationPlugins, Placements, plugins, pluginStore} from './plugins'
+export type {
+  IBaseEntity,
+  IMigrationEntity,
+  IRemoteFileMigration
+} from './services/migration/types'
