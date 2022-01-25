@@ -6,7 +6,7 @@ const BlogPage = connectTemplate(
   () => {
     return <Field.Text name="test" defaultValue="<p>Hello World</p>" />
   },
-  {name: 'BlogPage', displayName: 'Blog Page', children: []}
+  {displayName: 'Blog Page', children: ['BlogPage']}
 )
 
 export const query = graphql`
