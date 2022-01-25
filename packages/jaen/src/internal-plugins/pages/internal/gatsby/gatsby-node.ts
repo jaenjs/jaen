@@ -2,6 +2,7 @@ import {GatsbyNode as GatsbyNodeType} from 'gatsby'
 import path from 'path'
 import {IJaenPage} from '../../types'
 import {processPage} from '../services/imaProcess'
+import {scanTemplates} from '../services/scanTemplates'
 import {sourceTemplates} from './gatsby-config'
 
 const GatsbyNode: GatsbyNodeType = {}
@@ -79,11 +80,14 @@ GatsbyNode.sourceNodes = async ({
   actions,
   createNodeId,
   createContentDigest,
+  getNodesByType,
   cache,
   store,
   reporter
 }) => {
   const {createNode} = actions
+
+  await scanTemplates(sourceTemplates + '/*')
 
   const dummyTemplates = [
     {
@@ -246,9 +250,6 @@ GatsbyNode.sourceNodes = async ({
       store,
       reporter
     })
-
-    // @ts-ignore
-    console.log('JAENPAGE', jaenPage)
 
     const node = {
       ...jaenPage,
