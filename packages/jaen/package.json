@@ -50,6 +50,7 @@
     "@emotion/styled": "^11",
     "@jaenjs/snek-finder": "^1.0.0",
     "@loadable/component": "^5.15.2",
+    "@react-icons/all-files": "4.0.0",
     "@reduxjs/toolkit": "^1.6.2",
     "framer-motion": "^5",
     "gatsby": "^4.3.0",
