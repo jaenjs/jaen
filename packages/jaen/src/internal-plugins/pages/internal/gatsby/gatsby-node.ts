@@ -2,7 +2,6 @@ import {GatsbyNode as GatsbyNodeType} from 'gatsby'
 import path from 'path'
 import {IJaenPage} from '../../types'
 import {processPage} from '../services/imaProcess'
-import {scanTemplates} from '../services/scanTemplates'
 import {sourceTemplates} from './gatsby-config'
 
 const GatsbyNode: GatsbyNodeType = {}
@@ -46,18 +45,12 @@ GatsbyNode.onCreateWebpackConfig = ({
 
 GatsbyNode.createSchemaCustomization = ({actions}) => {
   actions.createTypes(`
-    type JaenTemplate implements Node {
-      id: String!
-      name: String!
-      displayName: String!
-    }
-
     type JaenPage implements Node {
       id: ID!
       jaenPageMetadata: JaenPageMetadata!
       jaenFields: JSON
       chapters: JSON
-      template: JaenTemplate @link
+      template: String
       jaenFiles: [JaenFile!]!
     }
 
@@ -86,20 +79,6 @@ GatsbyNode.sourceNodes = async ({
   reporter
 }) => {
   const {createNode} = actions
-
-  await scanTemplates(sourceTemplates + '/*')
-
-  const dummyTemplates = [
-    {
-      name: 'BlogPage',
-      displayName: 'Blog',
-      children: [
-        {
-          id: 'BlogPage'
-        }
-      ]
-    }
-  ]
 
   const dummyJaenPages: IJaenPage[] = [
     {
@@ -224,21 +203,6 @@ GatsbyNode.sourceNodes = async ({
     }
   ]
 
-  dummyTemplates.forEach(jaenTemplate => {
-    const node = {
-      id: jaenTemplate.name,
-      ...jaenTemplate,
-      children: jaenTemplate.children.map(child => child.id),
-      internal: {
-        type: 'JaenTemplate',
-        content: JSON.stringify(jaenTemplate),
-        contentDigest: createContentDigest(jaenTemplate)
-      }
-    }
-
-    createNode(node)
-  })
-
   dummyJaenPages.forEach(async jaenPage => {
     //> Process IMA fields in page and its chapters
 
@@ -297,10 +261,7 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
             }
             jaenFields
             chapters
-            template {
-              name
-              displayName
-            }
+            template
           }
         }
       }

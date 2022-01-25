@@ -17,15 +17,17 @@ export const SiteProvider: React.FC<{}> = withRedux(({children}) => {
   // n to dict
   const templatesPaths = React.useMemo(
     () =>
-      data.allFile.nodes.reduce<{[name: string]: string}>((dict, node) => {
-        dict[node.name] = node.relativePath
-        return dict
-      }, {}),
+      data.jaenTemplates.nodes.reduce<{[name: string]: string}>(
+        (dict, node) => {
+          dict[node.name] = node.relativePath
+          return dict
+        },
+        {}
+      ),
     []
   )
 
   const templateLoader = async (name: string) => {
-    alert(`${___JAEN_TEMPLATES___}/${templatesPaths[name]}`)
     //@ts-ignore
     return (await import(`${___JAEN_TEMPLATES___}/${templatesPaths[name]}`))
       .default

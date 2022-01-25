@@ -1,9 +1,8 @@
+import {RootState, useAppDeepEqualSelector} from '@src/internal/store'
+import {JaenPage, TreeJaenPage} from '@src/internal/types'
 import deepmerge from 'deepmerge'
 import {graphql, useStaticQuery} from 'gatsby'
 import * as React from 'react'
-
-import {RootState, useAppDeepEqualSelector} from '@src/internal/store'
-import {JaenPage, TreeJaenPage} from '@src/internal/types'
 
 type QueryData = {
   allJaenPage: {
@@ -35,10 +34,7 @@ const useStaticData = () => {
               datePublished
               canonical
             }
-            template {
-              name
-              displayName
-            }
+            template
           }
         }
       }
@@ -56,8 +52,14 @@ const useStaticData = () => {
 
 const getStatePages = (state: RootState) =>
   Object.keys(state.pages.pages).map(id => {
-    const {slug, parent, children, jaenPageMetadata, template, deleted} =
-      state.pages.pages[id]
+    const {
+      slug,
+      parent,
+      children,
+      jaenPageMetadata,
+      template,
+      deleted
+    } = state.pages.pages[id]
 
     return {
       id,

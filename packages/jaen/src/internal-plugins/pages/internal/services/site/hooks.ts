@@ -2,20 +2,18 @@ import {RootState, useAppDeepEqualSelector} from '@internal/redux'
 import deepmerge from 'deepmerge'
 import {graphql, useStaticQuery} from 'gatsby'
 import * as React from 'react'
-import {IJaenPage, ITreeJaenPage} from 'types'
-import {IJaenTemplate} from '../../../types'
+import {useSiteContext} from '.'
+import {IJaenPage, IJaenTemplate, ITreeJaenPage} from '../../../types'
+
 type QueryData = {
-  allFile: {
+  allJaenPage: {
+    nodes: ITreeJaenPage[]
+  }
+  jaenTemplates: {
     nodes: Array<{
       name: string
       relativePath: string
     }>
-  }
-  allJaenPage: {
-    nodes: ITreeJaenPage[]
-  }
-  allJaenTemplate: {
-    nodes: IJaenTemplate[]
   }
 }
 
@@ -25,7 +23,9 @@ export const useStaticData = () => {
   try {
     staticData = useStaticQuery<QueryData>(graphql`
       query {
-        allFile(filter: {sourceInstanceName: {eq: "templates"}}) {
+        jaenTemplates: allFile(
+          filter: {sourceInstanceName: {eq: "templates"}}
+        ) {
           nodes {
             name
             relativePath
@@ -49,33 +49,17 @@ export const useStaticData = () => {
               datePublished
               canonical
             }
-            template {
-              name
-              displayName
-            }
-          }
-        }
-        allJaenTemplate {
-          nodes {
-            name
-            displayName
-            children: childrenJaenTemplate {
-              name
-              displayName
-            }
+            template
           }
         }
       }
     `)
   } catch (e) {
     staticData = {
-      allFile: {
-        nodes: []
-      },
       allJaenPage: {
         nodes: []
       },
-      allJaenTemplate: {
+      jaenTemplates: {
         nodes: []
       }
     }
@@ -87,10 +71,63 @@ export const useStaticData = () => {
 /**
  * Access the JaenTemplates
  */
-export const useJaenTemplates = (): IJaenTemplate[] => {
+export const useJaenTemplates = () => {
+  const site = useSiteContext()
   const data = useStaticData()
 
-  return data.allJaenTemplate.nodes
+  const [templates, setTemplates] = React.useState<{
+    [name: string]: IJaenTemplate
+  }>({})
+
+  React.useEffect(() => {
+    const templateNodes = data.jaenTemplates.nodes
+
+    for (const templateNode of templateNodes) {
+      const {name: loadTemplate} = templateNode
+
+      const load = async () => {
+        if (loadTemplate && !(loadTemplate in templates)) {
+          const Component = await site.templateLoader(loadTemplate)
+
+          const children = []
+
+          for (const child of Component.options.children) {
+            if (typeof child === 'string') {
+              const ad = await site.templateLoader(child)
+              children.push({
+                name: child,
+                displayName: ad.options.displayName
+              })
+            } else {
+              children.push({
+                name: child.name,
+                displayName: child.options.displayName
+              })
+            }
+          }
+
+          setTemplates({
+            ...templates,
+            [loadTemplate]: {
+              name: loadTemplate,
+              displayName: Component.options.displayName,
+              children
+            }
+          })
+        }
+      }
+
+      load()
+    }
+  }, [])
+
+  const templatesArray = React.useMemo(() => Object.values(templates), [
+    templates
+  ])
+
+  alert(JSON.stringify(templatesArray))
+
+  return templatesArray
 }
 
 const getStatePages = (state: RootState) =>
@@ -122,19 +159,15 @@ const mergeStaticWithStatePages = (
   staticPages
     .concat(
       statePages.filter(
-        item =>
-          staticPages.findIndex(
-            n => n.id === item.id && !['JaenPage /'].includes(n.id)
-          ) === -1
+        item => staticPages.findIndex(n => n.id === item.id) === -1
       )
     )
     .map(({id}) => {
       const p1 = staticPages.find(e => e.id === id)
       const p2 = statePages.find(e => e.id === id)
-      const m = deepmerge(p1 || {}, p2 || {})
-      return m
+
+      return deepmerge(p1 || {}, p2 || {})
     })
-    .filter(p => ['JaenPage /'].indexOf(p.id) === -1)
 
 /**
  * Access the PageTree of the JaenContext and Static.

@@ -96,8 +96,7 @@ const PageTree: React.FC<PageTreeProps> = ({
   const creatorTemplates = React.useMemo(
     () =>
       templates.find(
-        template =>
-          template.name === tree.items[selectedItem]?.data?.template?.name
+        template => template.name === tree.items[selectedItem]?.data?.template
       )?.children || creatorFallbackTemplates,
     [
       templates,

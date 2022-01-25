@@ -305,10 +305,7 @@ export const createPages: GatsbyNode['createPages'] = async (
             }
             jaenFields
             chapters
-            template {
-              name
-              displayName
-            }
+            template
           }
         }
       }

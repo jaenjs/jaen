@@ -34,9 +34,8 @@ const PagesTab = (props: PagesTabProps) => {
   )
 
   const selectedTemplate = React.useMemo(
-    () =>
-      props.templates.find(t => t.name === selection?.template?.name) || null,
-    [props.templates, selection?.template?.name]
+    () => props.templates.find(t => t.name === selection?.template) || null,
+    [props.templates, selection?.template]
   )
 
   return (

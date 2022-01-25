@@ -18,7 +18,7 @@ export const connectPage = <P extends IJaenPageProps>(
   Component: React.ComponentType<P>,
   options: {
     displayName: string
-    children: Array<ITemplateConnection>
+    children: Array<ITemplateConnection | string>
   }
 ) => {
   const MyComp: IJaenConnection<P, typeof options> = props => (
@@ -60,7 +60,6 @@ export type IPageConnection = ReturnType<typeof connectPage>
  *     )
  *   },
  *   {
- *     name: 'blog-page',
  *     displayName: 'Simple Blog Page'
  *   }
  * )
@@ -92,9 +91,8 @@ export const connectTemplate = <P extends IJaenPageProps>(
   return MyComp
 }
 export type ITemplateOptions = {
-  name: string
   displayName: string
-  children: Array<ITemplateConnection>
+  children: Array<ITemplateConnection | string>
 }
 export type ITemplateConnection = ReturnType<typeof connectTemplate>
 
