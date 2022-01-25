@@ -2,11 +2,6 @@ import {createPluginStore, IPlugin, RendererPlugin} from 'react-pluggable'
 import AdminPlugin from './internal-plugins/admin/AdminPlugin'
 import PagesPlugin from './internal-plugins/pages/PagesPlugin'
 
-export enum Placements {
-  HOTBAR = 'HOTBAR',
-  CONTENT = 'CONTENT'
-}
-
 export const pluginStore = createPluginStore()
 
 export interface IJaenPlugin extends IPlugin {

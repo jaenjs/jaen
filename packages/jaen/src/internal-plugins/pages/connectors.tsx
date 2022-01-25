@@ -72,7 +72,7 @@ export type IPageConnection = ReturnType<typeof connectPage>
  * `
  * ```
  */
-export const connectPageAsTemplate = <P extends IJaenPageProps>(
+export const connectTemplate = <P extends IJaenPageProps>(
   Component: React.ComponentType<P>,
   options: ITemplateOptions
 ) => {
@@ -96,7 +96,7 @@ export type ITemplateOptions = {
   displayName: string
   children: Array<ITemplateConnection>
 }
-export type ITemplateConnection = ReturnType<typeof connectPageAsTemplate>
+export type ITemplateConnection = ReturnType<typeof connectTemplate>
 
 /**
  * @function connectSection Connects a section with Jaen.
