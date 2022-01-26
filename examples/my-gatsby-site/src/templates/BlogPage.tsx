@@ -2,11 +2,15 @@ import {connectTemplate, Field} from '@jaenjs/jaen'
 import {graphql} from 'gatsby'
 import React from 'react'
 
-const BlogPage = connectTemplate(
+export default connectTemplate(
   () => {
     return <Field.Text name="test" defaultValue="<p>Hello World</p>" />
   },
-  {displayName: 'Blog Page', children: ['BlogPage']}
+  {
+    displayName: 'Blog Page',
+    children: ['BlogPage', 'ArticlePage'],
+    isRootTemplate: true
+  }
 )
 
 export const query = graphql`
@@ -14,5 +18,3 @@ export const query = graphql`
     ...JaenPageData
   }
 `
-
-export default BlogPage

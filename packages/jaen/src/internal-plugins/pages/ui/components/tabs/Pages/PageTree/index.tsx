@@ -93,17 +93,23 @@ const PageTree: React.FC<PageTreeProps> = ({
     defaultSelection
   )
 
-  const creatorTemplates = React.useMemo(
-    () =>
+  alert('selectedItem: ' + selectedItem)
+
+  const creatorTemplates = React.useMemo(() => {
+    return (
       templates.find(
         template => template.name === tree.items[selectedItem]?.data?.template
-      )?.children || creatorFallbackTemplates,
-    [
-      templates,
-      creatorFallbackTemplates,
-      tree.items[selectedItem]?.data?.template
-    ]
-  )
+      )?.children || creatorFallbackTemplates
+    )
+  }, [
+    templates,
+    creatorFallbackTemplates,
+    tree.items[selectedItem]?.data?.template
+  ])
+
+  const rootTemplates = React.useMemo(() => {
+    return templates.filter(t => t.isRootTemplate)
+  }, [templates])
 
   const pageCreatorDisclosure = useDisclosure()
 
@@ -126,7 +132,7 @@ const PageTree: React.FC<PageTreeProps> = ({
       data: {
         title,
         slug,
-        template
+        template: template.name
       },
       children: [],
       parent: selectedItem
@@ -424,7 +430,9 @@ const PageTree: React.FC<PageTreeProps> = ({
             displayName: ''
           }
         }}
-        templates={creatorTemplates}
+        templates={
+          selectedItem === 'SitePage' ? rootTemplates : creatorTemplates
+        }
         isOpen={pageCreatorDisclosure.isOpen}
         onClose={pageCreatorDisclosure.onClose}
         onSubmit={handleItemCreate}

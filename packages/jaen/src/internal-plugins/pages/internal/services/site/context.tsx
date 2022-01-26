@@ -1,11 +1,11 @@
 import {withRedux} from '@internal/redux'
 import React from 'react'
 import {useStaticData} from '.'
-import {IPageConnection} from '../../../connectors'
+import {ITemplateConnection} from '../../../connectors'
 import {useDynamicRedirect} from '../routing/hooks'
 
 export interface ISiteContext {
-  templateLoader: (name: string) => Promise<IPageConnection>
+  templateLoader: (name: string) => Promise<ITemplateConnection>
 }
 
 export const SiteContext = React.createContext<ISiteContext | undefined>(

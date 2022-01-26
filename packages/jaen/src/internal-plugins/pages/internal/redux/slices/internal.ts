@@ -467,7 +467,7 @@ const routingSlice = createSlice({
         if (create) {
           state.dynamicPaths[path] = {
             pageId,
-            templateName: node?.template?.name!
+            templateName: node?.template!
           }
         }
       }

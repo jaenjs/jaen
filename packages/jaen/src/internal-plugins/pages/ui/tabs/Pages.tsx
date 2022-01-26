@@ -19,11 +19,10 @@ export const PagesContainer = withRedux(() => {
     state => state.internal.pages.lastAddedNodeId
   )
 
-  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] =
-    React.useState<{
-      pageId: string
-      create: boolean
-    } | null>(null)
+  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] = React.useState<{
+    pageId: string
+    create: boolean
+  } | null>(null)
 
   console.log(
     '🚀 ~ file: Pages.tsx ~ line 186 ~ PagesContainer ~ shouldUpdateDpathsFor',
@@ -86,7 +85,7 @@ export const PagesContainer = withRedux(() => {
           jaenPageMetadata: {
             title: values.title
           },
-          template: values.template
+          template: values.template.name
         })
       ),
     []
@@ -198,12 +197,7 @@ export const PagesContainer = withRedux(() => {
       <PagesTab
         items={treeItems}
         templates={jaenTemplates || []}
-        creatorFallbackTemplates={[
-          {
-            name: 'fb-page',
-            displayName: 'Fallback Page'
-          }
-        ]}
+        creatorFallbackTemplates={[]}
         getPage={handlePageGet}
         onItemCreate={handlePageCreate}
         onItemDelete={handlePageDelete}

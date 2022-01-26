@@ -75,51 +75,44 @@ export const useJaenTemplates = () => {
   const site = useSiteContext()
   const data = useStaticData()
 
-  const [templates, setTemplates] =
-    React.useState<{
-      [name: string]: IJaenTemplate
-    } | null>(null)
+  const [templates, setTemplates] = React.useState<{
+    [name: string]: IJaenTemplate
+  } | null>(null)
 
   React.useEffect(() => {
     const templateNodes = data.jaenTemplates.nodes
 
-    for (const templateNode of templateNodes) {
-      const {name: loadTemplate} = templateNode
+    const load = async () => {
+      const tmpls: {[name: string]: IJaenTemplate} = {}
 
-      const load = async () => {
+      for (const templateNode of templateNodes) {
+        const {name: loadTemplate} = templateNode
+
         if (loadTemplate && !(loadTemplate in (templates || {}))) {
           const Component = await site.templateLoader(loadTemplate)
-
           const children = []
 
           for (const child of Component.options.children) {
-            if (typeof child === 'string') {
-              const ad = await site.templateLoader(child)
-              children.push({
-                name: child,
-                displayName: ad.options.displayName
-              })
-            } else {
-              children.push({
-                name: child.name, // TODO: use change to unchanging name => Reintroduce options.name and do not use the template file name as the name.
-                displayName: child.options.displayName
-              })
-            }
+            const ad = await site.templateLoader(child)
+            children.push({
+              name: child,
+              displayName: ad.options.displayName
+            })
           }
 
-          setTemplates({
-            ...templates,
-            [loadTemplate]: {
-              name: loadTemplate,
-              displayName: Component.options.displayName,
-              children
-            }
-          })
+          tmpls[loadTemplate] = {
+            name: loadTemplate,
+            displayName: Component.options.displayName,
+            children,
+            isRootTemplate: Component.options.isRootTemplate
+          }
         }
       }
 
-      load()
+      setTemplates(tmpls)
     }
+
+    load()
   }, [])
 
   const templatesArray = React.useMemo(
@@ -132,8 +125,14 @@ export const useJaenTemplates = () => {
 
 const getStatePages = (state: RootState) =>
   Object.keys(state.internal.pages.nodes).map(id => {
-    const {slug, parent, children, jaenPageMetadata, template, deleted} =
-      state.internal.pages.nodes[id]
+    const {
+      slug,
+      parent,
+      children,
+      jaenPageMetadata,
+      template,
+      deleted
+    } = state.internal.pages.nodes[id]
 
     return {
       id,
@@ -159,6 +158,9 @@ const mergeStaticWithStatePages = (
     .map(({id}) => {
       const p1 = staticPages.find(e => e.id === id)
       const p2 = statePages.find(e => e.id === id)
+
+      console.log('p1', p1)
+      console.log('p2', p2)
 
       return deepmerge(p1 || {}, p2 || {})
     })

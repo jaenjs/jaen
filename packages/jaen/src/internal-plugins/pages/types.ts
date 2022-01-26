@@ -9,6 +9,7 @@ export interface IJaenTemplate {
     name: string
     displayName: string
   }[]
+  isRootTemplate?: boolean
 }
 
 export interface IJaenPage {
@@ -65,7 +66,7 @@ export interface IJaenPage {
    * - Used to determine the component to render.
    * - Possible templates are specified in the `gatsby-config.js` file.
    */
-  template: Omit<IJaenTemplate, 'children'> | null
+  template: string | null
   deleted?: true
 }
 
