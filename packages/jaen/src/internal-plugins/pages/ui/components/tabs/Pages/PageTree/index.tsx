@@ -93,8 +93,6 @@ const PageTree: React.FC<PageTreeProps> = ({
     defaultSelection
   )
 
-  alert('selectedItem: ' + selectedItem)
-
   const creatorTemplates = React.useMemo(() => {
     return (
       templates.find(
