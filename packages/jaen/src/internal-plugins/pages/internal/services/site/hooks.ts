@@ -75,9 +75,10 @@ export const useJaenTemplates = () => {
   const site = useSiteContext()
   const data = useStaticData()
 
-  const [templates, setTemplates] = React.useState<{
-    [name: string]: IJaenTemplate
-  }>({})
+  const [templates, setTemplates] =
+    React.useState<{
+      [name: string]: IJaenTemplate
+    } | null>(null)
 
   React.useEffect(() => {
     const templateNodes = data.jaenTemplates.nodes
@@ -86,7 +87,7 @@ export const useJaenTemplates = () => {
       const {name: loadTemplate} = templateNode
 
       const load = async () => {
-        if (loadTemplate && !(loadTemplate in templates)) {
+        if (loadTemplate && !(loadTemplate in (templates || {}))) {
           const Component = await site.templateLoader(loadTemplate)
 
           const children = []
@@ -100,7 +101,7 @@ export const useJaenTemplates = () => {
               })
             } else {
               children.push({
-                name: child.name,
+                name: child.name, // TODO: use change to unchanging name => Reintroduce options.name and do not use the template file name as the name.
                 displayName: child.options.displayName
               })
             }
@@ -121,25 +122,18 @@ export const useJaenTemplates = () => {
     }
   }, [])
 
-  const templatesArray = React.useMemo(() => Object.values(templates), [
-    templates
-  ])
-
-  alert(JSON.stringify(templatesArray))
+  const templatesArray = React.useMemo(
+    () => (templates ? Object.values(templates) : null),
+    [templates]
+  )
 
   return templatesArray
 }
 
 const getStatePages = (state: RootState) =>
   Object.keys(state.internal.pages.nodes).map(id => {
-    const {
-      slug,
-      parent,
-      children,
-      jaenPageMetadata,
-      template,
-      deleted
-    } = state.internal.pages.nodes[id]
+    const {slug, parent, children, jaenPageMetadata, template, deleted} =
+      state.internal.pages.nodes[id]
 
     return {
       id,

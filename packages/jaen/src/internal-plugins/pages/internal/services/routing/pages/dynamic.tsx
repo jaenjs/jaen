@@ -44,25 +44,36 @@ const Dynamic = (props: RouteComponentProps & Partial<PageProps>) => {
     }
   }, [dynamicPaths])
 
-  const template = useJaenTemplates().find(t => t.name === templateName)
+  const loadingComponent = (
+    <Center>
+      <CircularProgress isIndeterminate color="green.300" />
+    </Center>
+  )
 
-  if (!template) {
-    throw Error(
-      'No template found in dynamic page. Page could also be not in state.'
+  const templates = useJaenTemplates()
+
+  // We need to wait for the template to be loaded before we can render the page,
+  // so template null means the template is not loaded yet
+  const template = templates
+    ? templates.find(t => t.name === templateName)
+    : null
+
+  if (template === undefined) {
+    // Templates are loaded, but the template is not found
+    throw new Error(
+      `Could not find template ${templateName} for dynamic page ${pageId}.`
     )
   }
 
   const {value: Component} = usePromiseEffect(async () => {
-    // TODO: Remove this hack to ignore incorrect template names
-    return await templateLoader(templateName)
+    if (template) {
+      // TODO: Remove this hack to ignore incorrect template names
+      return await templateLoader(templateName)
+    }
   }, [template])
 
   if (!Component) {
-    return (
-      <Center>
-        <CircularProgress isIndeterminate color="green.300" />
-      </Center>
-    )
+    return loadingComponent
   }
 
   return (
