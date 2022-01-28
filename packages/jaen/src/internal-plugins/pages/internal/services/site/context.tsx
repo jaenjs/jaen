@@ -14,6 +14,7 @@ export const SiteContext = React.createContext<ISiteContext | undefined>(
 
 export const SiteProvider: React.FC<{}> = withRedux(({children}) => {
   const data = useStaticData()
+  alert('laoded site provider')
   // n to dict
   const templatesPaths = React.useMemo(
     () =>

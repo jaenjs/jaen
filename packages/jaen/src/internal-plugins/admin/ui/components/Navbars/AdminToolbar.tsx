@@ -27,7 +27,7 @@ export default function AdminToolbar() {
       <Flex
         bg={useColorModeValue('gray.800', 'gray.800')}
         color={useColorModeValue('white', 'white')}
-        py={{base: 1}}
+        py={{base: 2}}
         px={{base: 4}}
         borderBottom={1}
         borderStyle={'solid'}

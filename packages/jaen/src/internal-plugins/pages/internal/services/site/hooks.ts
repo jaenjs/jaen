@@ -179,10 +179,16 @@ export const useJaenPageTree = (): ITreeJaenPage[] => {
     [staticData, pages]
   )
 
-  console.log(
-    '🚀 ~ file: useJaenPageTree.tsx ~ line 125 ~ mergeData',
-    mergeData
+  // Not all jaenpages should end up in the tree
+  const filteredData = React.useMemo(
+    () => mergeData.filter(item => !(item.id in ['JaenPage /'])),
+    [mergeData]
   )
 
-  return mergeData
+  console.log(
+    '🚀 ~ file: useJaenPageTree.tsx ~ line 125 ~ filteredData',
+    filteredData
+  )
+
+  return filteredData
 }
