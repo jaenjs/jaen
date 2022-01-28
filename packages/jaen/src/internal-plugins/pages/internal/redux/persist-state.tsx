@@ -5,7 +5,7 @@ export const persistKey = 'jaen-pages-state'
 export const loadState = (): RootState | undefined => {
   try {
     const serialState = localStorage.getItem(persistKey)
-    alert('load state: ' + serialState)
+
     if (serialState === null) {
       return undefined
     }
@@ -16,7 +16,6 @@ export const loadState = (): RootState | undefined => {
 }
 
 export const saveState = (state: RootState) => {
-  alert('save: ' + JSON.stringify(state))
   try {
     const serialState = JSON.stringify(state)
     localStorage.setItem(persistKey, serialState)
@@ -26,8 +25,6 @@ export const saveState = (state: RootState) => {
 }
 
 export const clearState = () => {
-  alert('clear')
   localStorage.removeItem(persistKey)
   store.dispatch({type: 'RESET_STATE'})
-  alert('cleared')
 }

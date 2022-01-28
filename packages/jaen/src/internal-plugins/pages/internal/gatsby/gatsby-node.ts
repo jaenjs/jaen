@@ -287,8 +287,8 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
   // stepPage.matchPath is a special key that's used for matching pages
   // only on the client.
   createPage({
-    path: '/jaen/r/_',
-    matchPath: '/jaen/r/_/*',
+    path: '/_',
+    matchPath: '/_/*',
     component: require.resolve('../services/routing/pages/_.tsx'),
     context: {}
   })

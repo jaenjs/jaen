@@ -27,7 +27,6 @@ const combinedReducer = combineReducers({
 // Reset state if action called
 const rootReducer = (state: any, action: any) => {
   if (action.type === 'RESET_STATE') {
-    alert('reducer reset state')
     return {
       internal: initialState
     }
@@ -49,7 +48,6 @@ export const store = configureStore({
 })
 
 store.subscribe(() => {
-  alert('subscribe: ' + JSON.stringify(store.getState()))
   saveState(store.getState() as RootState)
 })
 
@@ -96,7 +94,6 @@ export const PersistorWrapper: React.FC = ({children}) => {
 
   if (storageBuildTime !== buildTime) {
     if (storageBuildTime) {
-      alert('resest')
       clearState()
     }
 
