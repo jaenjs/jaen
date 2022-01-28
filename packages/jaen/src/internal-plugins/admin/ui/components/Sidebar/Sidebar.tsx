@@ -16,8 +16,8 @@ import {
   useColorModeValue,
   useDisclosure
 } from '@chakra-ui/react'
+import {IRoute} from '@jaen-admin/AdminPlugin'
 import {Link as NavLink, useLocation} from '@reach/router'
-import {IRoute} from '@src/admin/routes'
 import PropTypes from 'prop-types'
 import React from 'react'
 import IconBox from '../Icons/IconBox'

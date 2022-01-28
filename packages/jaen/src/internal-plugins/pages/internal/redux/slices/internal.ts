@@ -1,4 +1,4 @@
-import {omitSingle} from '@internal/utils/helper'
+import {omitSingle} from '@jaen-pages/internal/utils/helper'
 import {combineReducers, createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {v4 as uuidv4} from 'uuid'
 import {ITreeJaenPage} from '../../../types'

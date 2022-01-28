@@ -1,8 +1,16 @@
 import {Box} from '@chakra-ui/react'
-import {store, useAppDispatch, useAppSelector, withRedux} from '@internal/redux'
-import {internalActions} from '@internal/redux/slices'
-import {generateOriginPath} from '@internal/services/path'
-import {useJaenPageTree, useJaenTemplates} from '@internal/services/site'
+import {
+  store,
+  useAppDispatch,
+  useAppSelector,
+  withRedux
+} from '@jaen-pages/internal/redux'
+import {internalActions} from '@jaen-pages/internal/redux/slices'
+import {generateOriginPath} from '@jaen-pages/internal/services/path'
+import {
+  useJaenPageTree,
+  useJaenTemplates
+} from '@jaen-pages/internal/services/site'
 import {navigate} from 'gatsby'
 import * as React from 'react'
 import PagesTab from '../components/tabs/Pages'
@@ -19,10 +27,11 @@ export const PagesContainer = withRedux(() => {
     state => state.internal.pages.lastAddedNodeId
   )
 
-  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] = React.useState<{
-    pageId: string
-    create: boolean
-  } | null>(null)
+  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] =
+    React.useState<{
+      pageId: string
+      create: boolean
+    } | null>(null)
 
   console.log(
     '🚀 ~ file: Pages.tsx ~ line 186 ~ PagesContainer ~ shouldUpdateDpathsFor',

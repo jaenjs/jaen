@@ -1,3 +1,5 @@
+const path = require('path')
+
 module.exports = {
   stories: ['../src/**/*.stories.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx)'],
   addons: [
@@ -16,6 +18,19 @@ module.exports = {
     // Use babel-plugin-remove-graphql-queries to remove static queries from components when rendering in storybook
 
     config.resolve.mainFields = ['browser', 'module', 'main']
+
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@jaen': path.resolve(__dirname, '../src'),
+      '@jaen-admin': path.resolve(__dirname, '../src/internal-plugins/admin'),
+      '@jaen-pages': path.resolve(__dirname, '../src/internal-plugins/pages')
+    }
+
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false
+    }
+
     return config
   }
 }

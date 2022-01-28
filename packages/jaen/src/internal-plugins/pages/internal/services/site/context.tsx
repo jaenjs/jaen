@@ -1,4 +1,4 @@
-import {withRedux} from '@internal/redux'
+import {withRedux} from '@jaen-pages/internal/redux'
 import React from 'react'
 import {useStaticData} from '.'
 import {ITemplateConnection} from '../../../connectors'
@@ -8,9 +8,8 @@ export interface ISiteContext {
   templateLoader: (name: string) => Promise<ITemplateConnection>
 }
 
-export const SiteContext = React.createContext<ISiteContext | undefined>(
-  undefined
-)
+export const SiteContext =
+  React.createContext<ISiteContext | undefined>(undefined)
 
 export const SiteProvider: React.FC<{}> = withRedux(({children}) => {
   const data = useStaticData()

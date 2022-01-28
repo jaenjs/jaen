@@ -1,9 +1,6 @@
-import {Box, useDisclosure} from '@chakra-ui/react'
-import {useSnekFinder} from '@jaenjs/snek-finder'
-import {getSrc, IGatsbyImageData} from 'gatsby-plugin-image'
-import React from 'react'
+import {IGatsbyImageData} from 'gatsby-plugin-image'
 import {connectField} from '../../index'
-import UpdateModal from './components/UpdateModal'
+import {InteractiveImage} from './InteractiveImage'
 import {
   JaenImage,
   JaenImageData,
@@ -62,12 +59,6 @@ const ImageField = connectField<
       gatsbyImage = useJaenPageImage({id: imageId})
     }
 
-    const updateable = !!value?.internalImageUrl || !!gatsbyImage
-
-    const gatsbyImageSrc = gatsbyImage && getSrc(gatsbyImage)
-
-    const updateDisclosure = useDisclosure()
-
     const handleUpdateValue = (data: Partial<ImageFieldData>) => {
       jaenField.onUpdateValue({
         layout, // ?
@@ -80,68 +71,40 @@ const ImageField = connectField<
       })
     }
 
-    const finder = useSnekFinder({
-      mode: 'selector',
-      onAction: action => {
-        if (action.type === 'SELECTOR_SELECT') {
-          handleUpdateValue({
-            internalImageUrl: action.payload.item.src,
-            title: action.payload.item.name,
-            alt: action.payload.item.description
-          })
-        }
-      }
-    })
+    const image = (
+      <JaenImage
+        image={{
+          title: value.title || 'A Jaen Image',
+          alt: value.alt || 'A Jaen Image',
+          internalImageUrl: value.internalImageUrl,
+          layout: value.layout || layout,
+          width,
+          height,
+          gatsbyImage
+        }}
+        className={jaenField.className}
+        style={jaenField.style}
+        imgClassName={imgClassName}
+        imgStyle={imgStyle}
+      />
+    )
 
-    const handleBoxClick = () => {
-      if (updateable) {
-        updateDisclosure.onOpen()
-      } else {
-        finder.toggleSelector()
-      }
+    if (!jaenField.isEditing) {
+      return (
+        <InteractiveImage
+          handleUpdateValue={handleUpdateValue}
+          data={{
+            gatsbyImage,
+            internalImageUrl: value.internalImageUrl,
+            alt: value.alt,
+            title: value.title
+          }}>
+          {image}
+        </InteractiveImage>
+      )
     }
 
-    return (
-      <>
-        {finder.finderElement}
-        {updateable && (
-          <UpdateModal
-            {...updateDisclosure}
-            data={{
-              image: value?.internalImageUrl || gatsbyImageSrc || '',
-              description: value?.alt || '',
-              title: value?.title || ''
-            }}
-            onUpdate={({image: internalImageUrl, description: alt, title}) => {
-              handleUpdateValue({
-                internalImageUrl,
-                alt,
-                title
-              })
-            }}
-            onDelete={() => handleUpdateValue({internalImageUrl: undefined})}
-          />
-        )}
-
-        <Box onClick={handleBoxClick}>
-          <JaenImage
-            image={{
-              title: value.title || 'A Jaen Image',
-              alt: value.alt || 'A Jaen Image',
-              internalImageUrl: value.internalImageUrl,
-              layout: value.layout || layout,
-              width,
-              height,
-              gatsbyImage
-            }}
-            className={jaenField.className}
-            style={jaenField.style}
-            imgClassName={imgClassName}
-            imgStyle={imgStyle}
-          />
-        </Box>
-      </>
-    )
+    return image
   },
   {
     fieldType: 'IMA:ImageField'

@@ -4,7 +4,9 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@src/*": ["src/*"]
+      "@jaen/*": ["src/*"],
+      "@jaen-admin/*": ["src/internal-plugins/admin/*"],
+      "@jaen-pages/*": ["src/internal-plugins/pages/*"]
     }
   },
   "include": ["**/*"],

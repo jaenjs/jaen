@@ -1,4 +1,4 @@
-import {useAppSelector} from '@internal/redux'
+import {useAppSelector} from '@jaen-pages/internal/redux'
 import {navigate} from 'gatsby'
 import React from 'react'
 

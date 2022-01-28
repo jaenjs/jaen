@@ -1,8 +1,6 @@
+import {withSnekFinder} from '@jaen/withSnekFinder'
 import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
-
-import {withSnekFinder} from '@src/internal/root/hooks/withSnekFinder'
-
 import Component from '.'
 
 export default {

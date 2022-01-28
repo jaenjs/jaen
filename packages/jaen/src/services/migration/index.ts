@@ -1,6 +1,6 @@
+import {migrationPlugins} from '@jaen/plugins'
 import fs from 'fs'
 import update from 'immutability-helper'
-import {migrationPlugins} from '../..'
 import {nodejsSafeJsonUpload} from '../openStorageGateway'
 import {IBaseEntity, IMigrationEntity, IMigrationURLData} from './types'
 const JAEN_STATIC_DATA_DIR = './jaen-data'

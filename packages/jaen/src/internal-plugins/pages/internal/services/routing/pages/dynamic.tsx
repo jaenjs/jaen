@@ -1,7 +1,10 @@
 import {Center, CircularProgress} from '@chakra-ui/react'
-import {useAppSelector, withRedux} from '@internal/redux'
-import {useJaenTemplates, useSiteContext} from '@internal/services/site'
-import {usePromiseEffect} from '@internal/utils/hooks/usePromiseEffect'
+import {useAppSelector, withRedux} from '@jaen-pages/internal/redux'
+import {
+  useJaenTemplates,
+  useSiteContext
+} from '@jaen-pages/internal/services/site'
+import {usePromiseEffect} from '@jaen-pages/internal/utils/hooks/usePromiseEffect'
 import {RouteComponentProps} from '@reach/router'
 import {navigate, PageProps} from 'gatsby'
 import * as React from 'react'

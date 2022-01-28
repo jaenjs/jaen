@@ -1,4 +1,4 @@
-import {RootState, useAppDeepEqualSelector} from '@internal/redux'
+import {RootState, useAppDeepEqualSelector} from '@jaen-pages/internal/redux'
 import deepmerge from 'deepmerge'
 import {graphql, useStaticQuery} from 'gatsby'
 import * as React from 'react'
@@ -75,9 +75,10 @@ export const useJaenTemplates = () => {
   const site = useSiteContext()
   const data = useStaticData()
 
-  const [templates, setTemplates] = React.useState<{
-    [name: string]: IJaenTemplate
-  } | null>(null)
+  const [templates, setTemplates] =
+    React.useState<{
+      [name: string]: IJaenTemplate
+    } | null>(null)
 
   React.useEffect(() => {
     const templateNodes = data.jaenTemplates.nodes
@@ -125,14 +126,8 @@ export const useJaenTemplates = () => {
 
 const getStatePages = (state: RootState) =>
   Object.keys(state.internal.pages.nodes).map(id => {
-    const {
-      slug,
-      parent,
-      children,
-      jaenPageMetadata,
-      template,
-      deleted
-    } = state.internal.pages.nodes[id]
+    const {slug, parent, children, jaenPageMetadata, template, deleted} =
+      state.internal.pages.nodes[id]
 
     return {
       id,

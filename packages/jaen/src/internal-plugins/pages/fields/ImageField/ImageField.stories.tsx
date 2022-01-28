@@ -1,4 +1,4 @@
-import {JaenPageProvider} from '@src/internal/page'
+import {JaenPageProvider} from '@jaen-pages/internal/services/page'
 import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
 import Component from '.'
@@ -29,10 +29,7 @@ export default {
             }
           },
           chapters: {},
-          template: {
-            name: 'BlogPage',
-            displayName: "'BlogPage'"
-          },
+          template: 'BlogPage',
           jaenFiles: []
         }}>
         <Story />

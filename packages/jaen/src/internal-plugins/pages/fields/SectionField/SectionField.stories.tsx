@@ -1,10 +1,9 @@
 import {Box} from '@chakra-ui/react'
+import {JaenPageProvider} from '@jaen-pages/internal/services/page'
 import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
-
-import {connectSection, JaenPageProvider} from '@src/internal/page'
-
 import Component from '.'
+import {connectSection} from '../../../..'
 import TextField from '../TextField'
 
 export default {
@@ -28,6 +27,7 @@ export default {
             isBlogPost: false
           },
           jaenFields: null,
+          jaenFiles: [],
           chapters: {
             'section-field-filled': {
               ptrHead: 'JaenSection foo-bar-baz-1',
@@ -48,10 +48,7 @@ export default {
               }
             }
           },
-          template: {
-            name: 'BlogPage',
-            displayName: "'BlogPage'"
-          }
+          template: 'BlogPage'
         }}>
         <Story />
       </JaenPageProvider>

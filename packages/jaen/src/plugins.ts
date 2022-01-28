@@ -14,12 +14,17 @@ export interface IJaenPlugin extends IPlugin {
   migrate(base: any | undefined, migration: any): any
 }
 
+export const migrationPlugins = [new PagesPlugin()]
+
 const installPlugins = () => {
   pluginStore.install(new RendererPlugin())
 
   if (typeof window !== 'undefined') {
     pluginStore.install(new AdminPlugin())
-    pluginStore.install(new PagesPlugin())
+
+    for (const plugin of migrationPlugins) {
+      pluginStore.install(plugin)
+    }
   }
 }
 

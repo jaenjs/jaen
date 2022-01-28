@@ -1,5 +1,5 @@
 import {Button, useDisclosure} from '@chakra-ui/react'
-import {runPublish} from '@internal/services/publish'
+import {runPublish} from '@jaen-pages/internal/services/publish'
 import PublishAlert from '../components/PublishAlert'
 
 export const PublishButton = () => {
