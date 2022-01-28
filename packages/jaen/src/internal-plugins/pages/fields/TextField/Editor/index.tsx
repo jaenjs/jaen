@@ -33,20 +33,30 @@ type EditorProps = {
 
 let BalloonEditor: any = undefined
 
+const cleanValue = (defaultValue: string, value?: string) => {
+  let v = value || defaultValue || ''
+
+  // Check if the default value does not contain any HTML tags
+  // If so, wrap it in a <p> tag, else return the default value
+  if (v.indexOf('<') === -1) {
+    return `<p>${v}</p>`
+  }
+  return v
+}
+
 /**
  * TODO: Renders twice all the time. :(
  */
 const Editor: React.FC<EditorProps> = props => {
-  const [value, _] = React.useState(() => {
-    let v = props.value || props.defaultValue || ''
+  const [value, setValue] = React.useState(() =>
+    cleanValue(props.defaultValue, props.value)
+  )
 
-    // Check if the default value does not contain any HTML tags
-    // If so, wrap it in a <p> tag, else return the default value
-    if (v.indexOf('<') === -1) {
-      return `<p>${v}</p>`
+  React.useEffect(() => {
+    if (JSON.stringify(value) !== JSON.stringify(props.value)) {
+      setValue(cleanValue(props.defaultValue, props.value))
     }
-    return v
-  })
+  }, [props.value, props.editing])
 
   const raw = (
     <Box
@@ -80,8 +90,6 @@ const Editor: React.FC<EditorProps> = props => {
     load()
   })
 
-  console.log('Editor', props.editing)
-
   return (
     <EditorWrapper>
       {props.editing && editor ? (
@@ -96,6 +104,7 @@ const Editor: React.FC<EditorProps> = props => {
             const data = editor.getData()
 
             if (data !== value) {
+              setValue(data)
               props.onBlurValue(data)
             }
           }}

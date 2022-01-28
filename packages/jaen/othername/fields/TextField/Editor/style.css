@@ -36,10 +36,14 @@
 }
 
 .ck-editor__editable_inline {
-  overflow: unset !important;
   padding: 0 !important;
   border: none !important;
 }
+
+.ck.ck-editor__editable_inline {
+  overflow: unset !important;
+}
+
 .ck.ck-editor__editable_inline > *:first-child {
   margin-top: 0 !important;
 }

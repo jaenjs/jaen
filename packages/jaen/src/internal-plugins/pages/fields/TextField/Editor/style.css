@@ -38,6 +38,7 @@
 .ck-editor__editable_inline {
   padding: 0 !important;
   border: none !important;
+  overflow: unset !important;
 }
 .ck.ck-editor__editable_inline > *:first-child {
   margin-top: 0 !important;

@@ -181,7 +181,7 @@ export const useJaenPageTree = (): ITreeJaenPage[] => {
 
   // Not all jaenpages should end up in the tree
   const filteredData = React.useMemo(
-    () => mergeData.filter(item => !(item.id in ['JaenPage /'])),
+    () => mergeData.filter(item => !['JaenPage /'].includes(item.id)),
     [mergeData]
   )
 

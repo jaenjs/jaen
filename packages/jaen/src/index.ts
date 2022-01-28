@@ -1,5 +1,5 @@
 export * from './internal-plugins/pages'
-export {migrationPlugins, plugins, pluginStore} from './plugins'
+export {pluginStore} from './plugins'
 export type {
   IBaseEntity,
   IMigrationEntity,
