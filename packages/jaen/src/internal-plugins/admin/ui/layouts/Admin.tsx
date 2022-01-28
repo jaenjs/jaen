@@ -3,16 +3,15 @@ import {ChakraProvider} from '@chakra-ui/react'
 import {RouteComponentProps} from '@reach/router'
 import React, {useState} from 'react'
 import {pluginStore} from '../../../../plugins'
-import {AdminFunctions} from '../../AdminPlugin'
-import {IRoute} from '../../routes'
+// Custom Chakra theme
+import theme from '../../../../theme/theme'
+import {AdminFunctions, IRoute} from '../../AdminPlugin'
 import Footer from '../components/Footer/Footer'
 // Custom components
 import MainPanel from '../components/Layout/MainPanel'
 import PanelContainer from '../components/Layout/PanelContainer'
 import PanelContent from '../components/Layout/PanelContent'
 import Sidebar from '../components/Sidebar/Sidebar'
-// Custom Chakra theme
-import theme from '../theme/theme'
 
 export default function Dashboard(props: RouteComponentProps) {
   const {...rest} = props

@@ -36,6 +36,7 @@
 }
 
 .ck-editor__editable_inline {
+  overflow: unset !important;
   padding: 0 !important;
   border: none !important;
 }

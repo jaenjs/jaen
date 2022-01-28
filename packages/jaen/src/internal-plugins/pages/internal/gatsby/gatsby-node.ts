@@ -36,6 +36,10 @@ GatsbyNode.onCreateWebpackConfig = ({
           {
             test: /canvas/,
             use: loaders.null()
+          },
+          {
+            test: /filerobot-image-editor/,
+            use: loaders.null()
           }
         ]
       }

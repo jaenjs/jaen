@@ -1,6 +1,6 @@
 import {ChakraProvider} from '@chakra-ui/react'
+import theme from '../../../../theme/theme'
 import AdminToolbar from '../components/Navbars/AdminToolbar'
-import theme from '../theme/theme'
 
 const AToolbar = () => {
   return (

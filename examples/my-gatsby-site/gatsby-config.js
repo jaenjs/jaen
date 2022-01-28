@@ -18,6 +18,7 @@ module.exports = {
         }
       }
     },
+    '@chakra-ui/gatsby-plugin',
     {
       resolve: 'gatsby-plugin-webpack-bundle-analyser-v2'
     }

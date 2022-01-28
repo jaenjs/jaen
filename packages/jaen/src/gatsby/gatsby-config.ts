@@ -12,7 +12,6 @@ const internalPlugins = [
 
 GatsbyConfig.plugins = [
   ...internalPlugins,
-  `@chakra-ui/gatsby-plugin`,
   {
     resolve: `gatsby-plugin-compile-es6-packages`,
     options: {

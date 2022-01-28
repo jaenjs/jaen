@@ -23,7 +23,7 @@ export default function AdminToolbar() {
   const Renderer = pluginStore.executeFunction('Renderer.getRendererComponent')
 
   return (
-    <Box position={'sticky'} top="0" zIndex={'banner'}>
+    <Box pos="sticky" top="0" zIndex={'banner'} bg="green">
       <Flex
         bg={useColorModeValue('gray.800', 'gray.800')}
         color={useColorModeValue('white', 'white')}
@@ -95,72 +95,3 @@ export default function AdminToolbar() {
     </Box>
   )
 }
-
-const DesktopNav = () => {
-  const linkColor = useColorModeValue('gray.600', 'gray.200')
-  const linkHoverColor = useColorModeValue('gray.800', 'white')
-  const popoverContentBgColor = useColorModeValue('white', 'gray.800')
-
-  return <Flex></Flex>
-}
-
-const MobileNav = () => {
-  return (
-    <Stack
-      bg={useColorModeValue('white', 'gray.800')}
-      p={1}
-      display={{md: 'none'}}>
-      <Text>
-        Not supported yet. Please use the desktop version of the site.
-      </Text>
-    </Stack>
-  )
-}
-
-interface NavItem {
-  label: string
-  subLabel?: string
-  children?: Array<NavItem>
-  href?: string
-}
-
-const NAV_ITEMS: Array<NavItem> = [
-  {
-    label: 'Inspiration',
-    children: [
-      {
-        label: 'Explore Design Work',
-        subLabel: 'Trending Design to inspire you',
-        href: '#'
-      },
-      {
-        label: 'New & Noteworthy',
-        subLabel: 'Up-and-coming Designers',
-        href: '#'
-      }
-    ]
-  },
-  {
-    label: 'Find Work',
-    children: [
-      {
-        label: 'Job Board',
-        subLabel: 'Find your dream design job',
-        href: '#'
-      },
-      {
-        label: 'Freelance Projects',
-        subLabel: 'An exclusive list for contract work',
-        href: '#'
-      }
-    ]
-  },
-  {
-    label: 'Learn Design',
-    href: '#'
-  },
-  {
-    label: 'Hire Designers',
-    href: '#'
-  }
-]

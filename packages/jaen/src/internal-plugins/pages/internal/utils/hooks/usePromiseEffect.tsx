@@ -10,6 +10,9 @@ export function usePromiseEffect<T>(
   effect: () => Promise<T>,
   deps: DependencyList
 ) {
+  console.log('🚀 ~ file: usePromiseEffect.tsx ~ line 13 ~ deps', deps)
+  console.log('🚀 ~ file: usePromiseEffect.tsx ~ line 13 ~ effect', effect)
+
   const [state, setState] = React.useState<PromiseState<T>>({
     status: 'idle',
     value: null,
@@ -26,6 +29,8 @@ export function usePromiseEffect<T>(
   // here are some examples:
   // return [state.value, state.status === 'pending', state.error]
   // return [state.value, state.status, state.error]
+
+  console.log('state', state)
 
   return state
 }
