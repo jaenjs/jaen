@@ -13,8 +13,7 @@ export default {
   decorators: [
     Story => (
       <JaenPageProvider
-        jaenPageId="JaenPage jaen-page-1"
-        staticJaenPage={{
+        jaenPage={{
           id: `JaenPage jaen-page-1`,
           slug: 'jaen-page-1',
           parent: null,

@@ -54,18 +54,18 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
     {}
   )
 
-  const {staticJaenPage, jaenPageId} = useJaenPageContext()
+  const {jaenPage} = useJaenPageContext()
 
-  if (!jaenPageId) {
+  if (!jaenPage.id) {
     throw new Error(
       'JaenPage id is undefined! connectField must be used within a JaenPage'
     )
   }
 
-  const staticChapter = staticJaenPage?.chapters?.[name]
+  const staticChapter = jaenPage?.chapters?.[name]
 
   const dynamicChapter = useAppSelector(
-    state => state.internal.pages.nodes[jaenPageId]?.chapters?.[name],
+    state => state.internal.pages.nodes[jaenPage.id]?.chapters?.[name],
     (l, r) => {
       if (!l || !r) {
         return false
@@ -99,7 +99,7 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
     ) => {
       dispatch(
         internalActions.section_add({
-          pageId: jaenPageId,
+          pageId: jaenPage.id,
           chapterName: name,
           sectionName,
           between
@@ -152,7 +152,7 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
     ) => {
       dispatch(
         internalActions.section_remove({
-          pageId: jaenPageId,
+          pageId: jaenPage.id,
           sectionId: id,
           chapterName: name,
           between

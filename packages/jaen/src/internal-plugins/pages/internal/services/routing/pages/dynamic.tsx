@@ -83,7 +83,7 @@ const Dynamic = (props: RouteComponentProps & Partial<PageProps>) => {
     <Component
       {...(props as any)}
       pageContext={{...props.pageContext, jaenPageId: pageId}}
-      data={{...props.data, staticJaenPage: null}}
+      data={{...props.data, jaenPage: null}}
     />
   )
 }

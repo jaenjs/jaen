@@ -1,10 +1,11 @@
+import {IJaenPage} from '@jaen/internal-plugins/pages/types'
 import {graphql} from 'gatsby'
 import React from 'react'
-import {IJaenPage} from '../../../types'
 
 export interface JaenPageContext {
-  jaenPageId: string
-  staticJaenPage: IJaenPage | null
+  jaenPage: {
+    id: string
+  } & Partial<IJaenPage>
 }
 
 export const JaenPageContext =
@@ -12,14 +13,12 @@ export const JaenPageContext =
 
 export const JaenPageProvider: React.FC<JaenPageContext> = ({
   children,
-  jaenPageId,
-  staticJaenPage
+  jaenPage
 }) => {
   return (
     <JaenPageContext.Provider
       value={{
-        jaenPageId,
-        staticJaenPage
+        jaenPage
       }}>
       {children}
     </JaenPageContext.Provider>

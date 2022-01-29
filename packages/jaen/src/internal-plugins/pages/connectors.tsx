@@ -21,14 +21,18 @@ export const connectPage = <P extends IJaenPageProps>(
     children: Array<string>
   }
 ) => {
-  const MyComp: IJaenConnection<P, typeof options> = props => (
-    <JaenPageProvider
-      // @ts-ignore
-      jaenPageId={props.pageContext.jaenPageId}
-      staticJaenPage={props.data ? props.data.jaenPage : null}>
-      <Component {...props} />
-    </JaenPageProvider>
-  )
+  const MyComp: IJaenConnection<P, typeof options> = props => {
+    console.log('🚀 ~ file: connectors.tsx ~ line 25 ~ props', props)
+    return (
+      <JaenPageProvider
+        jaenPage={{
+          id: props.pageContext.jaenPageId,
+          ...props.data?.jaenPage
+        }}>
+        <Component {...props} />
+      </JaenPageProvider>
+    )
+  }
 
   MyComp.options = options
 
@@ -78,9 +82,10 @@ export const connectTemplate = <P extends IJaenPageProps>(
   const MyComp: IJaenConnection<P, typeof options> = props => {
     return (
       <JaenPageProvider
-        // @ts-ignore
-        jaenPageId={props.pageContext.jaenPageId}
-        staticJaenPage={props.data ? props.data.jaenPage : null}>
+        jaenPage={{
+          id: props.pageContext.jaenPageId,
+          ...props.data?.jaenPage
+        }}>
         <Component {...props} />
       </JaenPageProvider>
     )
@@ -159,9 +164,10 @@ export const connectField = <IValue, IDefaultValue = IValue, IProps = {}>(
   withRedux(props => {
     const dispatch = useAppDispatch()
 
-    const {staticJaenPage, jaenPageId} = useJaenPageContext()
+    const {jaenPage} = useJaenPageContext()
+    console.log('🚀 ~ file: connectors.tsx ~ line 165 ~ jaenPage', jaenPage)
 
-    if (!jaenPageId) {
+    if (!jaenPage.id) {
       throw new Error(
         'JaenPage id is undefined! connectField must be used within a JaenPage'
       )
@@ -188,21 +194,21 @@ export const connectField = <IValue, IDefaultValue = IValue, IProps = {}>(
     }
 
     const value = useAppSelector<IValue | undefined>(state => {
-      const page = state.internal.pages.nodes[jaenPageId]
+      const page = state.internal.pages.nodes[jaenPage.id]
 
       if (page) {
         return getPageField(page)
       }
     })
 
-    const staticValue = getPageField<IValue>(staticJaenPage)
+    const staticValue = getPageField<IValue>(jaenPage)
 
     const isEditing = useAppSelector(state => state.internal.status.isEditing)
 
     const handleUpdateValue = (value: IValue) => {
       dispatch(
         internalActions.field_write({
-          pageId: jaenPageId,
+          pageId: jaenPage.id,
           section: sectionContext,
           fieldType: options.fieldType,
           fieldName: props.name,

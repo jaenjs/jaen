@@ -6,13 +6,13 @@ export function useJaenPageImage(options: {
 }): IGatsbyImageData | undefined {
   const {id} = options
 
-  const {staticJaenPage} = useJaenPageContext()
+  const {jaenPage} = useJaenPageContext()
 
-  if (!staticJaenPage) {
+  if (!jaenPage.jaenFiles) {
     return undefined
   }
 
-  const file = staticJaenPage.jaenFiles.find(({file}) => file.id === id)?.file
+  const file = jaenPage.jaenFiles.find(({file}) => file.id === id)?.file
 
   if (file) {
     return getImage(file.gatsbyImageData)
