@@ -7,9 +7,8 @@ export interface JaenPageContext {
   staticJaenPage: IJaenPage | null
 }
 
-export const JaenPageContext = React.createContext<JaenPageContext | undefined>(
-  undefined
-)
+export const JaenPageContext =
+  React.createContext<JaenPageContext | undefined>(undefined)
 
 export const JaenPageProvider: React.FC<JaenPageContext> = ({
   children,
@@ -47,29 +46,58 @@ export const useJaenPageContext = () => {
 
 /**
  * @type {Fragment}
+ *
+ * @example
+ * ```
+ * export const query = graphql`
+ *  query ($jaenPageId: String!) {
+ *   ...JaenPageQuery
+ *  }
+ * `
+ * ```
+ */
+export const JaenPageQuery = graphql`
+  fragment JaenPageQuery on Query {
+    jaenPage(id: {eq: $jaenPageId}) {
+      ...JaenPageData
+    }
+  }
+`
+
+/**
+ * @type {Fragment}
+ *
+ * @example
+ * ```
+ * export const query = graphql`
+ *  query ($jaenPageId: String!) {
+ *   jaenPage(id: {eq: $jaenPageId}) {
+ *    ...JaenPageData
+ *    }
+ *  }
+ * `
+ * ```
  */
 export const JaenPageData = graphql`
-  fragment JaenPageData on Query {
-    staticJaenPage: jaenPage(id: {eq: $jaenPageId}) {
-      id
-      jaenFields
-      jaenPageMetadata {
-        title
-        isBlogPost
-        image
-        description
-        datePublished
-        canonical
-      }
-      jaenFiles {
-        file {
-          id
-          childImageSharp {
-            gatsbyImageData(placeholder: BLURRED, formats: [AUTO, WEBP, AVIF])
-          }
+  fragment JaenPageData on JaenPage {
+    id
+    jaenFields
+    jaenPageMetadata {
+      title
+      isBlogPost
+      image
+      description
+      datePublished
+      canonical
+    }
+    jaenFiles {
+      file {
+        id
+        childImageSharp {
+          gatsbyImageData(placeholder: BLURRED, formats: [AUTO, WEBP, AVIF])
         }
       }
-      chapters
     }
+    chapters
   }
 `

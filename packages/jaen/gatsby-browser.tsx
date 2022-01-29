@@ -1,7 +1,7 @@
-import {SnekFinder} from '@jaen/withSnekFinder'
 import type {GatsbyBrowser} from 'gatsby'
 import {PluginProvider} from 'react-pluggable'
 import {pluginStore} from './src'
+import {SnekFinder} from './src/withSnekFinder'
 
 export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = ({
   element

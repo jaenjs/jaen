@@ -14,7 +14,7 @@ export default connectTemplate(
 )
 
 export const query = graphql`
-  query($jaenPageId: String!) {
-    ...JaenPageData
+  query ($jaenPageId: String!) {
+    ...JaenPageQuery
   }
 `

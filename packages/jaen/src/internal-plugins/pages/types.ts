@@ -86,7 +86,7 @@ export type IJaenPages = {
 }
 
 export type IJaenPageProps = PageProps<
-  {staticJaenPage: IJaenPage | null},
+  {jaenPage: IJaenPage | null},
   {jaenPageId: string}
 >
 
