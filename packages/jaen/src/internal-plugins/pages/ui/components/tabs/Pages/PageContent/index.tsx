@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Checkbox,
   Flex,
   FormControl,
   FormErrorMessage,
@@ -29,6 +30,7 @@ export type ContentValues = {
   title: string
   slug: string
   description?: string
+  excludedFromIndex?: boolean
 }
 
 export interface PageContentProps extends IFormProps<ContentValues> {
@@ -156,13 +158,19 @@ export const PageContent = (props: PageContentProps) => {
                     {...register('description', {})}
                   />
                 </FormControl>
-                <FormControl>
+                <FormControl mt={4}>
                   <FormLabel>Image</FormLabel>
                   <Img
                     boxSize="200px"
                     src="https://bit.ly/dan-abramov"
                     alt="Dan Abramov"
                   />
+                </FormControl>
+                <FormControl mt={4}>
+                  <FormLabel>Settings</FormLabel>
+                  <Checkbox {...register('excludedFromIndex')}>
+                    Exclude form index
+                  </Checkbox>
                 </FormControl>
               </Box>
             </AccordionPanel>

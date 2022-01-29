@@ -50,6 +50,7 @@ export const useStaticData = () => {
               canonical
             }
             template
+            excludedFromIndex
           }
         }
       }
@@ -126,8 +127,15 @@ export const useJaenTemplates = () => {
 
 const getStatePages = (state: RootState) =>
   Object.keys(state.internal.pages.nodes).map(id => {
-    const {slug, parent, children, jaenPageMetadata, template, deleted} =
-      state.internal.pages.nodes[id]
+    const {
+      slug,
+      parent,
+      children,
+      jaenPageMetadata,
+      template,
+      deleted,
+      excludedFromIndex
+    } = state.internal.pages.nodes[id]
 
     return {
       id,
@@ -136,7 +144,8 @@ const getStatePages = (state: RootState) =>
       ...(children && {children}),
       ...(jaenPageMetadata && {jaenPageMetadata}),
       ...(template && {template}),
-      ...(deleted && {deleted})
+      ...(deleted && {deleted}),
+      ...(excludedFromIndex && {excludedFromIndex})
     }
   })
 

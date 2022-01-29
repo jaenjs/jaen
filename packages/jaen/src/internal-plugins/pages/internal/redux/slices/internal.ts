@@ -53,6 +53,7 @@ const pagesSlice = createSlice({
         parent,
         children,
         template,
+        excludedFromIndex,
         fromId
       } = action.payload
 
@@ -67,7 +68,8 @@ const pagesSlice = createSlice({
           ...(jaenFields !== undefined && {jaenFields}),
           ...(jaenPageMetadata && {jaenPageMetadata}),
           ...(parent !== undefined && {parent}),
-          ...(children && {children})
+          ...(children && {children}),
+          ...(excludedFromIndex && {excludedFromIndex})
         }
 
         state.nodes[id] = {
@@ -106,7 +108,8 @@ const pagesSlice = createSlice({
           },
           parent: parent || null,
           children: children || [],
-          template
+          template,
+          excludedFromIndex
         }
 
         state.lastAddedNodeId = id

@@ -131,7 +131,8 @@ export const PagesContainer = withRedux(() => {
           jaenPageMetadata: {
             title: values.title,
             description: values.description
-          }
+          },
+          excludedFromIndex: values.excludedFromIndex
         })
       )
     },

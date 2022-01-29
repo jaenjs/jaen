@@ -64,6 +64,7 @@ export interface IJaenPage {
    */
   template: string | null
   deleted?: true
+  excludedFromIndex?: boolean
 }
 
 export type ITreeJaenPage = Pick<
@@ -75,6 +76,7 @@ export type ITreeJaenPage = Pick<
   | 'jaenPageMetadata'
   | 'template'
   | 'deleted'
+  | 'excludedFromIndex'
 >
 
 export type IJaenPages = {

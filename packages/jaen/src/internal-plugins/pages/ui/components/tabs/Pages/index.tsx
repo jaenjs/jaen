@@ -1,13 +1,13 @@
 import {AddIcon, DeleteIcon, ViewIcon} from '@chakra-ui/icons'
 import {Box, Divider, Flex} from '@chakra-ui/layout'
 import {ButtonGroup, IconButton} from '@chakra-ui/react'
-import {TreeJaenPage} from '@src/internal/types'
+import {ITreeJaenPage} from '@jaen/internal-plugins/pages/types'
 import * as React from 'react'
 import {ContentValues, PageContent} from './PageContent'
 import PageTree, {PageTreeProps} from './PageTree'
 
 export interface PagesTabProps extends PageTreeProps {
-  getPage: (id: string) => TreeJaenPage
+  getPage: (id: string) => ITreeJaenPage
   onPageUpdate: (id: string, values: ContentValues) => void
 }
 
@@ -16,7 +16,7 @@ export interface PagesTabProps extends PageTreeProps {
  * Display PageTree and PageContent next to each other.
  */
 const PagesTab = (props: PagesTabProps) => {
-  const [selection, setSelection] = React.useState<TreeJaenPage | null>(null)
+  const [selection, setSelection] = React.useState<ITreeJaenPage | null>(null)
 
   const onSelect = (id: string | null) => {
     if (id !== null) {
@@ -88,7 +88,8 @@ const PagesTab = (props: PagesTabProps) => {
               values={{
                 title: selection.jaenPageMetadata.title,
                 slug: selection.slug,
-                description: selection.jaenPageMetadata.description
+                description: selection.jaenPageMetadata.description,
+                excludedFromIndex: selection.excludedFromIndex
               }}
               onSubmit={handlePageUpdate}
             />

@@ -51,7 +51,7 @@ export const IndexField = withRedux((props: IndexFieldProps) => {
   const {renderPage, filter, sort} = props
 
   if (filter) {
-    children = children.filter(filter)
+    children = children.filter(c => !c.excludedFromIndex).filter(filter)
   }
 
   if (sort) {
