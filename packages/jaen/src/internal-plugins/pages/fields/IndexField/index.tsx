@@ -7,6 +7,11 @@ import {IJaenPage} from '../../types'
 
 export interface IndexFieldProps {
   /**
+   * Opts out the field from the page content on which it is applied.
+   * Instead the page context of the provided jaenPageId will be used.
+   */
+  jaenPageId?: string
+  /**
    * Provides page and wrapps the return jsx in a JaenPageProvider, thus allowing
    * to use fields.
    *
@@ -18,9 +23,20 @@ export interface IndexFieldProps {
 }
 
 export const IndexField = withRedux((props: IndexFieldProps) => {
-  let {
-    jaenPage: {id, children: staticChildren}
-  } = useJaenPageContext()
+  let {jaenPage, jaenPages} = useJaenPageContext()
+
+  let id = jaenPage.id
+  let staticChildren = jaenPage.children
+
+  if (props.jaenPageId && props.jaenPageId !== id) {
+    id = props.jaenPageId
+
+    if (jaenPages) {
+      staticChildren = jaenPages.find(page => page.id === id)?.children
+    } else {
+      console.warn('There are no jaenPages in the context')
+    }
+  }
 
   let dynamicChildren = useAppSelector(
     state => state.internal.pages.nodes[id]?.children

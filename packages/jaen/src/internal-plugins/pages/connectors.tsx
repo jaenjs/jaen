@@ -28,7 +28,8 @@ export const connectPage = <P extends IJaenPageProps>(
         jaenPage={{
           id: props.pageContext.jaenPageId,
           ...props.data?.jaenPage
-        }}>
+        }}
+        jaenPages={props.data.jaenPages}>
         <Component {...props} />
       </JaenPageProvider>
     )
@@ -85,7 +86,8 @@ export const connectTemplate = <P extends IJaenPageProps>(
         jaenPage={{
           id: props.pageContext.jaenPageId,
           ...props.data?.jaenPage
-        }}>
+        }}
+        jaenPages={props.data.jaenPages}>
         <Component {...props} />
       </JaenPageProvider>
     )

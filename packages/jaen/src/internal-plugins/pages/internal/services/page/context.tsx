@@ -6,6 +6,7 @@ export interface JaenPageContext {
   jaenPage: {
     id: string
   } & Partial<IJaenPage>
+  jaenPages?: Array<Partial<IJaenPage>>
 }
 
 export const JaenPageContext =
@@ -13,12 +14,14 @@ export const JaenPageContext =
 
 export const JaenPageProvider: React.FC<JaenPageContext> = ({
   children,
-  jaenPage
+  jaenPage,
+  jaenPages
 }) => {
   return (
     <JaenPageContext.Provider
       value={{
-        jaenPage
+        jaenPage,
+        jaenPages
       }}>
       {children}
     </JaenPageContext.Provider>

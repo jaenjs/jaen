@@ -37,7 +37,7 @@ export interface IJaenPage {
   parent: {
     id: string
   } | null
-  children: IJaenPage[]
+  children: Array<{id: string} & Partial<IJaenPage>>
   chapters: {
     [chapterName: string]: {
       ptrHead: string | null
@@ -82,7 +82,7 @@ export type IJaenPages = {
 }
 
 export type IJaenPageProps = PageProps<
-  {jaenPage: IJaenPage | null},
+  {jaenPage: IJaenPage | null; jaenPages?: Array<Partial<IJaenPage>>},
   {jaenPageId: string}
 >
 
