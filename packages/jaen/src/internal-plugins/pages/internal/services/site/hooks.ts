@@ -31,7 +31,7 @@ export const useStaticData = () => {
             relativePath
           }
         }
-        allJaenPage(filter: {id: {ne: "JaenPage /"}}) {
+        allJaenPage {
           nodes {
             id
             slug
@@ -176,7 +176,10 @@ export const useJaenPageTree = (): ITreeJaenPage[] => {
 
   // Not all jaenpages should end up in the tree
   const filteredData = React.useMemo(
-    () => mergeData.filter(item => !['JaenPage /'].includes(item.id)),
+    () =>
+      mergeData.filter(
+        item => !['JaenPage /', 'JaenPage /jaen/admin'].includes(item.id)
+      ),
     [mergeData]
   )
 
