@@ -96,7 +96,7 @@ export const JaenImage = (props: JaenImageProps) => {
           {...wrapperElementProps}
           {...imgElementProps}
           src={props.image.internalImageUrl}
-          fallback={<>Fallback</>}
+          fallback={<></>}
         />
       </Skeleton>
     )

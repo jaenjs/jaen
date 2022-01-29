@@ -4,6 +4,7 @@ import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
 import Component from '.'
 import {connectSection} from '../../../..'
+import {EditButtonGroup} from '../../ui/toolbar'
 import TextField from '../TextField'
 
 export default {
@@ -50,6 +51,7 @@ export default {
           },
           template: 'BlogPage'
         }}>
+        <EditButtonGroup />
         <Story />
       </JaenPageProvider>
     )

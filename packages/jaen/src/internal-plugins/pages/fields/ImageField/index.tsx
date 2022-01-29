@@ -89,7 +89,7 @@ const ImageField = connectField<
       />
     )
 
-    if (!jaenField.isEditing) {
+    if (jaenField.isEditing) {
       return (
         <InteractiveImage
           handleUpdateValue={handleUpdateValue}
