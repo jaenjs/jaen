@@ -38,7 +38,6 @@ export const InteractiveImage: React.FC<IInteractiveImageProps> =
     })
 
     const handleBoxClick = () => {
-      alert('click')
       if (updateable) {
         updateDisclosure.onOpen()
       } else {
