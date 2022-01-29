@@ -37,10 +37,7 @@ export interface IJaenPage {
   parent: {
     id: string
   } | null
-  children: {
-    id: string
-    deleted?: true
-  }[]
+  children: IJaenPage[]
   chapters: {
     [chapterName: string]: {
       ptrHead: string | null
@@ -64,7 +61,6 @@ export interface IJaenPage {
    * Unique identifier of the page component name (e.g. `JaenPageHome`).
    * - Must be unique across all pages.
    * - Used to determine the component to render.
-   * - Possible templates are specified in the `gatsby-config.js` file.
    */
   template: string | null
   deleted?: true
