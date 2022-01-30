@@ -45,7 +45,7 @@ export const EditButtonGroup = withRedux(() => {
           leftIcon={
             <Circle
               size="4"
-              bg={isEdting ? 'orange' : 'gray.300'}
+              bg={isEdting ? 'teal.300' : 'gray.300'}
               color="white"
             />
           }
@@ -55,7 +55,7 @@ export const EditButtonGroup = withRedux(() => {
         <IconButton
           variant={'darkghost'}
           aria-label="Add to friends"
-          icon={<FiTrash color="orange" />}
+          icon={<FiTrash color="teal" />}
           onClick={onOpen}
         />
       </ButtonGroup>
