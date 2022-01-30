@@ -28,16 +28,11 @@ import {SidebarHelp} from './SidebarHelp'
 // FUNCTIONS
 
 function Sidebar(props) {
-  // to check for active links and opened collapses
-  let location = useLocation()
   // this is for the rest of the collapses
   const [state, setState] = React.useState({})
   const mainPanel = React.useRef()
   let variantChange = '0.2s linear'
   // verifies if routeName is the one active (in browser input)
-  const activeRoute = (routeName: string) => {
-    return location.pathname === routeName ? 'active' : ''
-  }
   // this function creates the links and collapses that appear in the sidebar (left menu)
   const createLinks = (routes: IRoute[]) => {
     const {sidebarVariant} = props
@@ -85,9 +80,10 @@ function Sidebar(props) {
           </>
         )
       }
+
       return (
         <NavLink to={prop.layout + prop.path}>
-          {activeRoute(prop.layout + prop.path) === 'active' ? (
+          {prop.name === props.activeRoute ? (
             <Button
               boxSize="initial"
               justifyContent="flex-start"

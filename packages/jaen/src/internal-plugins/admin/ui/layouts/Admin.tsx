@@ -75,14 +75,19 @@ export default function Dashboard(props: RouteComponentProps) {
 
   document.documentElement.dir = 'ltr'
 
-  const View = dashRoutes.find(
-    route => route.name === getActiveRoute(dashRoutes)
-  )?.component
+  const activeRoute = getActiveRoute(dashRoutes)
+
+  const View = dashRoutes.find(route => route.name === activeRoute)?.component
 
   // Chakra Color Mode
   return (
     <ChakraProvider theme={theme} resetCSS={false} portalZIndex={10000}>
-      <Sidebar routes={dashRoutes} logoText={'JAEN ADMIN'} {...rest} />
+      <Sidebar
+        routes={dashRoutes}
+        activeRoute={activeRoute}
+        logoText={'JAEN ADMIN'}
+        {...rest}
+      />
 
       <MainPanel
         ref={mainPanel}
