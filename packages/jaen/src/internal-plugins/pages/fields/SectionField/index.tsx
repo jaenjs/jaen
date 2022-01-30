@@ -34,6 +34,8 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
 
   const dispatch = useAppDispatch()
 
+  const isEditing = useAppSelector(state => state.internal.status.isEditing)
+
   // sections to dictionary with key as section name
   const sectionsDict = sections.reduce<
     Record<
@@ -167,25 +169,27 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
 
     let ptrHead = chapter.ptrHead
 
-    if (!ptrHead || Object.keys(chapter.sections).length === 0) {
-      return (
-        <SectionAddPopover
-          disabled={false}
-          header={
-            <>
-              Add to <strong>{displayName}</strong>
-            </>
-          }
-          sections={sections.map(s => ({
-            name: s.options.name,
-            displayName: s.options.displayName
-          }))}
-          onSelect={name => handleSectionAdd(name, [null, null])}>
-          <Box>
-            <Skeleton h="100" />
-          </Box>
-        </SectionAddPopover>
-      )
+    if (isEditing) {
+      if (!ptrHead || Object.keys(chapter.sections).length === 0) {
+        return (
+          <SectionAddPopover
+            disabled={false}
+            header={
+              <>
+                Add to <strong>{displayName}</strong>
+              </>
+            }
+            sections={sections.map(s => ({
+              name: s.options.name,
+              displayName: s.options.displayName
+            }))}
+            onSelect={name => handleSectionAdd(name, [null, null])}>
+            <Box>
+              <Skeleton h="100" />
+            </Box>
+          </SectionAddPopover>
+        )
+      }
     }
 
     while (ptrHead) {
@@ -193,50 +197,54 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
       if (sectionsDict[section.name]) {
         const {Component, options} = sectionsDict[section.name]
 
-        const element = (
-          <SectionManagePopover
-            key={ptrHead}
-            id={ptrHead}
-            ptrPrev={section.ptrPrev}
-            ptrNext={section.ptrNext}
-            header={options.displayName}
-            disabled={false}
-            onAppend={(id, ptrNext) =>
-              handleSectionAppend(section.name, id, ptrNext)
-            }
-            onPrepend={(id, ptrPrev) =>
-              handleSectionPrepend(section.name, id, ptrPrev)
-            }
-            onDelete={(id, ptrPrev, ptrNext) =>
-              handleSectionDelete(id, [
-                ptrPrev
-                  ? {
-                      ...chapter.sections[ptrPrev],
-                      id: ptrPrev
-                    }
-                  : null,
-                ptrNext
-                  ? {
-                      ...chapter.sections[ptrNext],
-                      id: ptrNext
-                    }
-                  : null
-              ])
-            }
-            trigger={
-              <Box>
-                <JaenSectionProvider
-                  key={ptrHead}
-                  chapterName={name}
-                  sectionId={ptrHead}>
-                  <Component />
-                </JaenSectionProvider>
-              </Box>
-            }
-          />
+        const trigger = (
+          <Box>
+            <JaenSectionProvider
+              key={ptrHead}
+              chapterName={name}
+              sectionId={ptrHead}>
+              <Component />
+            </JaenSectionProvider>
+          </Box>
         )
 
-        rendered.push(element)
+        if (isEditing) {
+          rendered.push(
+            <SectionManagePopover
+              key={ptrHead}
+              id={ptrHead}
+              ptrPrev={section.ptrPrev}
+              ptrNext={section.ptrNext}
+              header={options.displayName}
+              disabled={false}
+              onAppend={(id, ptrNext) =>
+                handleSectionAppend(section.name, id, ptrNext)
+              }
+              onPrepend={(id, ptrPrev) =>
+                handleSectionPrepend(section.name, id, ptrPrev)
+              }
+              onDelete={(id, ptrPrev, ptrNext) =>
+                handleSectionDelete(id, [
+                  ptrPrev
+                    ? {
+                        ...chapter.sections[ptrPrev],
+                        id: ptrPrev
+                      }
+                    : null,
+                  ptrNext
+                    ? {
+                        ...chapter.sections[ptrNext],
+                        id: ptrNext
+                      }
+                    : null
+                ])
+              }
+              trigger={trigger}
+            />
+          )
+        } else {
+          rendered.push(trigger)
+        }
       }
 
       ptrHead = section.ptrNext
