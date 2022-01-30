@@ -23,9 +23,22 @@ export interface SectionFieldProps {
   name: string // chapterName
   displayName: string
   sections: ISectionConnection[]
+  as?: React.ComponentType<React.HTMLAttributes<HTMLElement>>
+  sectionAs?: React.ComponentType<React.HTMLAttributes<HTMLElement>>
+  props?: {[key: string]: any}
+  sectionProps?: {[key: string]: any}
+  className?: string
+  style?: React.CSSProperties
+  sectionClassName?: string
+  sectionStyle?: React.CSSProperties
 }
 
-const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
+const SectionField = ({
+  name,
+  displayName,
+  sections,
+  ...rest
+}: SectionFieldProps) => {
   const jaenSection = useJaenSectionContext()
 
   if (jaenSection) {
@@ -198,52 +211,64 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
         const {Component, options} = sectionsDict[section.name]
 
         const trigger = (
-          <Box>
-            <JaenSectionProvider
-              key={ptrHead}
-              chapterName={name}
-              sectionId={ptrHead}>
-              <Component />
-            </JaenSectionProvider>
-          </Box>
+          <JaenSectionProvider
+            key={ptrHead}
+            chapterName={name}
+            sectionId={ptrHead}>
+            <Component />
+          </JaenSectionProvider>
         )
+
+        const SectionWrapper = rest.sectionAs || Component
 
         if (isEditing) {
           rendered.push(
-            <SectionManagePopover
-              key={ptrHead}
-              id={ptrHead}
-              ptrPrev={section.ptrPrev}
-              ptrNext={section.ptrNext}
-              header={options.displayName}
-              disabled={false}
-              onAppend={(id, ptrNext) =>
-                handleSectionAppend(section.name, id, ptrNext)
-              }
-              onPrepend={(id, ptrPrev) =>
-                handleSectionPrepend(section.name, id, ptrPrev)
-              }
-              onDelete={(id, ptrPrev, ptrNext) =>
-                handleSectionDelete(id, [
-                  ptrPrev
-                    ? {
-                        ...chapter.sections[ptrPrev],
-                        id: ptrPrev
-                      }
-                    : null,
-                  ptrNext
-                    ? {
-                        ...chapter.sections[ptrNext],
-                        id: ptrNext
-                      }
-                    : null
-                ])
-              }
-              trigger={trigger}
-            />
+            <SectionWrapper
+              {...rest.sectionProps}
+              className={rest.sectionClassName}
+              style={rest.sectionStyle}>
+              <SectionManagePopover
+                key={ptrHead}
+                id={ptrHead}
+                ptrPrev={section.ptrPrev}
+                ptrNext={section.ptrNext}
+                header={options.displayName}
+                disabled={false}
+                onAppend={(id, ptrNext) =>
+                  handleSectionAppend(section.name, id, ptrNext)
+                }
+                onPrepend={(id, ptrPrev) =>
+                  handleSectionPrepend(section.name, id, ptrPrev)
+                }
+                onDelete={(id, ptrPrev, ptrNext) =>
+                  handleSectionDelete(id, [
+                    ptrPrev
+                      ? {
+                          ...chapter.sections[ptrPrev],
+                          id: ptrPrev
+                        }
+                      : null,
+                    ptrNext
+                      ? {
+                          ...chapter.sections[ptrNext],
+                          id: ptrNext
+                        }
+                      : null
+                  ])
+                }
+                trigger={<Box>{trigger}</Box>}
+              />
+            </SectionWrapper>
           )
         } else {
-          rendered.push(trigger)
+          rendered.push(
+            <SectionWrapper
+              {...rest.sectionProps}
+              className={rest.sectionClassName}
+              style={rest.sectionStyle}>
+              {trigger}
+            </SectionWrapper>
+          )
         }
       }
 
@@ -253,7 +278,13 @@ const SectionField = ({name, displayName, sections}: SectionFieldProps) => {
     return rendered
   }
 
-  return <>{renderedSections()}</>
+  const Wrapper = rest.as || Box
+
+  return (
+    <Wrapper {...rest.props} className={rest.className} style={rest.style}>
+      {renderedSections()}
+    </Wrapper>
+  )
 }
 
 export default withRedux(SectionField)

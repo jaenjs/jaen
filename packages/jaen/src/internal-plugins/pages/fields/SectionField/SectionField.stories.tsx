@@ -1,4 +1,4 @@
-import {Box} from '@chakra-ui/react'
+import {Box, Wrap, WrapItem} from '@chakra-ui/react'
 import {JaenPageProvider} from '@jaen-pages/internal/services/page'
 import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
@@ -108,4 +108,30 @@ WithFields.args = {
   name: 'section-field-filled',
   displayName: 'Section Field with inner fields',
   sections: [FieldsSection]
+}
+
+export const Styled: Story<ComponentProps> = Template.bind({})
+Styled.args = {
+  name: 'section-field-filled',
+  displayName: 'Section Field with inner fields',
+  sections: [BoxSection],
+  style: {
+    border: 'red 1px solid'
+  },
+  sectionStyle: {
+    border: 'blue 1px solid',
+    maxWidth: '100px'
+  }
+}
+
+export const Wrapped: Story<ComponentProps> = Template.bind({})
+Wrapped.args = {
+  name: 'section-field-filled',
+  displayName: 'Section Field with inner fields',
+  sections: [BoxSection],
+  as: Wrap,
+  sectionAs: WrapItem,
+  props: {
+    justify: 'center'
+  }
 }

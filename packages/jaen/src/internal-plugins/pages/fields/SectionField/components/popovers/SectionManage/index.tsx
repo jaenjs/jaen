@@ -44,7 +44,6 @@ const SectionManagePopover = React.memo<Props>(
     onAppend,
     onPrepend
   }) => {
-    console.log('rerender SectionManagePopover: ' + id)
     if (disabled) {
       return <>{trigger}</>
     }
