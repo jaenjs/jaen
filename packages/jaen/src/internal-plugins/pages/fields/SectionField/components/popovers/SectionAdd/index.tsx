@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Popover,
   PopoverArrow,
@@ -33,7 +34,9 @@ const SectionAddPopover: React.FC<Props> = ({
 
   return (
     <Popover trigger="hover" placement="top-start">
-      <PopoverTrigger>{children}</PopoverTrigger>
+      <PopoverTrigger>
+        <Box>{children}</Box>
+      </PopoverTrigger>
       <PopoverContent>
         <PopoverArrow />
         <PopoverCloseButton />

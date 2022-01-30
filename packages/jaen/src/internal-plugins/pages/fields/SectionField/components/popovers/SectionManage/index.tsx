@@ -50,7 +50,9 @@ const SectionManagePopover = React.memo<Props>(
 
     return (
       <Popover trigger="hover">
-        <PopoverTrigger>{trigger}</PopoverTrigger>
+        <PopoverTrigger>
+          <Box>{trigger}</Box>
+        </PopoverTrigger>
         <PopoverContent>
           <PopoverArrow />
           <PopoverCloseButton />

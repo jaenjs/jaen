@@ -219,7 +219,7 @@ const SectionField = ({
           </JaenSectionProvider>
         )
 
-        const SectionWrapper = rest.sectionAs || Component
+        const SectionWrapper = rest.sectionAs || Box
 
         if (isEditing) {
           rendered.push(
@@ -256,7 +256,7 @@ const SectionField = ({
                       : null
                   ])
                 }
-                trigger={<Box>{trigger}</Box>}
+                trigger={trigger}
               />
             </SectionWrapper>
           )
