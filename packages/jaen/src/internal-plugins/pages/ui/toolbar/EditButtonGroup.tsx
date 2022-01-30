@@ -27,6 +27,7 @@ export const EditButtonGroup = withRedux(() => {
 
   const handleDiscard = async () => {
     dispatch(internalActions.discardAllChanges())
+    dispatch(internalActions.setIsEditing(false))
 
     return Promise.resolve(true)
   }

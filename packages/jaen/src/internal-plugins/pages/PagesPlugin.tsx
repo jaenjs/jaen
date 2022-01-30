@@ -86,15 +86,6 @@ class PagesPlugin implements IJaenPlugin {
       layout: ''
     })
 
-    this.pluginStore.executeFunction(AdminFunctions.addRoute, {
-      path: '/notifications',
-      name: 'Notifications',
-      rtlName: 'لوحة القيادة',
-      icon: null,
-      component: null,
-      layout: ''
-    })
-
     this.pluginStore.executeFunction(
       AdminFunctions.addToolbarItem,
       <>
