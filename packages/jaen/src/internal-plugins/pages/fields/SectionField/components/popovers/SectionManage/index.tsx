@@ -12,7 +12,8 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
-  Select
+  Select,
+  useDisclosure
 } from '@chakra-ui/react'
 import {ISectionConnection} from '@jaen-pages/connectors'
 import * as React from 'react'
@@ -47,24 +48,55 @@ const SectionManagePopover = React.memo<Props>(
     onAppend,
     onPrepend
   }) => {
+    const {isOpen, onOpen, onClose} = useDisclosure()
+
     const [sectionName, setSectionName] = React.useState(sections[0].name)
+
+    let closing = false
+
+    const handleMouseEnter = () => {
+      // Prevent the popover  from closing when the mouse enters the trigger
+      if (closing) {
+        closing = false
+      }
+
+      onOpen()
+    }
+
+    const handleMouseLeave = () => {
+      closing = true
+
+      // delay of 300ms to prevent the popover from closing immediately
+      // when the mouse is over the popover
+      setTimeout(() => {
+        if (closing) {
+          onClose()
+        }
+      }, 300)
+    }
 
     if (disabled) {
       return <>{trigger}</>
     }
 
     return (
-      <Popover trigger="hover">
+      <Popover trigger="hover" isOpen={isOpen}>
         <PopoverTrigger>
           <Box
             transition={'box-shadow 0.3s ease-in-out'}
-            _hover={{boxShadow: '0 0 0 2.5px #4fd1c5'}}>
+            boxShadow={isOpen ? '0 0 0 2.5px #4fd1c5' : 'none'}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onFocus={onOpen}
+            onBlur={onClose}>
             {trigger}
           </Box>
         </PopoverTrigger>
-        <PopoverContent>
+        <PopoverContent
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}>
           <PopoverArrow />
-          <PopoverCloseButton />
+          <PopoverCloseButton onClick={onClose} />
           <PopoverHeader>Manage Section</PopoverHeader>
           <PopoverBody>
             <Box>
@@ -85,13 +117,19 @@ const SectionManagePopover = React.memo<Props>(
                     mr="-px"
                     disabled={disablePrepandSection}
                     icon={<ChevronLeftIcon />}
-                    onClick={() => onPrepend(sectionName, id, ptrPrev)}
+                    onClick={() => {
+                      onPrepend(sectionName, id, ptrPrev)
+                      onClose()
+                    }}
                   />
                   <IconButton
                     aria-label="Add section after"
                     disabled={disableAppendSection}
                     icon={<ChevronRightIcon />}
-                    onClick={() => onAppend(sectionName, id, ptrNext)}
+                    onClick={() => {
+                      onAppend(sectionName, id, ptrNext)
+                      onClose()
+                    }}
                   />
                 </ButtonGroup>
                 <Divider orientation="vertical" />
@@ -99,7 +137,10 @@ const SectionManagePopover = React.memo<Props>(
                   variant="outline"
                   aria-label="Delete section"
                   icon={<DeleteIcon />}
-                  onClick={() => onDelete(id, ptrPrev, ptrNext)}
+                  onClick={() => {
+                    onDelete(id, ptrPrev, ptrNext)
+                    onClose()
+                  }}
                   size="sm"
                 />
               </HStack>

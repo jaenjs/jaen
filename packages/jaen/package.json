@@ -66,6 +66,7 @@
     "gatsby-transformer-sharp": "^4.5.0",
     "hash-source": "^1.0.5",
     "react": "^17.0.2",
+    "react-focus-lock": "^2.7.1",
     "react-github-btn": "^1.2.1",
     "react-hook-form": "^7.22.5",
     "react-in-viewport": "^1.0.0-alpha.20",
