@@ -78,7 +78,7 @@ const FieldsSection = connectSection(
       <TextField name="tf" defaultValue="sample value" />
     </Box>
   ),
-  {name: 'BoxSection', displayName: 'Box Section'}
+  {name: 'FieldsSection', displayName: 'Fields Section'}
 )
 //#endregion
 
@@ -108,6 +108,13 @@ WithFields.args = {
   name: 'section-field-filled',
   displayName: 'Section Field with inner fields',
   sections: [FieldsSection]
+}
+
+export const MultipleSections: Story<ComponentProps> = Template.bind({})
+MultipleSections.args = {
+  name: 'section-field-filled',
+  displayName: 'Section Field with multiple sections',
+  sections: [BoxSection, FieldsSection]
 }
 
 export const Styled: Story<ComponentProps> = Template.bind({})

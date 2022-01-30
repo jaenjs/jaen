@@ -177,6 +177,15 @@ const SectionField = ({
     []
   )
 
+  const sectionsOptions = React.useMemo(
+    () =>
+      sections.map(s => ({
+        name: s.options.name,
+        displayName: s.options.displayName
+      })),
+    [sections]
+  )
+
   const renderedSections = () => {
     const rendered = []
 
@@ -192,10 +201,7 @@ const SectionField = ({
                 Add to <strong>{displayName}</strong>
               </>
             }
-            sections={sections.map(s => ({
-              name: s.options.name,
-              displayName: s.options.displayName
-            }))}
+            sections={sectionsOptions}
             onSelect={name => handleSectionAdd(name, [null, null])}>
             <Box>
               <Skeleton h="100" />
@@ -229,17 +235,14 @@ const SectionField = ({
               style={rest.sectionStyle}>
               <SectionManagePopover
                 key={ptrHead}
+                sections={sectionsOptions}
                 id={ptrHead}
                 ptrPrev={section.ptrPrev}
                 ptrNext={section.ptrNext}
                 header={options.displayName}
                 disabled={false}
-                onAppend={(id, ptrNext) =>
-                  handleSectionAppend(section.name, id, ptrNext)
-                }
-                onPrepend={(id, ptrPrev) =>
-                  handleSectionPrepend(section.name, id, ptrPrev)
-                }
+                onAppend={handleSectionAppend}
+                onPrepend={handleSectionPrepend}
                 onDelete={(id, ptrPrev, ptrNext) =>
                   handleSectionDelete(id, [
                     ptrPrev
