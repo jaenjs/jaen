@@ -27,12 +27,12 @@
 
 .ck-focused {
   border: none !important;
-  box-shadow: 0 0 0 2.5px #77bd43 !important;
+  box-shadow: 0 0 0 2.5px #4fd1c5 !important;
 }
 
 .ck-blurred:hover {
-  box-shadow: 0 0 0 2.5px #77bd43 !important;
-  transition: box-shadow 0.1s ease-in-out;
+  box-shadow: 0 0 0 2.5px #4fd1c5 !important;
+  transition: box-shadow 0.3s ease-in-out;
 }
 
 .ck-editor__editable_inline {

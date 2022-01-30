@@ -23,7 +23,7 @@ export default function AdminToolbar() {
   const Renderer = pluginStore.executeFunction('Renderer.getRendererComponent')
 
   return (
-    <Box pos="sticky" top="0" zIndex={'banner'} bg="green">
+    <Box pos="sticky" top="0" zIndex={'banner'}>
       <Flex
         bg={useColorModeValue('gray.800', 'gray.800')}
         color={useColorModeValue('white', 'white')}

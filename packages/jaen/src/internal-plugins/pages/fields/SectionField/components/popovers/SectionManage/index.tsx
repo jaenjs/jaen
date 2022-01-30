@@ -51,7 +51,11 @@ const SectionManagePopover = React.memo<Props>(
     return (
       <Popover trigger="hover">
         <PopoverTrigger>
-          <Box>{trigger}</Box>
+          <Box
+            transition={'box-shadow 0.3s ease-in-out'}
+            _hover={{boxShadow: '0 0 0 2.5px #4fd1c5'}}>
+            {trigger}
+          </Box>
         </PopoverTrigger>
         <PopoverContent>
           <PopoverArrow />
