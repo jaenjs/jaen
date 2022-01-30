@@ -1,3 +1,5 @@
+import theme from '../src/theme/theme'
+
 export const parameters = {
   actions: {argTypesRegex: '^on[A-Z].*'},
   layout: 'fullscreen',
@@ -6,6 +8,9 @@ export const parameters = {
       color: /(background|color)$/i,
       date: /Date$/
     }
+  },
+  chakra: {
+    theme
   }
 }
 
