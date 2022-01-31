@@ -4,7 +4,7 @@ import {
   useJaenTemplates,
   useSiteContext
 } from '@jaen-pages/internal/services/site'
-import {usePromiseEffect} from '@jaen-pages/internal/utils/hooks/usePromiseEffect'
+import {usePromiseEffect} from '@jaen/utils/hooks/usePromiseEffect'
 import {RouteComponentProps} from '@reach/router'
 import {navigate, PageProps} from 'gatsby'
 import * as React from 'react'

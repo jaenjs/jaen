@@ -1,3 +1,4 @@
+import {IJaenConnection} from '@jaen/types'
 import {useAppDispatch, useAppSelector, withRedux} from './internal/redux'
 import {internalActions} from './internal/redux/slices'
 import {JaenPageProvider, useJaenPageContext} from './internal/services/page'
@@ -5,8 +6,7 @@ import {
   SectionOptionsContext,
   useJaenSectionContext
 } from './internal/services/section'
-import {IJaenConnection, IJaenPage, IJaenPageProps} from './types'
-
+import {IJaenPage, IJaenPageProps} from './types'
 /**
  * @function connectPage Connects a gatsby page with Jaen.
  *

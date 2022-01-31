@@ -96,11 +96,6 @@ export type IPagesMigration = {
   [uuid: string]: IMigrationEntity
 }
 
-export interface IJaenConnection<ReactProps, Options>
-  extends React.FC<ReactProps> {
-  options: Options
-}
-
 export interface IFormProps<Values> {
   values: Values
   onSubmit: (values: Values) => void

@@ -23,7 +23,8 @@ module.exports = {
       ...config.resolve.alias,
       '@jaen': path.resolve(__dirname, '../src'),
       '@jaen-admin': path.resolve(__dirname, '../src/internal-plugins/admin'),
-      '@jaen-pages': path.resolve(__dirname, '../src/internal-plugins/pages')
+      '@jaen-pages': path.resolve(__dirname, '../src/internal-plugins/pages'),
+      '@jaen-notify': path.resolve(__dirname, '../src/internal-plugins/notify')
     }
 
     config.resolve.fallback = {

@@ -3,7 +3,7 @@ import type {GatsbyBrowser} from 'gatsby'
 
 const AdminToolbar = loadable(() => import('./ui/layouts/AdminToolbar'))
 
-export const wrapPageElement: GatsbyBrowser['wrapPageElement'] = ({
+export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = ({
   element
 }) => {
   return (

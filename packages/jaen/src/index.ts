@@ -1,3 +1,4 @@
+export * from './internal-plugins/notify'
 export * from './internal-plugins/pages'
 export {pluginStore} from './plugins'
 export type {

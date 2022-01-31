@@ -7,7 +7,8 @@ const GatsbyConfig: GatsbyConfigType = {
 
 const internalPlugins = [
   require.resolve('../internal-plugins/admin'),
-  require.resolve('../internal-plugins/pages')
+  require.resolve('../internal-plugins/pages'),
+  require.resolve('../internal-plugins/notify')
 ]
 
 GatsbyConfig.plugins = [

@@ -6,7 +6,8 @@
     "paths": {
       "@jaen/*": ["src/*"],
       "@jaen-admin/*": ["src/internal-plugins/admin/*"],
-      "@jaen-pages/*": ["src/internal-plugins/pages/*"]
+      "@jaen-pages/*": ["src/internal-plugins/pages/*"],
+      "@jaen-notify/*": ["src/internal-plugins/notify/*"]
     }
   },
   "include": ["**/*"],

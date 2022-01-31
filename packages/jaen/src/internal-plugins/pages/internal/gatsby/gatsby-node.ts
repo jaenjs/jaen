@@ -21,7 +21,8 @@ GatsbyNode.onCreateWebpackConfig = ({
     ],
     resolve: {
       alias: {
-        '@jaen-pages': path.resolve(__dirname, '../../')
+        '@jaen-pages': path.resolve(__dirname, '../../'),
+        '@jaen': path.resolve(__dirname, '../../../../')
       },
       fallback: {
         fs: false

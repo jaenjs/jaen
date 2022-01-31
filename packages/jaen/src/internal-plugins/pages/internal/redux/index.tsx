@@ -7,7 +7,7 @@
  * Use of this source code is governed by an EUPL-1.2 license that can be found
  * in the LICENSE file at https://snek.at/license
  */
-import {useDeepEqualSelector} from '@jaen-pages/internal/utils/hooks/useDeepEqualSelector'
+import {useDeepEqualSelector} from '@jaen/utils/hooks/useDeepEqualSelector'
 import {combineReducers, configureStore} from '@reduxjs/toolkit'
 import {graphql, useStaticQuery} from 'gatsby'
 import {

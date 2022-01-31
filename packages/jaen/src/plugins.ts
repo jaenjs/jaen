@@ -1,5 +1,6 @@
 import {createPluginStore, IPlugin, RendererPlugin} from 'react-pluggable'
 import AdminPlugin from './internal-plugins/admin/AdminPlugin'
+import NotifyPlugin from './internal-plugins/notify/NotifyPlugin'
 import PagesPlugin from './internal-plugins/pages/PagesPlugin'
 
 export const pluginStore = createPluginStore()
@@ -14,7 +15,7 @@ export interface IJaenPlugin extends IPlugin {
   migrate(base: any | undefined, migration: any): any
 }
 
-export const migrationPlugins = [new PagesPlugin()]
+export const migrationPlugins = [new PagesPlugin(), new NotifyPlugin()]
 
 const installPlugins = () => {
   pluginStore.install(new RendererPlugin())
