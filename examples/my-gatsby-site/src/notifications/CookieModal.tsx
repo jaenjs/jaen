@@ -1,31 +1,49 @@
+import {Box, Link, Stack, Text, useColorModeValue} from '@chakra-ui/react'
 import {connectNotification} from '@jaenjs/jaen'
+import {SubscribeForm} from '../components/SubscribeForm'
 
 const CookieModal = () => {
   return (
-    <div className="cookie-modal">
-      <div className="cookie-modal__content">
-        <div className="cookie-modal__content__text">
-          <p>
-            This website uses cookies to ensure you get the best experience on
-            our website.
-          </p>
-          <p>By continuing to use this site you agree to our use of cookies.</p>
-        </div>
-        <div className="cookie-modal__content__buttons">
-          <button className="cookie-modal__content__buttons__button">
-            Accept
-          </button>
-          <button className="cookie-modal__content__buttons__button">
-            Decline
-          </button>
-        </div>
-      </div>
-    </div>
+    <Stack
+      maxW="xs"
+      mx="auto"
+      py={{base: '12', md: '16'}}
+      spacing={{base: '6', md: '10'}}>
+      <Stack spacing="3" textAlign="center">
+        <Text fontSize="lg">Enter your email below &amp; get</Text>
+        <Text
+          color={useColorModeValue('blue.500', 'blue.200')}
+          fontWeight="extrabold"
+          fontSize={{base: '5xl', md: '6xl'}}
+          textTransform="uppercase"
+          transform="scale(1.2)">
+          20% off
+        </Text>
+        <Text fontSize="lg">
+          <Box as="span" whiteSpace="nowrap" fontWeight="bold">
+            on your next purchase
+          </Box>{' '}
+          + exclusive access to new products
+        </Text>
+      </Stack>
+      <SubscribeForm />
+      <Link
+        fontSize="sm"
+        textAlign="center"
+        color={useColorModeValue('gray.600', 'gray.400')}
+        textDecoration="underline">
+        No, I don’t want discounts
+      </Link>
+    </Stack>
   )
 }
 
 export default connectNotification(CookieModal, {
   position: 'modal-center',
+  positionProps: {
+    borderRadius: '2xl',
+    mx: '4'
+  },
   conditions: {
     entireSite: true
   },
