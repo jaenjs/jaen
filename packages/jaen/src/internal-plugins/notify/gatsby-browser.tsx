@@ -1,4 +1,5 @@
 import type {GatsbyBrowser} from 'gatsby'
+import {PersistorWrapper} from './redux'
 import {NotificationsLoader} from './services/notification'
 
 export const wrapPageElement: GatsbyBrowser['wrapPageElement'] = ({
@@ -6,8 +7,10 @@ export const wrapPageElement: GatsbyBrowser['wrapPageElement'] = ({
   props
 }) => {
   return (
-    <NotificationsLoader pageProps={props}>
-      <>{element}</>
-    </NotificationsLoader>
+    <PersistorWrapper>
+      <NotificationsLoader pageProps={props}>
+        <>{element}</>
+      </NotificationsLoader>
+    </PersistorWrapper>
   )
 }

@@ -584,9 +584,9 @@ describe('pages', () => {
       // Expect
       const page = result[payload.pageId]
 
-      const prevNodes = previousState.nodes[payload.pageId].chapters![
-        payload.chapterName
-      ]!.sections
+      const prevNodes =
+        previousState.nodes[payload.pageId].chapters![payload.chapterName]!
+          .sections
       const sections = page!.chapters![payload.chapterName]!.sections
 
       //> Conditions
@@ -641,9 +641,9 @@ describe('pages', () => {
       // Expect
       const page = result[payload.pageId]
 
-      const prevNodes = previousState.nodes[payload.pageId].chapters![
-        payload.chapterName
-      ]!.sections
+      const prevNodes =
+        previousState.nodes[payload.pageId].chapters![payload.chapterName]!
+          .sections
       const sections = page!.chapters![payload.chapterName]!.sections
 
       //> Conditions
@@ -704,9 +704,9 @@ describe('pages', () => {
       // Expect
       const page = result[payload.pageId]
 
-      const prevNodes = previousState.nodes[payload.pageId].chapters![
-        payload.chapterName
-      ]!.sections
+      const prevNodes =
+        previousState.nodes[payload.pageId].chapters![payload.chapterName]!
+          .sections
       const sections = page!.chapters![payload.chapterName]!.sections
 
       //> Conditions
@@ -801,18 +801,16 @@ describe('pages', () => {
 
       // Expect the section to be marked as deleted
       const page = result[payload.pageId]
-      const section = page!.chapters![payload.chapterName]!.sections[
-        payload.sectionId
-      ]
+      const section =
+        page!.chapters![payload.chapterName]!.sections[payload.sectionId]
 
       expect(section.deleted).toBe(true)
 
       // Expect the pointers to be correct
       // - between[1]: ptrNext: null; ptrPrev: null
 
-      const p1 = page!.chapters![payload.chapterName]!.sections[
-        payload.between[1].id
-      ]
+      const p1 =
+        page!.chapters![payload.chapterName]!.sections[payload.between[1].id]
 
       expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
         expect.objectContaining({
@@ -852,18 +850,16 @@ describe('pages', () => {
 
       // Expect the section to be marked as deleted
       const page = result[payload.pageId]
-      const section = page!.chapters![payload.chapterName]!.sections[
-        payload.sectionId
-      ]
+      const section =
+        page!.chapters![payload.chapterName]!.sections[payload.sectionId]
 
       expect(section.deleted).toBe(true)
 
       // Expect the pointers to be correct
       // - between[0]: ptrNext: null; ptrPrev: null
 
-      const p1 = page!.chapters![payload.chapterName]!.sections[
-        payload.between[0].id
-      ]
+      const p1 =
+        page!.chapters![payload.chapterName]!.sections[payload.between[0].id]
 
       expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
         expect.objectContaining({
@@ -907,9 +903,8 @@ describe('pages', () => {
 
       // Expect the section to be marked as deleted
       const page = result[payload.pageId]
-      const section = page!.chapters![payload.chapterName]!.sections[
-        payload.sectionId
-      ]
+      const section =
+        page!.chapters![payload.chapterName]!.sections[payload.sectionId]
 
       expect(section.deleted).toBe(true)
 
@@ -917,9 +912,8 @@ describe('pages', () => {
       // - between[0]: ptrNext: "JaenSection foo-bar-baz-5"; ptrPrev: null
       // - between[1]: ptrNext: null; ptrPrev: "JaenSection foo-bar-baz-5"
 
-      const p1 = page!.chapters![payload.chapterName]!.sections[
-        payload.between[0].id
-      ]
+      const p1 =
+        page!.chapters![payload.chapterName]!.sections[payload.between[0].id]
 
       expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
         expect.objectContaining({
@@ -928,9 +922,8 @@ describe('pages', () => {
         })
       )
 
-      const p2 = page!.chapters![payload.chapterName]!.sections[
-        payload.between[1].id
-      ]
+      const p2 =
+        page!.chapters![payload.chapterName]!.sections[payload.between[1].id]
 
       expect({ptrPrev: p2.ptrPrev, ptrNext: p2.ptrNext}).toEqual(
         expect.objectContaining({
@@ -974,9 +967,8 @@ describe('pages', () => {
 
       // Expect the section to be marked as deleted
       const page = result[payload.pageId]
-      const section = page!.chapters![payload.chapterName]!.sections[
-        payload.sectionId
-      ]
+      const section =
+        page!.chapters![payload.chapterName]!.sections[payload.sectionId]
 
       expect(section.deleted).toBe(true)
 
@@ -984,9 +976,8 @@ describe('pages', () => {
       // - between[0]: ptrNext: "JaenSection foo-bar-baz-5"; ptrPrev: null
       // - between[1]: ptrNext: null; ptrPrev: "JaenSection foo-bar-baz-5"
 
-      const p1 = page!.chapters![payload.chapterName]!.sections[
-        payload.between[0].id
-      ]
+      const p1 =
+        page!.chapters![payload.chapterName]!.sections[payload.between[0].id]
 
       expect({ptrPrev: p1.ptrPrev, ptrNext: p1.ptrNext}).toEqual(
         expect.objectContaining({
@@ -995,9 +986,8 @@ describe('pages', () => {
         })
       )
 
-      const p2 = page!.chapters![payload.chapterName]!.sections[
-        payload.between[1].id
-      ]
+      const p2 =
+        page!.chapters![payload.chapterName]!.sections[payload.between[1].id]
 
       expect({ptrPrev: p2.ptrPrev, ptrNext: p2.ptrNext}).toEqual(
         expect.objectContaining({
@@ -1127,7 +1117,7 @@ describe('routing', () => {
       expect(newState.dynamicPaths).toEqual({
         '/root/contact/subcontact': {
           pageId: '3',
-          templateName: undefined
+          templateName: null
         }
       })
     })
