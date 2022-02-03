@@ -25,18 +25,11 @@ const getSnekFinderData = (): DataType['snekFinder'] | undefined => {
   return undefined
 }
 
-export const runPublish = async (): Promise<boolean> => {
+export const runPublish = async () => {
   const data: DataType = {
     pages: getPagesData(),
     snekFinder: getSnekFinderData()
   }
 
-  console.log('🚀 ~ file: publish.ts ~ line 33 ~ data', data)
-
-  // Simulate a slow process.
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(true)
-    }, 1000)
-  })
+  return data
 }

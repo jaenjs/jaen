@@ -2,6 +2,7 @@ import {PluginStore} from 'react-pluggable'
 import {IJaenPlugin} from '../../plugins'
 import {updateEntity} from '../../services/migration'
 import {AdminFunctions} from '../admin/AdminPlugin'
+import {runPublish} from './services/publish'
 
 class NotifyPlugin implements IJaenPlugin {
   pluginStore!: PluginStore
@@ -42,6 +43,10 @@ class NotifyPlugin implements IJaenPlugin {
     }
 
     return base
+  }
+
+  async publishData(): Promise<any> {
+    return await runPublish()
   }
 }
 

@@ -1,11 +1,12 @@
-import {createPluginStore, IPlugin, RendererPlugin} from 'react-pluggable'
+import {createPluginStore, RendererPlugin} from 'react-pluggable'
 import AdminPlugin from './internal-plugins/admin/AdminPlugin'
 import NotifyPlugin from './internal-plugins/notify/NotifyPlugin'
 import PagesPlugin from './internal-plugins/pages/PagesPlugin'
 
 export const pluginStore = createPluginStore()
 
-export interface IJaenPlugin extends IPlugin {
+export interface IJaenPlugin {
+  getPluginName(): string
   /**
    * Defines how the plugin handles a migration.
    *
@@ -13,17 +14,24 @@ export interface IJaenPlugin extends IPlugin {
    * @param migration - new migration
    */
   migrate(base: any | undefined, migration: any): any
+
+  /**
+   * Defines how the plugin reacts to a publish event.
+   */
+  publishData(): Promise<any>
 }
 
-export const migrationPlugins = [new PagesPlugin(), new NotifyPlugin()]
+export const plugins = [
+  new AdminPlugin(),
+  new PagesPlugin(),
+  new NotifyPlugin()
+]
 
 const installPlugins = () => {
   pluginStore.install(new RendererPlugin())
 
   if (typeof window !== 'undefined') {
-    pluginStore.install(new AdminPlugin())
-
-    for (const plugin of migrationPlugins) {
+    for (const plugin of plugins) {
       pluginStore.install(plugin)
     }
   }

@@ -1,10 +1,7 @@
 import {Box} from '@chakra-ui/react'
 import React from 'react'
-import {PluginStore} from 'react-pluggable'
-import {IJaenPlugin} from '../../plugins'
-import {updateEntity} from '../../services/migration'
+import {IPlugin, PluginStore} from 'react-pluggable'
 import {AdminFunctions} from '../admin/AdminPlugin'
-import {IPagesMigration, IPagesMigrationBase} from './types'
 import {FilesContainer} from './ui/tabs/Files'
 import {PagesContainer} from './ui/tabs/Pages'
 import {EditButtonGroup, HomeButton, PublishButton} from './ui/toolbar'
@@ -13,34 +10,11 @@ const Test = () => {
   return (
     <Box>
       <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
-      <h1>DASHBOARD</h1>
     </Box>
   )
 }
 
-class PagesPlugin implements IJaenPlugin {
+class PagesPlugin implements IPlugin {
   pluginStore!: PluginStore
 
   getPluginName(): string {
@@ -98,14 +72,6 @@ class PagesPlugin implements IJaenPlugin {
 
   deactivate(): void {
     //
-  }
-
-  async migrate(base: IPagesMigrationBase, migration: IPagesMigration) {
-    for (const id of Object.keys(migration)) {
-      base[id] = await updateEntity(base[id], migration[id])
-    }
-
-    return base
   }
 }
 

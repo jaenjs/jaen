@@ -1,9 +1,15 @@
+import NotifyMigrationPlugin from '@jaen/internal-plugins/notify/NotifyMigrationPlugin'
+import PagesMigrationPlugin from '@jaen/internal-plugins/pages/PagesMigrationPlugin'
 import fs from 'fs'
 import update from 'immutability-helper'
-import {migrationPlugins} from '../../plugins'
 import {nodejsSafeJsonUpload} from '../openStorageGateway'
 import {IBaseEntity, IMigrationEntity, IMigrationURLData} from './types'
 const JAEN_STATIC_DATA_DIR = './jaen-data'
+
+export const migrationPlugins = [
+  new PagesMigrationPlugin(),
+  new NotifyMigrationPlugin()
+]
 
 export const downloadMigrationURL = async (
   url: string

@@ -1,5 +1,5 @@
 import {Button, useDisclosure} from '@chakra-ui/react'
-import {runPublish} from '@jaen-pages/internal/services/publish'
+import {publishRunner} from '@jaen/services/publish'
 import PublishAlert from '../components/PublishAlert'
 
 export const PublishButton = () => {
@@ -7,7 +7,11 @@ export const PublishButton = () => {
 
   return (
     <>
-      <PublishAlert isOpen={isOpen} onClose={onClose} onConfirm={runPublish} />
+      <PublishAlert
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={publishRunner}
+      />
       <Button onClick={onOpen} size="xs" variant={'darkghost'}>
         Publish
       </Button>

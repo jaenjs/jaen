@@ -12,6 +12,7 @@ const EditorWrapper = styled(Box)`
   }
 `
 
+//@ts-ignore
 const LoadableCKEditor = loadable(() => import('@ckeditor/ckeditor5-react'), {
   resolveComponent: (editor: {CKEditor: any}) => editor.CKEditor
 })
