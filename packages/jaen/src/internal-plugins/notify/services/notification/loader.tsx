@@ -57,7 +57,11 @@ const loadNotifications = (
     )
   }
 
-  const Notifications: Array<INotificationConnection> = []
+  const notifications: Array<JSX.Element> = []
+
+  const addNotification = (id: string, Component: INotificationConnection) => {
+    notifications.push(<Component id={id} />)
+  }
 
   for (const {name} of jaenNotifications.nodes) {
     const Notification = notificationLoader(name)
@@ -69,7 +73,7 @@ const loadNotifications = (
       const show = customCondition(pageProps)
 
       if (show) {
-        Notifications.push(Notification)
+        addNotification(name, Notification)
         break
       }
     }
@@ -79,7 +83,7 @@ const loadNotifications = (
 
       //> Entire site
       if (entireSite) {
-        Notifications.push(Notification)
+        addNotification(name, Notification)
         break
       }
 
@@ -88,7 +92,7 @@ const loadNotifications = (
         const staticTemplate = pageProps.data?.jaenPage?.template
 
         if (staticTemplate && templates.includes(staticTemplate)) {
-          Notifications.push(Notification)
+          addNotification(name, Notification)
           break
         }
       }
@@ -99,7 +103,7 @@ const loadNotifications = (
 
         for (const urlPattern of urlPatterns) {
           if (staticUrl.match(urlPattern)) {
-            Notifications.push(Notification)
+            addNotification(name, Notification)
             break
           }
         }
@@ -107,7 +111,7 @@ const loadNotifications = (
     }
   }
 
-  return Notifications
+  return notifications
 }
 
 /**
@@ -134,7 +138,7 @@ export const NotificationsLoader: React.FC<{pageProps: PageProps}> = ({
     []
   )
 
-  const Notifications = React.useMemo(
+  const notifications = React.useMemo(
     () =>
       loadNotifications(
         jaenNotifications,
@@ -146,13 +150,7 @@ export const NotificationsLoader: React.FC<{pageProps: PageProps}> = ({
 
   return (
     <>
-      {Notifications && (
-        <>
-          {Notifications.map(Notification => (
-            <Notification />
-          ))}
-        </>
-      )}
+      <>{notifications}</>
       {children}
     </>
   )

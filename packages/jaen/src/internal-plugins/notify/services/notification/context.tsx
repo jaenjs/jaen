@@ -49,7 +49,11 @@ export const useNotificationContext = () => {
   return context
 }
 
-export const NotificationProvider: React.FC<NotificationOptions> = ({
+export interface NotificationProviderProps extends NotificationOptions {
+  id: string
+}
+
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   children,
   position,
   positionProps,
@@ -134,7 +138,7 @@ export const NotificationProvider: React.FC<NotificationOptions> = ({
   )
 }
 
-export const connectNotification = <P extends {}>(
+export const connectNotification = <P extends {id: string}>(
   Component: React.ComponentType<P>,
   options: NotificationOptions
 ) => {
