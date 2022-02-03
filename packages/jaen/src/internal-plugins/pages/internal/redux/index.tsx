@@ -82,7 +82,7 @@ export const PersistorWrapper: React.FC = ({children}) => {
   const data = useStaticQuery<{
     siteBuildMetadata: {buildTime: string}
   }>(graphql`
-    query CoreBuildMetadata {
+    query PagesBuildMetadata {
       siteBuildMetadata {
         buildTime
       }

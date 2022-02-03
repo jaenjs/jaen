@@ -1,5 +1,5 @@
 import Editor from '@jaen/shared/Editor'
-import {connectField} from '../../index'
+import {connectField} from '../connectField'
 
 const TextField = connectField<string, string, {rtf?: boolean}>(
   ({jaenField, rtf = false}) => (

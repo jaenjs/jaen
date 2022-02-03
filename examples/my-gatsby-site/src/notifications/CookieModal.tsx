@@ -1,5 +1,5 @@
 import {Box, Link, Stack, Text, useColorModeValue} from '@chakra-ui/react'
-import {connectNotification} from '@jaenjs/jaen'
+import {connectNotification, NotifyField} from '@jaenjs/jaen'
 import {SubscribeForm} from '../components/SubscribeForm'
 
 const CookieModal = () => {
@@ -10,7 +10,14 @@ const CookieModal = () => {
       py={{base: '12', md: '16'}}
       spacing={{base: '6', md: '10'}}>
       <Stack spacing="3" textAlign="center">
-        <Text fontSize="lg">Enter your email below &amp; get</Text>
+        <NotifyField.TextField
+          name="email"
+          style={{
+            fontSize: 'lg',
+            textAlign: 'center'
+          }}
+          defaultValue="Enter your email below &amp; get"
+        />
         <Text
           color={useColorModeValue('blue.500', 'blue.200')}
           fontWeight="extrabold"

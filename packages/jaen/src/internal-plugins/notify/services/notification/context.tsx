@@ -8,6 +8,7 @@ import {
 import {IJaenConnection, RequireAtLeastOne} from '@jaen/types'
 import {PageProps} from 'gatsby'
 import * as React from 'react'
+import {INotification} from '../../types'
 
 type PositionProps = ModalContentProps & {size?: string; isCentered?: boolean}
 
@@ -37,7 +38,9 @@ export type NotificationOptions = {
 }
 
 export const NotificationContext =
-  React.createContext<{} | undefined>(undefined)
+  React.createContext<{id: string; notification?: INotification} | undefined>(
+    undefined
+  )
 
 export const useNotificationContext = () => {
   const context = React.useContext(NotificationContext)
@@ -51,9 +54,12 @@ export const useNotificationContext = () => {
 
 export interface NotificationProviderProps extends NotificationOptions {
   id: string
+  notification?: INotification
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({
+  id,
+  notification,
   children,
   position,
   positionProps,
@@ -125,7 +131,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   }, [])
 
   return (
-    <NotificationContext.Provider value={{}}>
+    <NotificationContext.Provider value={{id, notification}}>
       <Modal
         isOpen={isOpen}
         onClose={onClose}
@@ -138,13 +144,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   )
 }
 
-export const connectNotification = <P extends {id: string}>(
+export const connectNotification = <
+  P extends {id: string; notification?: INotification}
+>(
   Component: React.ComponentType<P>,
   options: NotificationOptions
 ) => {
   const MyComp: IJaenConnection<P, typeof options> = props => {
     return (
-      <NotificationProvider {...options}>
+      <NotificationProvider
+        id={props.id}
+        notification={props.notification}
+        {...options}>
         <Component {...props} />
       </NotificationProvider>
     )

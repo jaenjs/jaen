@@ -1,5 +1,21 @@
 import {actions, reducers} from '../internal'
 
+describe('status', () => {
+  const reducer = reducers.status
+
+  it('enables editing if disabled', () => {
+    expect(reducer(undefined, actions.setEditing(true))).toEqual({
+      isEditing: true
+    })
+  })
+
+  it('disables editing if enabled', () => {
+    expect(reducer({isEditing: true}, actions.setEditing(false))).toEqual({
+      isEditing: false
+    })
+  })
+})
+
 describe('notifications', () => {
   const reducer = reducers.notifications
 

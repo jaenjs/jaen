@@ -13,4 +13,13 @@ GatsbyNode.onCreateWebpackConfig = ({plugins, actions}) => {
   })
 }
 
+GatsbyNode.createSchemaCustomization = ({actions}) => {
+  actions.createTypes(`
+    type JaenNotification implements Node {
+      id: ID!
+      jaenFields: JSON
+    }
+    `)
+}
+
 export default GatsbyNode

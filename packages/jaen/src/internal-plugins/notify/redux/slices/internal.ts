@@ -2,10 +2,23 @@ import {combineReducers, createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {IJaenState} from '../types'
 
 export const initialState: IJaenState = {
+  status: {
+    isEditing: false
+  },
   notifications: {
     nodes: {}
   }
 }
+
+const statusSlice = createSlice({
+  name: 'status',
+  initialState: initialState.status,
+  reducers: {
+    setEditing: (state, action: PayloadAction<boolean>) => {
+      state.isEditing = action.payload
+    }
+  }
+})
 
 const notificationSlice = createSlice({
   name: 'notifications',
@@ -37,9 +50,11 @@ const notificationSlice = createSlice({
 })
 
 export const actions = {
+  ...statusSlice.actions,
   ...notificationSlice.actions
 }
 export const reducers = {
+  status: statusSlice.reducer,
   notifications: notificationSlice.reducer
 }
 

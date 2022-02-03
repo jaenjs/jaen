@@ -1,6 +1,7 @@
 import {IJaenPageProps} from '@jaen/internal-plugins/pages/types'
 import {graphql, PageProps, useStaticQuery} from 'gatsby'
 import * as React from 'react'
+import {INotification} from '../../types'
 import {INotificationConnection} from './context'
 
 type QueryData = {
@@ -9,6 +10,9 @@ type QueryData = {
       name: string
       relativePath: string
     }>
+  }
+  allJaenNotification: {
+    nodes: Array<INotification>
   }
 }
 
@@ -26,11 +30,20 @@ const useStaticData = () => {
             relativePath
           }
         }
+        allJaenNotification {
+          nodes {
+            id
+            jaenFields
+          }
+        }
       }
     `)
   } catch (e) {
     staticData = {
       jaenNotifications: {
+        nodes: []
+      },
+      allJaenNotification: {
         nodes: []
       }
     }
@@ -41,6 +54,7 @@ const useStaticData = () => {
 
 const loadNotifications = (
   jaenNotifications: QueryData['jaenNotifications'],
+  allJaenNotification: QueryData['allJaenNotification'],
   notificationsPaths: {[name: string]: string},
   pageProps: IJaenPageProps
 ) => {
@@ -60,7 +74,9 @@ const loadNotifications = (
   const notifications: Array<JSX.Element> = []
 
   const addNotification = (id: string, Component: INotificationConnection) => {
-    notifications.push(<Component id={id} />)
+    const notification = allJaenNotification.nodes.find(node => node.id === id)
+
+    notifications.push(<Component id={id} notification={notification} />)
   }
 
   for (const {name} of jaenNotifications.nodes) {
@@ -127,7 +143,9 @@ export const NotificationsLoader: React.FC<{pageProps: PageProps}> = ({
   children,
   pageProps
 }) => {
-  const {jaenNotifications} = useStaticData()
+  const {jaenNotifications, allJaenNotification} = useStaticData()
+
+  alert(JSON.stringify(allJaenNotification))
 
   const notificationsPaths = React.useMemo(
     () =>
@@ -142,6 +160,7 @@ export const NotificationsLoader: React.FC<{pageProps: PageProps}> = ({
     () =>
       loadNotifications(
         jaenNotifications,
+        allJaenNotification,
         notificationsPaths,
         pageProps as any
       ),
