@@ -1,6 +1,6 @@
 import {RootState, store} from '.'
 
-export const persistKey = 'jaen-pages-notify'
+export const persistKey = 'jaen-notify'
 
 export const loadState = (): RootState | undefined => {
   try {
