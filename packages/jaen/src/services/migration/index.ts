@@ -1,5 +1,5 @@
-import NotifyMigrationPlugin from '@jaen/internal-plugins/notify/NotifyMigrationPlugin'
-import PagesMigrationPlugin from '@jaen/internal-plugins/pages/PagesMigrationPlugin'
+import NotifyMigrationPlugin from '@jaen-notify/NotifyMigrationPlugin'
+import PagesMigrationPlugin from '@jaen-pages/PagesMigrationPlugin'
 import fs from 'fs'
 import update from 'immutability-helper'
 import {nodejsSafeJsonUpload} from '../openStorageGateway'
@@ -56,6 +56,7 @@ export const updateEntity = async (
 }
 
 export const runMigration = async (migrationUrl: string) => {
+  console.log('runMigration', migrationUrl)
   if (migrationUrl) {
     const migrationData = await downloadMigrationURL(migrationUrl)
 
