@@ -1,7 +1,8 @@
-import NotifyMigrationPlugin from '@jaen-notify/NotifyMigrationPlugin'
-import PagesMigrationPlugin from '@jaen-pages/PagesMigrationPlugin'
+import NotifyMigrationPlugin from '@jaen/internal-plugins/notify/NotifyMigrationPlugin'
+import PagesMigrationPlugin from '@jaen/internal-plugins/pages/PagesMigrationPlugin'
 import fs from 'fs'
 import update from 'immutability-helper'
+import fetch from 'node-fetch'
 import {nodejsSafeJsonUpload} from '../openStorageGateway'
 import {IBaseEntity, IMigrationEntity, IMigrationURLData} from './types'
 const JAEN_STATIC_DATA_DIR = './jaen-data'
@@ -27,15 +28,21 @@ export const updateEntity = async (
   baseEntity: IBaseEntity | undefined,
   migrationEntity: IMigrationEntity
 ) => {
+  console.log(`Updating ${JSON.stringify(migrationEntity)}`)
   const migrationContext = migrationEntity.context
 
   // check if baseEntity is not a empty object
+
+  console.log('migrationContext', migrationContext)
 
   if (!baseEntity?.context) {
     return {context: migrationContext, migrations: [migrationContext]}
   } else {
     const baseData = await downloadBaseContext(baseEntity)
     const migrationData = await downloadMigrationContext(migrationEntity)
+
+    console.log('baseData', baseData)
+    console.log('migrationData', migrationData)
 
     //   console.log('fetch done', typeof baseData, typeof migrationData)
 
@@ -57,6 +64,11 @@ export const updateEntity = async (
 
 export const runMigration = async (migrationUrl: string) => {
   console.log('runMigration', migrationUrl)
+
+  if (!fs.existsSync(JAEN_STATIC_DATA_DIR)) {
+    throw new Error('JAEN_STATIC_DATA_DIR does not exist')
+  }
+
   if (migrationUrl) {
     const migrationData = await downloadMigrationURL(migrationUrl)
 
@@ -72,6 +84,10 @@ export const runMigration = async (migrationUrl: string) => {
           let baseEntity
 
           try {
+            if (!fs.existsSync(filePath)) {
+              fs.writeFileSync(filePath, '{}')
+            }
+
             baseEntity = JSON.parse(fs.readFileSync(filePath, 'utf8'))
           } catch (e) {
             console.warn('Base entity not found for plugin', pluginName)

@@ -9,7 +9,9 @@ export default class PagesMigrationPlugin implements IJaenPlugin {
   }
   async migrate(base: IPagesMigrationBase, migration: IPagesMigrationBase) {
     for (const id of Object.keys(migration)) {
-      base[id] = await updateEntity(base[id], migration[id])
+      base[id] = await updateEntity(base[id], {
+        context: migration[id]
+      } as any)
     }
 
     return base
