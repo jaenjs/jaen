@@ -1,4 +1,5 @@
 {
+  "presets": ["@babel/preset-typescript", "@babel/preset-flow"],
   "plugins": [
     [
       "babel-plugin-module-resolver",

@@ -1,5 +1,5 @@
-import {updateEntity} from '@jaen/services/migration'
 import {IJaenPlugin} from '../../plugins'
+import {updateEntity} from '../../services/migration'
 import {runPublish} from './internal/services/publish'
 import {IPagesMigration, IPagesMigrationBase} from './types'
 

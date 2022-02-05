@@ -12,7 +12,7 @@ tsConfigPaths.register({
 const {Command} = require('commander')
 const program = new Command()
 
-const {runMigration} = require('../services/migration')
+const {runMigration} = require('../services/migration/run-migration')
 
 program.version('3.0.0')
 
