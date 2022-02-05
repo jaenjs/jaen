@@ -1,6 +1,6 @@
 import {PageProps} from 'gatsby'
 import {IGatsbyImageData} from 'gatsby-plugin-image'
-import {IBaseEntity, IMigrationEntity} from '../../index'
+import {IBaseEntity} from '../../index'
 
 export interface IJaenTemplate {
   name: string
@@ -93,7 +93,9 @@ export interface IPagesMigrationBase {
 }
 
 export type IPagesMigration = {
-  [uuid: string]: IMigrationEntity
+  pages: {
+    [uuid: string]: Partial<IJaenPage>
+  }
 }
 
 export interface IFormProps<Values> {

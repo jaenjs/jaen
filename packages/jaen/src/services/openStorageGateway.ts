@@ -30,8 +30,11 @@ export const upload = async (payload: object | Blob | File) => {
  */
 export const nodejsSafeJsonUpload = async (payload: string) => {
   const FormData = require('form-data')
+  const fetch = require('node-fetch')
 
   const formData = new FormData()
+
+  console.log('payload', payload)
 
   formData.append('file', payload, {
     knownLength: payload.length,
@@ -43,6 +46,8 @@ export const nodejsSafeJsonUpload = async (payload: string) => {
     body: formData,
     method: 'POST'
   })
+
+  console.log(resp)
 
   const json = await resp.json()
 

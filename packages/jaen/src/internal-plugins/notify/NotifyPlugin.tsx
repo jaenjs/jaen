@@ -1,10 +1,7 @@
-import {PluginStore} from 'react-pluggable'
-import {IJaenPlugin} from '../../plugins'
-import {updateEntity} from '../../services/migration'
+import {IPlugin, PluginStore} from 'react-pluggable'
 import {AdminFunctions} from '../admin/AdminPlugin'
-import {runPublish} from './services/publish'
 
-class NotifyPlugin implements IJaenPlugin {
+class NotifyPlugin implements IPlugin {
   pluginStore!: PluginStore
 
   getPluginName(): string {
@@ -35,18 +32,6 @@ class NotifyPlugin implements IJaenPlugin {
 
   deactivate(): void {
     //
-  }
-
-  async migrate(base: any, migration: any) {
-    for (const id of Object.keys(migration)) {
-      base[id] = await updateEntity(base[id], migration[id])
-    }
-
-    return base
-  }
-
-  async publishData(): Promise<any> {
-    return await runPublish()
   }
 }
 

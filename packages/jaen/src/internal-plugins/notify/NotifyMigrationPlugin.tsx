@@ -1,7 +1,7 @@
 import {updateEntity} from '@jaen/services/migration'
 import {IJaenPlugin} from '../../plugins'
 import {runPublish} from './services/publish'
-import {INotificationsMigrationBase} from './types'
+import {INotificationsMigration, INotificationsMigrationBase} from './types'
 
 export default class NotifyMigrationPlugin implements IJaenPlugin {
   getPluginName(): string {
@@ -9,12 +9,12 @@ export default class NotifyMigrationPlugin implements IJaenPlugin {
   }
   async migrate(
     base: INotificationsMigrationBase,
-    migration: INotificationsMigrationBase
+    migration: INotificationsMigration
   ) {
-    for (const id of Object.keys(migration)) {
-      base[id] = await updateEntity(base[id], {
-        context: migration[id]
-      } as any)
+    console.log('Migrating Notify', base)
+    console.log('Migrating Notify', migration)
+    for (const id of Object.keys(migration.notifications)) {
+      base[id] = await updateEntity(base[id], migration.notifications[id])
     }
 
     return base

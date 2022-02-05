@@ -1,4 +1,4 @@
-import {IBaseEntity, IMigrationEntity} from '../../'
+import {IBaseEntity} from '../../'
 
 export interface INotification {
   id: string // relative path to the notification file
@@ -14,5 +14,7 @@ export interface INotificationsMigrationBase {
 }
 
 export type INotificationsMigration = {
-  [uuid: string]: IMigrationEntity
+  notifications: {
+    [id: string]: INotification
+  }
 }

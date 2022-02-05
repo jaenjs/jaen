@@ -4,7 +4,12 @@ import fs from 'fs'
 import update from 'immutability-helper'
 import fetch from 'node-fetch'
 import {nodejsSafeJsonUpload} from '../openStorageGateway'
-import {IBaseEntity, IMigrationEntity, IMigrationURLData} from './types'
+import {
+  IBaseEntity,
+  IMigrationEntity,
+  IMigrationURLData,
+  IRemoteFileMigration
+} from './types'
 const JAEN_STATIC_DATA_DIR = './jaen-data'
 
 export const migrationPlugins = [
@@ -24,47 +29,46 @@ export const downloadBaseContext = async (
   entity: IBaseEntity
 ): Promise<object> => await (await fetch(entity.context.fileUrl)).json()
 
+const uploadMigration = async (data: object): Promise<IRemoteFileMigration> => {
+  const fileUrl = await nodejsSafeJsonUpload(JSON.stringify(data))
+
+  const newMigration = {
+    createdAt: new Date().toISOString(),
+    fileUrl
+  }
+
+  return newMigration
+}
+
 export const updateEntity = async (
   baseEntity: IBaseEntity | undefined,
-  migrationEntity: IMigrationEntity
+  migrationData: object
 ) => {
-  console.log(`Updating ${JSON.stringify(migrationEntity)}`)
-  const migrationContext = migrationEntity.context
-
   // check if baseEntity is not a empty object
 
-  console.log('migrationContext', migrationContext)
-
   if (!baseEntity?.context) {
-    return {context: migrationContext, migrations: [migrationContext]}
+    console.log('baseEntity is undefined', baseEntity, migrationData)
+    const newMigration = await uploadMigration(migrationData)
+    return {
+      context: newMigration,
+      migrations: [newMigration]
+    }
   } else {
     const baseData = await downloadBaseContext(baseEntity)
-    const migrationData = await downloadMigrationContext(migrationEntity)
-
-    console.log('baseData', baseData)
-    console.log('migrationData', migrationData)
-
-    //   console.log('fetch done', typeof baseData, typeof migrationData)
-
     // !TODO: Implement merging logic
     const mergedData = {...baseData, ...migrationData} as any //merge(baseData, migrationData) as object
-    const fileUrl = await nodejsSafeJsonUpload(JSON.stringify(mergedData))
 
-    const context = {
-      createdAt: migrationContext.createdAt,
-      fileUrl
-    }
+    console.log('a', mergedData)
+    const newMigration = await uploadMigration(mergedData)
 
     return update(baseEntity, {
-      context: {$set: context},
-      migrations: {$push: [migrationContext]}
+      context: {$set: newMigration},
+      migrations: {$push: [newMigration]}
     })
   }
 }
 
 export const runMigration = async (migrationUrl: string) => {
-  console.log('runMigration', migrationUrl)
-
   if (!fs.existsSync(JAEN_STATIC_DATA_DIR)) {
     throw new Error('JAEN_STATIC_DATA_DIR does not exist')
   }
