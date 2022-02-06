@@ -1,9 +1,10 @@
 import {GatsbyNode as GatsbyNodeType} from 'gatsby'
+import fetch from 'node-fetch'
 import path from 'path'
-import {IJaenPage} from '../../types'
+import {getJaenDataForPlugin} from '../../../../services/migration/get-jaen-data-for-plugin'
+import {IJaenPage, IPagesMigrationBase} from '../../types'
 import {processPage} from '../services/imaProcess'
 import {sourceTemplates} from './gatsby-config'
-
 const GatsbyNode: GatsbyNodeType = {}
 
 GatsbyNode.onCreateWebpackConfig = ({
@@ -52,6 +53,7 @@ GatsbyNode.createSchemaCustomization = ({actions}) => {
   actions.createTypes(`
     type JaenPage implements Node {
       id: ID!
+      slug: String!
       jaenPageMetadata: JaenPageMetadata!
       jaenFields: JSON
       chapters: JSON
@@ -86,131 +88,15 @@ GatsbyNode.sourceNodes = async ({
 }) => {
   const {createNode} = actions
 
-  const dummyJaenPages: IJaenPage[] = [
-    {
-      id: `JaenPage ${createNodeId('jaen-page-1')}`,
-      slug: 'jaen-page-1',
-      parent: null,
-      children: [],
-      jaenPageMetadata: {
-        title: 'Jaen Page 1',
-        description: 'Jaen Page 1 description',
-        image: 'https://via.placeholder.com/300x200',
-        canonical: 'https://jaen.com/jaen-page-1',
-        datePublished: '2020-01-01',
-        isBlogPost: false
-      },
-      jaenFields: {
-        'IMA:TextField': {
-          jaenField1: 'jaenField1',
-          jaenField2: 'jaenField2'
-        }
-      },
-      jaenFiles: undefined as any,
-      chapters: {},
-      template: 'BlogPage' as any
-    },
-    {
-      id: `JaenPage ${createNodeId('jaen-page-2')}`,
-      slug: 'jaen-page-2',
-      parent: null,
-      children: [{id: `JaenPage ${createNodeId('jaen-page-2-1')}}`}],
-      jaenPageMetadata: {
-        title: 'Jaen Page 2',
-        description: 'Jaen Page 2 description',
-        image: 'https://via.placeholder.com/300x200',
-        canonical: 'https://jaen.com/jaen-page-2',
-        datePublished: '2020-01-01',
-        isBlogPost: false
-      },
-      jaenFields: {
-        'IMA:TextField': {
-          jaenField1: 'jaenField1',
-          jaenField2: 'jaenField2'
-        }
-      },
-      jaenFiles: undefined as any,
+  let pages = await getJaenDataForPlugin<IPagesMigrationBase>('JaenPages@0.0.1')
 
-      chapters: {
-        chapter1: {
-          ptrHead: 'JaenSection foo-bar-baz-1',
-          ptrTail: 'JaenSection foo-bar-baz-2',
-          sections: {
-            'JaenSection foo-bar-baz-1': {
-              jaenFields: null,
-              name: 'BoxSection',
-              ptrNext: 'JaenSection foo-bar-baz-2',
-              ptrPrev: null // this is the first section of the chapter
-            },
-            'JaenSection foo-bar-baz-2': {
-              jaenFields: null,
-              name: 'BoxSection',
-              ptrNext: null, // this is the last section of the chapter
-              ptrPrev: 'JaenSection foo-bar-baz-1'
-            }
-          }
-        },
-        chapter2: {
-          ptrHead: 'JaenSection foo-bar-baz-3',
-          ptrTail: 'JaenSection foo-bar-baz-5',
-          sections: {
-            'JaenSection foo-bar-baz-3': {
-              jaenFields: null,
-              name: 'BoxSection',
-              ptrNext: 'JaenSection foo-bar-baz-4',
-              ptrPrev: null // this is the first section of the chapter
-            },
-            'JaenSection foo-bar-baz-4': {
-              jaenFields: null,
-              name: 'BoxSection',
-              ptrNext: 'JaenSection foo-bar-baz-5',
-              ptrPrev: 'JaenSection foo-bar-baz-3'
-            },
-            'JaenSection foo-bar-baz-5': {
-              jaenFields: null,
-              name: 'BoxSection',
-              ptrNext: null, // this is the last section of the chapter
-              ptrPrev: 'JaenSection foo-bar-baz-4'
-            }
-          }
-        }
-      },
-      template: 'BlogPage' as any
-    },
-    {
-      id: `JaenPage ${createNodeId('jaen-page-2-1')}`,
-      slug: 'jaen-page-2-1',
-      parent: {
-        id: `JaenPage ${createNodeId('jaen-page-2')}`
-      },
-      children: [],
-      jaenPageMetadata: {
-        title: 'Jaen Page 21',
-        description: 'Jaen Page 21 description',
-        image: 'https://via.placeholder.com/300x200',
-        canonical: 'https://jaen.com/jaen-page-2',
-        datePublished: '2020-01-01',
-        isBlogPost: false
-      },
-      jaenFields: {
-        'IMA:TextField': {
-          jaenField1: 'jaenField1',
-          jaenField2: 'jaenField2'
-        },
-        'IMA:ImageField': {
-          jaenField3: {
-            internalImageUrl: 'https://via.placeholder.com/300x200'
-          }
-        }
-      },
-      jaenFiles: undefined as any,
-      chapters: {},
-      template: 'BlogPage' as any
-    }
-  ]
+  for (const [id, page] of Object.entries(pages)) {
+    console.log('page', page)
+    const jaenPage = ((await (
+      await fetch(page.context.fileUrl)
+    ).json()) as unknown) as IJaenPage
 
-  dummyJaenPages.forEach(async jaenPage => {
-    //> Process IMA fields in page and its chapters
+    console.log('jaen page')
 
     await processPage({
       page: jaenPage,
@@ -223,6 +109,7 @@ GatsbyNode.sourceNodes = async ({
 
     const node = {
       ...jaenPage,
+      id,
       template: jaenPage.template || null,
       parent: jaenPage.parent ? jaenPage.parent.id : null,
       children: jaenPage.children.map(child => child.id),
@@ -234,7 +121,7 @@ GatsbyNode.sourceNodes = async ({
     }
 
     createNode(node)
-  })
+  }
 
   //> Fetch template files and proccess them
 }
@@ -243,6 +130,12 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
   const {createPage} = actions
 
   interface QueryData {
+    allTemplate: {
+      nodes: Array<{
+        id: string
+        absolutePath: string
+      }>
+    }
     allJaenPage: {
       edges: {
         node: IJaenPage
@@ -252,6 +145,12 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
 
   const result = await graphql<QueryData>(`
     query {
+      allTemplate: allFile(filter: {sourceInstanceName: {eq: "templates"}}) {
+        nodes {
+          absolutePath
+          id: relativePath
+        }
+      }
       allJaenPage {
         edges {
           node {
@@ -279,13 +178,31 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
     return
   }
 
-  const jaenPages = result.data.allJaenPage.edges
+  const {allTemplate, allJaenPage} = result.data
 
-  jaenPages.forEach(({node}) => {
+  allJaenPage.edges.forEach(({node}) => {
     const {slug} = node
     const {template} = node
 
-    return
+    if (template) {
+      const component = allTemplate.nodes.find(e => e.id === template)
+        ?.absolutePath
+
+      if (!component) {
+        reporter.panicOnBuild(
+          `Could not find template for page ${node.id} (${template})`
+        )
+        return
+      }
+
+      createPage({
+        path: slug,
+        component,
+        context: {
+          jaenPageId: node.id
+        }
+      })
+    }
   })
 
   // Dynamic routing pages

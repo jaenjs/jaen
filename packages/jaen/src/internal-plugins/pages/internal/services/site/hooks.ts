@@ -11,7 +11,6 @@ type QueryData = {
   }
   jaenTemplates: {
     nodes: Array<{
-      name: string
       relativePath: string
     }>
   }
@@ -27,7 +26,6 @@ export const useStaticData = () => {
           filter: {sourceInstanceName: {eq: "templates"}}
         ) {
           nodes {
-            name
             relativePath
           }
         }
@@ -76,19 +74,18 @@ export const useJaenTemplates = () => {
   const site = useSiteContext()
   const data = useStaticData()
 
-  const [templates, setTemplates] =
-    React.useState<{
-      [name: string]: IJaenTemplate
-    } | null>(null)
+  const [templates, setTemplates] = React.useState<{
+    [id: string]: IJaenTemplate
+  } | null>(null)
 
   React.useEffect(() => {
     const templateNodes = data.jaenTemplates.nodes
 
     const load = async () => {
-      const tmpls: {[name: string]: IJaenTemplate} = {}
+      const tmpls: {[id: string]: IJaenTemplate} = {}
 
       for (const templateNode of templateNodes) {
-        const {name: loadTemplate} = templateNode
+        const {relativePath: loadTemplate} = templateNode
 
         if (loadTemplate && !(loadTemplate in (templates || {}))) {
           const Component = await site.templateLoader(loadTemplate)

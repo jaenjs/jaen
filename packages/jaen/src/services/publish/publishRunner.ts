@@ -1,4 +1,4 @@
-import {migrationPlugins} from '../migration'
+import {migrationPlugins} from '../migration/run-migration'
 import {upload} from '../openStorageGateway'
 
 const runPluginsToGetMergedData = async () => {
