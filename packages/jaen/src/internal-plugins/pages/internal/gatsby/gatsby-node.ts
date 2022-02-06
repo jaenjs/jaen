@@ -132,7 +132,7 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
   interface QueryData {
     allTemplate: {
       nodes: Array<{
-        id: string
+        name: string
         absolutePath: string
       }>
     }
@@ -147,8 +147,8 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
     query {
       allTemplate: allFile(filter: {sourceInstanceName: {eq: "templates"}}) {
         nodes {
+          name
           absolutePath
-          id: relativePath
         }
       }
       allJaenPage {
@@ -185,7 +185,7 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
     const {template} = node
 
     if (template) {
-      const component = allTemplate.nodes.find(e => e.id === template)
+      const component = allTemplate.nodes.find(e => e.name === template)
         ?.absolutePath
 
       if (!component) {

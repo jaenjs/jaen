@@ -23,7 +23,7 @@ import styled from '@emotion/styled'
 import {motion} from 'framer-motion'
 import * as React from 'react'
 import {FaFile, FaFolderMinus, FaFolderPlus} from 'react-icons/fa'
-import {IJaenTemplate} from 'types'
+import {IJaenTemplate} from '../../../../../types'
 import {ContextMenu} from '../../../ContextMenu'
 import {CreateValues, PageCreator} from '../PageCreator'
 import {TreeConverter} from './treeconverter'
@@ -144,7 +144,7 @@ const PageTree: React.FC<PageTreeProps> = ({
     newTree.items[selectedItem].isExpanded = true
     newTree.items[selectedItem].children.push(newItemId)
 
-    setTree(newTree)
+    //setTree(newTree)
     //handleSelectItem(newItemId)
   }
 
