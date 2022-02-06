@@ -1,3 +1,4 @@
+import deepmerge from 'deepmerge'
 import update from 'immutability-helper'
 import fetch from 'node-fetch'
 import {nodejsSafeJsonUpload} from '../openStorageGateway'
@@ -47,7 +48,7 @@ export const updateEntity = async (
   } else {
     const baseData = await downloadBaseContext(baseEntity)
     // !TODO: Implement merging logic
-    const mergedData = {...baseData, ...migrationData}
+    const mergedData = deepmerge<any>(baseData, migrationData) //{...baseData, ...migrationData}
 
     console.log('a', mergedData)
     const newMigration = await uploadMigration(mergedData)
