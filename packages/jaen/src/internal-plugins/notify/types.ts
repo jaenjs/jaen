@@ -2,6 +2,7 @@ import {IBaseEntity} from '../../'
 
 export interface INotification {
   id: string // relative path to the notification file
+  active: boolean
   jaenFields: {
     [type: string]: {
       [name: string]: any

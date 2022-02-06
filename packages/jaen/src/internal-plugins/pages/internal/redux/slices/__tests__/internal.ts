@@ -429,8 +429,8 @@ describe('pages', () => {
 
         // Expect the old parent to be updated
         expect(oldParentPage.children).toEqual(
-          expect.not.arrayContaining([
-            expect.objectContaining({id: payload.id})
+          expect.arrayContaining([
+            expect.objectContaining({id: payload.id, deleted: true})
           ])
         )
       }
@@ -477,8 +477,8 @@ describe('pages', () => {
 
         // Expect the old parent to be updated
         expect(oldParentPage.children).toEqual(
-          expect.not.arrayContaining([
-            expect.objectContaining({id: payload.id})
+          expect.arrayContaining([
+            expect.objectContaining({id: payload.id, deleted: true})
           ])
         )
 

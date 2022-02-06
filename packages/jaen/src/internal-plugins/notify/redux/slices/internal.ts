@@ -24,6 +24,18 @@ const notificationSlice = createSlice({
   name: 'notifications',
   initialState: initialState.notifications,
   reducers: {
+    setActive: (state, action: PayloadAction<string>) => {
+      state.nodes[action.payload] = {
+        ...state.nodes[action.payload],
+        active: true
+      }
+    },
+    setInactive: (state, action: PayloadAction<string>) => {
+      state.nodes[action.payload] = {
+        ...state.nodes[action.payload],
+        active: false
+      }
+    },
     field_write: (
       state,
       action: PayloadAction<{
@@ -36,6 +48,7 @@ const notificationSlice = createSlice({
       const {notificationId, fieldType, fieldName, value} = action.payload
 
       state.nodes[notificationId] = {
+        ...state.nodes[notificationId],
         id: notificationId,
         jaenFields: {
           ...(state.nodes[notificationId]?.jaenFields ?? {}),

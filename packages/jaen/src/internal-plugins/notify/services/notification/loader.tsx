@@ -1,6 +1,7 @@
 import {IJaenPageProps} from '@jaen/internal-plugins/pages/types'
 import {graphql, PageProps, useStaticQuery} from 'gatsby'
 import * as React from 'react'
+import {store} from '../../redux'
 import {INotification} from '../../types'
 import {INotificationConnection} from './context'
 
@@ -52,7 +53,59 @@ const useStaticData = () => {
   return staticData
 }
 
-const loadNotifications = (
+const notificationLoader = (relativePath: string): INotificationConnection => {
+  return (
+    //@ts-ignore
+    require(`${___JAEN_NOTIFICATIONS___}/${relativePath}`).default
+  )
+}
+
+export const loadNotificationsComponent = (
+  jaenNotifications: QueryData['jaenNotifications'],
+  allJaenNotification: QueryData['allJaenNotification']
+) => {
+  const notifications: Array<{
+    id: string
+    notification: INotification
+    Component: INotificationConnection
+  }> = []
+
+  for (const {relativePath} of jaenNotifications.nodes) {
+    const Notification = notificationLoader(relativePath)
+    if (Notification) {
+      const notification = allJaenNotification.nodes.find(
+        node => node.id === relativePath
+      )
+
+      if (notification) {
+        notifications.push({
+          id: relativePath,
+          notification,
+          Component: Notification
+        })
+      }
+    }
+  }
+
+  return notifications
+}
+
+export const useNotifications = () => {
+  const staticData = useStaticData()
+
+  const notifications = React.useMemo(
+    () =>
+      loadNotificationsComponent(
+        staticData.jaenNotifications,
+        staticData.allJaenNotification
+      ),
+    []
+  )
+
+  return notifications
+}
+
+export const loadNotificationsForPage = (
   jaenNotifications: QueryData['jaenNotifications'],
   allJaenNotification: QueryData['allJaenNotification'],
   pageProps: IJaenPageProps
@@ -63,44 +116,45 @@ const loadNotifications = (
     return []
   }
 
-  const notificationLoader = (
-    relativePath: string
-  ): INotificationConnection => {
-    return (
-      //@ts-ignore
-      require(`${___JAEN_NOTIFICATIONS___}/${relativePath}`).default
-    )
-  }
+  const notifications = loadNotificationsComponent(
+    jaenNotifications,
+    allJaenNotification
+  )
 
-  const notifications: Array<JSX.Element> = []
+  const allNotificationElement: Array<JSX.Element> = []
 
-  const addNotification = (id: string, Component: INotificationConnection) => {
-    const notification = allJaenNotification.nodes.find(node => node.id === id)
+  for (const {Component, notification} of notifications) {
+    const isActive = store.getState().internal.notifications.nodes?.[
+      notification.id
+    ]?.active
 
-    notifications.push(<Component id={id} notification={notification} />)
-  }
+    if (isActive === false || notification.active === false) {
+      break
+    }
 
-  for (const {relativePath} of jaenNotifications.nodes) {
-    const Notification = notificationLoader(relativePath)
-
-    const {conditions, customCondition} = Notification.options
+    const pushNotification = () => {
+      allNotificationElement.push(
+        <Component id={notification.id} notification={notification} />
+      )
+    }
 
     //> Conditions
-    if (customCondition) {
-      const show = customCondition(pageProps)
+    const {conditions, customCondition} = Component.options
 
-      if (show) {
-        addNotification(relativePath, Notification)
+    if (customCondition) {
+      const condition = customCondition(pageProps)
+
+      if (condition) {
+        pushNotification()
         break
       }
     }
 
     if (conditions) {
       const {entireSite, templates, urlPatterns} = conditions
-
       //> Entire site
       if (entireSite) {
-        addNotification(relativePath, Notification)
+        pushNotification()
         break
       }
 
@@ -109,7 +163,7 @@ const loadNotifications = (
         const staticTemplate = pageProps.data?.jaenPage?.template
 
         if (staticTemplate && templates.includes(staticTemplate)) {
-          addNotification(relativePath, Notification)
+          pushNotification()
           break
         }
       }
@@ -120,7 +174,7 @@ const loadNotifications = (
 
         for (const urlPattern of urlPatterns) {
           if (staticUrl.match(urlPattern)) {
-            addNotification(relativePath, Notification)
+            pushNotification()
             break
           }
         }
@@ -128,7 +182,7 @@ const loadNotifications = (
     }
   }
 
-  return notifications
+  return allNotificationElement
 }
 
 /**
@@ -148,7 +202,7 @@ export const NotificationsLoader: React.FC<{pageProps: PageProps}> = ({
 
   const notifications = React.useMemo(
     () =>
-      loadNotifications(
+      loadNotificationsForPage(
         jaenNotifications,
         allJaenNotification,
         pageProps as any
@@ -156,6 +210,7 @@ export const NotificationsLoader: React.FC<{pageProps: PageProps}> = ({
     [jaenNotifications, pageProps]
   )
 
+  console.log('NOTIFICAITONS', notifications)
   return (
     <>
       <>{notifications}</>

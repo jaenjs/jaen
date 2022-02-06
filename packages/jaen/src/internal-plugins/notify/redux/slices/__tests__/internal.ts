@@ -19,6 +19,28 @@ describe('status', () => {
 describe('notifications', () => {
   const reducer = reducers.notifications
 
+  it('sets the status of a notification to true', () => {
+    expect(reducer(undefined, actions.setActive('test'))).toEqual({
+      nodes: {
+        test: {
+          id: 'test',
+          active: true
+        }
+      }
+    })
+  })
+
+  it('sets the status of a notification to false', () => {
+    expect(reducer(undefined, actions.setInactive('test'))).toEqual({
+      nodes: {
+        test: {
+          id: 'test',
+          active: false
+        }
+      }
+    })
+  })
+
   it('creates a notification when a field is written', () => {
     expect(
       reducer(
@@ -49,6 +71,7 @@ describe('notifications', () => {
       nodes: {
         'notification-id': {
           id: 'notification-id',
+          active: true,
           jaenFields: {
             'field-type': {
               'field-name': 'value'
@@ -88,6 +111,7 @@ describe('notifications', () => {
       nodes: {
         'notification-id': {
           id: 'notification-id',
+          active: true,
           jaenFields: {
             'field-type': {
               'field-name': 'value'

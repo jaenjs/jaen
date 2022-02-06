@@ -1,5 +1,6 @@
 import {IPlugin, PluginStore} from 'react-pluggable'
 import {AdminFunctions} from '../admin/AdminPlugin'
+import {NotifyTab} from './ui/components/tabs/Notify'
 
 class NotifyPlugin implements IPlugin {
   pluginStore!: PluginStore
@@ -25,7 +26,7 @@ class NotifyPlugin implements IPlugin {
       name: 'Notifications',
       rtlName: 'لوحة القيادة',
       icon: null,
-      component: null,
+      component: NotifyTab,
       layout: ''
     })
   }

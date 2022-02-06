@@ -13,8 +13,8 @@ import {INotification} from '../../types'
 type PositionProps = ModalContentProps & {size?: string; isCentered?: boolean}
 
 export type NotificationOptions = {
-  displayName?: string
-  description?: string
+  displayName: string
+  description: string
   position?: 'modal' | 'modal-center'
   positionProps?: PositionProps
   conditions: RequireAtLeastOne<{
@@ -37,10 +37,9 @@ export type NotificationOptions = {
   customTrigger?: () => Promise<boolean>
 }
 
-export const NotificationContext =
-  React.createContext<{id: string; notification?: INotification} | undefined>(
-    undefined
-  )
+export const NotificationContext = React.createContext<
+  {id: string; notification?: INotification} | undefined
+>(undefined)
 
 export const useNotificationContext = () => {
   const context = React.useContext(NotificationContext)
@@ -55,6 +54,8 @@ export const useNotificationContext = () => {
 export interface NotificationProviderProps extends NotificationOptions {
   id: string
   notification?: INotification
+  forceOpen?: boolean
+  onClose?: () => void
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({
@@ -65,9 +66,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   positionProps,
   triggers,
   customTrigger,
-  advanced
+  advanced,
+  forceOpen,
+  onClose: onCloseProp
 }) => {
-  const {isOpen, onClose, onOpen} = useDisclosure({defaultIsOpen: false})
+  const {isOpen, onClose, onOpen} = useDisclosure({
+    defaultIsOpen: false,
+    isOpen: forceOpen
+  })
+
+  const handleClose = React.useCallback(() => {
+    onCloseProp?.()
+    onClose()
+  }, [onCloseProp, onClose])
 
   const defaultPositonProps: PositionProps = {
     m: 0
@@ -134,7 +145,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     <NotificationContext.Provider value={{id, notification}}>
       <Modal
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={handleClose}
         size={size}
         isCentered={isCentered}>
         <ModalOverlay />
@@ -145,7 +156,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 }
 
 export const connectNotification = <
-  P extends {id: string; notification?: INotification}
+  P extends {
+    id: string
+    notification?: INotification
+    forceOpen?: boolean
+    onClose?: () => void
+  }
 >(
   Component: React.ComponentType<P>,
   options: NotificationOptions
@@ -155,6 +171,8 @@ export const connectNotification = <
       <NotificationProvider
         id={props.id}
         notification={props.notification}
+        forceOpen={props.forceOpen}
+        onClose={props.onClose}
         {...options}>
         <Component {...props} />
       </NotificationProvider>
