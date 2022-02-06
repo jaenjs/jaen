@@ -1,4 +1,3 @@
-import {Box} from '@chakra-ui/react'
 import {
   store,
   useAppDispatch,
@@ -11,6 +10,7 @@ import {
   useJaenPageTree,
   useJaenTemplates
 } from '@jaen-pages/internal/services/site'
+import {Card} from '@jaen/internal-plugins/admin/ui/components/Card'
 import {navigate} from 'gatsby'
 import * as React from 'react'
 import PagesTab from '../components/tabs/Pages'
@@ -27,11 +27,10 @@ export const PagesContainer = withRedux(() => {
     state => state.internal.pages.lastAddedNodeId
   )
 
-  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] =
-    React.useState<{
-      pageId: string
-      create: boolean
-    } | null>(null)
+  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] = React.useState<{
+    pageId: string
+    create: boolean
+  } | null>(null)
 
   console.log(
     '🚀 ~ file: Pages.tsx ~ line 186 ~ PagesContainer ~ shouldUpdateDpathsFor',
@@ -203,7 +202,7 @@ export const PagesContainer = withRedux(() => {
   )
 
   return (
-    <Box>
+    <Card overflowX={{sm: 'scroll', xl: 'hidden'}}>
       <PagesTab
         items={treeItems}
         templates={jaenTemplates || []}
@@ -216,6 +215,6 @@ export const PagesContainer = withRedux(() => {
         onItemSelect={id => null}
         onItemDoubleClick={handlePageNavigate}
       />
-    </Box>
+    </Card>
   )
 })
