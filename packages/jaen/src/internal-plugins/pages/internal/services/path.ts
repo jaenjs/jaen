@@ -1,37 +1,45 @@
 import {ITreeJaenPage} from '../../types'
 
+type PageNode = {
+  id: string
+  slug: string
+  parent: {
+    id: string
+  } | null
+}
+
 export const generateOriginPath = (
-  jaenPageTree: ITreeJaenPage[],
-  node: ITreeJaenPage,
+  allNodes: Array<PageNode>,
+  node: PageNode,
   path = `/${node.slug}`
 ): string | undefined => {
   const parentId = node.parent?.id
-  const parent = jaenPageTree.find(n => n.id === parentId)
+  const parent = allNodes.find(n => n.id === parentId)
 
   if (parent) {
-    return generateOriginPath(jaenPageTree, parent, `/${parent.slug}${path}`)
+    return generateOriginPath(allNodes, parent, `/${parent.slug}${path}`)
   }
 
   return path
 }
 
 export const generatePagePaths = (
-  jaenPageTree: ITreeJaenPage[],
+  allNodes: ITreeJaenPage[],
   pageId: string
 ) => {
-  const originNode = jaenPageTree.find(node => node.id === pageId)
+  const originNode = allNodes.find(node => node.id === pageId)
 
   if (originNode) {
     const paths: {[path: string]: string} = {}
 
-    const originPath = generateOriginPath(jaenPageTree, originNode!)
+    const originPath = generateOriginPath(allNodes, originNode!)
 
     const lookupPath = (node: ITreeJaenPage, pathPrefix = '/') => {
       paths[pathPrefix] = node.id
 
       if (node.children.length) {
         for (const {id} of node.children) {
-          const child = jaenPageTree.find(n => n.id === id)
+          const child = allNodes.find(n => n.id === id)
 
           if (child) {
             lookupPath(

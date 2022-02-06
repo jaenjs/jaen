@@ -4,6 +4,7 @@ import path from 'path'
 import {getJaenDataForPlugin} from '../../../../services/migration/get-jaen-data-for-plugin'
 import {IJaenPage, IPagesMigrationBase} from '../../types'
 import {processPage} from '../services/imaProcess'
+import {generateOriginPath} from '../services/path'
 import {sourceTemplates} from './gatsby-config'
 const GatsbyNode: GatsbyNodeType = {}
 
@@ -137,9 +138,7 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
       }>
     }
     allJaenPage: {
-      edges: {
-        node: IJaenPage
-      }[]
+      nodes: Array<IJaenPage>
     }
   }
 
@@ -152,22 +151,23 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
         }
       }
       allJaenPage {
-        edges {
-          node {
+        nodes {
+          id
+          parent {
             id
-            slug
-            jaenPageMetadata {
-              title
-              description
-              image
-              canonical
-              datePublished
-              isBlogPost
-            }
-            jaenFields
-            chapters
-            template
           }
+          slug
+          jaenPageMetadata {
+            title
+            description
+            image
+            canonical
+            datePublished
+            isBlogPost
+          }
+          jaenFields
+          chapters
+          template
         }
       }
     }
@@ -180,11 +180,20 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
 
   const {allTemplate, allJaenPage} = result.data
 
-  allJaenPage.edges.forEach(({node}) => {
+  console.log(allJaenPage.nodes)
+
+  allJaenPage.nodes.forEach(node => {
     const {slug} = node
     const {template} = node
 
     if (template) {
+      const path = generateOriginPath(allJaenPage.nodes, node)
+
+      if (!path) {
+        reporter.panicOnBuild(`Error while generating path for page ${node.id}`)
+        return
+      }
+
       const component = allTemplate.nodes.find(e => e.name === template)
         ?.absolutePath
 
@@ -196,7 +205,7 @@ GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
       }
 
       createPage({
-        path: slug,
+        path: path,
         component,
         context: {
           jaenPageId: node.id
