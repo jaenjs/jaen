@@ -63,7 +63,7 @@ export interface IJaenPage {
    * - Used to determine the component to render.
    */
   template: string | null
-  deleted?: true
+  deleted?: boolean
   excludedFromIndex?: boolean
 }
 

@@ -165,7 +165,24 @@ const mergeStaticWithStatePages = (
       console.log('p1', p1)
       console.log('p2', p2)
 
-      return deepmerge(p1 || {}, p2 || {})
+      const merged = deepmerge(p1 || {}, p2 || {}, {
+        arrayMerge: (destinationArray, sourceArray) => {
+          // concat arrays of objects without duplicates by id
+          const array = sourceArray
+            .concat(
+              destinationArray.filter(
+                item => sourceArray.findIndex(n => n.id === item.id) === -1
+              )
+            )
+            .filter(item => !item.deleted)
+
+          return array
+        }
+      })
+
+      console.log('pm', merged)
+
+      return merged
     })
 
 /**

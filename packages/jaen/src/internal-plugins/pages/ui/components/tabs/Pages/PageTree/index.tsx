@@ -354,24 +354,34 @@ const PageTree: React.FC<PageTreeProps> = ({
       }
     })
 
-    if (validSlug) {
-      const newTree = moveItemOnTree(tree, source, destination)
+    const dstTemplate = tree.items[dstId]?.data?.template
+    const movedTemplate = tree.items[movedItemId]?.data?.template
 
-      // @ts-ignore
-      //newTree.items[movedItemId].parent = destination.parentId
+    // Check movedItemId template is in dstId template children
+    const childTemplates = templates.find(
+      template => template.name === dstTemplate
+    )?.children
 
-      setTree(mutateTree(tree, destination.parentId, {isExpanded: true}))
-      handleSelectItem(movedItemId)
+    if (childTemplates && childTemplates.some(e => e.name === movedTemplate)) {
+      if (validSlug) {
+        const newTree = moveItemOnTree(tree, source, destination)
 
-      props.onItemMove(
-        movedItemId,
         // @ts-ignore
-        tree.items[movedItemId].parent === tree.rootId.toString()
-          ? null
-          : // @ts-ignore
-            tree.items[movedItemId].parent,
-        dstId === tree.rootId.toString() ? null : dstId
-      )
+        //newTree.items[movedItemId].parent = destination.parentId
+
+        setTree(mutateTree(tree, destination.parentId, {isExpanded: true}))
+        handleSelectItem(movedItemId)
+
+        props.onItemMove(
+          movedItemId,
+          // @ts-ignore
+          tree.items[movedItemId].parent === tree.rootId.toString()
+            ? null
+            : // @ts-ignore
+              tree.items[movedItemId].parent,
+          dstId === tree.rootId.toString() ? null : dstId
+        )
+      }
     }
   }
 

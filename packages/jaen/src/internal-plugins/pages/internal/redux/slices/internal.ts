@@ -82,12 +82,17 @@ const pagesSlice = createSlice({
           // Update the from page
           // If the fromIndex is not found, add the fromPage to the state and set the from index
 
+          const newChildren = [
+            ...(state.nodes[fromId]?.children || []).filter(e => e.id !== id),
+            {
+              id,
+              deleted: true
+            }
+          ]
+
           state.nodes[fromId] = {
             ...state.nodes[fromId],
-            children:
-              state.nodes[fromId]?.children?.filter(
-                child => child?.id !== id
-              ) || []
+            children: newChildren
           }
         }
       } else {
