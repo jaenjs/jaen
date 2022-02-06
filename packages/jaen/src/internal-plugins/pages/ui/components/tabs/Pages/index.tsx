@@ -41,7 +41,7 @@ const PagesTab = (props: PagesTabProps) => {
   return (
     <div>
       <Flex>
-        <Box h="70vh" w="30%">
+        <Box w={selection ? '30%' : '100%'}>
           <>
             <ButtonGroup size="sm" pb="4">
               <IconButton
@@ -81,7 +81,7 @@ const PagesTab = (props: PagesTabProps) => {
         <Divider orientation="vertical" />
 
         <Box flex={1}>
-          {selection ? (
+          {selection && (
             <PageContent
               key={selection.id}
               template={selectedTemplate}
@@ -93,8 +93,6 @@ const PagesTab = (props: PagesTabProps) => {
               }}
               onSubmit={handlePageUpdate}
             />
-          ) : (
-            <p>Select a page to view its content.</p>
           )}
         </Box>
       </Flex>
