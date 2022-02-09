@@ -10,7 +10,6 @@ import {
   useJaenPageTree,
   useJaenTemplates
 } from '@jaen-pages/internal/services/site'
-import {Card} from '@jaen/internal-plugins/admin/ui/components/Card'
 import {navigate} from 'gatsby'
 import * as React from 'react'
 import PagesTab from '../components/tabs/Pages'
@@ -202,19 +201,17 @@ export const PagesContainer = withRedux(() => {
   )
 
   return (
-    <Card overflowX={{sm: 'scroll', xl: 'hidden'}}>
-      <PagesTab
-        items={treeItems}
-        templates={jaenTemplates || []}
-        creatorFallbackTemplates={[]}
-        getPage={handlePageGet}
-        onItemCreate={handlePageCreate}
-        onItemDelete={handlePageDelete}
-        onItemMove={handlePageMove}
-        onPageUpdate={handlePageUpdate}
-        onItemSelect={id => null}
-        onItemDoubleClick={handlePageNavigate}
-      />
-    </Card>
+    <PagesTab
+      items={treeItems}
+      templates={jaenTemplates || []}
+      creatorFallbackTemplates={[]}
+      getPage={handlePageGet}
+      onItemCreate={handlePageCreate}
+      onItemDelete={handlePageDelete}
+      onItemMove={handlePageMove}
+      onPageUpdate={handlePageUpdate}
+      onItemSelect={id => null}
+      onItemDoubleClick={handlePageNavigate}
+    />
   )
 })

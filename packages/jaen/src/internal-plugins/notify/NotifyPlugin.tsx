@@ -1,5 +1,5 @@
 import {IPlugin, PluginStore} from 'react-pluggable'
-import {AdminFunctions} from '../admin/AdminPlugin'
+import {AdminFunctions} from '../../UIPlugin'
 import {NotifyTab} from './ui/components/tabs/Notify'
 
 class NotifyPlugin implements IPlugin {

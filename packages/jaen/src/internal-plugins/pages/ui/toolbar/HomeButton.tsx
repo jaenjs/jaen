@@ -6,10 +6,8 @@ export const HomeButton = () => {
   const siteTitle = 'Ballons & Balloons' // useStaticQuery site meta data
 
   return (
-    <Link to="/">
-      <Button size="xs" variant={'darkghost'} leftIcon={<FiHome />}>
-        Ballons & Ballons
-      </Button>
-    </Link>
+    <Button size="xs" variant={'darkghost'} leftIcon={<FiHome />}>
+      <Link to="/">Ballons & Ballons</Link>
+    </Button>
   )
 }

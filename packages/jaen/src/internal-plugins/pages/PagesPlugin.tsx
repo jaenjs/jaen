@@ -1,10 +1,12 @@
 import {Box} from '@chakra-ui/react'
 import React from 'react'
 import {IPlugin, PluginStore} from 'react-pluggable'
-import {AdminFunctions} from '../admin/AdminPlugin'
+import {AdminFunctions} from '../../UIPlugin'
 import {FilesContainer} from './ui/tabs/Files'
 import {PagesContainer} from './ui/tabs/Pages'
 import {EditButtonGroup, HomeButton, PublishButton} from './ui/toolbar'
+import {FaPager} from '@react-icons/all-files/fa/FaPager'
+import {BsFiles} from '@react-icons/all-files/bs/BsFiles'
 
 const Test = () => {
   return (
@@ -25,50 +27,14 @@ class PagesPlugin implements IPlugin {
   }
 
   getDependencies(): string[] {
-    return ['JaenAdmin@0.0.1']
+    return ['JaenUI@0.0.1']
   }
 
   init(pluginStore: PluginStore): void {
     this.pluginStore = pluginStore
   }
 
-  activate(): void {
-    this.pluginStore.executeFunction(AdminFunctions.addRoute, {
-      path: '/dashboard',
-      name: 'Dashboard',
-      rtlName: 'لوحة القيادة',
-      icon: null,
-      component: Test,
-      layout: ''
-    })
-
-    this.pluginStore.executeFunction(AdminFunctions.addRoute, {
-      path: '/pages',
-      name: 'Pages',
-      rtlName: 'لوحة القيادة',
-      icon: null,
-      component: PagesContainer,
-      layout: ''
-    })
-
-    this.pluginStore.executeFunction(AdminFunctions.addRoute, {
-      path: '/files',
-      name: 'Files',
-      rtlName: 'لوحة القيادة',
-      icon: null,
-      component: FilesContainer,
-      layout: ''
-    })
-
-    this.pluginStore.executeFunction(
-      AdminFunctions.addToolbarItem,
-      <>
-        <HomeButton />
-        <EditButtonGroup />
-        <PublishButton />
-      </>
-    )
-  }
+  activate(): void {}
 
   deactivate(): void {
     //

@@ -1,5 +1,5 @@
 import {createPluginStore, RendererPlugin} from 'react-pluggable'
-import AdminPlugin from './internal-plugins/admin/AdminPlugin'
+import UIPlugin from './UIPlugin'
 import NotifyPlugin from './internal-plugins/notify/NotifyPlugin'
 import PagesPlugin from './internal-plugins/pages/PagesPlugin'
 
@@ -21,11 +21,7 @@ export interface IJaenPlugin {
   publishData(): Promise<any>
 }
 
-export const plugins = [
-  new AdminPlugin(),
-  new PagesPlugin(),
-  new NotifyPlugin()
-]
+export const plugins = [new UIPlugin(), new PagesPlugin(), new NotifyPlugin()]
 
 const installPlugins = () => {
   pluginStore.install(new RendererPlugin())

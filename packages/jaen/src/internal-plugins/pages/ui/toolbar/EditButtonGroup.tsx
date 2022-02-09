@@ -39,7 +39,13 @@ export const EditButtonGroup = withRedux(() => {
         onClose={onClose}
         onConfirm={handleDiscard}
       />
-      <ButtonGroup isAttached variant="outline" size="xs" bg="gray.800">
+      <ButtonGroup
+        isAttached
+        variant="outline"
+        size="xs"
+        bg="gray.700"
+        p="0"
+        m="0">
         <Button
           mr="-px"
           variant={'darkghost'}

@@ -1,14 +1,21 @@
-import type {GatsbyBrowser} from 'gatsby'
-import {PluginProvider} from 'react-pluggable'
-import {pluginStore} from './src'
-import {SnekFinder} from './src/withSnekFinder'
+import AdminToolbarContainer from '@jaen/ui/AdminToolbar'
+import {GatsbyBrowser} from 'gatsby'
 
-export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = ({
+export * from './src/gatsby/wrapper'
+
+export const wrapPageElement: GatsbyBrowser['wrapPageElement'] = ({
   element
 }) => {
+  const pathname = window.location.pathname
+
+  if (pathname.startsWith('/jaen/admin')) {
+    return element
+  }
+
   return (
-    <PluginProvider pluginStore={pluginStore}>
-      <SnekFinder>{element}</SnekFinder>
-    </PluginProvider>
+    <>
+      <AdminToolbarContainer sticky />
+      {element}
+    </>
   )
 }
