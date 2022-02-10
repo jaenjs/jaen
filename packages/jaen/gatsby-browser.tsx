@@ -1,3 +1,4 @@
+import {Box} from '@chakra-ui/react'
 import AdminToolbarContainer from '@jaen/ui/AdminToolbar'
 import {GatsbyBrowser} from 'gatsby'
 
@@ -15,6 +16,7 @@ export const wrapPageElement: GatsbyBrowser['wrapPageElement'] = ({
   return (
     <>
       <AdminToolbarContainer sticky />
+     
       {element}
     </>
   )
