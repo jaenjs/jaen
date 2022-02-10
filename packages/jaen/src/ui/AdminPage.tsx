@@ -26,6 +26,8 @@ import {PagesContainer} from '@jaen/internal-plugins/pages/ui/tabs/Pages'
 import {FilesContainer} from '@jaen/internal-plugins/pages/ui/tabs/Files'
 import {NotificationContext} from '@jaen/internal-plugins/notify/services/notification/context'
 import {NotifyTab} from '@jaen/internal-plugins/notify/ui/components/tabs/Notify'
+import AdminLogin from './components/AdminLogin'
+import {AdminLoginPage} from './AdminLoginPage'
 
 let source = createHashSource()
 let history = createHistory(source as HistorySource)
@@ -152,7 +154,11 @@ const AdminPageShell = (props: RouteComponentProps) => {
 const AdminPage = (props: any) => (
   <LocationProvider history={history}>
     <Router primary={false}>
-      <AdminPageShell default path="/" {...props} />
+      {false ? (
+        <AdminPageShell default path="/" />
+      ) : (
+        <AdminLoginPage default path="/login" />
+      )}
     </Router>
   </LocationProvider>
 )
