@@ -1,5 +1,6 @@
 import {migrationPlugins} from '../migration/run-migration'
 import {upload} from '../openStorageGateway'
+import * as snekApi from '../api'
 
 const runPluginsToGetMergedData = async () => {
   const data: any = {}
@@ -12,11 +13,15 @@ const runPluginsToGetMergedData = async () => {
 }
 
 export const publishRunner = async () => {
-  alert('publishRunner')
   const data = await runPluginsToGetMergedData()
   const fileUrl = await upload(data)
+  //@ts-ignore
+  const jaenProjectId: number = ___JAEN_PROJECT_ID___
 
-  alert(fileUrl)
-
-  return true
+  try {
+    await snekApi.publishProject(jaenProjectId, fileUrl)
+    return true
+  } catch (e) {
+    return false
+  }
 }

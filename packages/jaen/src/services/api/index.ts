@@ -154,3 +154,23 @@ export async function getMe() {
 
   return (await response.json()) as IUser
 }
+
+export async function publishProject(projectId: number, migrationUrl: string) {
+  const response = await baseFetch(`projects/${projectId}/publish`, {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      migraiton_url: migrationUrl
+    })
+  })
+
+  if (response.status !== 200) {
+    const error = await response.json()
+    throw new Error(error.detail)
+  }
+}

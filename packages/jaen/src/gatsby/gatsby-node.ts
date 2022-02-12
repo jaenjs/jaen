@@ -1,6 +1,24 @@
+import {IJaenConfig} from '@jaen/types'
 import {GatsbyNode as GatsbyNodeType} from 'gatsby'
 
 const GatsbyNode: GatsbyNodeType = {}
+
+GatsbyNode.onCreateWebpackConfig = (
+  {plugins, actions, loaders, stage, getNodesByType},
+  pluginOptions
+) => {
+  const options = pluginOptions as unknown as IJaenConfig
+
+  console.log('JOPTIONS', options)
+
+  actions.setWebpackConfig({
+    plugins: [
+      plugins.define({
+        ___JAEN_PROJECT_ID___: JSON.stringify(options.jaenProjectId)
+      })
+    ]
+  })
+}
 
 GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
   const {createPage} = actions

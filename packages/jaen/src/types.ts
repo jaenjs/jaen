@@ -9,13 +9,7 @@ export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
   }[Keys]
 
 export interface IJaenConfig {
-  templates: {
-    rootDir: string
-    paths: {
-      [templateName: string]: string
-    }
-  }
-  staticDataPath: string
+  jaenProjectId: number
 }
 
 export interface IJaenStaticData {

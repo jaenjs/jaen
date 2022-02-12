@@ -8,14 +8,7 @@ module.exports = {
     {
       resolve: '@jaenjs/jaen',
       options: {
-        //
-        templates: {
-          rootDir: path.resolve('./src/templates'),
-          paths: {
-            BlogPage: 'BlogPage.tsx'
-          }
-          //
-        }
+        jaenProjectId: 1
       }
     },
     '@chakra-ui/gatsby-plugin',
