@@ -15,10 +15,8 @@ export const NotifyTab: React.FC = withRedux(() => {
     state => state.internal.notifications.nodes
   )
 
-  const [
-    previewNotificaitonElement,
-    setPreviewNotificaitonElement
-  ] = React.useState<JSX.Element | undefined>(undefined)
+  const [previewNotificaitonElement, setPreviewNotificaitonElement] =
+    React.useState<JSX.Element | undefined>(undefined)
 
   const allNotifyComponent = useNotifications()
 
@@ -34,8 +32,6 @@ export const NotifyTab: React.FC = withRedux(() => {
     dispatch(internalActions.setEditing(true))
 
     const notify = allNotifyComponent.find(n => n.id === id)
-
-    alert(`Edit ${notify?.notification.id}`)
 
     if (notify) {
       const {Component, notification} = notify

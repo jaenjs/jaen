@@ -1,3 +1,5 @@
+import {IUser} from './services/api/types'
+
 export type RequireAtLeastOne<T, Keys extends keyof T = keyof T> = Pick<
   T,
   Exclude<keyof T, Keys>
@@ -23,4 +25,9 @@ export interface IJaenStaticData {
 export interface IJaenConnection<ReactProps, Options>
   extends React.FC<ReactProps> {
   options: Options
+}
+
+export interface IAuth {
+  isAuthenticated: boolean
+  user: IUser | null
 }

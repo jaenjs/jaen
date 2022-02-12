@@ -2,7 +2,7 @@ import {JaenPageProvider} from '@jaen-pages/internal/services/page'
 import {withSnekFinder} from '@jaen/withSnekFinder'
 import {ComponentMeta, Story} from '@storybook/react'
 import React from 'react'
-import {default as Component} from './components/AdminLogin'
+import {default as Component} from './AdminLogin'
 
 export default {
   title: 'NewUI/AdminLogin',

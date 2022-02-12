@@ -28,6 +28,7 @@ import {NotificationContext} from '@jaen/internal-plugins/notify/services/notifi
 import {NotifyTab} from '@jaen/internal-plugins/notify/ui/components/tabs/Notify'
 import AdminLogin from './components/AdminLogin'
 import {AdminLoginPage} from './AdminLoginPage'
+import {useAppSelector, withRedux} from '@jaen/redux'
 
 let source = createHashSource()
 let history = createHistory(source as HistorySource)
@@ -151,16 +152,21 @@ const AdminPageShell = (props: RouteComponentProps) => {
   )
 }
 
-const AdminPage = (props: any) => (
-  <LocationProvider history={history}>
-    <Router primary={false}>
-      {false ? (
-        <AdminPageShell default path="/" />
-      ) : (
-        <AdminLoginPage default path="/login" />
-      )}
-    </Router>
-  </LocationProvider>
-)
+const AdminPage = withRedux((props: any) => {
+  const isAuthenticated  = useAppSelector(state => state.auth.isAuthenticated)
+
+  
+  return (
+    <LocationProvider history={history}>
+      <Router primary={false}>
+        {isAuthenticated ? (
+          <AdminPageShell default path="/" />
+        ) : (
+          <AdminLoginPage default path="/login" />
+        )}
+      </Router>
+    </LocationProvider>
+  )
+})
 
 export default AdminPage

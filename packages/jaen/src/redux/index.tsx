@@ -18,17 +18,18 @@ import {
   useStore
 } from 'react-redux'
 import {clearState, loadState, persistKey, saveState} from './persist-state'
-import internal, {initialState} from './slices/internal'
+
+import auth, {authInitialState} from './slices/auth'
 
 const combinedReducer = combineReducers({
-  internal
+  auth
 })
 
 // Reset state if action called
 const rootReducer = (state: any, action: any) => {
   if (action.type === 'RESET_STATE') {
     return {
-      internal: initialState
+      auth: authInitialState
     }
   }
 
@@ -82,7 +83,7 @@ export const PersistorWrapper: React.FC = ({children}) => {
   const data = useStaticQuery<{
     siteBuildMetadata: {buildTime: string}
   }>(graphql`
-    query NotifyBuildMetadata {
+    query CoreBuildMetadata {
       siteBuildMetadata {
         buildTime
       }

@@ -1,6 +1,11 @@
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
   Box,
   Button,
+  Divider,
   Heading,
   SimpleGrid,
   Text,
@@ -8,7 +13,7 @@ import {
   VisuallyHidden
 } from '@chakra-ui/react'
 import * as React from 'react'
-import {FaFacebook, FaGithub, FaGoogle} from 'react-icons/fa'
+import {FaHome, FaBook} from 'react-icons/fa'
 import {JaenLogo} from '../icons'
 import {Card} from './Card'
 import {DividerWithText} from './DividerWithText'
@@ -17,6 +22,8 @@ import {LoginForm} from './LoginForm'
 import {Logo} from './Logo'
 
 export interface AdminLoginProps {
+  onHomeClick: () => void
+  onDocsClick: () => void
   onLogin: (email: string, password: string) => void
   onLiveDemo: () => void
 }
@@ -43,6 +50,23 @@ export const AdminLogin = (props: AdminLoginProps) => (
       </Text>
       <Card>
         <LoginForm onLogin={props.onLogin} />
+        <DividerWithText mt="6">or visit</DividerWithText>
+        <SimpleGrid mt="6" columns={3} spacing="3">
+          <Button
+            color="currentColor"
+            variant="outline"
+            onClick={props.onDocsClick}>
+            <VisuallyHidden>Docs</VisuallyHidden>
+            <FaBook />
+          </Button>
+          <Button
+            color="currentColor"
+            variant="outline"
+            onClick={props.onHomeClick}>
+            <VisuallyHidden>Home</VisuallyHidden>
+            <FaHome />
+          </Button>
+        </SimpleGrid>
       </Card>
     </Box>
   </Box>
