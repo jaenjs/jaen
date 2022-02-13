@@ -36,7 +36,7 @@ import {HiCloudUpload} from '@react-icons/all-files/hi/HiCloudUpload'
 export type ContentValues = {
   title: string
   slug: string
-  imageUrl?: string
+  image?: string
   description?: string
   excludedFromIndex?: boolean
 }
@@ -77,9 +77,9 @@ export const PageContent = (props: PageContentProps) => {
     onAction: action => {
       if (action.type === 'SELECTOR_SELECT') {
         console.log(action.payload.item)
-        const imageUrl = action.payload.item.src
+        const image = action.payload.item.src
 
-        setValue('imageUrl', imageUrl, {
+        setValue('image', image, {
           shouldDirty: true
         })
       }
@@ -91,6 +91,8 @@ export const PageContent = (props: PageContentProps) => {
       ...defaultValues,
       ...values
     }
+
+    alert(JSON.stringify(vs, null, 2))
 
     props.onSubmit(vs)
 
@@ -114,7 +116,7 @@ export const PageContent = (props: PageContentProps) => {
   }
 
   const handleImageRemove = () => {
-    setValue('imageUrl', undefined, {
+    setValue('image', '', {
       shouldDirty: true
     })
   }
@@ -213,7 +215,7 @@ export const PageContent = (props: PageContentProps) => {
 
                       <Controller
                         control={control}
-                        name="imageUrl"
+                        name="image"
                         render={({field: {value}}) => (
                           <Stack
                             direction="row"

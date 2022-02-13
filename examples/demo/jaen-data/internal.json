@@ -12,13 +12,29 @@
       "organization": {
         "name": "Example, Inc.",
         "url": "https://example.com",
-        "logo": "https://lengstorf.com/android-chrome-512x512.png"
+        "logo": "https://osg.snek.at/storage/BQACAgQAAxkDAAIGEGIHjCjfdFFSe3Y7teMnwoRmtHm5AAI9DAACH4xBUE1uwhSrbVRpIwQ"
       },
       "social": {
         "twitter": "@jlengstorf",
         "fbAppID": ""
       },
       "categories": [
+        {
+          "slug": "test",
+          "name": "Test Category"
+        },
+        {
+          "slug": "test",
+          "name": "Test Category"
+        },
+        {
+          "slug": "test",
+          "name": "Test Category"
+        },
+        {
+          "slug": "test",
+          "name": "Test Category"
+        },
         {
           "slug": "test",
           "name": "Test Category"
