@@ -31,10 +31,11 @@ export const useSnekFinder = ({
 
   const [isSelectorOpen, setIsSelectorOpen] = React.useState(false)
   const [data, setData] = React.useState(initData)
-  const [openFile, setOpenFile] = React.useState<{
-    fileId: string
-    previewType: 'IMAGE_VIEWER' | 'PDF_VIEWER' | 'SNEK_STUDIO'
-  } | null>(null)
+  const [openFile, setOpenFile] =
+    React.useState<{
+      fileId: string
+      previewType: 'IMAGE_VIEWER' | 'PDF_VIEWER' | 'SNEK_STUDIO'
+    } | null>(null)
 
   const openedFileItem = React.useMemo(() => {
     if (!openFile) {

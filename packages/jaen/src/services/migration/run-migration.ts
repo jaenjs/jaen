@@ -18,6 +18,11 @@ export const runMigration = async (migrationUrl: string) => {
 
     await Promise.all(
       Object.entries(migrationData).map(async ([pluginName, entity]) => {
+        if (pluginName === 'jaen') {
+          console.log('jaen plugin entity', entity)
+          return
+        }
+
         const plugin = migrationPlugins.find(
           p => p.getPluginName() === pluginName
         )

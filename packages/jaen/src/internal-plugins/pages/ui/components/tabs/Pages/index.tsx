@@ -89,6 +89,7 @@ const PagesTab = (props: PagesTabProps) => {
                 title: selection.jaenPageMetadata.title,
                 slug: selection.slug,
                 description: selection.jaenPageMetadata.description,
+                imageUrl: selection.jaenPageMetadata.image,
                 excludedFromIndex: selection.excludedFromIndex
               }}
               onSubmit={handlePageUpdate}

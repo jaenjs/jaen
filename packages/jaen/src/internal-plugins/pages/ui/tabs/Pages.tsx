@@ -26,10 +26,11 @@ export const PagesContainer = withRedux(() => {
     state => state.internal.pages.lastAddedNodeId
   )
 
-  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] = React.useState<{
-    pageId: string
-    create: boolean
-  } | null>(null)
+  let [shouldUpdateDpathsFor, setShouldUpdateDpathsFor] =
+    React.useState<{
+      pageId: string
+      create: boolean
+    } | null>(null)
 
   console.log(
     '🚀 ~ file: Pages.tsx ~ line 186 ~ PagesContainer ~ shouldUpdateDpathsFor',

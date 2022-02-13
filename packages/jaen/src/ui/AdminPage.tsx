@@ -29,6 +29,8 @@ import {NotifyTab} from '@jaen/internal-plugins/notify/ui/components/tabs/Notify
 import AdminLogin from './components/AdminLogin'
 import {AdminLoginPage} from './AdminLoginPage'
 import {useAppSelector, withRedux} from '@jaen/redux'
+import {SettingsTab} from '@jaen/ui/components/Settings/SettingsTab.stories'
+import {SettingsContainer} from './SettingsTab'
 
 let source = createHashSource()
 let history = createHistory(source as HistorySource)
@@ -75,7 +77,8 @@ const AdminPageShell = (props: RouteComponentProps) => {
     '/': <>Dashboard</>,
     '/pages': <PagesContainer />,
     '/files': <FilesContainer />,
-    '/notifications': <NotifyTab />
+    '/notifications': <NotifyTab />,
+    '/settings': <SettingsContainer />
   }
   //const routes: IAdminRoute[] =
   //pluginStore.executeFunction(AdminFunctions.getRoutes) || []
@@ -146,16 +149,15 @@ const AdminPageShell = (props: RouteComponentProps) => {
       }}
       content={activeRoute.content}
       onSidebarItemClick={handleSidebarItemClick}
-      onSettingsClick={() => {}}
+      onSettingsClick={() => navigate('/settings')}
       onHelpClick={() => {}}
     />
   )
 }
 
 const AdminPage = withRedux((props: any) => {
-  const isAuthenticated  = useAppSelector(state => state.auth.isAuthenticated)
+  const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated)
 
-  
   return (
     <LocationProvider history={history}>
       <Router primary={false}>

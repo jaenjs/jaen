@@ -148,6 +148,7 @@ export const UpdateModal = ({
               <Image
                 h="300px"
                 w="300px"
+                cursor={isSubmitting ? 'not-allowed' : 'pointer'}
                 objectFit={'cover'}
                 src={data.image}
                 onClick={handleImageClick}

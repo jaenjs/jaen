@@ -25,3 +25,24 @@ export interface IAuth {
   isAuthenticated: boolean
   user: IUser | null
 }
+
+export interface ISite {
+  siteMetadata: Partial<{
+    title: string
+    description: string
+    siteUrl: string
+    image: string
+    author: {
+      name: string
+    }
+    organization: {
+      name: string
+      url: string
+      logo: string
+    }
+    social: {
+      twitter: string // twitter username
+      fbAppID: string // FB ANALYTICS
+    }
+  }>
+}

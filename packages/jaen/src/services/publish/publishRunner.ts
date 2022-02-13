@@ -1,14 +1,20 @@
 import {migrationPlugins} from '../migration/run-migration'
 import {upload} from '../openStorageGateway'
 import * as snekApi from '../api'
+import {runPublish} from './publish'
 
 const runPluginsToGetMergedData = async () => {
   const data: any = {}
   for (const plugin of migrationPlugins) {
     const pluginData = await plugin.publishData()
-    alert(`${plugin.getPluginName()} data: ${JSON.stringify(pluginData)}`)
     data[plugin.getPluginName()] = pluginData
   }
+
+  // run internal jaen plugin
+  data['jaen'] = await runPublish()
+
+  alert(`data: ${JSON.stringify(data)}`)
+
   return data
 }
 

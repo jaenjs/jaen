@@ -62,7 +62,7 @@ export const AdminPageShell: React.FC<UIProps> = ({
   onHelpClick
 }) => {
   return (
-    <Box height="100vh" overflow="hidden" position="relative">
+    <Box height="100vh" overflow="auto" position="relative">
       {toolbar}
       <Flex h="calc(100vh - 54px)" id="app-container">
         <Box w="64" bg="gray.900" color="white" fontSize="sm">
@@ -111,7 +111,11 @@ export const AdminPageShell: React.FC<UIProps> = ({
             </Stack>
           </Flex>
         </Box>
-        <Box bg={mode('gray.50', 'gray.700')} w="100%" h="100%">
+        <Box
+          bg={mode('gray.50', 'gray.700')}
+          w="100%"
+          h="100%"
+          overflowY="scroll">
           <Box rounded="lg" bg="white" m="4" p="2">
             {content}
           </Box>

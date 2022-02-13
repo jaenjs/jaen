@@ -20,6 +20,14 @@ GatsbyNode.onCreateWebpackConfig = (
   })
 }
 
+GatsbyNode.createSchemaCustomization = ({actions, schema}) => {
+  actions.createTypes(`
+    type Site implements Node {
+      siteMetadata: JSON
+    }
+  `)
+}
+
 GatsbyNode.createPages = async ({actions, graphql, reporter}) => {
   const {createPage} = actions
 

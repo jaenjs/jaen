@@ -20,16 +20,19 @@ import {
 import {clearState, loadState, persistKey, saveState} from './persist-state'
 
 import auth, {authInitialState} from './slices/auth'
+import site, {siteInitialState} from './slices/site'
 
 const combinedReducer = combineReducers({
-  auth
+  auth,
+  site
 })
 
 // Reset state if action called
 const rootReducer = (state: any, action: any) => {
   if (action.type === 'RESET_STATE') {
     return {
-      auth: authInitialState
+      auth: authInitialState,
+      site: siteInitialState
     }
   }
 
