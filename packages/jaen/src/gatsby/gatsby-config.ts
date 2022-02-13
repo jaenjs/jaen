@@ -1,8 +1,14 @@
+import {readFile} from '../services/jaen-data/internal'
 import {GatsbyConfig as GatsbyConfigType} from 'gatsby'
+
+const internalJaenData = readFile()
+
+console.log('internalJaenData', internalJaenData)
 
 const GatsbyConfig: GatsbyConfigType = {
   jsxRuntime: 'automatic',
-  jsxImportSource: '@emotion/react'
+  jsxImportSource: '@emotion/react',
+  siteMetadata: internalJaenData.site.siteMetadata
 }
 
 const internalPlugins = [

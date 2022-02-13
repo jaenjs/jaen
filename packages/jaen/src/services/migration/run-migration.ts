@@ -2,6 +2,9 @@ import fs from 'fs'
 import {downloadMigrationURL, JAEN_STATIC_DATA_DIR} from '.'
 import NotifyMigrationPlugin from '../../internal-plugins/notify/NotifyMigrationPlugin'
 import PagesMigrationPlugin from '../../internal-plugins/pages/PagesMigrationPlugin'
+import * as internalJaenData from '../jaen-data/internal'
+
+import deepmerge from 'deepmerge'
 
 export const migrationPlugins = [
   new PagesMigrationPlugin(),
@@ -20,6 +23,12 @@ export const runMigration = async (migrationUrl: string) => {
       Object.entries(migrationData).map(async ([pluginName, entity]) => {
         if (pluginName === 'jaen') {
           console.log('jaen plugin entity', entity)
+
+          const data = internalJaenData.readFile()
+          const merged = deepmerge(data, entity)
+
+          internalJaenData.writeFile(merged)
+
           return
         }
 

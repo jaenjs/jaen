@@ -21,15 +21,12 @@ import {
 } from '@chakra-ui/react'
 import * as React from 'react'
 import {HiCloudUpload} from 'react-icons/hi'
-import {FaGithub, FaGoogle} from 'react-icons/fa'
 import {FieldGroup} from './FieldGroup'
-import {CurrencySelect} from './CurrencySelect'
 import {LanguageSelect} from './LanguageSelect'
 
 import {Controller, useForm} from 'react-hook-form'
 import {ISite} from '@jaen/types'
 import {useSnekFinder} from '@jaenjs/snek-finder'
-import {dirtyValues} from '@jaen/utils/hooks/dirtyValues'
 
 type FormDataType = ISite
 
