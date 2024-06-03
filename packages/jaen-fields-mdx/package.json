@@ -1,6 +1,6 @@
 {
   "name": "@atsnek/jaen-fields-mdx",
-  "version": "1.0.0-rc.19",
+  "version": "1.0.0-rc.20",
   "description": "Markdown field for Jaen",
   "type": "module",
   "source": "src/index.ts",
