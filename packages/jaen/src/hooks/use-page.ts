@@ -75,7 +75,7 @@ export const usePage = (props: UsePageProps) => {
 
         page.mediaNodes = (
           Object.values(
-            mediaPage.jaenFields['IMA:MEDIA_NODES']?.media_nodes?.value || {}
+            mediaPage?.jaenFields['IMA:MEDIA_NODES']?.media_nodes?.value || {}
           ).filter((mediaNode: MediaNode) => {
             return page.id === mediaNode.jaenPageId
           }) || []
