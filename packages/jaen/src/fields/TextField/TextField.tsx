@@ -33,8 +33,8 @@ const cleanRichText = (
   if (isRTF) {
     // allow target="_blank" for links
     return DOMPurify.sanitize(text, {
-      ALLOWED_TAGS: ['a'],
-      ALLOWED_ATTR: ['href', 'target']
+      ADD_TAGS: ['a'],
+      ADD_ATTR: ['href', 'target']
     })
   }
 
