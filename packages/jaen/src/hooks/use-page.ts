@@ -12,7 +12,7 @@ export interface UsePageProps {
   injectMedia?: boolean
 }
 
-export const usePage = (props: UsePageProps) => {
+export const usePage = (props: UsePageProps = {}) => {
   const {jaenPage, jaenPages} = usePageContext()
 
   const paths = useDynamicPaths({
