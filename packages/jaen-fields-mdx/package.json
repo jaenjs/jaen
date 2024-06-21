@@ -1,6 +1,6 @@
 {
   "name": "jaen-fields-mdx",
-  "version": "1.0.0-rc.20",
+  "version": "1.0.0",
   "description": "Markdown field for Jaen",
   "type": "module",
   "source": "src/index.ts",
