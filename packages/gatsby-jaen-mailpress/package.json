@@ -13,7 +13,7 @@
     "gatsby-node.js"
   ],
   "scripts": {
-    "build": "tsc gatsby/* --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule"
+    "build": "tsc gatsby/* --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule && tsc"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
