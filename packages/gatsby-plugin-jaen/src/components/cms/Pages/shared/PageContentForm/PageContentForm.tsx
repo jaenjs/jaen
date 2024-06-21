@@ -1,4 +1,4 @@
-import {DuplicateSlugError, JaenTemplate, useAuth} from '@atsnek/jaen'
+import {DuplicateSlugError, JaenTemplate, useAuth} from 'jaen'
 import {
   Box,
   Button,

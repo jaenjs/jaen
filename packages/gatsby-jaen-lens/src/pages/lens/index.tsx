@@ -2,7 +2,7 @@ import {
   PageConfig,
   useAuthenticationContext,
   useNotificationsContext
-} from '@atsnek/jaen'
+} from 'jaen'
 import {
   Button,
   Heading,
@@ -321,4 +321,4 @@ export const query = graphql`
   }
 `
 
-export {Head} from '@atsnek/jaen'
+export {Head} from 'jaen'

@@ -1,4 +1,4 @@
-import {PageConfig} from '@atsnek/jaen'
+import {PageConfig} from 'jaen'
 import {CreatePageArgs, Node} from 'gatsby'
 
 import {getJaenPageParentId} from '../utils/get-jaen-page-parent-id'

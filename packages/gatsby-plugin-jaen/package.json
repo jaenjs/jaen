@@ -16,7 +16,7 @@
     "build": "tsc gatsby/* --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule && yarn build:css"
   },
   "peerDependencies": {
-    "@atsnek/jaen": "^1.0.0-rc.2",
+    "jaen": "^1.0.0-rc.2",
     "@react-icons/all-files": "https://github.com/react-icons/react-icons/releases/download/v4.11.0/react-icons-all-files-4.11.0.tgz",
     "gatsby": "^5.11.0",
     "react": "^18.2.0"

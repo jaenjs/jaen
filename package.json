@@ -4,7 +4,7 @@
   "private": true,
   "version": "1.0.0",
   "repository": "https://github.com/atsnek/jaen",
-  "author": "Nico Schett <schett@atsnek.com>",
+  "author": "Nico Schett <nico.schett@cronit.io>",
   "scripts": {
     "lint:fix": "yarn eslint packages/jaen/src/ --fix",
     "prettier:fix": "yarn prettier packages/jaen/src/ --write",
