@@ -1,4 +1,4 @@
-import {PageConfig, useNotificationsContext} from '@atsnek/jaen'
+import {PageConfig, useNotificationsContext} from 'jaen'
 import {
   Box,
   Button,
@@ -229,4 +229,4 @@ export const query = graphql`
   }
 `
 
-export {Head} from '@atsnek/jaen'
+export {Head} from 'jaen'

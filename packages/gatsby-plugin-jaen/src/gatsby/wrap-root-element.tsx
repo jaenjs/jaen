@@ -5,7 +5,7 @@ import {
   NotificationsProvider,
   JaenUpdateModalProvider,
   CookieConsentProvider
-} from '@atsnek/jaen'
+} from 'jaen'
 import {GatsbyBrowser} from 'gatsby'
 import {lazy} from 'react'
 

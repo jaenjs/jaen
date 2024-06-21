@@ -1,4 +1,4 @@
-import {MediaNode} from '@atsnek/jaen'
+import {MediaNode} from 'jaen'
 import {Flex, Heading, HStack, IconButton, Stack} from '@chakra-ui/react'
 import React, {useEffect, useMemo, useState} from 'react'
 

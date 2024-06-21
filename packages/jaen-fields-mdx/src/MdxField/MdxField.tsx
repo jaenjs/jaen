@@ -1,4 +1,4 @@
-import {connectField, EditingProvider} from '@atsnek/jaen'
+import {connectField, EditingProvider} from 'jaen'
 import React, {useEffect, useMemo} from 'react'
 
 import {Preview} from './components/Preview.js'

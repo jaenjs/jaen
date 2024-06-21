@@ -18,7 +18,7 @@ import {
   Spinner,
   Text
 } from '@chakra-ui/react'
-import {MediaNode} from '@atsnek/jaen'
+import {MediaNode} from 'jaen'
 import {useEffect} from 'react'
 import FilerobotImageEditor, {TABS} from 'react-filerobot-image-editor'
 

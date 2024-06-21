@@ -5,7 +5,7 @@ import {
   useMediaModal,
   useNotificationsContext,
   checkUserRoles
-} from '@atsnek/jaen'
+} from 'jaen'
 import {graphql, SliceComponentProps} from 'gatsby'
 import {useEffect, useState} from 'react'
 

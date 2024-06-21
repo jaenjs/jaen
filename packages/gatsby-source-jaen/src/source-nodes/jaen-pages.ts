@@ -1,4 +1,4 @@
-import {MediaNode} from '@atsnek/jaen'
+import {MediaNode} from 'jaen'
 import {Node, SourceNodesArgs} from 'gatsby'
 import {createRemoteFileNode} from 'gatsby-source-filesystem'
 import {getLastPartOfId} from '../utils/get-last-part-of-id'
