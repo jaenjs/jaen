@@ -1,7 +1,8 @@
-import {ISite} from '@jaen/types'
 import {createSlice, PayloadAction} from '@reduxjs/toolkit'
 
-export const siteInitialState: ISite = {
+import {IJaenSiteState} from '../types'
+
+export const siteInitialState: IJaenSiteState = {
   siteMetadata: {}
 }
 
@@ -11,15 +12,19 @@ const siteSlice = createSlice({
   reducers: {
     updateSiteMetadata: (
       state,
-      action: PayloadAction<ISite['siteMetadata']>
+      action: PayloadAction<IJaenSiteState['siteMetadata']>
     ) => {
       state.siteMetadata = {
         ...state.siteMetadata,
         ...action.payload
       }
+    },
+    discardAllChanges: state => {
+      state.siteMetadata = {}
     }
   }
 })
 
-export const {updateSiteMetadata} = siteSlice.actions
+export const actions = siteSlice.actions
+
 export default siteSlice.reducer

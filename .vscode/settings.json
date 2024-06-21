@@ -1,13 +1,8 @@
 {
-  "cSpell.words": ["chakra"],
-  "editor.rulers": [80, 120],
-  "[git-commit]": {
-    "editor.rulers": [72, 80]
-  },
-  "editor.formatOnSave": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
   "editor.codeActionsOnSave": {
-    "source.fixAll": true,
-    "source.organizeImports": true,
-    "source.sortMembers": true
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.tslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
   }
 }

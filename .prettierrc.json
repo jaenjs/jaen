@@ -7,8 +7,6 @@
   "trailingComma": "none",
   "bracketSpacing": false,
   "arrowParens": "avoid",
-  "jsxBracketSameLine": true,
-  "importOrder": ["^@src/(.*)$", "^[./]"],
-  "importOrderSeparation": true,
-  "experimentalBabelParserPluginsList": ["jsx", "typescript"]
+  "bracketSameLine": true,
+  "jsxBracketSameLine": true
 }

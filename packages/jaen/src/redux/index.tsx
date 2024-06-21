@@ -7,9 +7,9 @@
  * Use of this source code is governed by an EUPL-1.2 license that can be found
  * in the LICENSE file at https://snek.at/license
  */
-import {useDeepEqualSelector} from '@jaen/utils/hooks/useDeepEqualSelector'
 import {combineReducers, configureStore} from '@reduxjs/toolkit'
-import {graphql, useStaticQuery} from 'gatsby'
+import deepmerge from 'deepmerge'
+import React from 'react'
 import {
   Provider,
   TypedUseSelectorHook,
@@ -17,22 +17,46 @@ import {
   useSelector,
   useStore
 } from 'react-redux'
-import {clearState, loadState, persistKey, saveState} from './persist-state'
 
-import auth, {authInitialState} from './slices/auth'
+import PersistState from './persist-state'
+
+import page, {pageInitialState} from './slices/page'
+import popup, {popupInitialState} from './slices/popup'
 import site, {siteInitialState} from './slices/site'
+import status, {statusInitialState} from './slices/status'
+import widget, {widgetInitialState} from './slices/widget'
+
+import {useDeepEqualSelector} from '../utils/use-deep-equal-selector'
+
+export const persistKey = 'jaenjs-state'
+
+const {loadState, persistState, persistMiddleware} =
+  PersistState<RootState>(persistKey)
 
 const combinedReducer = combineReducers({
-  auth,
-  site
+  site,
+  page,
+  status,
+  popup,
+  widget
 })
 
 // Reset state if action called
 const rootReducer = (state: any, action: any) => {
   if (action.type === 'RESET_STATE') {
+    const payload: {
+      site?: typeof siteInitialState
+      page?: typeof pageInitialState
+      popup?: typeof popupInitialState
+      widget?: typeof widgetInitialState
+    } = action.payload || {}
+
     return {
-      auth: authInitialState,
-      site: siteInitialState
+      site: deepmerge(siteInitialState, payload.site || {}),
+      page: deepmerge(pageInitialState, payload.page || {}),
+      status: statusInitialState,
+      popup: deepmerge(popupInitialState, payload.popup || {}),
+      widget: deepmerge(widgetInitialState, payload.widget || {})
     }
   }
 
@@ -46,14 +70,12 @@ export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       thunk: {extraArgument: {}}
-    }).concat([]),
+    }).concat([...persistMiddleware]),
   devTools: true || process.env.NODE_ENV !== 'production',
   preloadedState: persistedState
 })
 
-store.subscribe(() => {
-  saveState(store.getState() as RootState)
-})
+export const {resetState} = persistState(store)
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof combinedReducer>
@@ -75,35 +97,3 @@ export const withRedux =
       </Provider>
     )
   }
-
-/**
- * Persist state to localStorage
- * Notice that this can only be used in the browser, so we can't use it in
- * `gatsby-ssr.js` because it would have unwanted side effects.
- */
-export const PersistorWrapper: React.FC = ({children}) => {
-  const btKey = `${persistKey}:buildTime`
-  const data = useStaticQuery<{
-    siteBuildMetadata: {buildTime: string}
-  }>(graphql`
-    query CoreBuildMetadata {
-      siteBuildMetadata {
-        buildTime
-      }
-    }
-  `)
-
-  const buildTime = data.siteBuildMetadata.buildTime
-
-  const storageBuildTime = localStorage.getItem(btKey)
-
-  if (storageBuildTime !== buildTime) {
-    if (storageBuildTime) {
-      clearState()
-    }
-
-    localStorage.setItem(btKey, buildTime)
-  }
-
-  return <>{children}</>
-}
