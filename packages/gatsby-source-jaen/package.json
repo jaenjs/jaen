@@ -15,13 +15,13 @@
     "deepmerge": "^4.2.2"
   },
   "devDependencies": {
-    "jaen": "^1.0.0-rc.1",
+    "jaen": "^1.0.0",
     "@types/babel__generator": "^7.6.5",
     "@types/babel__traverse": "^7.20.1",
     "typescript": "^5"
   },
   "peerDependencies": {
-    "jaen": "^1.0.0-rc.1"
+    "jaen": "^1.0.0"
   },
   "scripts": {
     "build": "tsc src/gatsby-node.ts src/gatsby-config.ts --outDir dist --esModuleInterop --skipLibCheck --resolveJsonModule"
