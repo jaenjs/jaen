@@ -306,20 +306,18 @@ export const TextField = connectField<string, TextFieldProps>(
           </Button>,
           ...(isRTF
             ? [
-                <>
-                  <TuneSelectorButton
-                    key={`jaen-highlight-tooltip-tune-${jaenField.name}`}
-                    aria-label="Customize"
-                    tunes={[styleTune, ...fieldStyleTunes]}
-                    icon={
-                      <Text as="span" fontSize="sm" fontFamily="serif">
-                        T
-                      </Text>
-                    }
-                    activeTunes={tunes.activeTunes}
-                    onTune={jaenField.tune}
-                  />
-                </>
+                <TuneSelectorButton
+                  key={`jaen-highlight-tooltip-tune-${jaenField.name}`}
+                  aria-label="Customize"
+                  tunes={[styleTune, ...fieldStyleTunes]}
+                  icon={
+                    <Text as="span" fontSize="sm" fontFamily="serif">
+                      T
+                    </Text>
+                  }
+                  activeTunes={tunes.activeTunes}
+                  onTune={jaenField.tune}
+                />
               ]
             : []),
           <TuneSelectorButton
