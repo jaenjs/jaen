@@ -1,6 +1,12 @@
 import {Heading, Progress, Stack, StackDivider, Text} from '@chakra-ui/react'
 import {navigate} from 'gatsby'
-import {PageConfig, PageProps, useAuthUser, useNotificationsContext} from 'jaen'
+import {
+  AuthUserProvider,
+  PageConfig,
+  PageProps,
+  useAuthUser,
+  useNotificationsContext
+} from 'jaen'
 
 import {sq} from '../../clients/lens/src'
 import {PasswordUpdateForm} from '../../components/PasswordUpdateForm'
@@ -37,8 +43,6 @@ const Page: React.FC<PageProps> = () => {
         status: 'error'
       })
     }
-
-    return success
   }
 
   if (!user) {
@@ -105,6 +109,12 @@ export const pageConfig: PageConfig = {
   withoutJaenFrameStickyHeader: true
 }
 
-export default Page
+export default props => {
+  return (
+    <AuthUserProvider>
+      <Page {...props} />
+    </AuthUserProvider>
+  )
+}
 
-export {Head} from '@atsnek/jaen'
+export {Head} from 'jaen'
