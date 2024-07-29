@@ -190,6 +190,8 @@ export const Media: React.FC<MediaProps> = ({
       <MediaPreview
         mediaNodes={sortedMediaNodes}
         isPreview={isPreview}
+        isSelector={isSelector}
+        onSelect={onSelect}
         selectedMediaNode={selectedMediaNode || defaultSelectedMediaNode}
         onSelectMediaNode={setSelectedMediaNode}
         onPreview={handlePreview}
