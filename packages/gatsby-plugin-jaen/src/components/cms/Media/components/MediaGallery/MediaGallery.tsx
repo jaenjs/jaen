@@ -422,7 +422,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
         <Button
           display={isSelector ? 'block' : 'none'}
           leftIcon={<FaCheck />}
-          size="sm"
+          size="xs"
           isDisabled={selectedMediaNode === null}
           onClick={() => {
             if (isSelector && selectedMediaNode) {
