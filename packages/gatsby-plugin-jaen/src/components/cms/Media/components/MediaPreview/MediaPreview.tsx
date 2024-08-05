@@ -217,6 +217,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
 
               {isSelector && (
                 <Button
+                  variant="solid"
                   leftIcon={<FaCheck />}
                   onClick={() => {
                     if (selectedMediaNode && onSelect) {
