@@ -125,12 +125,16 @@ const pagesSlice = createSlice({
 
       // Add the page to the new parentPages' childPages
       if (parentPageId) {
+        const childPages = state.nodes[parentPageId]?.childPages || [{id}]
+
+        if (!childPages.find(e => e.id === id)) {
+          childPages.push({id})
+        }
+
         state.nodes[parentPageId] = {
           modifiedAt,
           ...state.nodes[parentPageId],
-          childPages: state.nodes[parentPageId]?.childPages
-            ? [...(state.nodes[parentPageId]?.childPages || []), {id}]
-            : [{id}]
+          childPages
         }
       }
 
