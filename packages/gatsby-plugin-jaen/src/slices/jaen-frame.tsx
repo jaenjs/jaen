@@ -46,7 +46,9 @@ const Slice: React.FC<SliceProps> = props => {
   const manager = useCMSManagement()
 
   const auth = useAuth()
-  const mediaModal = useMediaModal()
+  const mediaModal = useMediaModal({
+    id: 'JaenFrameMediaModal'
+  })
 
   const {toast} = useNotificationsContext()
 

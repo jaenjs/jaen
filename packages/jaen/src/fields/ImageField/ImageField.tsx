@@ -87,6 +87,7 @@ export const ImageField = connectField<ImageFieldMediaId, ImageFieldProps>(
     const {jaenPage} = usePageContext()
 
     const context = useMediaModal({
+      id: jaenField.name,
       jaenPageId: jaenPage.id,
       onSelect: media => {
         jaenField.onUpdateValue(media.id)

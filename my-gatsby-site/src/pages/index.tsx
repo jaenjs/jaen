@@ -175,6 +175,7 @@ const IndexPage: React.FC<PageProps> = () => {
   const siteMetadata = useSiteMetadataContext()
 
   const mediaSelector = useMediaModal({
+    id: 'media',
     onSelect: mediaNode => {
       alert('media selected: ' + mediaNode.url)
     }

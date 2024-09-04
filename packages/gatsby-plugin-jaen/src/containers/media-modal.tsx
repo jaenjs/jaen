@@ -18,7 +18,9 @@ export interface MediaSelectorProps {
 }
 
 const MediaModal: React.FC<MediaSelectorProps> = props => {
-  const context = useMediaModal()
+  const context = useMediaModal({
+    id: 'MediaModal'
+  })
 
   const [jaenPage, setJaenPage] = useState<
     {
