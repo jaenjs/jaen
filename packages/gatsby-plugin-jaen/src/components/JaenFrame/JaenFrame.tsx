@@ -50,40 +50,42 @@ export const JaenFrame: React.FC<JaenFrameProps> = React.memo(props => {
           'sticky top-0': !props.navigation.isStickyDisabled
         }
       )}>
-      <div className="flex flex-1 gap-4 my-auto">
-        <DrawerLeft
-          navigationGroups={props.navigation.app.navigationGroups}
-          version={props.navigation.app.version}
-          logo={props.navigation.app.logo}
-        />
+      <div className="flex w-full max-w-7xl justify-center">
+        <div className="flex flex-1 gap-4 my-auto">
+          <DrawerLeft
+            navigationGroups={props.navigation.app.navigationGroups}
+            version={props.navigation.app.version}
+            logo={props.navigation.app.logo}
+          />
 
-        <Breadcrumbs links={props.navigation.breadcrumbs.links} />
-      </div>
+          <Breadcrumbs links={props.navigation.breadcrumbs.links} />
+        </div>
 
-      <div className="flex justify-center items-center flex-1">
-        <Link className="no-underline h-full max-w-xs" to="/">
-          {props.logo || <JaenLogo />}
-        </Link>
-      </div>
+        <div className="flex justify-center items-center flex-1">
+          <Link className="no-underline h-full max-w-xs" to="/">
+            {props.logo || <JaenLogo />}
+          </Link>
+        </div>
 
-      <div className="flex flex-1 my-auto gap-4 justify-end">
-        <Toolbar />
+        <div className="flex flex-1 my-auto gap-4 justify-end">
+          <Toolbar />
 
-        <MenuButton
-          display={{
-            base: 'none',
-            md: 'flex'
-          }}
-          leftIcon={<Icon as={FaPlus} color="brand.500" />}
-          variant="outline"
-          items={props.navigation.addMenu.items}
-        />
+          <MenuButton
+            display={{
+              base: 'none',
+              md: 'flex'
+            }}
+            leftIcon={<Icon as={FaPlus} color="brand.500" />}
+            variant="outline"
+            items={props.navigation.addMenu.items}
+          />
 
-        <DrawerRight
-          user={props.navigation.user.user}
-          navigationGroups={props.navigation.user.navigationGroups}
-          isBadgeVisible={props.navigation.user.isBadgeVisible}
-        />
+          <DrawerRight
+            user={props.navigation.user.user}
+            navigationGroups={props.navigation.user.navigationGroups}
+            isBadgeVisible={props.navigation.user.isBadgeVisible}
+          />
+        </div>
       </div>
     </header>
   )
