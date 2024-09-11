@@ -29,12 +29,12 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
   }
 
   return (
-    <AuthenticationProvider>
-      <ChakraProvider theme={theme} cssVarsRoot="#coco">
-        <Toaster />
+    <NotificationsProvider>
+      <AuthenticationProvider>
+        <ChakraProvider theme={theme} cssVarsRoot="#coco">
+          <Toaster />
 
-        <CookieConsentProvider>
-          <NotificationsProvider>
+          <CookieConsentProvider>
             <JaenUpdateModalProvider>
               <SiteMetadataProvider>
                 <JaenFrameMenuProvider>
@@ -47,9 +47,9 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
                 </JaenFrameMenuProvider>
               </SiteMetadataProvider>
             </JaenUpdateModalProvider>
-          </NotificationsProvider>
-        </CookieConsentProvider>
-      </ChakraProvider>
-    </AuthenticationProvider>
+          </CookieConsentProvider>
+        </ChakraProvider>
+      </AuthenticationProvider>
+    </NotificationsProvider>
   )
 }
