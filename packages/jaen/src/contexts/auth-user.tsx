@@ -320,10 +320,6 @@ export const AuthUserProvider: React.FC<{
     }
   }, [data])
 
-  if (!auth.isAuthenticated || !data) {
-    return <Text>Loading...</Text>
-  }
-
   return (
     <AuthUserContext.Provider value={value}>
       {children}

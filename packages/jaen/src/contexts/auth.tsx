@@ -4,6 +4,7 @@ import {AuthProvider} from 'react-oidc-context'
 import {PageProps} from '../types'
 
 import {useAuth as useOIDCAuth} from 'react-oidc-context'
+import {AuthUserProvider} from './auth-user'
 
 export const useAuth = () => {
   const oidcAuth = useOIDCAuth()
@@ -120,7 +121,7 @@ export const AuthenticationProvider: React.FC<{
           window.location.pathname
         )
       }}>
-      {children}
+      <AuthUserProvider>{children}</AuthUserProvider>
     </AuthProvider>
   )
 }

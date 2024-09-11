@@ -4,7 +4,8 @@ import {
   useJaenUpdateModalContext,
   useMediaModal,
   useNotificationsContext,
-  checkUserRoles
+  checkUserRoles,
+  useAuthUser
 } from 'jaen'
 import {graphql, SliceComponentProps} from 'gatsby'
 import {useEffect, useState} from 'react'
@@ -46,6 +47,11 @@ const Slice: React.FC<SliceProps> = props => {
   const manager = useCMSManagement()
 
   const auth = useAuth()
+  const {
+    user: {
+      human: {profile}
+    }
+  } = useAuthUser()
   const mediaModal = useMediaModal({
     id: 'JaenFrameMediaModal'
   })
@@ -258,9 +264,9 @@ const Slice: React.FC<SliceProps> = props => {
                     `@${auth.user.profile['urn:zitadel:iam:user:resourceowner:primary_domain']}`,
                     ''
                   ) || auth.user.profile.sub,
-                firstName: auth.user.profile.given_name,
-                lastName: auth.user.profile.family_name,
-                avatarURL: auth.user.profile.picture
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                avatarURL: profile.avatarUrl
               }
             : {
                 username: 'Guest'

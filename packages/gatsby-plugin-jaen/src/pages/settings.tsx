@@ -26,16 +26,7 @@ const SettingsPage: React.FC<PageProps> = () => {
   )
 }
 
-// Wrap your component with the provider
-const SettingsPageWithAuthProvider: React.FC<PageProps> = props => {
-  return (
-    <AuthUserProvider>
-      <SettingsPage {...props} />
-    </AuthUserProvider>
-  )
-}
-
-export default SettingsPageWithAuthProvider
+export default SettingsPage
 
 export const pageConfig: PageConfig = {
   label: 'Settings',

@@ -109,12 +109,6 @@ export const pageConfig: PageConfig = {
   withoutJaenFrameStickyHeader: true
 }
 
-export default props => {
-  return (
-    <AuthUserProvider>
-      <Page {...props} />
-    </AuthUserProvider>
-  )
-}
+export default Page
 
 export {Head} from 'jaen'
