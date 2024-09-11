@@ -1,8 +1,4 @@
-import {
-  AuthUser,
-  useNotificationsContext,
-  AuthPasswordPolicy
-} from 'jaen'
+import {AuthUser, useNotificationsContext, AuthPasswordPolicy} from 'jaen'
 import {
   Avatar,
   Button,
@@ -287,8 +283,8 @@ export const Settings: React.FC<SettingsProps> = props => {
                     <HStack>
                       <Avatar
                         size="xl"
-                        name={user.human.profile.displayName}
-                        src={user.human.profile.avatarUrl}
+                        name={user?.human?.profile?.displayName}
+                        src={user?.human?.profile?.avatarUrl}
                         cursor="pointer"
                         onClick={
                           isProfileAvatarUpdating
@@ -329,7 +325,7 @@ export const Settings: React.FC<SettingsProps> = props => {
                             maxW="xs"
                             autoComplete="off"
                             bg="gray.100"
-                            value={user.userName}
+                            value={user?.userName}
                             onChange={e =>
                               setUser({...user, userName: e.target.value})
                             }
@@ -354,7 +350,7 @@ export const Settings: React.FC<SettingsProps> = props => {
                           <FormLabel>First Name</FormLabel>
                           <Input
                             placeholder=""
-                            value={user.human.profile.firstName}
+                            value={user?.human?.profile?.firstName}
                             onChange={e =>
                               setUser({
                                 ...user,
@@ -373,7 +369,7 @@ export const Settings: React.FC<SettingsProps> = props => {
                           <FormLabel>Last Name</FormLabel>
                           <Input
                             placeholder=""
-                            value={user.human.profile.lastName}
+                            value={user?.human?.profile?.lastName}
                             onChange={e =>
                               setUser({
                                 ...user,
@@ -393,7 +389,7 @@ export const Settings: React.FC<SettingsProps> = props => {
                           <FormLabel>Nickname</FormLabel>
                           <Input
                             placeholder=""
-                            value={user.human.profile.nickName}
+                            value={user?.human?.profile?.nickName}
                             onChange={e =>
                               setUser({
                                 ...user,
@@ -413,7 +409,7 @@ export const Settings: React.FC<SettingsProps> = props => {
                           <FormLabel>Full Name</FormLabel>
                           <Input
                             placeholder=""
-                            value={user.human.profile.displayName}
+                            value={user?.human?.profile?.displayName}
                             onChange={e =>
                               setUser({
                                 ...user,
@@ -432,7 +428,7 @@ export const Settings: React.FC<SettingsProps> = props => {
                         <FormControl id="gender">
                           <FormLabel>Gender</FormLabel>
                           <Select
-                            defaultValue={user.human.profile.gender}
+                            defaultValue={user?.human?.profile?.gender}
                             onChange={e => {
                               setUser({
                                 ...user,
@@ -458,7 +454,9 @@ export const Settings: React.FC<SettingsProps> = props => {
                         <FormControl id="preferredLanguage">
                           <FormLabel>Language</FormLabel>
                           <Select
-                            defaultValue={user.human.profile.preferredLanguage}
+                            defaultValue={
+                              user?.human?.profile?.preferredLanguage
+                            }
                             onChange={e => {
                               setUser({
                                 ...user,
@@ -525,22 +523,22 @@ export const Settings: React.FC<SettingsProps> = props => {
                         isLoading={isEmailChanging}
                       />
                     </HStack>
-                    <Text mt="2">{user.human.email.email}</Text>
+                    <Text mt="2">{user?.human?.email?.email}</Text>
 
                     <HStack>
                       <Text
                         fontSize="sm"
                         color={
-                          user.human.email.isEmailVerified
+                          user?.human?.email?.isEmailVerified
                             ? 'green.500'
                             : 'red.500'
                         }>
-                        {user.human.email.isEmailVerified
+                        {user?.human?.email?.isEmailVerified
                           ? 'Verified'
                           : 'Not verified'}
                       </Text>
 
-                      {!user.human.email.isEmailVerified && (
+                      {!user?.human?.email?.isEmailVerified && (
                         <>
                           <Button
                             variant="link"
@@ -556,7 +554,7 @@ export const Settings: React.FC<SettingsProps> = props => {
                   </FormControl>
 
                   <FormControl>
-                    {user.human.phone.phone ? (
+                    {user?.human?.phone?.phone ? (
                       <>
                         <HStack justifyContent="space-between">
                           <FormLabel>Phone number</FormLabel>
