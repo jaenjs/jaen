@@ -47,11 +47,7 @@ const Slice: React.FC<SliceProps> = props => {
   const manager = useCMSManagement()
 
   const auth = useAuth()
-  const {
-    user: {
-      human: {profile}
-    }
-  } = useAuthUser()
+  const authUser = useAuthUser()
   const mediaModal = useMediaModal({
     id: 'JaenFrameMediaModal'
   })
@@ -264,9 +260,15 @@ const Slice: React.FC<SliceProps> = props => {
                     `@${auth.user.profile['urn:zitadel:iam:user:resourceowner:primary_domain']}`,
                     ''
                   ) || auth.user.profile.sub,
-                firstName: profile.firstName,
-                lastName: profile.lastName,
-                avatarURL: profile.avatarUrl
+                firstName:
+                  authUser.user?.human?.profile?.firstName ||
+                  auth.user?.profile?.given_name,
+                lastName:
+                  authUser.user?.human?.profile?.lastName ||
+                  auth.user?.profile?.family_name,
+                avatarURL:
+                  authUser.user?.human?.profile?.avatarUrl ||
+                  auth.user?.profile?.picture
               }
             : {
                 username: 'Guest'
