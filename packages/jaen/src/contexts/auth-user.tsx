@@ -1,7 +1,6 @@
 import React, {createContext, useMemo} from 'react'
 import {useAuth} from 'react-oidc-context'
 import {useNotificationsContext} from './notifications'
-import {Text} from '@chakra-ui/react'
 
 export interface AuthUser {
   id: string
