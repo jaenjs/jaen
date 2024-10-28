@@ -41,7 +41,7 @@ export const usePageConfig = () => {
       return field
     }
 
-    return (await parseField(pageConfig)) as PageConfig
+    return (await parseField({...pageConfig})) as PageConfig
   }
 
   return {
