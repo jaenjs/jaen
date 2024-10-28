@@ -9,6 +9,7 @@ import {
 } from 'jaen'
 import {graphql, SliceComponentProps} from 'gatsby'
 import {useEffect, useState} from 'react'
+import {globalHistory} from '@reach/router'
 
 import {FaEdit} from '@react-icons/all-files/fa/FaEdit'
 import {FaFileDownload} from '@react-icons/all-files/fa/FaFileDownload'
@@ -70,6 +71,16 @@ const Slice: React.FC<SliceProps> = props => {
         setPageConfig(config)
       })
     }
+
+    globalHistory.listen(({action}) => {
+      if (action !== 'PUSH') return
+
+      if (props.pageConfig) {
+        parsePageConfig(props.pageConfig).then(config => {
+          setPageConfig(config)
+        })
+      }
+    })
   }, [props.pageConfig])
 
   useEffect(() => {
