@@ -44,6 +44,10 @@ export const Editor: React.FC<EditorProps> = props => {
     props.components
   ) as any
 
+  useEffect(() => {
+    props.onMdast?.(state.file.data?.mdast)
+  }, [state.file.data?.mdast])
+
   const [view, setView] = React.useState<EditorView | null>(null)
 
   const componentsInfo = Object.entries(props.components || {}).filter(
