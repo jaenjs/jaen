@@ -1,10 +1,11 @@
-import {Alert, AlertIcon, Box, Center, Spinner, Text} from '@chakra-ui/react'
+import {Alert, AlertIcon, Box, Center} from '@chakra-ui/react'
 import React, {useEffect, useMemo} from 'react'
 import {AuthProvider} from 'react-oidc-context'
 import {PageProps} from '../types'
 
 import {useAuth as useOIDCAuth} from 'react-oidc-context'
 import {AuthUserProvider} from './auth-user'
+import {useNotificationsContext} from './notifications'
 
 export const useAuth = () => {
   const oidcAuth = useOIDCAuth()
@@ -136,6 +137,7 @@ export const withAuthSecurity = <
   const Wrapper: React.FC<P> = props => {
     const pageConfigAuth = props.pageContext.pageConfig?.auth
     const auth = useAuth()
+    const notify = useNotificationsContext()
 
     const loadingText = useMemo(() => {
       switch (auth.activeNavigator) {
@@ -152,35 +154,24 @@ export const withAuthSecurity = <
       }
     }, [auth.activeNavigator])
 
-    if (loadingText) {
-      return (
-        <Center height="100vh">
-          <Box textAlign="center">
-            <Spinner size="xl" color="blue.500" mb={4} />
-            <Text>{loadingText}</Text>
-            {auth.error && (
-              <Alert status="error" mt={4}>
-                <AlertIcon />
-                Error: {auth.error.message}
-              </Alert>
-            )}
-          </Box>
-        </Center>
-      )
-    }
+    useEffect(() => {
+      if (auth.error) {
+        notify.toast({
+          title: 'Error',
+          description: auth.error.message,
+          status: 'error'
+        })
+      }
+    }, [auth.error, notify])
 
-    if (auth.error) {
-      return (
-        <Center height="100vh">
-          <Box textAlign="center">
-            <Alert status="error" mb={4}>
-              <AlertIcon />
-              Error: {auth.error.message}
-            </Alert>
-          </Box>
-        </Center>
-      )
-    }
+    useEffect(() => {
+      if (loadingText) {
+        notify.toast({
+          title: loadingText,
+          status: 'info'
+        })
+      }
+    }, [loadingText])
 
     if (pageConfigAuth?.isRequired) {
       let roles = pageConfigAuth?.roles
