@@ -18,6 +18,7 @@ import TabsTemplate from './TabsTemplate.js'
 
 import {useMdx} from '../use-mdx.js'
 import {BaseEditorProps} from './types.js'
+import {InjectMdxPropContext} from '../inject-mdx-prop-context.js'
 
 const MemoizedCodeMirror = React.memo<ReactCodeMirrorProps>(props => {
   return (
@@ -36,6 +37,7 @@ export const Editor: React.FC<EditorProps> = props => {
       frontmatter: true,
       math: true,
       directive: true,
+      value: props.value,
       mdast: props.mdast
     },
     false,
@@ -65,19 +67,6 @@ export const Editor: React.FC<EditorProps> = props => {
     },
     [setConfig]
   )
-
-  // const onUpdate = useCallback(
-  //   (v: {docChanged: any; state: {doc: any}}) => {
-  //     if (v.docChanged) {
-  //       console.log('docChanged 2', v)
-
-  //       const value = String(v.state.doc)
-
-  //       setConfig({...state, value})
-  //     }
-  //   },
-  //   [setConfig]
-  // )
 
   const insertSnippet = (snippet: string) => {
     if (!view) return
@@ -130,109 +119,124 @@ export const Editor: React.FC<EditorProps> = props => {
   }
 
   useEffect(() => {
-    props.onUpdateValue?.(state.file.data.mdast)
+    props.onUpdateValue?.(state.file.data.mdast, state.value)
   }, [state.file.data?.mdast])
 
   const TabsTemplateComponent = props.tabsTemplate || TabsTemplate
 
   return (
-    <TabsTemplateComponent
-      tabs={[
-        {
-          label: (
-            <HStack spacing={2}>
-              <ViewIcon />
-              <Box>Preview</Box>
-              {stats.fatal ? (
-                <Badge colorScheme="red">Error</Badge>
-              ) : stats.warn ? (
-                <Badge colorScheme="yellow">Warning</Badge>
-              ) : null}
-            </HStack>
-          ),
-          content: (
-            <PreviewComponent
-              state={state}
-              stats={stats}
-              components={props.components}
-            />
+    <InjectMdxPropContext.Provider
+      value={{
+        injectProp: (prop, id, src) => {
+          const regex = new RegExp(
+            `(<[A-Za-z]+\\s+[^>]*id="${id}"[^>]*${prop}=")([^"]*)(")`
           )
-        },
-        {
-          label: (
-            <HStack spacing={2}>
-              <EditIcon />
-              <Box>Editor</Box>
-            </HStack>
-          ),
-          content: (
-            <>
-              <noscript>Enable JavaScript for the rendered result.</noscript>
+          const updatedMDX = state.value.replace(regex, `$1${src}$3`)
 
-              <MemoizedCodeMirror
-                value={state.value}
-                extensions={[
-                  markdown({base: markdownLanguage, codeLanguages: languages}),
-                  EditorView.lineWrapping
-                ]}
-                onCreateEditor={editorView => {
-                  setView(editorView)
-                }}
-                onUpdate={onUpdate}
-                theme="dark"
+          setConfig({...state, value: updatedMDX})
+        }
+      }}>
+      <TabsTemplateComponent
+        tabs={[
+          {
+            label: (
+              <HStack spacing={2}>
+                <ViewIcon />
+                <Box>Preview</Box>
+                {stats.fatal ? (
+                  <Badge colorScheme="red">Error</Badge>
+                ) : stats.warn ? (
+                  <Badge colorScheme="yellow">Warning</Badge>
+                ) : null}
+              </HStack>
+            ),
+            content: (
+              <PreviewComponent
+                state={state}
+                stats={stats}
+                components={props.components}
               />
-            </>
-          )
-        }
-      ]}
-      componentsInfo={componentsInfo.map(([name, component]) => ({
-        label: component.displayName || name,
-        onClick: () => {
-          const props = Object.entries(
-            component.defaultProps || {}
-          ).reduce<any>((acc, [name, value]) => {
-            // skip if children
-            if (name === 'children') return acc
+            )
+          },
+          {
+            label: (
+              <HStack spacing={2}>
+                <EditIcon />
+                <Box>Editor</Box>
+              </HStack>
+            ),
+            content: (
+              <>
+                <noscript>Enable JavaScript for the rendered result.</noscript>
 
-            if (typeof value === 'function') {
-              const result = value()
-              acc[name] = processValue(result)
-            } else {
-              acc[name] = processValue(value)
-            }
-
-            return acc
-          }, {})
-
-          function processValue(value: any) {
-            if (typeof value === 'string') {
-              return `"${value}"`
-            } else if (typeof value === 'number') {
-              return value
-            } else if (typeof value === 'boolean') {
-              return value
-            } else if (typeof value === 'object') {
-              return `{${JSON.stringify(value)}}`
-            } else {
-              return value
-            }
+                <MemoizedCodeMirror
+                  value={state.value}
+                  extensions={[
+                    markdown({
+                      base: markdownLanguage,
+                      codeLanguages: languages
+                    }),
+                    EditorView.lineWrapping
+                  ]}
+                  onCreateEditor={editorView => {
+                    setView(editorView)
+                  }}
+                  onUpdate={onUpdate}
+                  theme="dark"
+                />
+              </>
+            )
           }
+        ]}
+        componentsInfo={componentsInfo.map(([name, component]) => ({
+          label: component.displayName || name,
+          onClick: () => {
+            const props = Object.entries(
+              component.defaultProps || {}
+            ).reduce<any>((acc, [name, value]) => {
+              // skip if children
+              if (name === 'children') return acc
 
-          // Generate a usage snippet with filled-in placeholder props.
-          const propsChain = Object.entries(props)
-            .map(([name, value]) => `${name}=${value}`)
-            .join(' ')
+              if (typeof value === 'function') {
+                const result = value()
+                acc[name] = processValue(result)
+              } else {
+                acc[name] = processValue(value)
+              }
 
-          const snippet = `<${name}${propsChain && ' ' + propsChain}>${
-            component.defaultProps?.children || ''
-          }</${name}>`
+              return acc
+            }, {})
 
-          // Insert the snippet into the editor at the current cursor position.
-          insertSnippet(snippet)
-        }
-      }))}
-      selectedTab={0}
-    />
+            function processValue(value: any) {
+              if (typeof value === 'string') {
+                return `"${value}"`
+              } else if (typeof value === 'number') {
+                return value
+              } else if (typeof value === 'boolean') {
+                return value
+              } else if (typeof value === 'object') {
+                return `{${JSON.stringify(value)}}`
+              } else {
+                return value
+              }
+            }
+
+            // Generate a usage snippet with filled-in placeholder props.
+            const propsChain = Object.entries(props)
+              .map(([name, value]) => `${name}=${value}`)
+              .join(' ')
+
+            const snippet = `<${name}${propsChain && ' ' + propsChain}>${
+              component.defaultProps?.children || ''
+            }</${name}>`
+
+            // Insert the snippet into the editor at the current cursor position.
+            insertSnippet(snippet)
+          }
+        }))}
+        selectedTab={0}
+      />
+    </InjectMdxPropContext.Provider>
   )
 }
 

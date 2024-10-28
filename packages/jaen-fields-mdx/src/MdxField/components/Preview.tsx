@@ -10,32 +10,36 @@ export interface BuildEditorProps {
   components: BaseEditorProps['components']
 
   mdast?: MdastRoot
+  value?: string
 }
 
-export const Preview = React.memo<BuildEditorProps>(({components, mdast}) => {
-  const defaults = useMemo(
-    () => ({
-      gfm: true,
-      frontmatter: true,
-      math: true,
-      directive: true,
-      mdast
-    }),
-    [mdast]
-  )
+export const Preview = React.memo<BuildEditorProps>(
+  ({components, mdast, value}) => {
+    const defaults = useMemo(
+      () => ({
+        gfm: true,
+        frontmatter: true,
+        math: true,
+        directive: true,
+        mdast,
+        value
+      }),
+      [mdast]
+    )
 
-  const [state, _] = useMdx(defaults, true, components) as any
+    const [state, _] = useMdx(defaults, true, components) as any
 
-  const stats = useMemo(() => {
-    return state.file ? statistics(state.file) : ({} as Statistics)
-  }, [state.file])
+    const stats = useMemo(() => {
+      return state.file ? statistics(state.file) : ({} as Statistics)
+    }, [state.file])
 
-  // useEffect(() => {
-  //   console.log('useEffect', defaultValue)
-  //   setConfig({value: defaultValue})
-  // }, [defaultValue, setConfig])
+    // useEffect(() => {
+    //   console.log('useEffect', defaultValue)
+    //   setConfig({value: defaultValue})
+    // }, [defaultValue, setConfig])
 
-  return (
-    <PreviewComponent state={state} stats={stats} components={components} />
-  )
-})
+    return (
+      <PreviewComponent state={state} stats={stats} components={components} />
+    )
+  }
+)
