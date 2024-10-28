@@ -36,6 +36,7 @@ export const Editor: React.FC<EditorProps> = props => {
       frontmatter: true,
       math: true,
       directive: true,
+      value: props.value,
       mdast: props.mdast
     },
     false,
@@ -65,19 +66,6 @@ export const Editor: React.FC<EditorProps> = props => {
     },
     [setConfig]
   )
-
-  // const onUpdate = useCallback(
-  //   (v: {docChanged: any; state: {doc: any}}) => {
-  //     if (v.docChanged) {
-  //       console.log('docChanged 2', v)
-
-  //       const value = String(v.state.doc)
-
-  //       setConfig({...state, value})
-  //     }
-  //   },
-  //   [setConfig]
-  // )
 
   const insertSnippet = (snippet: string) => {
     if (!view) return
@@ -130,7 +118,7 @@ export const Editor: React.FC<EditorProps> = props => {
   }
 
   useEffect(() => {
-    props.onUpdateValue?.(state.file.data.mdast)
+    props.onUpdateValue?.(state.file.data.mdast, state.value)
   }, [state.file.data?.mdast])
 
   const TabsTemplateComponent = props.tabsTemplate || TabsTemplate
