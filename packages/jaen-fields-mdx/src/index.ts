@@ -1,1 +1,6 @@
-export {MdxField, UncontrolledMdxField, MdxFieldProps} from './MdxField'
+export {
+  MdxField,
+  UncontrolledMdxField,
+  MdxFieldProps,
+  useInjectMdxPropContext
+} from './MdxField'
