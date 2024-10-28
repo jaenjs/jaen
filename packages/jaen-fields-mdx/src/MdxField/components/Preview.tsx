@@ -24,7 +24,7 @@ export const Preview = React.memo<BuildEditorProps>(
         mdast,
         value
       }),
-      [mdast]
+      [mdast, value]
     )
 
     const [state, _] = useMdx(defaults, true, components) as any
