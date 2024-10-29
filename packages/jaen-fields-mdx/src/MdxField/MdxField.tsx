@@ -56,8 +56,8 @@ export const MdxField = connectField<MdxFieldValue, MdxFieldProps>(
       return (
         <LayzEditor
           components={combinedComponents}
-          onUpdateValue={(_: MdastRoot, value: string) => {
-            jaenField.onUpdateValue(value)
+          onUpdateValue={(mdast: MdastRoot) => {
+            jaenField.onUpdateValue(mdast)
           }}
           rawValue={typeof value === 'string' ? undefined : value}
           value={typeof value === 'string' ? value : undefined}
