@@ -298,8 +298,8 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                 TABS.ANNOTATE,
                 TABS.WATERMARK
               ]}
-              savingPixelRatio={0}
-              previewPixelRatio={0}
+              savingPixelRatio={8}
+              // previewPixelRatio={0}
             />
           )}
         </ModalBody>
