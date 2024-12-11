@@ -26,7 +26,6 @@ import {
   Skeleton,
   Stack,
   Table,
-  Tag,
   Tbody,
   Td,
   Text,
@@ -40,8 +39,7 @@ import {Editor} from '@monaco-editor/react'
 import {Link as GatsbyLink, navigate} from 'gatsby'
 import {sanitize} from 'isomorphic-dompurify'
 import {Controller, useFieldArray, useForm} from 'react-hook-form'
-import {useQuery} from 'snek-query/react-hooks'
-import {sq} from '../../../client/src'
+import {resolve, useQuery} from '../../../client'
 
 const Page: React.FC<PageProps> = ({params}) => {
   const templateId = params.templateId
@@ -114,55 +112,72 @@ const Page: React.FC<PageProps> = ({params}) => {
     return sanitize(unsafeContent || '')
   }, [unsafeContent])
 
-  const {data, isLoading, error, refetch} = useQuery(sq)
+  const data = useQuery({
+    refetchOnRender: false,
+    refetchOnReconnect: false,
+    refetchOnWindowVisible: false
+  })
 
   useEffect(() => {
-    if (error) {
+    data.$refetch(true)
+  }, [])
+
+  const template = data.template({id: templateId})!
+
+  const isLoading = !!(data.$state.isLoading && template.id === undefined)
+
+  useEffect(() => {
+    if (data.$state.error) {
       toast({
-        title: 'Failed to load template',
-        description: (error as any)[0].message
+        title: `Failed to load template (${data.$state.error.name})`,
+        description: data.$state.error.message,
+        status: 'error'
       })
     }
-  }, [error])
+  }, [data.$state.error])
+
+  const defaultValues = {
+    id: template.id,
+    parentId: template.parent?.id ?? undefined,
+    description: template.description,
+    verifyReplyTo: template.verifyReplyTo ?? false,
+    content: template.content,
+    transformer: template.transformer ?? undefined,
+    updatedAt: template.updatedAt,
+    createdAt: template.createdAt,
+    envelope: {
+      subject: template.envelope?.subject ?? undefined,
+      to: template.envelope?.to?.map(email => ({email})) || undefined,
+      replyTo: template.envelope?.replyTo ?? undefined
+    },
+    variables: template.variables.map(v => ({
+      id: v.id,
+      name: v.name,
+      isRequired: v.isRequired ?? undefined,
+      isConstant: v.isConstant ?? undefined,
+      description: v.description || undefined,
+      defaultValue: v.defaultValue || undefined
+    }))
+  }
 
   useEffect(() => {
-    const template = data.template({id: templateId})
+    reset(defaultValues)
+    console.log('defaultValues', defaultValues)
+  }, [JSON.stringify(defaultValues)])
 
-    reset({
-      id: template.id,
-      parentId: template.parent()?.id ?? undefined,
-      description: template.description,
-      verifyReplyTo: template.verifyReplyTo ?? false,
-      content: template.content,
-      transformer: template.transformer ?? undefined,
-      updatedAt: template.updatedAt,
-      createdAt: template.createdAt,
-      envelope: {
-        subject: template.envelope()?.subject ?? undefined,
-        to: template.envelope()?.to?.map(email => ({email})) || undefined,
-        replyTo: template.envelope()?.replyTo ?? undefined
-      },
-      variables: template.variables().nodes.map(v => ({
-        id: v.id,
-        name: v.name,
-        isRequired: v.isRequired ?? undefined,
-        isConstant: v.isConstant ?? undefined,
-        description: v.description || undefined,
-        defaultValue: v.defaultValue || undefined
-      }))
-    })
-  }, [data])
+  const onSubmit = handleSubmit(async input => {
+    console.log('input', input)
 
-  const onSubmit = handleSubmit(async data => {
-    if (data.transformer) {
-      const [_, errors] = await sq.mutate(m =>
-        m.templateTransformer({
-          id: templateId,
-          transformer: data.transformer!
+    if (input.transformer) {
+      try {
+        await resolve(({mutation}) => {
+          return mutation.templateTransformer({
+            id: templateId,
+            transformer: input.transformer!
+          }).id
         })
-      )
-
-      if (errors) {
+        console.log('transformer updated')
+      } catch (e) {
         toast({
           title: 'Error!',
           description: `Error updating transformer for template ${templateId}`,
@@ -171,45 +186,45 @@ const Page: React.FC<PageProps> = ({params}) => {
       }
     }
 
-    const [_, errors] = await sq.mutate(m =>
-      m.templateUpdate({
-        id: templateId,
-        data: {
-          description: data.description,
-          parentId: data.parentId || undefined,
-          verifyReplyTo: data.verifyReplyTo ?? undefined,
-          content: data.content,
-          envelope: {
-            subject: data.envelope.subject || undefined,
-            to: data.envelope.to?.map(to => to.email) || undefined,
-            replyTo: data.envelope.replyTo || undefined
-          },
-          variables: data.variables.map(v => ({
-            name: v.name,
-            isRequired: v.isRequired ?? undefined,
-            isConstant: v.isConstant ?? undefined,
-            description: v.description || undefined,
-            defaultValue: v.defaultValue || undefined
-          }))
-        }
+    try {
+      await resolve(({mutation}) => {
+        return mutation.templateUpdate({
+          id: templateId,
+          input: {
+            description: input.description,
+            parentId: input.parentId || null,
+            verifyReplyTo: input.verifyReplyTo ?? undefined,
+            content: input.content,
+            envelope: {
+              subject: input.envelope.subject || undefined,
+              to: input.envelope.to?.map(to => to.email) || undefined,
+              replyTo: input.envelope.replyTo || undefined
+            },
+            variables: input.variables.map(v => ({
+              name: v.name,
+              isRequired: v.isRequired ?? undefined,
+              isConstant: v.isConstant ?? undefined,
+              description: v.description || undefined,
+              defaultValue: v.defaultValue || undefined
+            }))
+          }
+        }).id
       })
-    )
 
-    if (errors) {
-      toast({
-        title: 'Error!',
-        description: `Error updating template ${templateId}`,
-        status: 'error'
-      })
-    } else {
       toast({
         title: 'Template Updated!',
         description: `Template ID ${templateId} updated`,
         status: 'success'
       })
-    }
 
-    refetch()
+      await data.$refetch(true)
+    } catch (e) {
+      toast({
+        title: 'Error!',
+        description: `Error updating template ${templateId}`,
+        status: 'error'
+      })
+    }
   })
 
   const handleDeleteClick = async () => {
@@ -220,25 +235,26 @@ const Page: React.FC<PageProps> = ({params}) => {
       cancelText: 'Cancel'
     })
     if (confirmed) {
-      // delete using sq
-      const [_, errors] = await sq.mutate(m =>
-        m.templateDelete({
-          id: templateId
+      try {
+        await resolve(({mutation}) => {
+          return mutation.templateDelete({
+            id: templateId
+          })
         })
-      )
-      if (errors?.length) {
-        toast({
-          title: 'Error!',
-          description: `Error deleting template ${templateId}`,
-          status: 'error'
-        })
-      } else {
+
         toast({
           title: 'Template Deleted!',
           description: `Template ID ${templateId} deleted`,
           status: 'success'
         })
+
         navigate('..')
+      } catch (e) {
+        toast({
+          title: 'Error!',
+          description: `Error deleting template ${templateId}`,
+          status: 'error'
+        })
       }
     }
   }
@@ -255,12 +271,21 @@ const Page: React.FC<PageProps> = ({params}) => {
     })
   }
 
+  const parentTemplates = data
+    .allTemplate()
+    .nodes.map(t => ({
+      id: t.id,
+      description: t.description
+    }))
+    .filter(t => t.id !== templateId)
+
+  const linked = template.links.map(t => ({
+    id: t.id,
+    description: t.description
+  }))
+
   return (
     <Stack spacing="4">
-      <Tag size="lg" variant="solid" colorScheme="blue">
-        {data.me?.organization()?.email()?.email || 'No Email Configured'}
-      </Tag>
-
       <Heading size="md">Email Template</Heading>
 
       <Skeleton isLoaded={!isLoading}>
@@ -294,15 +319,12 @@ const Page: React.FC<PageProps> = ({params}) => {
             <Skeleton isLoaded={!isLoading}>
               <FormControl id="parent">
                 <FormLabel>Parent</FormLabel>
-                <Select {...register('parentId')}>
-                  {data
-                    .allTemplate()
-                    .nodes.filter(n => n.id !== templateId)
-                    .map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.description} ({t.id})
-                      </option>
-                    ))}
+                <Select {...register('parentId')} placeholder="Kein Template">
+                  {parentTemplates.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.description} ({t.id})
+                    </option>
+                  ))}
                 </Select>
               </FormControl>
             </Skeleton>
@@ -317,18 +339,15 @@ const Page: React.FC<PageProps> = ({params}) => {
             <Skeleton isLoaded={!isLoading}>
               <FormControl id="linked">
                 <FormLabel>Linked</FormLabel>
-                {data.template({id: templateId}).links().nodes.length ? (
+                {linked.length ? (
                   <UnorderedList>
-                    {data
-                      .template({id: templateId})
-                      .links()
-                      .nodes.map(t => (
-                        <ListItem key={t.id}>
-                          <Link as={GatsbyLink} to={`../${t.id}`}>
-                            {t.description} ({t.id})
-                          </Link>
-                        </ListItem>
-                      ))}
+                    {linked.map(t => (
+                      <ListItem key={t.id}>
+                        <Link as={GatsbyLink} to={`../${t.id}`}>
+                          {t.description} ({t.id})
+                        </Link>
+                      </ListItem>
+                    ))}
                   </UnorderedList>
                 ) : (
                   <Text>No linked templates</Text>
@@ -548,8 +567,8 @@ const Page: React.FC<PageProps> = ({params}) => {
               type="button"
               variant="outline"
               isDisabled={isLoading || isSubmitting || !isDirty}
-              onClick={() => {
-                refetch()
+              onClick={async () => {
+                await data.$refetch(true)
               }}>
               Cancel
             </Button>
