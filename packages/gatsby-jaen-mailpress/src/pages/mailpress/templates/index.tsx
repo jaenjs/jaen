@@ -1,10 +1,6 @@
 import {PageConfig, useNotificationsContext} from 'jaen'
 import {
   Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Flex,
   HStack,
   Heading,
   Icon,
