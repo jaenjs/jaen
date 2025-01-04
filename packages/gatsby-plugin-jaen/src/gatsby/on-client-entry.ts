@@ -35,14 +35,17 @@ export const onClientEntry: GatsbyBrowser['onClientEntry'] = async (
   Sentry.addIntegration(Sentry.browserProfilingIntegration())
   Sentry.addIntegration(Sentry.replayIntegration())
 
-  Sentry.addIntegration(
-    Sentry.feedbackIntegration({
-      colorScheme: 'light',
-      showBranding: false,
-      formTitle: 'Give Feedback',
-      buttonLabel: 'Feedback',
-      submitButtonLabel: 'Send Feedback',
-      messagePlaceholder: 'Report an issue or share your ideas.'
-    })
-  )
+  // Temporary disable Sentry feedback integration
+  // A lot of websites build using Jaen are targeted at non-engish speaking
+  // users and the feedback form is in english. This can be confusing for users.
+  // Sentry.addIntegration(
+  //   Sentry.feedbackIntegration({
+  //     colorScheme: 'light',
+  //     showBranding: false,
+  //     formTitle: 'Give Feedback',
+  //     buttonLabel: 'Feedback',
+  //     submitButtonLabel: 'Send Feedback',
+  //     messagePlaceholder: 'Report an issue or share your ideas.'
+  //   })
+  // )
 }
