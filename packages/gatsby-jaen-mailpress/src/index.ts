@@ -5,7 +5,7 @@ export const sendTemplateMail = async (
   id: string,
   options?: {
     envelope?: Partial<EnvelopeInput>
-    values?: Record<string, string>
+    values?: Record<string, any>
   }
 ) => {
   try {
