@@ -47,7 +47,8 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
     sentry: Joi.object({
       org: Joi.string().required(),
       project: Joi.string().required(),
-      dsn: Joi.string().required()
+      dsn: Joi.string().required(),
+      feedbackIntegration: Joi.object()
     })
   })
 }
