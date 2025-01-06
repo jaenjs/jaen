@@ -13,5 +13,10 @@ export interface JaenPluginOptions extends PluginOptions {
     trackingIds?: string[]
   }
 
-  feedbackIntegration?: Parameters<typeof feedbackIntegration>[0]
+  sentry?: {
+    org: string
+    project: string
+    dsn: string
+    feedbackIntegration?: Parameters<typeof feedbackIntegration>[0]
+  }
 }

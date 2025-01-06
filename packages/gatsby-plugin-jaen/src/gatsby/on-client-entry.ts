@@ -35,7 +35,7 @@ export const onClientEntry: GatsbyBrowser['onClientEntry'] = async (
   Sentry.addIntegration(Sentry.browserProfilingIntegration())
   Sentry.addIntegration(Sentry.replayIntegration())
 
-  if (pluginOptions.feedbackIntegration) {
+  if (pluginOptions.sentry?.feedbackIntegration) {
     Sentry.addIntegration(
       Sentry.feedbackIntegration({
         colorScheme: 'light',
@@ -45,7 +45,7 @@ export const onClientEntry: GatsbyBrowser['onClientEntry'] = async (
         submitButtonLabel: 'Send Feedback',
         messagePlaceholder: 'Report an issue or share your ideas.',
         // Allows for customizing the feedback form
-        ...pluginOptions.feedbackIntegration
+        ...pluginOptions.sentry.feedbackIntegration
       })
     )
   }
