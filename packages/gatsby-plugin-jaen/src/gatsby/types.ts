@@ -1,4 +1,5 @@
 import {PluginOptions} from 'gatsby'
+import type {feedbackIntegration} from '@sentry/gatsby'
 
 export interface JaenPluginOptions extends PluginOptions {
   zitadel: {
@@ -11,4 +12,6 @@ export interface JaenPluginOptions extends PluginOptions {
   googleAnalytics?: {
     trackingIds?: string[]
   }
+
+  feedbackIntegration?: Parameters<typeof feedbackIntegration>[0]
 }
