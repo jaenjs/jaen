@@ -1,15 +1,17 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { graphql } from 'gatsby'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
+import { PageConfig } from 'jaen'
 
 // Tiptap
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
+import Placeholder from '@tiptap/extension-placeholder'
 
 // Icons (lucide-react or your own)
 import {
@@ -68,36 +70,59 @@ import {
 } from '@chakra-ui/react'
 import { CalendarIcon } from '@radix-ui/react-icons'
 
-// Additional imports for fetching templates
-import { useQuery } from '../../../client/index' // Adjust the import path as necessary
-import DOMPurify from 'isomorphic-dompurify' // Corrected import
-import { sendTemplateMail } from "../../../index"
+// GQty client
+import * as gqtyMailpressClient from '../../../client'
+import { GQtyError } from 'gqty'
 
-// Define the PageConfig interface locally
-interface PageConfig {
-  label: string
-  icon: string
-  menu: {
-    type: string
-    group: string
-    groupLabel: string
-    order: number
+// Sanitize HTML content
+import DOMPurify from 'isomorphic-dompurify'
+
+// Function to send template mail
+const sendTemplateMail = async (
+  id: string,
+  options?: {
+    envelope?: Partial<gqtyMailpressClient.EnvelopeInput>
+    values?: Record<string, any>
   }
-  layout: {
-    name: string
-  }
-  breadcrumbs: Array<{
-    label: string
-    path: string
-  }>
-  auth: {
-    isRequired: boolean
-    isAdminRequired: boolean
+) => {
+  try {
+    await gqtyMailpressClient.resolve(
+      ({ mutation }) => {
+        const mail = mutation.sendTemplateMail({
+          id,
+          envelope: options?.envelope,
+          values: options?.values
+        })
+
+        return mail
+      },
+      {
+        cachePolicy: 'no-store'
+      }
+    )
+
+    return {
+      ok: true,
+      message: 'Mail sent successfully'
+    }
+  } catch (error: any) {
+    if (error instanceof GQtyError) {
+      return {
+        ok: false,
+        message: 'Failed to send mail',
+        errors: error.graphQLErrors
+      }
+    }
+
+    return {
+      ok: false,
+      message: error.message
+    }
   }
 }
 
 // Define the schema using Zod
-const NotificationPopupSchema = z.object({
+const EmailSendSchema = z.object({
   templateId: z.string().nonempty('Template is required'),
   subject: z.string().nonempty('Subject is required'),
   message: z.string().nonempty('Message is required'),
@@ -105,28 +130,45 @@ const NotificationPopupSchema = z.object({
     .date()
     .or(z.string().transform(val => new Date(val)))
     .optional(),
-  to: z.string().nonempty('To is required'),
-  bcc: z.string().optional(),
-  sendEmailOnSubmitConsent: z.literal(true)
+  to: z
+    .string()
+    .nonempty('To is required')
+    .refine(val => {
+      // Simple email validation
+      const emails = val.split(',').map(email => email.trim())
+      return emails.every(email => /\S+@\S+\.\S+/.test(email))
+    }, 'Invalid email address(es)'),
+  bcc: z
+    .string()
+    .optional()
+    .refine(val => {
+      if (!val) return true
+      const emails = val.split(',').map(email => email.trim())
+      return emails.every(email => /\S+@\S+\.\S+/.test(email))
+    }, 'Invalid BCC email address(es)'),
+  sendEmailOnSubmitConsent: z.boolean().refine(val => val === true, {
+    message: 'Consent is required.'
+  })
 })
 
-type EmailPopupForm = z.infer<typeof NotificationPopupSchema>
+type EmailPopupForm = z.infer<typeof EmailSendSchema>
 
 // Define the EmailTemplate interface
 interface EmailTemplate {
   id: string
   description: string
   content: string
-  variables: Array<{
-    name: string
-    defaultValue?: string | null
-  }>
   envelope?: {
     subject?: string | null
     to?: string[] | null // Adjusted to match actual data
     replyTo?: string | null
   } | null
-  links: Array<EmailTemplate> // Assuming links are also EmailTemplates
+  links: Array<any> // Assuming links are also EmailTemplates
+  variables: Array<{
+    name: string
+    defaultValue?: string | null
+    description?: string | null
+  }>
 }
 
 // Utility function to replace variables in content
@@ -143,18 +185,98 @@ const replaceVariables = (
 }
 
 // Define the component
-const NotificationPopupFormComponent: React.FC = () => {
+const EmailSendFormComponent: React.FC = () => {
   const toast = useToast()
 
   // Local state for controlling the "Preview" modal
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
+  // Local state for email templates
+  const [emailTemplates, setEmailTemplates] = useState<Record<string, EmailTemplate>>({})
+  const [isLoadingEmailTemplates, setIsLoadingEmailTemplates] = useState(false)
+  const [fetchTemplatesError, setFetchTemplatesError] = useState<string | null>(null)
+
+  // Function to fetch all email templates with necessary fields
+  const getAllTemplates = useCallback(async () => {
+    try {
+      setIsLoadingEmailTemplates(true)
+      setFetchTemplatesError(null)
+
+      const result = await gqtyMailpressClient.resolve(({ query }) => {
+        const allTemplate = query.allTemplate({
+          // Add any necessary arguments or filters here
+        })
+
+        return {
+          allTemplate: {
+            nodes: allTemplate.nodes.map(template => ({
+              id: template.id,
+              description: template.description,
+              content: template.content,
+              variables: template.variables.map(variable => ({
+                name: variable.name,
+                defaultValue: variable.defaultValue
+              })),
+              envelope: {
+                subject: template.envelope?.subject,
+                to: template.envelope?.to,
+                replyTo: template.envelope?.replyTo
+              },
+              links: template.links.map(link => ({
+                id: link.id
+              }))
+            })).filter(template => template.variables.every(variable => variable.name === 'message')).filter(template => template.links.length !== 0),
+          }
+        }
+      })
+
+      const { allTemplate } = result
+
+      if (!allTemplate || !allTemplate.nodes) {
+        throw new Error('No templates found')
+      }
+
+      // Create a template dictionary with ID as key
+      const templateDict: Record<string, EmailTemplate> = allTemplate.nodes.reduce(
+        (acc, template) => {
+          acc[template.id] = template
+          return acc
+        },
+        {} as Record<string, EmailTemplate>
+      )
+
+      setEmailTemplates(templateDict)
+    } catch (error: any) {
+      console.error('Failed to fetch templates:', error)
+      if (error instanceof GQtyError) {
+        setFetchTemplatesError('Failed to fetch templates due to GraphQL error.')
+      } else {
+        setFetchTemplatesError(error.message || 'An unknown error occurred while fetching templates.')
+      }
+
+      toast({
+        title: 'Error fetching templates',
+        description: error.message || 'An error occurred while fetching templates.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true
+      })
+    } finally {
+      setIsLoadingEmailTemplates(false)
+    }
+  }, [gqtyMailpressClient, toast])
+
+  // Fetch email templates on component mount
+  useEffect(() => {
+    getAllTemplates()
+  }, [getAllTemplates])
+
   // Initialize react-hook-form with Zod resolver
   const form = useForm<EmailPopupForm>({
-    resolver: zodResolver(NotificationPopupSchema),
+    resolver: zodResolver(EmailSendSchema),
     defaultValues: {
-      templateId: undefined, // Changed from '' to undefined
-      sendEmailOnSubmitConsent: undefined,
+      templateId: '', // Changed from undefined to empty string for Select component compatibility
+      sendEmailOnSubmitConsent: false, // Changed to false as default
       subject: '',
       message: '',
       schedule: undefined,
@@ -165,8 +287,19 @@ const NotificationPopupFormComponent: React.FC = () => {
 
   // Initialize Tiptap editor
   const editor = useEditor({
-    extensions: [StarterKit, Link, Underline],
-    content: form.getValues().message ?? '',
+    extensions: [
+      StarterKit,
+      Link,
+      Underline,
+      Placeholder.configure({
+        placeholder: emailTemplates[form.watch('templateId')]?.variables.find(
+          variable => variable.name === 'message',
+        )?.description || 'Enter your message here'
+      }),
+    ],
+    content: emailTemplates[form.watch('templateId')]?.variables.find(
+      variable => variable.name === 'message',
+    )?.defaultValue || '',
     editorProps: {
       attributes: {
         // Chakra styling: bigger min-height, slimmer border
@@ -179,47 +312,21 @@ const NotificationPopupFormComponent: React.FC = () => {
   })
 
   const currentSchedule = form.watch('schedule')
-  //const currentTo = form.watch('to')
-  //const currentBcc = form.watch('bcc')
-  const selectedTemplateId = form.watch('templateId')
+  const selectedEmailTemplateId = form.watch('templateId')
   const currentMessage = form.watch('message') // Added to watch 'message'
-
-  // Fetch email templates using useQuery
-  const templateQuery = useQuery({
-    // Define your query parameters if needed
-    // Example: pass variables or options based on your backend
-  })
-
-  // Refetch templates on mount
-  useEffect(() => {
-    templateQuery.$refetch()
-  }, [templateQuery])
-
-  // Handle errors in fetching templates
-  useEffect(() => {
-    if (templateQuery.$state.error) {
-      toast({
-        title: `Failed to load templates (${templateQuery.$state.error.name})`,
-        description: templateQuery.$state.error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      })
-    }
-  }, [templateQuery.$state.error, toast])
 
   // Find the selected template's description for preview
   const selectedTemplate = useMemo(() => {
-    if (selectedTemplateId && selectedTemplateId.trim() !== '') {
-      return templateQuery.template({ id: selectedTemplateId })
+    if (selectedEmailTemplateId && selectedEmailTemplateId.trim() !== '') {
+      return emailTemplates[selectedEmailTemplateId] || null
     }
     return null
-  }, [templateQuery, selectedTemplateId])
+  }, [emailTemplates, selectedEmailTemplateId])
 
   // Generate the template content for preview
   const templateContent = useMemo(() => {
     if (!selectedTemplate) {
-      return form.watch('message') || ''
+      return form.watch('message') || 'No content available'
     }
 
     // Create a variables mapping using defaultValue
@@ -239,35 +346,59 @@ const NotificationPopupFormComponent: React.FC = () => {
 
     // Sanitize the replaced message
     return DOMPurify.sanitize(replacedMessage)
-  }, [selectedTemplate, currentMessage, form.watch('message')])
+  }, [selectedTemplate, currentMessage, form])
 
   // Handle form submission
   const onSubmit = async (values: EmailPopupForm) => {
     try {
-      const { message, errors } = await sendTemplateMail(
-        "68d4c136-7d75-40cc-ba74-079a0dca4044",
+      if (!values.templateId) {
+        throw new Error('No template selected.')
+      }
+
+      const { ok, message, errors } = await sendTemplateMail(
+        values.templateId,
         {
-          envelope: { replyTo: values.to },
+          envelope: {
+            replyTo: values.to,
+            subject: values.subject,
+            //bcc: (values.bcc || "").split(','),
+            //schedule: values.schedule
+          },
           values: {
-            email: values.to,
             message: values.message,
           },
         }
       )
-      if (errors) {
-        console.error("Mail failed:", errors)
-      } else {
-        console.log("Mail sent:", message)
-      }
 
-      toast({
-        title: 'Email sent',
-        description: 'The email has been sent successfully.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      })
+      if (!ok) {
+        console.error('Mail failed:', errors || message)
+        toast({
+          title: 'Email Sending Failed',
+          description: errors
+            ? errors.map((err: any) => err.message).join(', ')
+            : message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true
+        })
+      } else {
+        console.log('Mail sent:', message)
+        toast({
+          title: 'Email sent',
+          description: 'The email has been sent successfully.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true
+        })
+
+        // Optionally, reset the form or perform other actions
+        form.reset()
+        if (editor) {
+          editor.commands.clearContent()
+        }
+      }
     } catch (error: any) {
+      console.error('Submission Error:', error)
       toast({
         title: 'Submission Error',
         description: error.message || 'An unexpected error occurred.',
@@ -278,21 +409,6 @@ const NotificationPopupFormComponent: React.FC = () => {
     }
   }
 
-  useEffect(() => {
-    const sendMail = async () => {
-      // ...existing mail sending code...
-    };
-    sendMail();
-  }, []); // <-- Make sure you only call this once
-
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      // ...template fetch logic...
-    }
-    // Called once
-    fetchTemplates();
-  }, []);
-
   return (
     <Box as="form" onSubmit={form.handleSubmit(onSubmit)}>
       <Card variant="outline">
@@ -300,10 +416,6 @@ const NotificationPopupFormComponent: React.FC = () => {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box>
               <Heading size="sm">Send Email</Heading>
-              <Text fontSize="sm" color="gray.600">
-                Configure the notification popup. The notification will be shown
-                when the user visits the page.
-              </Text>
             </Box>
             <Button variant="outline" onClick={() => setIsPreviewOpen(true)}>
               Preview
@@ -315,27 +427,50 @@ const NotificationPopupFormComponent: React.FC = () => {
           {/* Email Template Select */}
           <FormControl mb={5} isInvalid={!!form.formState.errors.templateId}>
             <FormLabel>Email Template</FormLabel>
-            {templateQuery.$state.isLoading ? (
+            {isLoadingEmailTemplates ? (
               <HStack>
                 <Spinner size="sm" />
                 <Text>Loading templates...</Text>
               </HStack>
-            ) : templateQuery.$state.error ? (
+            ) : fetchTemplatesError ? (
               <Alert status="error">
                 <AlertIcon />
                 <AlertTitle mr={2}>Error!</AlertTitle>
                 <AlertDescription>
-                  Failed to load email templates.
+                  {fetchTemplatesError}
+                </AlertDescription>
+              </Alert>
+            ) : Object.keys(emailTemplates).length === 0 ? (
+              <Alert status="warning">
+                <AlertIcon />
+                <AlertTitle mr={2}>No Templates Found!</AlertTitle>
+                <AlertDescription>
+                  There are no email templates available. Please create one first.
                 </AlertDescription>
               </Alert>
             ) : (
               <Select
                 placeholder="Select an email template"
-                {...form.register('templateId', { required: 'Template is required' })}
+                {...form.register('templateId', {
+                  required: 'Template is required',
+                  onChange: (e) => {
+                    form.setValue('templateId', e.target.value);
+                    if (editor) {
+                      // and if the previous template message default value is equal to form.watch('message')
+                      // then set the editor content to the new template message default value
+                      if (form.watch('message') == '' || form.watch('message') == '<p></p>') {
+                        editor.commands.setContent(emailTemplates[e.target.value]?.variables.find(
+                          variable => variable.name === 'message',
+                        )?.defaultValue || '');
+                      }
+                      form.setValue('subject', emailTemplates[e.target.value]?.envelope?.subject || '');
+                    }
+                  },
+                })}
               >
-                {templateQuery.allTemplate().nodes.map((template: EmailTemplate) => (
+                {Object.values(emailTemplates).map((template: EmailTemplate) => (
                   <option key={template.id} value={template.id}>
-                    {template.description || template.envelope?.subject || 'Unnamed Template'}
+                    {template.description || 'Unnamed Template'}
                   </option>
                 ))}
               </Select>
@@ -346,11 +481,30 @@ const NotificationPopupFormComponent: React.FC = () => {
             </FormErrorMessage>
           </FormControl>
 
+          {/* To */}
+          <FormControl mb={5} isInvalid={!!form.formState.errors.to}>
+            <FormLabel>To</FormLabel>
+            <Input
+              placeholder="jane.doe@snek.at"
+              bg="white !important"
+              {...form.register('to')}
+            />
+            <FormHelperText>
+              The recipient(s) of the email. Add multiple recipients separated by a comma.
+            </FormHelperText>
+            <FormErrorMessage>
+              {form.formState.errors.to && form.formState.errors.to.message}
+            </FormErrorMessage>
+          </FormControl>
+
           {/* Subject */}
           <FormControl mb={5} isInvalid={!!form.formState.errors.subject}>
             <FormLabel>Subject</FormLabel>
-            {/* No gray background => default is white */}
-            <Input placeholder="Hi there" bg="white" {...form.register('subject')} />
+            <Input
+              placeholder="Hi there"
+              bg="white !important"
+              {...form.register('subject')}
+            />
             <FormHelperText>The subject of the email.</FormHelperText>
             <FormErrorMessage>
               {form.formState.errors.subject && form.formState.errors.subject.message}
@@ -358,7 +512,16 @@ const NotificationPopupFormComponent: React.FC = () => {
           </FormControl>
 
           {/* Message + Tiptap Toolbar */}
-          <FormControl mb={5} isInvalid={!!form.formState.errors.message}>
+          <FormControl mb={5} isInvalid={!!form.formState.errors.message}
+            sx={{
+              '.tiptap p.is-empty::before': {
+                color: '#adb5bd',
+                content: 'attr(data-placeholder)',
+                float: 'left',
+                height: '0',
+                pointerEvents: 'none',
+              }
+            }}>
             <FormLabel>Message</FormLabel>
             {editor && (
               <HStack mb={2} spacing={1}>
@@ -497,14 +660,14 @@ const NotificationPopupFormComponent: React.FC = () => {
             >
               <EditorContent editor={editor} />
             </Box>
-            <FormHelperText>The message of the notification.</FormHelperText>
+            <FormHelperText>The message of the email.</FormHelperText>
             <FormErrorMessage>
               {form.formState.errors.message && form.formState.errors.message.message}
             </FormErrorMessage>
           </FormControl>
 
-          {/* From Date */}
-          <FormControl mb={5} isInvalid={!!form.formState.errors.schedule}>
+          {/* Schedule DISABLED */}
+          <FormControl mb={5} isInvalid={!!form.formState.errors.schedule} display="none">
             <FormLabel>Schedule</FormLabel>
 
             <Popover placement="bottom-start">
@@ -519,14 +682,14 @@ const NotificationPopupFormComponent: React.FC = () => {
                     <CalendarIcon style={{ opacity: 0.5, marginLeft: 'auto' }} />
                   }
                 >
-                  {currentSchedule ? format(currentSchedule as Date, 'PPP') : 'Pick a date'}
+                  {currentSchedule ? format(new Date(currentSchedule), 'PPP') : 'Pick a date'}
                 </Button>
               </PopoverTrigger>
               <Portal>
                 <PopoverContent w="auto">
                   <Calendar
                     mode="single"
-                    selected={currentSchedule}
+                    selected={currentSchedule ? new Date(currentSchedule) : undefined}
                     onSelect={date => form.setValue('schedule', date || undefined)}
                     initialFocus
                   />
@@ -535,53 +698,54 @@ const NotificationPopupFormComponent: React.FC = () => {
             </Popover>
 
             <FormHelperText>
-              The email will be send <b>at 8:00</b> this date.
+              The email will be sent <b>at 8:00</b> on this date.
             </FormHelperText>
             <FormErrorMessage>
               {form.formState.errors.schedule && String(form.formState.errors.schedule.message)}
             </FormErrorMessage>
           </FormControl>
 
-          {/* To */}
-          <FormControl mb={5} isInvalid={!!form.formState.errors.to}>
-            <FormLabel>To</FormLabel>
-            {/* No gray background => default is white */}
-            <Input placeholder="jane.doe@snek.at" bg="white" {...form.register('to')} />
-            <FormHelperText>The recipient(s) of the email. Add multiple recipients separated by a comma.</FormHelperText>
-            <FormErrorMessage>
-              {form.formState.errors.to && form.formState.errors.to.message}
-            </FormErrorMessage>
-          </FormControl>
-
-          {/* BCC */}
-          <FormControl mb={5}>
+          {/* BCC DISABLED */}
+          <FormControl mb={5} isInvalid={!!form.formState.errors.bcc} display="none">
             <FormLabel>BCC</FormLabel>
-            {/* No gray background => default is white */}
-            <Input placeholder="john.doe@snek.at" bg="white" {...form.register('bcc')} />
-            <FormHelperText>Additional hidden recipient(s) of the email. Add multiple recipients separated by a comma.</FormHelperText>
+            <Input
+              placeholder="john.doe@snek.at"
+              bg="white"
+              {...form.register('bcc')}
+            />
+            <FormHelperText>
+              Additional hidden recipient(s) of the email. Add multiple recipients separated by a comma.
+            </FormHelperText>
             <FormErrorMessage>
               {form.formState.errors.bcc && form.formState.errors.bcc.message}
             </FormErrorMessage>
           </FormControl>
 
           {/* sendEmailOnSubmitConsent */}
-          <FormControl display="flex" alignItems="center" mb={5}>
+          <FormControl
+            display="flex"
+            alignItems="center"
+            mb={5}
+            isInvalid={!!form.formState.errors.sendEmailOnSubmitConsent}
+          >
             <Checkbox
               mr={2}
               {...form.register('sendEmailOnSubmitConsent')}
               isChecked={form.watch('sendEmailOnSubmitConsent')}
-              isInvalid={!!form.formState.errors.sendEmailOnSubmitConsent}
             />
             <FormLabel mb={0}>
-              By checking this box, you agree that clicking the "Submit" button will send an email.
+              By checking this box, you agree that clicking the "Send" button will send an email.
             </FormLabel>
+            <FormErrorMessage>
+              {form.formState.errors.sendEmailOnSubmitConsent && form.formState.errors.sendEmailOnSubmitConsent.message}
+            </FormErrorMessage>
           </FormControl>
         </CardBody>
 
         <CardFooter>
           {/* Use Chakra theme color brand.500 */}
           <Button type="submit" colorScheme="brand">
-            Submit
+            Send
           </Button>
         </CardFooter>
       </Card>
@@ -599,7 +763,7 @@ const NotificationPopupFormComponent: React.FC = () => {
             </Heading>
             {/* Display email subject */}
             <Heading size="md" mb={2}>
-              {form.watch('subject') || ''}
+              {form.watch('subject') || 'No Subject'}
             </Heading>
             {/* Render the processed message with variables replaced */}
             <Box
@@ -610,12 +774,6 @@ const NotificationPopupFormComponent: React.FC = () => {
               rounded="md"
               minH="12rem" // Adjusted for better visibility
             />
-            {/* Display additional notification details */}
-            <Text mt={4} fontSize="sm" color="gray.600">
-              {form.watch('sendEmailOnSubmitConsent')
-                ? 'This notification is currently enabled.'
-                : 'This notification is currently disabled.'}
-            </Text>
           </ModalBody>
           <ModalFooter>
             <Button onClick={() => setIsPreviewOpen(false)}>Close</Button>
@@ -627,7 +785,7 @@ const NotificationPopupFormComponent: React.FC = () => {
 }
 
 const Page: React.FC = () => {
-  return <NotificationPopupFormComponent />
+  return <EmailSendFormComponent />
 }
 
 export default Page
