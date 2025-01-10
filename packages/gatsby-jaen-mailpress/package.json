@@ -20,6 +20,7 @@
     "@monaco-editor/react": "^4.6.0",
     "@react-icons/all-files": "https://github.com/react-icons/react-icons/releases/download/v4.11.0/react-icons-all-files-4.11.0.tgz",
     "@tanstack/react-table": "^8.10.7",
+    "@tiptap/extension-placeholder": "^2.11.0",
     "isomorphic-dompurify": "^1.9.0",
     "react-hook-form": "^7.46.1"
   },
