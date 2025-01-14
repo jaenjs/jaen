@@ -1,5 +1,5 @@
 import {PageConfig, PageProps, useNotificationsContext} from 'jaen'
-import {useEffect, useMemo} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 
 import {CopyIcon, DeleteIcon} from '@chakra-ui/icons'
 import {
@@ -112,58 +112,132 @@ const Page: React.FC<PageProps> = ({params}) => {
     return sanitize(unsafeContent || '')
   }, [unsafeContent])
 
-  const data = useQuery({
-    refetchOnRender: false,
-    refetchOnReconnect: false,
-    refetchOnWindowVisible: false
+  const [template, setTemplate] = useState<
+    | {
+        id: string
+        description: string
+        content: string
+        transformer?: string
+        verifyReplyTo?: boolean
+        envelope?: {
+          subject?: string
+          to?: {
+            email: string
+          }[]
+          replyTo?: string
+        }
+        variables: {
+          id?: string
+          name: string
+          isRequired?: boolean
+          isConstant?: boolean
+          description?: string
+          defaultValue?: string
+        }[]
+        parent?: {
+          id: string
+          description: string
+        }
+        links: {
+          id: string
+          description: string
+        }[]
+        updatedAt: string
+        createdAt: string
+      }
+    | undefined
+  >(undefined)
+
+  const [parentTemplates, setParentTemplates] = useState<
+    {
+      id: string
+      description: string
+    }[]
+  >([])
+
+  const [state, setState] = useState<{isLoading: boolean; error?: Error}>({
+    isLoading: true
   })
 
-  useEffect(() => {
-    data.$refetch(true)
-  }, [])
+  const fetchData = async () => {
+    setState({isLoading: true})
 
-  const template = data.template({id: templateId})!
+    try {
+      const {template, parentTemplates} = await resolve(({query}) => {
+        const template = query.template({id: templateId})!
 
-  const isLoading = !!(data.$state.isLoading && template.id === undefined)
+        const parentTemplates = query
+          .allTemplate()
+          .nodes.map(t => ({
+            id: t.id,
+            description: t.description
+          }))
+          .filter(t => t.id !== templateId)
 
-  useEffect(() => {
-    if (data.$state.error) {
-      toast({
-        title: `Failed to load template (${data.$state.error.name})`,
-        description: data.$state.error.message,
-        status: 'error'
+        return {
+          template: {
+            id: template.id,
+            description: template.description,
+            content: template.content,
+            transformer: template.transformer || undefined,
+            verifyReplyTo: template.verifyReplyTo || undefined,
+            envelope: {
+              subject: template.envelope?.subject || undefined,
+              to: template.envelope?.to?.map(to => ({email: to})) || undefined,
+              replyTo: template.envelope?.replyTo || undefined
+            },
+            variables: template.variables.map(v => ({
+              id: v.id,
+              name: v.name,
+              isRequired: v.isRequired || undefined,
+              isConstant: v.isConstant || undefined,
+              description: v.description || undefined,
+              defaultValue: v.defaultValue || undefined
+            })),
+            parent: template.parent?.id
+              ? {
+                  id: template.parent.id,
+                  description: template.parent.description
+                }
+              : undefined,
+            links: template.links.map(l => ({
+              id: l.id,
+              description: l.description
+            })),
+            updatedAt: template.updatedAt,
+            createdAt: template.createdAt
+          },
+          parentTemplates
+        }
       })
-    }
-  }, [data.$state.error])
 
-  const defaultValues = {
-    id: template.id,
-    parentId: template.parent?.id ?? undefined,
-    description: template.description,
-    verifyReplyTo: template.verifyReplyTo ?? false,
-    content: template.content,
-    transformer: template.transformer ?? undefined,
-    updatedAt: template.updatedAt,
-    createdAt: template.createdAt,
-    envelope: {
-      subject: template.envelope?.subject ?? undefined,
-      to: template.envelope?.to?.map(email => ({email})) || undefined,
-      replyTo: template.envelope?.replyTo ?? undefined
-    },
-    variables: template.variables.map(v => ({
-      id: v.id,
-      name: v.name,
-      isRequired: v.isRequired ?? undefined,
-      isConstant: v.isConstant ?? undefined,
-      description: v.description || undefined,
-      defaultValue: v.defaultValue || undefined
-    }))
+      setTemplate(template)
+      setParentTemplates(parentTemplates)
+
+      setState({isLoading: false})
+    } catch (e) {
+      setState({isLoading: false, error: e})
+    }
   }
 
   useEffect(() => {
-    reset(defaultValues)
-    console.log('defaultValues', defaultValues)
-  }, [JSON.stringify(defaultValues)])
+    fetchData()
+  }, [])
+
+  useEffect(() => {
+    if (state.error) {
+      toast({
+        title: `Failed to load template (${state.error.name})`,
+        description: state.error.message,
+        status: 'error'
+      })
+    }
+  }, [state.error])
+
+  useEffect(() => {
+    reset(template)
+    console.log('defaultValues', template)
+  }, [JSON.stringify(template)])
 
   const onSubmit = handleSubmit(async input => {
     console.log('input', input)
@@ -217,7 +291,7 @@ const Page: React.FC<PageProps> = ({params}) => {
         status: 'success'
       })
 
-      await data.$refetch(true)
+      await fetchData()
     } catch (e) {
       toast({
         title: 'Error!',
@@ -271,24 +345,11 @@ const Page: React.FC<PageProps> = ({params}) => {
     })
   }
 
-  const parentTemplates = data
-    .allTemplate()
-    .nodes.map(t => ({
-      id: t.id,
-      description: t.description
-    }))
-    .filter(t => t.id !== templateId)
-
-  const linked = template.links.map(t => ({
-    id: t.id,
-    description: t.description
-  }))
-
   return (
     <Stack spacing="4">
       <Heading size="md">Email Template</Heading>
 
-      <Skeleton isLoaded={!isLoading}>
+      <Skeleton isLoaded={!state.isLoading}>
         <InputGroup>
           <InputLeftAddon>Template ID</InputLeftAddon>
           <Input type="text" defaultValue={templateId} isDisabled />
@@ -303,7 +364,7 @@ const Page: React.FC<PageProps> = ({params}) => {
       <form onSubmit={onSubmit}>
         <Stack spacing="8">
           <Stack spacing="4">
-            <Skeleton isLoaded={!isLoading}>
+            <Skeleton isLoaded={!state.isLoading}>
               <FormControl
                 id="description"
                 isRequired
@@ -316,7 +377,7 @@ const Page: React.FC<PageProps> = ({params}) => {
               </FormControl>
             </Skeleton>
 
-            <Skeleton isLoaded={!isLoading}>
+            <Skeleton isLoaded={!state.isLoading}>
               <FormControl id="parent">
                 <FormLabel>Parent</FormLabel>
                 <Select {...register('parentId')} placeholder="Kein Template">
@@ -329,19 +390,19 @@ const Page: React.FC<PageProps> = ({params}) => {
               </FormControl>
             </Skeleton>
 
-            <Skeleton isLoaded={!isLoading}>
+            <Skeleton isLoaded={!state.isLoading}>
               <FormControl id="verifyReplyTo">
                 <FormLabel>Verify Reply To</FormLabel>
                 <Checkbox {...register('verifyReplyTo')} />
               </FormControl>
             </Skeleton>
 
-            <Skeleton isLoaded={!isLoading}>
+            <Skeleton isLoaded={!state.isLoading}>
               <FormControl id="linked">
                 <FormLabel>Linked</FormLabel>
-                {linked.length ? (
+                {template?.links.length ? (
                   <UnorderedList>
-                    {linked.map(t => (
+                    {template.links.map(t => (
                       <ListItem key={t.id}>
                         <Link as={GatsbyLink} to={`../${t.id}`}>
                           {t.description} ({t.id})
@@ -422,7 +483,7 @@ const Page: React.FC<PageProps> = ({params}) => {
               </CardHeader>
               <CardBody>
                 <Stack>
-                  <Skeleton isLoaded={!isLoading}>
+                  <Skeleton isLoaded={!state.isLoading}>
                     <FormControl id="transformer">
                       <Controller
                         control={control}
@@ -450,7 +511,7 @@ const Page: React.FC<PageProps> = ({params}) => {
               <CardBody>
                 <Stack>
                   <Stack>
-                    <Skeleton isLoaded={!isLoading}>
+                    <Skeleton isLoaded={!state.isLoading}>
                       <FormControl id="content">
                         <Controller
                           control={control}
@@ -471,7 +532,7 @@ const Page: React.FC<PageProps> = ({params}) => {
 
                   <Stack>
                     <Heading size="sm">Preview</Heading>
-                    <Skeleton isLoaded={!isLoading}>
+                    <Skeleton isLoaded={!state.isLoading}>
                       <Box
                         dangerouslySetInnerHTML={{__html: templateContent}}
                       />
@@ -553,12 +614,12 @@ const Page: React.FC<PageProps> = ({params}) => {
             </Card>
           </Stack>
 
-          <ButtonGroup justifyContent="end" isDisabled={isLoading}>
+          <ButtonGroup justifyContent="end" isDisabled={state.isLoading}>
             <Button
               type="button"
               variant="outline"
               colorScheme="red"
-              isDisabled={isLoading || isSubmitting}
+              isDisabled={state.isLoading || isSubmitting}
               onClick={handleDeleteClick}>
               Delete
             </Button>
@@ -566,17 +627,17 @@ const Page: React.FC<PageProps> = ({params}) => {
             <Button
               type="button"
               variant="outline"
-              isDisabled={isLoading || isSubmitting || !isDirty}
+              isDisabled={state.isLoading || isSubmitting || !isDirty}
               onClick={async () => {
-                await data.$refetch(true)
+                await fetchData()
               }}>
               Cancel
             </Button>
 
             <Button
               type="submit"
-              isLoading={isLoading || isSubmitting}
-              isDisabled={isLoading || isSubmitting}>
+              isLoading={state.isLoading || isSubmitting}
+              isDisabled={state.isLoading || isSubmitting}>
               Save
             </Button>
           </ButtonGroup>
