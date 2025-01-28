@@ -39,7 +39,7 @@ import {Editor} from '@monaco-editor/react'
 import {Link as GatsbyLink, navigate} from 'gatsby'
 import {sanitize} from 'isomorphic-dompurify'
 import {Controller, useFieldArray, useForm} from 'react-hook-form'
-import {resolve, useQuery} from '../../../client'
+import {resolve} from '../../../client'
 
 const Page: React.FC<PageProps> = ({params}) => {
   const templateId = params.templateId
