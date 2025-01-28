@@ -4820,6 +4820,11 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-paragraph/-/extension-paragraph-2.4.0.tgz#5b9aea8775937b327bbe6754be12ae3144fb09ff"
   integrity sha512-+yse0Ow67IRwcACd9K/CzBcxlpr9OFnmf0x9uqpaWt1eHck1sJnti6jrw5DVVkyEBHDh/cnkkV49gvctT/NyCw==
 
+"@tiptap/extension-placeholder@^2.11.0":
+  version "2.11.3"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-placeholder/-/extension-placeholder-2.11.3.tgz#12cc74df63f32465d96f234c9b39229e3f6c6017"
+  integrity sha512-wXNcqsxkc+85NPrNpA/iuLa86RL2oOiOGWheJoIjtW2m9BEJSDsyHdUa9Nxwm28+PgonzG1uUfEv4JEzT5m4xg==
+
 "@tiptap/extension-strike@^2.4.0":
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/@tiptap/extension-strike/-/extension-strike-2.4.0.tgz#f09c4f51f7fed01c356026d7e8d8a1d1f2ac8f18"
@@ -11227,6 +11232,11 @@ human-signals@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/human-signals/-/human-signals-7.0.0.tgz#93e58e0c19cfec1dded4af10cd4969f5ab75f6c8"
   integrity sha512-74kytxOUSvNbjrT9KisAbaTZ/eJwD/LrbM/kh5j0IhPuJzwuA19dWvniFGwBzN9rVjg+O/e+F310PjObDXS+9Q==
+
+husky@^9.1.7:
+  version "9.1.7"
+  resolved "https://registry.yarnpkg.com/husky/-/husky-9.1.7.tgz#d46a38035d101b46a70456a850ff4201344c0b2d"
+  integrity sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==
 
 iconv-lite@0.4.24, iconv-lite@^0.4.24, iconv-lite@^0.4.4:
   version "0.4.24"
