@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Markdown field for Jaen",
   "type": "module",
-  "source": "src/index.ts",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.module.js",
   "exports": {
     ".": {
       "require": "./dist/index.cjs",
@@ -14,6 +11,9 @@
     },
     "./package.json": "./package.json"
   },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.module.js",
+  "source": "src/index.ts",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -56,17 +56,17 @@
     "vfile-message": "^4.0.2",
     "vfile-statistics": "^3.0.0"
   },
-  "peerDependencies": {
-    "jaen": "^1.0.0",
-    "gatsby": "^5.12.3",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
   "devDependencies": {
     "@types/react": "^18.2.15",
     "@types/react-syntax-highlighter": "^15.5.7",
     "@types/uuid": "^9.0.2",
     "microbundle": "^0.15.1",
     "rimraf": "^5.0.1"
+  },
+  "peerDependencies": {
+    "gatsby": "^5.12.3",
+    "jaen": "^1.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }
