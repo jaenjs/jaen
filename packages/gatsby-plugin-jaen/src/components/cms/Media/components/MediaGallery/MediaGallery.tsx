@@ -67,6 +67,8 @@ export interface MediaGalleryProps {
 
   isSelector?: boolean
   onSelect?: (id: string) => void
+
+  accept?: Record<string, string[]>
 }
 
 export const MediaGallery: React.FC<MediaGalleryProps> = ({
@@ -85,7 +87,8 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
   isPreview,
   onPreview,
   isSelector,
-  onSelect
+  onSelect,
+  accept
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('')
 
@@ -216,7 +219,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
 
   const dropzone = useDropzone({
     onDrop: handleOnUpload,
-    accept: {
+    accept: accept || {
       'image/*': []
     }
   })
@@ -363,6 +366,11 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
             aria-label="Customize selected image"
             icon={<FaSlidersH />}
             onClick={handleEdit}
+            isDisabled={
+              selectedMediaNode?.mimeType
+                ? !selectedMediaNode.mimeType.startsWith('image/')
+                : true
+            }
           />
 
           <IconButton

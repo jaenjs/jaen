@@ -107,6 +107,7 @@ export interface MediaNode {
   height: number
   revisions?: Array<Omit<MediaNode, 'revisions'>>
   jaenPageId?: string
+  mimeType?: string // e.g. 'image/jpeg', 'video/mp4'
 }
 
 export interface Widget<T = object> {

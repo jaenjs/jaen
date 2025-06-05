@@ -48,6 +48,14 @@ export const MediaItem: React.FC<MediaItemProps> = ({
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
+    if (node.mimeType) {
+      // If the node is not an image, we don't need to load it. We assume that the the preview contains a thumbnail or a placeholder.
+      if (!node.mimeType.startsWith('image/')) {
+        setIsLoaded(true)
+        return
+      }
+    }
+
     let timeoutId: NodeJS.Timeout
 
     // when the image is in viewport for at least 500ms, we load the full image

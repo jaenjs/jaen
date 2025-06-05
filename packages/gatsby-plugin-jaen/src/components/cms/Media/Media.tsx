@@ -1,5 +1,12 @@
 import {MediaNode} from 'jaen'
-import {Flex, Heading, HStack, IconButton, Stack} from '@chakra-ui/react'
+import {
+  Flex,
+  Heading,
+  HStack,
+  IconButton,
+  propNames,
+  Stack
+} from '@chakra-ui/react'
 import React, {useEffect, useMemo, useState} from 'react'
 
 import {BsLayoutSidebarInset} from '@react-icons/all-files/bs/BsLayoutSidebarInset'
@@ -35,6 +42,8 @@ export interface MediaProps {
   defaultSelected?: string
 
   onJaenPageSelect: (id: string | null) => void
+
+  accept?: Record<string, string[]>
 }
 
 export const Media: React.FC<MediaProps> = ({
@@ -48,7 +57,8 @@ export const Media: React.FC<MediaProps> = ({
   isSelector,
   onSelect,
   defaultSelected,
-  onJaenPageSelect
+  onJaenPageSelect,
+  accept
 }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false) // State variable for sidebar visibility
 
@@ -104,13 +114,27 @@ export const Media: React.FC<MediaProps> = ({
   }
 
   const filteredMediaNodes = useMemo(() => {
+    let nodes: MediaNode[] = mediaNodes
     if (filters.page) {
-      return mediaNodes.filter(node => {
+      nodes = mediaNodes.filter(node => {
         return node.jaenPageId === filters.page?.jaenPageId
       })
     }
 
-    return mediaNodes
+    if (accept) {
+      nodes = nodes.filter(node => {
+        // Check mimeType or file extension
+        const mimeType = node.mimeType || ''
+
+        const isAcceptedMimeType = Object.entries(accept).some(([type, _]) =>
+          mimeType.startsWith(type)
+        )
+
+        return isAcceptedMimeType
+      })
+    }
+
+    return nodes
   }, [filters, mediaNodes])
 
   const sortedMediaNodes = filteredMediaNodes.sort((a, b) => {
@@ -185,6 +209,7 @@ export const Media: React.FC<MediaProps> = ({
         onPreview={handlePreview}
         isSelector={isSelector}
         onSelect={onSelect}
+        accept={accept}
       />
 
       <MediaPreview

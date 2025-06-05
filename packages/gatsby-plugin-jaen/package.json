@@ -16,9 +16,9 @@
     "build": "tsc gatsby/* --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule && yarn build:css"
   },
   "peerDependencies": {
-    "jaen": "^1.0.0",
     "@react-icons/all-files": "https://github.com/react-icons/react-icons/releases/download/v4.11.0/react-icons-all-files-4.11.0.tgz",
     "gatsby": "^5.11.0",
+    "jaen": "^1.0.0",
     "react": "^18.2.0"
   },
   "dependencies": {
@@ -57,6 +57,7 @@
     "gatsby-transformer-sharp": "^5.11.0",
     "isomorphic-dompurify": "^1.8.0",
     "lucide-react": "^0.358.0",
+    "pdfjs-dist": "^5.3.31",
     "react-beautiful-dnd": "^13.1.1",
     "react-complex-tree": "^2.2.0",
     "react-day-picker": "^8.10.1",

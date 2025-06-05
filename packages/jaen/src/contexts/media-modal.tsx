@@ -10,6 +10,7 @@ type MediaModalContextType = {
     isSelector?: boolean
     id?: string
     defaultSelected?: string
+    accept?: Record<string, string[]>
   }) => void
 }
 
@@ -36,6 +37,7 @@ export const MediaModalProvider: React.FC<MediaModalProviderProps> = ({
     id: string
     defaultSelected?: string
     jaenPageId?: string
+    accept?: Record<string, string[]>
   }>({
     isOpen: false,
     isSelector: false,
@@ -47,13 +49,15 @@ export const MediaModalProvider: React.FC<MediaModalProviderProps> = ({
     id?: string
     defaultSelected?: string
     jaenPageId?: string
+    accept?: Record<string, string[]>
   }) => {
     setOpen({
       isOpen: !open.isOpen,
       isSelector: !!args?.isSelector,
       id: args?.id || 'default',
       defaultSelected: args?.defaultSelected,
-      jaenPageId: args?.jaenPageId
+      jaenPageId: args?.jaenPageId,
+      accept: args?.accept
     })
   }
 
@@ -83,6 +87,7 @@ export const MediaModalProvider: React.FC<MediaModalProviderProps> = ({
             isSelector={open.isSelector}
             defaultSelected={open.defaultSelected}
             jaenPageId={open.jaenPageId}
+            accept={open.accept}
           />
         </React.Suspense>
       )}
@@ -94,6 +99,7 @@ export const MediaModalProvider: React.FC<MediaModalProviderProps> = ({
 export interface UseMediaModalArgs {
   id: string
   jaenPageId?: string
+  accept?: Record<string, string[]>
   onSelect?: (mediaNode: MediaNode) => void
 }
 
@@ -140,7 +146,8 @@ export const useMediaModal = (args?: UseMediaModalArgs) => {
         id: `${args?.id}-${args?.jaenPageId}`,
         isSelector: !!args?.onSelect,
         defaultSelected: options?.defaultSelected,
-        jaenPageId: args?.jaenPageId
+        jaenPageId: args?.jaenPageId,
+        accept: args?.accept
       }),
     isOpen: context.isOpen
   }

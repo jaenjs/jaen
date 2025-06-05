@@ -15,6 +15,7 @@ export interface MediaSelectorProps {
   defaultSelected?: string
   jaenPageId?: string
   onSelect: (mediaNode: MediaNode) => void
+  accept?: Record<string, string[]>
 }
 
 const MediaModal: React.FC<MediaSelectorProps> = props => {
@@ -62,6 +63,7 @@ const MediaModal: React.FC<MediaSelectorProps> = props => {
               onSelect={props.onSelect}
               defaultSelected={props.defaultSelected}
               jaenPageId={props.jaenPageId}
+              accept={props.accept}
             />
           </PageProvider>
         </ModalBody>
