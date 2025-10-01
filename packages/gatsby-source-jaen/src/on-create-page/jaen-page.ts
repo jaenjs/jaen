@@ -11,7 +11,14 @@ export const onCreatePage = async ({
   createContentDigest
 }: CreatePageArgs) => {
   const expectedJaenPageId = `JaenPage ${page.path}`
-  const isStateful = Boolean(page.isCreatedByStatefulCreatePages)
+  // Gatsby attaches this property at runtime, but it's not declared on the Page TS type.
+  // Use a narrowed shape to make TypeScript happy without changing runtime behavior.
+  type MaybeStateful = {
+    isCreatedByStatefulCreatePages?: boolean
+  }
+  const isStateful = Boolean(
+    (page as unknown as MaybeStateful).isCreatedByStatefulCreatePages
+  )
 
   let jaenPageId = page.context?.jaenPageId as string | undefined
   let pageConfig = page.context?.pageConfig as PageConfig | undefined
