@@ -175,6 +175,11 @@ export const onPreInit: GatsbyNode['onPreInit'] = async (
       process.env.SENTRY_PROJECT = pluginOptions.sentry.project
       process.env.SENTRY_URL = new URL(pluginOptions.sentry.dsn).origin
     }
+  } else {
+    // If no sentry is defined, remove it from the plugins
+    state.flattenedPlugins = state.flattenedPlugins.filter(
+      (p: any) => p.name !== '@sentry/gatsby'
+    )
   }
 
   // state.flattenedPlugins[state.flattenedPlugins.indexOf(manifestPlugin)] =
