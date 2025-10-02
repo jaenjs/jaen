@@ -161,19 +161,22 @@ export const onPreInit: GatsbyNode['onPreInit'] = async (
     }
   }
 
-  if (pluginOptions.sentry) {
-    // Override sentry plugin options
-    const sentryPlugin = state.flattenedPlugins.find(
-      plugin => plugin.name === '@sentry/gatsby'
-    )
+  const sentryPlugin = state.flattenedPlugins.find(
+    (plugin: any) => plugin.name === '@sentry/gatsby'
+  )
 
-    if (sentryPlugin) {
+  if (sentryPlugin) {
+    // Override sentry plugin options
+
+    if (pluginOptions.sentry) {
       sentryPlugin.pluginOptions.dsn = pluginOptions.sentry.dsn
 
       // Write sentry.org and sentry.project to process.env
       process.env.SENTRY_ORG = pluginOptions.sentry.org
       process.env.SENTRY_PROJECT = pluginOptions.sentry.project
       process.env.SENTRY_URL = new URL(pluginOptions.sentry.dsn).origin
+    } else {
+      sentryPlugin.pluginOptions.enabled = false
     }
   }
 
