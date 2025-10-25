@@ -4,7 +4,7 @@ import {messagesByLocale} from '../src/locales/messages'
 
 const defaultLocale = 'en-US'
 
-const systemPageBlacklist = ['/cms/pages', '/mailpress']
+const systemPageBlacklist = ['/cms/', '/login/', '/mailpress/', '/settings/', '/logout/'];
 
 const locales = Object.entries(messagesByLocale).map(([locale, messages]) => {
   const prefix = locale.split('-')[0]

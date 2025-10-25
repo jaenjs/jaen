@@ -64,7 +64,7 @@
     "react-dropzone": "^14.2.3",
     "react-filerobot-image-editor": "^4.5.1",
     "react-hook-form": "^7.51.5",
-    "react-intl": "^6.6.2",
+    "react-intl": "6.8.9",
     "react-konva": "^18.2.10",
     "react-photo-view": "^1.2.3",
     "react-zoom-pan-pinch": "^3.1.0",
