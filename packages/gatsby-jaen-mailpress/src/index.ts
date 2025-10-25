@@ -1,13 +1,28 @@
 import {GQtyError} from 'gqty'
+import type {GraphQLError} from 'graphql'
+
 import {EnvelopeInput, resolve} from './client'
+
+export interface SendTemplateMailOptions {
+  envelope?: Partial<EnvelopeInput>
+  values?: Record<string, unknown>
+}
+
+export type SendTemplateMailResult =
+  | {
+      ok: true
+      message: string
+    }
+  | {
+      ok: false
+      message: string
+      errors?: readonly GraphQLError[]
+    }
 
 export const sendTemplateMail = async (
   id: string,
-  options?: {
-    envelope?: Partial<EnvelopeInput>
-    values?: Record<string, any>
-  }
-) => {
+  options?: SendTemplateMailOptions
+): Promise<SendTemplateMailResult> => {
   try {
     await resolve(
       ({mutation}) => {
