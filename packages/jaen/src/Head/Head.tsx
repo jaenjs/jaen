@@ -34,10 +34,15 @@ export const Head: React.FC<
 
   const description = jaenPageMetadata?.description || siteMetadata?.description
   const image = jaenPageMetadata?.image || siteMetadata?.image
-  const siteUrl = siteMetadata?.siteUrl || '/'
-  const url = siteMetadata?.siteUrl
-    ? `${siteMetadata?.siteUrl}${props.location.pathname}`
-    : props.location.pathname
+  const normalizedSiteUrl = siteMetadata?.siteUrl?.replace(/\/+$/, '')
+  const canonicalUrl = normalizedSiteUrl
+    ? new URL(
+        props.location.pathname || '/',
+        `${normalizedSiteUrl}/`
+      ).toString()
+    : undefined
+  const siteUrl = normalizedSiteUrl || '/'
+  const url = canonicalUrl || props.location.pathname
   const isBlogPost = !!jaenPageMetadata?.blogPost?.date || false
   const datePublished =
     (isBlogPost && jaenPageMetadata?.blogPost?.date) || false
@@ -62,7 +67,9 @@ export const Head: React.FC<
       <title id="title">{title}</title>
       <meta id="meta-description" name="description" content={description} />
       <meta id="meta-image" name="image" content={image} />
-      <link id="canonical-link" rel="canonical" href={url} />
+      {canonicalUrl ? (
+        <link id="canonical-link" rel="canonical" href={canonicalUrl} />
+      ) : null}
 
       {/* OpenGraph tags */}
       <meta id="og-url" property="og:url" content={url} />
