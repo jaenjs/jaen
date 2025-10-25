@@ -120,6 +120,12 @@ const Config: GatsbyConfig = {
         replaysSessionSampleRate: 1.0, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
         replaysOnErrorSampleRate: 1.0 // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
       }
+    },
+    {
+      resolve: 'gatsby-plugin-remove-console',
+      options: {
+        exclude: ['error', 'warn'] // <- Errors should not be removed
+      }
     }
   ]
 }
