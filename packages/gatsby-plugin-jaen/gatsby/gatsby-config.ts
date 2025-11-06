@@ -4,22 +4,12 @@ import {messagesByLocale} from '../src/locales/messages'
 
 const defaultLocale = 'en-US'
 
-// const systemPageBlacklist = ['/cms/', '/login/', '/mailpress/', '/settings/', '/logout/'];
-
-const locales = Object.entries(messagesByLocale).map(([locale, messages]) => {
-  const prefix = locale.split('-')[0]
-
-  // const pageBlacklist =
-  //   locale === defaultLocale ? undefined : systemPageBlacklist
-
-  return {
+const localeDefinitions = Object.entries(messagesByLocale).map(
+  ([locale, descriptor]) => ({
     locale,
-    prefix,
-    slugs: {},
-    messages,
-    //...(pageBlacklist ? {pageBlacklist} : {})
-  }
-})
+    prefix: descriptor.prefix
+  })
+)
 
 const siteUrl =
   process.env.GATSBY_SITE_URL || process.env.SITE_URL || 'https://page.jaen.io'
@@ -28,59 +18,15 @@ const Config: GatsbyConfig = {
   jsxRuntime: 'automatic',
   jsxImportSource: '@emotion/react',
   plugins: [
-    {
-      resolve: `gatsby-plugin-i18n-l10n`,
-      options: {
-        defaultLocale,
-        siteUrl,
-        locales
-      }
-    },
     `gatsby-plugin-image`,
     `gatsby-plugin-sharp`,
     `gatsby-transformer-sharp`,
-    `gatsby-source-jaen`,
     {
-      resolve: `gatsby-plugin-sitemap`,
+      resolve: `gatsby-source-jaen`,
       options: {
-        excludes: [
-          '/cms',
-          '/cms/*',
-          '/login',
-          '/logout',
-          '/password_reset',
-          '/settings',
-          '/signup'
-        ],
-        query: `
-        {
-          jaenSite {
-            id
-            siteMetadata {
-              siteUrl
-            }
-          }
-          allSitePage {
-            nodes {
-              path
-            }
-          }
-        }`,
-        resolveSiteUrl: data => {
-          console.log('RESOLVE SITE URL', data)
-          return data.jaenSite?.siteMetadata?.siteUrl || 'https://page.jaen.io'
-        },
-        resolvePages: data => {
-          return data.allSitePage.nodes.map(page => {
-            return {...page}
-          })
-        },
-        serialize: ({path, modifiedGmt}: any) => {
-          return {
-            url: path,
-            lastmod: modifiedGmt
-          }
-        }
+        defaultLocale,
+        siteUrl,
+        locales: localeDefinitions
       }
     },
     {

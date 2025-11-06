@@ -19,7 +19,8 @@
     "packages/gatsby-jaen-lens",
     "packages/gatsby-source-jaen",
     "packages/jaen-fields-mdx",
-    "my-gatsby-site"
+    "my-gatsby-site",
+    "limosen.at"
   ],
   "dependencies": {
     "eslint-config-prettier": "^8.6.0",

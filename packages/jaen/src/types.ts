@@ -218,6 +218,11 @@ export interface JaenPage {
   deleted?: boolean
   excludedFromIndex?: boolean
 
+  locale?: string | null
+  defaultLocale?: string | null
+  localePagesId?: string | null
+  localePages?: Array<{id: string} & Partial<JaenPage>>
+
   pageConfig: PageConfig | null
 }
 

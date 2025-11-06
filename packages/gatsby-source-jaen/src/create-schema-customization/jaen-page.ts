@@ -17,7 +17,12 @@ export const createSchemaCustomization = async ({
 
       buildPath: String @buildPath
       excludedFromIndex: Boolean
-      
+
+      locale: String
+      defaultLocale: String
+      localePagesId: String
+      localePages: [JaenPage!]! @link(from: "localePages", by: "id")
+
       pageConfig: JSON
 
       parentPage: JaenPage @link
