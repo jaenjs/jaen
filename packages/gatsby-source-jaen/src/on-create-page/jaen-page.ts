@@ -10,12 +10,30 @@ export const onCreatePage = async ({
   getNode,
   createContentDigest
 }: CreatePageArgs) => {
+  const expectedJaenPageId = `JaenPage ${page.path}`
+  // Gatsby attaches this property at runtime, but it's not declared on the Page TS type.
+  // Use a narrowed shape to make TypeScript happy without changing runtime behavior.
+  type MaybeStateful = {
+    isCreatedByStatefulCreatePages?: boolean
+  }
+  const isStateful = Boolean(
+    (page as unknown as MaybeStateful).isCreatedByStatefulCreatePages
+  )
+
   let jaenPageId = page.context?.jaenPageId as string | undefined
   let pageConfig = page.context?.pageConfig as PageConfig | undefined
 
-  if (!jaenPageId) {
-    jaenPageId = `JaenPage ${page.path}`
-    pageConfig = readPageConfig(page.component)
+  const shouldEnsureJaenPageId =
+    jaenPageId === undefined || (isStateful && jaenPageId !== expectedJaenPageId)
+
+  const shouldEnsurePageConfig = pageConfig === undefined
+
+  if (shouldEnsureJaenPageId || shouldEnsurePageConfig) {
+    pageConfig = pageConfig ?? readPageConfig(page.component)
+
+    const nextJaenPageId = isStateful
+      ? expectedJaenPageId
+      : jaenPageId ?? expectedJaenPageId
 
     actions.deletePage(page)
 
@@ -23,10 +41,12 @@ export const onCreatePage = async ({
       ...page,
       context: {
         ...page.context,
-        jaenPageId,
+        jaenPageId: nextJaenPageId,
         pageConfig
       }
     })
+
+    jaenPageId = nextJaenPageId
   }
 
   // Find the JaenPage node with the same id
@@ -43,7 +63,7 @@ export const onCreatePage = async ({
     : new Date()
 
   const newJaenPageNode = {
-    id: jaenPageId,
+    id: jaenPageId!,
     slug: lastPathElement,
 
     jaenPageMetadata: {

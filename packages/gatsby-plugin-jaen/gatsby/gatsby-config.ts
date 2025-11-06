@@ -1,9 +1,41 @@
 import {GatsbyConfig} from 'gatsby'
 
+import {messagesByLocale} from '../src/locales/messages'
+
+const defaultLocale = 'en-US'
+
+// const systemPageBlacklist = ['/cms/', '/login/', '/mailpress/', '/settings/', '/logout/'];
+
+const locales = Object.entries(messagesByLocale).map(([locale, messages]) => {
+  const prefix = locale.split('-')[0]
+
+  // const pageBlacklist =
+  //   locale === defaultLocale ? undefined : systemPageBlacklist
+
+  return {
+    locale,
+    prefix,
+    slugs: {},
+    messages,
+    //...(pageBlacklist ? {pageBlacklist} : {})
+  }
+})
+
+const siteUrl =
+  process.env.GATSBY_SITE_URL || process.env.SITE_URL || 'https://page.jaen.io'
+
 const Config: GatsbyConfig = {
   jsxRuntime: 'automatic',
   jsxImportSource: '@emotion/react',
   plugins: [
+    {
+      resolve: `gatsby-plugin-i18n-l10n`,
+      options: {
+        defaultLocale,
+        siteUrl,
+        locales
+      }
+    },
     `gatsby-plugin-image`,
     `gatsby-plugin-sharp`,
     `gatsby-transformer-sharp`,
