@@ -1,0 +1,1 @@
+export {mergeLocaleMessages} from './i18n'

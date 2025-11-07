@@ -1,5 +1,19 @@
 import {GatsbyConfig} from 'gatsby'
 
+import {messagesByLocale} from '../src/locales/messages'
+
+const defaultLocale = 'en-US'
+
+const localeDefinitions = Object.entries(messagesByLocale).map(
+  ([locale, descriptor]) => ({
+    locale,
+    prefix: descriptor.prefix
+  })
+)
+
+const siteUrl =
+  process.env.GATSBY_SITE_URL || process.env.SITE_URL || 'https://page.jaen.io'
+
 const Config: GatsbyConfig = {
   jsxRuntime: 'automatic',
   jsxImportSource: '@emotion/react',
@@ -8,6 +22,14 @@ const Config: GatsbyConfig = {
     `gatsby-plugin-sharp`,
     `gatsby-transformer-sharp`,
     `gatsby-source-jaen`,
+    {
+      resolve: `gatsby-source-jaen`,
+      options: {
+        defaultLocale,
+        siteUrl,
+        locales: localeDefinitions
+      }
+    },
     {
       resolve: `gatsby-plugin-manifest`,
       options: {
