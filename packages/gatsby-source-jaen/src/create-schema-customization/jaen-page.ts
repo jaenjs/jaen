@@ -21,7 +21,7 @@ export const createSchemaCustomization = async ({
       locale: String
       defaultLocale: String
       localePagesId: String
-      localePages: [JaenPage!]! @link(from: "localePages", by: "id")
+      localePages: [JaenPage!] @link(from: "localePages", by: "id")
 
       pageConfig: JSON
 
