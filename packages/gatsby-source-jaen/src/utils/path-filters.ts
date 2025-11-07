@@ -1,97 +1,42 @@
 // src/utils/path-filters.ts
 
-const EXCLUDED_PATH_PREFIXES: readonly string[] = [
-  '/dev-404-page',
-  '/404',
-  '/404.html',
-  '/500',
-  '/offline-plugin-app-shell-fallback',
-  '/__'
-]
+/**
+ * Local helpers to normalize paths and decide whether to exclude them from the sitemap.
+ * This file intentionally does not import anything from `gatsby-plugin-sitemap`.
+ */
 
-type SystemSegment =
-  | '404'
-  | '404.html'
-  | '500'
-  | 'cms'
-  | 'login'
-  | 'logout'
-  | 'mailpress'
-  | 'password_reset'
-  | 'settings'
-  | 'signup'
+const stripTrailingSlash = (p: string) =>
+  p !== '/' ? p.replace(/\/+$/, '') : '/'
 
-const SYSTEM_SEGMENTS = new Set<SystemSegment>([
-  '404',
-  '404.html',
-  '500',
-  'cms',
-  'login',
-  'logout',
-  'mailpress',
-  'password_reset',
-  'settings',
-  'signup'
-])
-
-const LOCALE_SEGMENT_PATTERN = /^[a-z]{2}(?:-[a-z]{2})?$/i
-
-const splitSegments = (pathname: string): string[] =>
-  pathname
-    .split('/')
-    .map(segment => segment.trim())
-    .filter(Boolean)
-
-const hasDynamicMarker = (segment: string): boolean =>
-  segment.includes('[') || segment.includes(']')
-
-export const normalizePath = (rawPath: string): string => {
-  const trimmed = rawPath.trim()
-  if (trimmed.length === 0 || trimmed === '/') return '/'
-
-  const withoutTrailing = trimmed.replace(/\/+$/, '')
-  return withoutTrailing.startsWith('/') ? withoutTrailing : `/${withoutTrailing}`
+/** Normalize a route/path to leading slash, no duplicate slashes, and no trailing slash (except for root). */
+export const normalizePath = (raw: string): string => {
+  const withSlash = raw.startsWith('/') ? raw : `/${raw}`
+  const collapsed = withSlash.replace(/\/{2,}/g, '/')
+  return stripTrailingSlash(collapsed)
 }
 
+/** Simple predicate for URLs that should never land in the sitemap. Extend as you like. */
 export const shouldExcludeFromSitemap = (pathname: string): boolean => {
+  const p = normalizePath(pathname)
+
+  // Gatsby dev/system pages
   if (
-    EXCLUDED_PATH_PREFIXES.some(prefix => {
-      return pathname === prefix || pathname.startsWith(`${prefix}/`)
-    })
+    p === '/dev-404-page' ||
+    p === '/404' ||
+    p === '/404.html' ||
+    p === '/offline-plugin-app-shell-fallback' ||
+    p.startsWith('/__') ||
+    p.startsWith('/plugins') ||
+    p.startsWith('/page-data') ||
+    p.startsWith('/static') ||
+    p.startsWith('/graphql')
   ) {
     return true
   }
 
-  const segments = splitSegments(pathname)
-  if (segments.length === 0) return false
+  // Add any of your own rules here (examples):
+  // if (p.startsWith('/draft')) return true
+  // if (p.includes('?')) return true
 
-  return segments.some(segment => {
-    const normalized = segment.toLowerCase()
-    if (SYSTEM_SEGMENTS.has(normalized as SystemSegment)) return true
-    if (normalized.startsWith('__')) return true
-    if (hasDynamicMarker(normalized)) return true
-    return false
-  })
-}
-
-export const shouldSkipPageCreation = (pathname: string): boolean => {
-  const segments = splitSegments(pathname)
-
-  // e.g. "/", "/about" → not localized → don't skip
-  if (segments.length <= 1) return false
-
-  const [maybeLocale, ...rest] = segments
-
-  // ✅ Guard against undefined to satisfy TS and runtime
-  if (!maybeLocale || !LOCALE_SEGMENT_PATTERN.test(maybeLocale)) {
-    return false
-  }
-
-  // We are inside a locale-prefixed path → check remaining segments for system/dynamic markers
-  return rest.some(segment => {
-    const normalized = segment.toLowerCase()
-    if (SYSTEM_SEGMENTS.has(normalized as SystemSegment)) return true
-    if (hasDynamicMarker(normalized)) return true
-    return false
-  })
+  return false
 }
