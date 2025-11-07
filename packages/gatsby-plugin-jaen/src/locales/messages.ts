@@ -1,5 +1,5 @@
 // src/locales/messages.ts
-import { getI18n } from './i18n'
+import {getI18n} from './i18n'
 
 export const messagesByLocale = {
   'en-US': getI18n('en-US').messages,

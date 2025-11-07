@@ -1,0 +1,11 @@
+.cache
+public
+node_modules
+.npmrc
+
+**/dist
+
+**/tsconfig.tsbuildinfo
+src/.DS_Store
+
+.vscode/tasks.json
