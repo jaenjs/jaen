@@ -21,6 +21,8 @@ export interface JaenPluginOptions extends PluginOptions {
     org: string
     project: string
     dsn: string
+    // keep optional to match schema without changing logic
+    feedbackIntegration?: Record<string, unknown>
   }
 }
 
@@ -62,14 +64,14 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] =
 
     const config = getConfig()
 
-    const babelLoaderRule = config.module.rules.find(
-      rule => String(rule.test) === String(/\.(js|mjs|jsx|ts|tsx)$/)
+    const babelLoaderRule = (config.module?.rules as any[]).find(
+      (rule: any) => String(rule.test) === String(/\.(js|mjs|jsx|ts|tsx)$/)
     )
 
     // Fix HMR by removing the pageConfig API from the babel-loader
     const babelLoaderWithPlugin = {
       ...babelLoaderRule,
-      use: ({resourceQuery, issuer}) => {
+      use: ({resourceQuery, issuer}: any) => {
         const babelLoaderOptions = {
           loader: 'babel-loader',
           options: {
@@ -85,8 +87,8 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] =
     }
 
     config.module.rules = [
-      ...config.module.rules.filter(
-        rule => String(rule.test) !== String(/\.(js|mjs|jsx|ts|tsx)$/)
+      ...(config.module?.rules as any[]).filter(
+        (rule: any) => String(rule.test) !== String(/\.(js|mjs|jsx|ts|tsx)$/)
       ),
 
       babelLoaderWithPlugin
@@ -132,7 +134,7 @@ export const onPreInit: GatsbyNode['onPreInit'] = async (
   const state = store.getState()
 
   const manifestPlugin = state.flattenedPlugins.find(
-    plugin => plugin.name === 'gatsby-plugin-manifest'
+    (plugin: any) => plugin.name === 'gatsby-plugin-manifest'
   )
 
   if (manifestPlugin) {
@@ -148,7 +150,7 @@ export const onPreInit: GatsbyNode['onPreInit'] = async (
 
   // Override the gatsby-plugin-google-gtag trackingIds
   const gtagPlugin = state.flattenedPlugins.find(
-    plugin => plugin.name === 'gatsby-plugin-google-gtag'
+    (plugin: any) => plugin.name === 'gatsby-plugin-google-gtag'
   )
 
   if (gtagPlugin) {
@@ -199,7 +201,6 @@ export const createPages: GatsbyNode['createPages'] = async (
   // const snekResourceId = pluginOptions.snekResourceId as string | undefined
 
   // Create JaenFrame slice
-
   actions.createSlice({
     id: `jaen-frame`,
     component: path.resolve(__dirname, '../../src/slices/jaen-frame.tsx')

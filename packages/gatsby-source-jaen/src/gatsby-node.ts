@@ -21,22 +21,48 @@ import {createSchemaCustomization as createSchemaCustomizationJaenWidget} from '
 
 import {onCreateWebpackConfig as onCreateWebpackConfigJaenTemplate} from './on-create-webpack-config/jaen-template'
 import {onCreateWebpackConfig as onCreateWebpackConfigJaenData} from './on-create-webpack-config/jaen-data'
+import {
+  resolvePluginOptions,
+  JaenSourcePluginOptions,
+  ResolvedJaenSourcePluginOptions
+} from './utils/plugin-options'
 
-export const sourceNodes: GatsbyNode['sourceNodes'] = async args => {
+const withResolvedOptions = (
+  pluginOptions: JaenSourcePluginOptions | undefined
+): ResolvedJaenSourcePluginOptions => {
+  return resolvePluginOptions(pluginOptions)
+}
+
+export const sourceNodes: GatsbyNode<JaenSourcePluginOptions>['sourceNodes'] = async (
+  args,
+  pluginOptions
+) => {
+  const resolved = withResolvedOptions(pluginOptions)
+
   await sourceNodesJaenData(args)
 
   // Must be called after sourceJaenNodes
-  await sourceNodesJaenPages(args)
+  await sourceNodesJaenPages(args, resolved)
   await sourceNodesJaenSite(args)
   await sourceNodesJaenWidget(args)
 }
 
-export const createPages: GatsbyNode['createPages'] = async args => {
-  await createPagesJaenPages(args)
+export const createPages: GatsbyNode<JaenSourcePluginOptions>['createPages'] = async (
+  args,
+  pluginOptions
+) => {
+  const resolved = withResolvedOptions(pluginOptions)
+
+  await createPagesJaenPages(args, resolved)
 }
 
-export const onCreatePage: GatsbyNode['onCreatePage'] = async args => {
-  await onCreatePageJaenPage(args)
+export const onCreatePage: GatsbyNode<JaenSourcePluginOptions>['onCreatePage'] = async (
+  args,
+  pluginOptions
+) => {
+  const resolved = withResolvedOptions(pluginOptions)
+
+  await onCreatePageJaenPage(args, resolved)
 }
 
 export const onCreateNode: GatsbyNode['onCreateNode'] = async args => {

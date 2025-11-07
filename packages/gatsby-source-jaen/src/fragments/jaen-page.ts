@@ -15,6 +15,12 @@ export const fragments = graphql`
     slug
     template
     excludedFromIndex
+    locale
+    defaultLocale
+    localePagesId
+    localePages {
+      id
+    }
     jaenPageMetadata {
       title
       image

@@ -4,8 +4,12 @@ import {createRemoteFileNode} from 'gatsby-source-filesystem'
 import {getLastPartOfId} from '../utils/get-last-part-of-id'
 
 import {JaenData} from './jaen-data'
+import {ResolvedJaenSourcePluginOptions} from '../utils/plugin-options'
 
-export const sourceNodes = async (args: SourceNodesArgs) => {
+export const sourceNodes = async (
+  args: SourceNodesArgs,
+  _options?: ResolvedJaenSourcePluginOptions
+) => {
   const {actions, reporter, createContentDigest, getNodesByType} = args
   const {createNode} = actions
 
@@ -99,12 +103,33 @@ The existing templates are: ${jaenTemplates
       ? new Date((page as any).updatedAt)
       : new Date()
 
+    const localePages =
+      page.localePages?.map((localePage: any) => {
+        if (!localePage) {
+          return null
+        }
+
+        if (typeof localePage === 'string') {
+          return localePage
+        }
+
+        if (typeof localePage.id === 'string') {
+          return localePage.id
+        }
+
+        return null
+      }).filter(Boolean) ?? []
+
     const pageWithSlug = {
       ...page,
       childPagesOrder,
       slug,
       parentPage: page.parentPage?.id,
       childPages: page.childPages?.map(child => child.id) || [],
+      locale: page.locale ?? null,
+      defaultLocale: page.defaultLocale ?? null,
+      localePagesId: page.localePagesId ?? null,
+      localePages,
       jaenPageMetadata: {
         ...page.jaenPageMetadata,
         title: page.jaenPageMetadata?.title || slug
