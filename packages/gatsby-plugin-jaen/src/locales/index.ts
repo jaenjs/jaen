@@ -1,1 +1,1 @@
-export {mergeLocaleMessages} from './i18n'
+export {getI18n} from './i18n'
