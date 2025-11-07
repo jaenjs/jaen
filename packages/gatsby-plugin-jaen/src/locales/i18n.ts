@@ -1107,3 +1107,7 @@ export function getI18n(code: I18nCode): UnifiedI18n {
     strings
   }
 }
+
+export function i18nJaen(code: I18nCode): UnifiedI18n {
+  return getI18n(code)
+}
