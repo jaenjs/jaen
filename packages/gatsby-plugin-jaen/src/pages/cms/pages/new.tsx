@@ -8,10 +8,19 @@ import {
   CMSManagement,
   useCMSManagement
 } from '../../../connectors/cms-management'
+import {
+  useJaenI18n,
+  formatI18nMessage,
+  resolveI18nCode
+} from '../../../hooks/use-jaen-i18n'
+import {getI18n} from '../../../locales'
 
 const PagesNew: React.FC = () => {
   const {toast} = useNotificationsContext()
   const manager = useCMSManagement()
+  const {strings} = useJaenI18n()
+  const cmsPages = (strings?.cms?.pages as Record<string, any>) ?? {}
+  const notifications = cmsPages.notifications ?? {}
 
   const parentPages = useMemo(() => {
     const pages = manager.pages()
@@ -103,8 +112,12 @@ const PagesNew: React.FC = () => {
           })
 
           toast({
-            title: 'Page created',
-            description: `Page ${data.title} has been created`,
+            title: notifications.created ?? 'Page created',
+            description: formatI18nMessage(
+              notifications.createdDescription ??
+                'Page {title} has been created',
+              {title: data.title}
+            ),
             status: 'success'
           })
 
@@ -125,20 +138,41 @@ const Page: React.FC<PageProps> = () => {
 
 export default Page
 
+const getCmsMessages = (auth: {
+  user?: {profile?: Record<string, string | undefined>}
+}) => {
+  const profile = auth.user?.profile ?? {}
+  const localeCode = resolveI18nCode(
+    profile.preferredLanguage ?? profile.locale ?? profile.language
+  )
+
+  const {strings} = getI18n(localeCode)
+  return (strings.cms as Record<string, any>) ?? {}
+}
+
 export const pageConfig: PageConfig = {
   label: 'New page',
   breadcrumbs: [
-    {
-      label: 'CMS',
-      path: '/cms/'
+    async ({auth}) => {
+      const cms = getCmsMessages(auth)
+      return {
+        label: cms.labels?.root ?? 'CMS',
+        path: '/cms/'
+      }
     },
-    {
-      label: 'Pages',
-      path: '/cms/pages/'
+    async ({auth}) => {
+      const cms = getCmsMessages(auth)
+      return {
+        label: cms.pages?.breadcrumbs?.pages ?? 'Pages',
+        path: '/cms/pages/'
+      }
     },
-    {
-      label: 'New',
-      path: '/cms/pages/new/'
+    async ({auth}) => {
+      const cms = getCmsMessages(auth)
+      return {
+        label: cms.pages?.breadcrumbs?.new ?? 'New',
+        path: '/cms/pages/new/'
+      }
     }
   ],
   withoutJaenFrameStickyHeader: true,

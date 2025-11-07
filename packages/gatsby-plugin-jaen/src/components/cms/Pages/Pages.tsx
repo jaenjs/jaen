@@ -32,6 +32,7 @@ import {
   Droppable,
   OnDragEndResponder
 } from 'react-beautiful-dnd'
+import {useJaenI18n, formatI18nMessage} from '../../../hooks/use-jaen-i18n'
 
 export interface PagesProps {
   pageId: string
@@ -52,6 +53,62 @@ export interface PagesProps {
 }
 
 export const Pages: React.FC<PagesProps> = props => {
+  const {strings, code} = useJaenI18n()
+  const cmsPages = (strings?.cms?.pages as Record<string, any>) ?? {}
+  const table = cmsPages.table ?? {}
+  const labels = cmsPages.labels ?? {}
+  const actions = cmsPages.actions ?? {}
+  const descriptions = cmsPages.descriptions ?? {}
+  const prompts = cmsPages.prompts ?? {}
+  const notifications = cmsPages.notifications ?? {}
+  const formButtons = cmsPages.form?.buttons ?? {}
+
+  const dateFormatter = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat(code, {
+        dateStyle: 'medium'
+      }),
+    [code]
+  )
+  const timeFormatter = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat(code, {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+    [code]
+  )
+
+  const renderTimestamp = React.useCallback(
+    (created?: string, modified?: string) => {
+      const emptyLabel = table.date?.empty ?? '-'
+      if (!created && !modified) {
+        return emptyLabel
+      }
+
+      const hasDifferentModification =
+        created && modified && modified !== created
+      const target = hasDifferentModification ? modified : created
+
+      if (!target) {
+        return emptyLabel
+      }
+
+      const date = dateFormatter.format(new Date(target))
+      const time = timeFormatter.format(new Date(target))
+      const template = hasDifferentModification
+        ? table.date?.updated
+        : table.date?.created
+
+      if (typeof template === 'string' && template.length > 0) {
+        return formatI18nMessage(template, {date, time})
+      }
+
+      return `${date} ${time}`
+    },
+    [dateFormatter, timeFormatter, table.date]
+  )
+
   const [canReorder, setCanReorder] = React.useState(false)
 
   const handleDragEnd: OnDragEndResponder = result => {
@@ -63,7 +120,9 @@ export const Pages: React.FC<PagesProps> = props => {
     const [movedItem] = reorderedChildren.splice(result.source.index, 1)
 
     if (!movedItem) {
-      alert('Something went wrong while reordering the pages.')
+      if (typeof window !== 'undefined') {
+        window.alert(table.reorderError || 'Something went wrong while reordering the pages.')
+      }
       return
     }
 
@@ -92,7 +151,7 @@ export const Pages: React.FC<PagesProps> = props => {
       <Stack spacing="4" divider={<StackDivider />}>
         <HStack justifyContent="space-between">
           <Heading as="h2" size="sm">
-            Subpages
+            {table.subpagesHeading ?? 'Subpages'}
           </Heading>
 
           <ButtonGroup>
@@ -106,7 +165,9 @@ export const Pages: React.FC<PagesProps> = props => {
                   <Icon as={FaGripVertical} />
                 )
               }>
-              {canReorder ? 'Done' : 'Reorder'}
+              {canReorder
+                ? table.reorderDisable ?? 'Done'
+                : table.reorderEnable ?? 'Reorder'}
             </Button>
 
             <Link
@@ -115,7 +176,7 @@ export const Pages: React.FC<PagesProps> = props => {
               to={`./new/#${btoa(props.pageId)}`}
               leftIcon={<FaPlus />}
               variant="outline">
-              New page
+              {table.newPage ?? 'New page'}
             </Link>
           </ButtonGroup>
         </HStack>
@@ -123,9 +184,9 @@ export const Pages: React.FC<PagesProps> = props => {
         <Table>
           <Thead>
             <Tr>
-              <Th>Title</Th>
-              <Th>Description</Th>
-              <Th>Date</Th>
+              <Th>{table.columns?.title ?? 'Title'}</Th>
+              <Th>{table.columns?.description ?? 'Description'}</Th>
+              <Th>{table.columns?.date ?? 'Date'}</Th>
               <Th></Th>
             </Tr>
           </Thead>
@@ -153,26 +214,7 @@ export const Pages: React.FC<PagesProps> = props => {
                           </Td>
                           <Td>{page.description}</Td>
                           <Td whiteSpace="break-spaces">
-                            {page.createdAt || page.modifiedAt
-                              ? page.modifiedAt &&
-                                page.modifiedAt !== page.createdAt
-                                ? `Last modified ${new Date(
-                                    page.modifiedAt
-                                  ).toLocaleDateString('en-US')} at ${new Date(
-                                    page.modifiedAt
-                                  ).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}`
-                                : `Created ${new Date(
-                                    page.createdAt
-                                  ).toLocaleDateString('en-US')} at ${new Date(
-                                    page.createdAt
-                                  ).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}`
-                              : '-'}
+                            {renderTimestamp(page.createdAt, page.modifiedAt)}
                           </Td>
                           <Td w="8">
                             {canReorder && (
@@ -190,10 +232,11 @@ export const Pages: React.FC<PagesProps> = props => {
                       <Td colSpan={4}>
                         <HStack>
                           <Text>
-                            This page doesn&apos;t have any subpages yet.{' '}
+                            {table.emptyState?.description ??
+                              "This page doesn't have any subpages yet."}{' '}
                           </Text>
                           <Link to={`./new/#${btoa(props.pageId)}`}>
-                            Create a new page
+                            {table.emptyState?.action ?? 'Create a new page'}
                           </Link>
                         </HStack>
                       </Td>
@@ -208,7 +251,7 @@ export const Pages: React.FC<PagesProps> = props => {
 
       <Stack spacing="4" divider={<StackDivider />}>
         <Heading as="h2" size="sm">
-          Danger zone
+          {table.dangerZoneHeading ?? 'Danger zone'}
         </Heading>
 
         <DangerZone actions={props.dangerZoneActions || []} />
