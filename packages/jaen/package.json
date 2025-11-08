@@ -1,6 +1,6 @@
 {
-  "name": "@atsnek/jaen",
-  "version": "1.0.0-rc.74",
+  "name": "jaen",
+  "version": "1.0.0",
   "description": "The Webapps framework for creating scalable and dynamic applications with ease.",
   "type": "module",
   "source": "src/index.ts",
@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
+    "@types/react-dom":"^18.2.6",
     "@types/react-icons": "^3.0.0",
     "@types/uuid": "^9.0.2",
     "microbundle": "^0.15.1"

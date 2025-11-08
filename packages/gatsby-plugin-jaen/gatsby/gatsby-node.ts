@@ -47,7 +47,8 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
     sentry: Joi.object({
       org: Joi.string().required(),
       project: Joi.string().required(),
-      dsn: Joi.string().required()
+      dsn: Joi.string().required(),
+      feedbackIntegration: Joi.object()
     })
   })
 }
@@ -57,7 +58,7 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] =
     {actions, loaders, stage, plugins, getConfig},
     pluginOptions: JaenPluginOptions
   ) => {
-    const {version} = await import('@atsnek/jaen/package.json')
+    const {version} = await import('jaen/package.json')
 
     const config = getConfig()
 
@@ -160,19 +161,23 @@ export const onPreInit: GatsbyNode['onPreInit'] = async (
     }
   }
 
-  if (pluginOptions.sentry) {
+  const sentryPlugin = state.flattenedPlugins.find(
+    (plugin: any) => plugin.name === '@sentry/gatsby'
+  )
+
+  if (sentryPlugin) {
     // Override sentry plugin options
-    const sentryPlugin = state.flattenedPlugins.find(
-      plugin => plugin.name === '@sentry/gatsby'
-    )
 
-    if (sentryPlugin) {
+    if (pluginOptions.sentry) {
       sentryPlugin.pluginOptions.dsn = pluginOptions.sentry.dsn
-    }
 
-    // Write sentry.org and sentry.project to process.env
-    process.env.SENTRY_ORG = pluginOptions.sentry.org
-    process.env.SENTRY_PROJECT = pluginOptions.sentry.project
+      // Write sentry.org and sentry.project to process.env
+      process.env.SENTRY_ORG = pluginOptions.sentry.org
+      process.env.SENTRY_PROJECT = pluginOptions.sentry.project
+      process.env.SENTRY_URL = new URL(pluginOptions.sentry.dsn).origin
+    } else {
+      sentryPlugin.pluginOptions.enabled = false
+    }
   }
 
   // state.flattenedPlugins[state.flattenedPlugins.indexOf(manifestPlugin)] =

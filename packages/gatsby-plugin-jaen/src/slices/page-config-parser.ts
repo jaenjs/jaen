@@ -1,4 +1,4 @@
-import {PageConfig, useAuth} from '@atsnek/jaen'
+import {PageConfig, useAuth} from 'jaen'
 
 export const usePageConfig = () => {
   const auth = useAuth()
@@ -41,7 +41,7 @@ export const usePageConfig = () => {
       return field
     }
 
-    return (await parseField(pageConfig)) as PageConfig
+    return (await parseField({...pageConfig})) as PageConfig
   }
 
   return {

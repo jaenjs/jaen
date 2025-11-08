@@ -66,7 +66,11 @@ const TabsTemplate: React.FC<TabsProps> = props => {
         onChange={handleTabChange}
         pos="relative"
         size="sm">
-        <TabList pos="sticky" top="0" zIndex="1">
+        <TabList
+          pos="sticky"
+          top="0"
+          zIndex="1"
+          bg="var(--chakra-colors-bg-canvas)">
           {props.tabs.map((tab, i) => (
             <Tab key={i}>{tab.label}</Tab>
           ))}
