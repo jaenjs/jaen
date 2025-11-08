@@ -1,6 +1,5 @@
-import {PageConfig, useNotificationsContext} from '@atsnek/jaen'
+import {PageConfig, useNotificationsContext} from 'jaen'
 import {
-  Box,
   Button,
   HStack,
   Heading,
@@ -11,25 +10,16 @@ import {
   Table,
   Tbody,
   Td,
+  Text,
   Th,
   Thead,
   Tr
 } from '@chakra-ui/react'
 import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
 import {Link as GatsbyLink, graphql} from 'gatsby'
-import {useQuery} from 'snek-query/react-hooks'
-import {sq} from '../../../client/src'
 import {useEffect} from 'react'
-
-interface MailPressTemplate {
-  id: string
-  description: string
-  subject?: string | null
-  from?: string | null
-  replyTo?: string | null
-  updatedAt: string
-  createdAt: string
-}
+import {resolve, useQuery} from '../../../client/index'
+import {EmailSMTPModal} from '../../../EmailSMTPModal'
 
 const SkeletonRow = () => (
   <Tr>
@@ -79,18 +69,22 @@ const Page: React.FC = () => {
   //   load()
   // }, [])
 
-  const {data, error, isLoading, refetch} = useQuery(sq)
+  const data = useQuery({})
 
   useEffect(() => {
-    if (error) {
-      console.log('error', error)
+    data.$refetch()
+  }, [])
+
+  useEffect(() => {
+    if (data.$state.error) {
+      console.log('error', data.$state.error)
       toast({
-        title: 'Failed to load templates',
-        description: (error as any)[0].message,
+        title: `Failed to load templates (${data.$state.error.name})`,
+        description: data.$state.error.message,
         status: 'error'
       })
     }
-  }, [error])
+  }, [data.$state.error])
 
   const handleAddTemplateClick = async () => {
     const description = await prompt({
@@ -99,26 +93,34 @@ const Page: React.FC = () => {
     })
 
     if (description) {
-      const [data, errors] = await sq.mutate(m => {
-        return m.templateCreate({
-          data: {
-            description: description,
-            content: 'Hello!',
-            variables: [],
-            envelope: {
-              subject: 'Hello!'
-            }
+      try {
+        await resolve(
+          ({mutation}) => {
+            const template = mutation.templateCreate({
+              input: {
+                description: description,
+                content: 'Hello!',
+                variables: [],
+                envelope: {
+                  subject: 'Hello!'
+                }
+              }
+            })
+
+            return template.id
+          },
+          {
+            cachePolicy: 'no-store'
           }
-        })
-      })
-      if (errors) {
+        )
+
+        await data.$refetch(true)
+      } catch (error) {
         toast({
           title: 'Failed to create template',
-          description: errors[0]!.message,
+          description: error.message,
           status: 'error'
         })
-      } else {
-        refetch()
       }
     }
   }
@@ -128,12 +130,36 @@ const Page: React.FC = () => {
       <Stack spacing="4">
         <Heading size="md">Email Templates</Heading>
 
-        <HStack spacing="4" justifyContent="end">
-          <Button
-            leftIcon={<Icon as={FaPlus} />}
-            onClick={handleAddTemplateClick}>
-            Add Template
-          </Button>
+        <HStack spacing="4" justifyContent="space-between">
+          <HStack>
+            {data.me.organization.email?.email ? (
+              <Text>
+                Connected email:{' '}
+                <strong>{data.me.organization.email?.email}</strong>
+              </Text>
+            ) : (
+              <Text color="yellow.500">No email connected</Text>
+            )}
+          </HStack>
+          <HStack>
+            <EmailSMTPModal
+              onSubmit={async input => {
+                await resolve(({mutation}) => {
+                  return mutation.organizationSetEmail({
+                    email: input.email,
+                    config: input.config
+                  }).id
+                })
+
+                await data.$refetch(true)
+              }}
+            />
+            <Button
+              leftIcon={<Icon as={FaPlus} />}
+              onClick={handleAddTemplateClick}>
+              Add Template
+            </Button>
+          </HStack>
         </HStack>
 
         <Table>
@@ -148,7 +174,7 @@ const Page: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {isLoading && (
+            {data.$state.isLoading && (
               <>
                 <SkeletonRow />
                 <SkeletonRow />
@@ -156,25 +182,27 @@ const Page: React.FC = () => {
               </>
             )}
 
-            {data.allTemplate().nodes.map(template => (
-              <Tr
-                key={template.id}
-                visibility={isLoading ? 'hidden' : 'visible'}>
-                <Td>
-                  <Link as={GatsbyLink} to={`./${template.id}`}>
-                    {template.description}
-                  </Link>
-                </Td>
-                <Td>{template.envelope()?.subject}</Td>
-                <Td>{template.envelope()?.to}</Td>
-                <Td>{template.envelope()?.replyTo}</Td>
-                <Td>{template.updatedAt}</Td>
-                <Td>{template.createdAt}</Td>
-              </Tr>
-            ))}
+            {data.allTemplate().nodes.map(template => {
+              return (
+                <Tr
+                  key={template.id}
+                  visibility={data.$state.isLoading ? 'hidden' : 'visible'}>
+                  <Td>
+                    <Link as={GatsbyLink} to={`./${template.id}`}>
+                      {template.description}
+                    </Link>
+                  </Td>
+                  <Td>{template.envelope?.subject}</Td>
+                  <Td>{template.envelope?.to}</Td>
+                  <Td>{template.envelope?.replyTo}</Td>
+                  <Td>{template.updatedAt}</Td>
+                  <Td>{template.createdAt}</Td>
+                </Tr>
+              )
+            })}
 
-            {data.allTemplate().nodes.length === 0 && (
-              <Tr visibility={isLoading ? 'hidden' : 'visible'}>
+            {data.allTemplate().totalCount === 0 && (
+              <Tr visibility={data.$state.isLoading ? 'hidden' : 'visible'}>
                 <Td colSpan={6}>No templates found</Td>
               </Tr>
             )}
@@ -229,4 +257,4 @@ export const query = graphql`
   }
 `
 
-export {Head} from '@atsnek/jaen'
+export {Head} from 'jaen'

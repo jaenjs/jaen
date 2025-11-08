@@ -5,7 +5,7 @@ import {
   ModalContent,
   ModalOverlay
 } from '@chakra-ui/react'
-import {JaenPage, MediaNode, PageProvider, useMediaModal} from '@atsnek/jaen'
+import {JaenPage, MediaNode, PageProvider, useMediaModal} from 'jaen'
 import {useEffect, useState} from 'react'
 
 import Media from './media'
@@ -18,7 +18,9 @@ export interface MediaSelectorProps {
 }
 
 const MediaModal: React.FC<MediaSelectorProps> = props => {
-  const context = useMediaModal()
+  const context = useMediaModal({
+    id: 'MediaModal'
+  })
 
   const [jaenPage, setJaenPage] = useState<
     {

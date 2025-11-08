@@ -89,6 +89,7 @@ function evaluateFile(file: VFile, components: {[key: string]: any}) {
 interface Defaults {
   gfm: boolean
   frontmatter: boolean
+  value?: string
   math: boolean
   directive: boolean
   mdast?: MdastRoot
@@ -99,7 +100,9 @@ const initializeState = (
     [key: string]: any
   } = {}
 ) => {
-  const markdown = defaults.mdast ? parseMdast(defaults.mdast) : ''
+  const markdown = defaults.mdast
+    ? parseMdast(defaults.mdast)
+    : defaults.value || ''
 
   const file = createFile(markdown)
 

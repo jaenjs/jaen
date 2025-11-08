@@ -1,8 +1,9 @@
-import {Field, PageConfig, PageProps} from '@atsnek/jaen'
+import {Field, PageConfig, PageProps} from 'jaen'
 import {Box} from '@chakra-ui/react'
-import {MdxField} from '@atsnek/jaen-fields-mdx'
+import {MdxField, UncontrolledMdxField} from 'jaen-fields-mdx'
 import {Link} from 'gatsby-plugin-jaen'
-import {usePage} from '@atsnek/jaen'
+import {usePage} from 'jaen'
+import {useEffect, useState} from 'react'
 
 const QASMPlayground: React.FC<{
   playground?: boolean
@@ -24,7 +25,37 @@ const Page: React.FC<PageProps> = ({location, pageContext}) => {
 
   const page = usePage()
 
-  console.log('page:', page)
+  const [value, setValue] = useState<any>()
+
+  useEffect(() => {
+    const storedValue = localStorage.getItem('mdxValue')
+    if (storedValue) {
+      setValue(storedValue)
+    }
+  }, [])
+
+  const save = () => {
+    localStorage.setItem('mdxValue', value)
+  }
+
+  const needsSaving = value !== localStorage.getItem('mdxValue')
+
+  // return (
+  //   <>
+  //     <UncontrolledMdxField
+  //       components={{QASMPlayground}}
+  //       value={value}
+  //       onUpdateValue={(mdast: any, value: string) => {
+  //         setValue(value)
+  //       }}
+  //       isEditing={true}
+  //     />
+
+  //     <button onClick={save} disabled={!needsSaving}>
+  //       Save
+  //     </button>
+  //   </>
+  // )
 
   return (
     <>
@@ -59,6 +90,7 @@ const Page: React.FC<PageProps> = ({location, pageContext}) => {
         <p>test</p>
       </Link>
       <MdxField
+        name="my-mdx-field"
         components={{
           QASMPlayground,
           code: ({children, ...props}: any) => {

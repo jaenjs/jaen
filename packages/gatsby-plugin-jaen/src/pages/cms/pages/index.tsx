@@ -1,7 +1,7 @@
 import {useLocation} from '@reach/router'
 import {navigate, PageProps} from 'gatsby'
 
-import {PageConfig, useNotificationsContext} from '@atsnek/jaen'
+import {PageConfig, useNotificationsContext} from 'jaen'
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import {FaArrowRight} from '@react-icons/all-files/fa/FaArrowRight'
 import {FaEdit} from '@react-icons/all-files/fa/FaEdit'
@@ -201,8 +201,6 @@ const PagesPage: React.FC = () => {
         },
         parentPages,
         onSubmit: data => {
-          alert('submit')
-          console.log('manager.updatePage', manager.updatePage)
           manager.updatePage(currentPage.id, {
             slug: data.slug,
             template: data.template,
@@ -425,4 +423,4 @@ export const pageConfig: PageConfig = {
   }
 }
 
-export {Head} from '@atsnek/jaen'
+export {Head} from 'jaen'

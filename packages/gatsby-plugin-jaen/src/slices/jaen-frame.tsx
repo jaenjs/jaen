@@ -4,10 +4,12 @@ import {
   useJaenUpdateModalContext,
   useMediaModal,
   useNotificationsContext,
-  checkUserRoles
-} from '@atsnek/jaen'
+  checkUserRoles,
+  useAuthUser
+} from 'jaen'
 import {graphql, SliceComponentProps} from 'gatsby'
 import {useEffect, useState} from 'react'
+import {globalHistory} from '@reach/router'
 
 import {FaEdit} from '@react-icons/all-files/fa/FaEdit'
 import {FaFileDownload} from '@react-icons/all-files/fa/FaFileDownload'
@@ -46,7 +48,10 @@ const Slice: React.FC<SliceProps> = props => {
   const manager = useCMSManagement()
 
   const auth = useAuth()
-  const mediaModal = useMediaModal()
+  const authUser = useAuthUser()
+  const mediaModal = useMediaModal({
+    id: 'JaenFrameMediaModal'
+  })
 
   const {toast} = useNotificationsContext()
 
@@ -66,29 +71,39 @@ const Slice: React.FC<SliceProps> = props => {
         setPageConfig(config)
       })
     }
+
+    globalHistory.listen(({action}) => {
+      if (action !== 'PUSH') return
+
+      if (props.pageConfig) {
+        parsePageConfig(props.pageConfig).then(config => {
+          setPageConfig(config)
+        })
+      }
+    })
   }, [props.pageConfig])
 
   useEffect(() => {
     const isJaenAdmin = checkUserRoles(auth.user, ['jaen:admin'])
 
     if (isJaenAdmin) {
-      extendMenu('user', {
-        group: 'add',
-        items: {
-          addPage: {
-            label: 'New page',
-            icon: FaSitemap,
-            path: `/cms/pages/new/#${btoa(props.jaenPageId)}`
-          },
-          addMedia: {
-            label: 'New media',
-            icon: FaImage,
-            onClick: () => {
-              mediaModal.toggleModal()
-            }
-          }
-        }
-      })
+      // extendMenu('user', {
+      //   group: 'add',
+      //   items: {
+      //     addPage: {
+      //       label: 'New page',
+      //       icon: FaSitemap,
+      //       path: `/cms/pages/new/#${btoa(props.jaenPageId)}`
+      //     },
+      //     addMedia: {
+      //       label: 'New media',
+      //       icon: FaImage,
+      //       onClick: () => {
+      //         mediaModal.toggleModal()
+      //       }
+      //     }
+      //   }
+      // })
 
       // Add jaenCMS user menu
       extendMenu('user', {
@@ -108,7 +123,8 @@ const Slice: React.FC<SliceProps> = props => {
                   : 'You can no longer edit the page',
                 status: !manager.isEditing ? 'success' : 'info'
               })
-            }
+            },
+            order: 1
           },
           save: {
             label: 'Save draft',
@@ -121,7 +137,8 @@ const Slice: React.FC<SliceProps> = props => {
                 description: 'Your changes have been saved',
                 status: 'success'
               })
-            }
+            },
+            order: 2
           },
           import: {
             label: 'Import draft',
@@ -142,7 +159,8 @@ const Slice: React.FC<SliceProps> = props => {
                   status: 'error'
                 })
               }
-            }
+            },
+            order: 3
           },
           discard: {
             label: 'Discard changes',
@@ -165,7 +183,8 @@ const Slice: React.FC<SliceProps> = props => {
             icon: FaGlobe,
             onClick: async () => {
               manager.draft.publish()
-            }
+            },
+            order: 4
           }
         }
       })
@@ -226,6 +245,7 @@ const Slice: React.FC<SliceProps> = props => {
           [node.id]: {
             label: config.menu?.label?.toString() || config.label,
             path: config.menu?.path?.toString() || node.path,
+            order: config.menu?.order,
             icon
           }
         }
@@ -244,16 +264,22 @@ const Slice: React.FC<SliceProps> = props => {
           logo: <Logo />
         },
         user: {
-          user: auth.user
+          user: auth.user?.profile
             ? {
                 username:
                   auth.user.profile.preferred_username?.replace(
                     `@${auth.user.profile['urn:zitadel:iam:user:resourceowner:primary_domain']}`,
                     ''
                   ) || auth.user.profile.sub,
-                firstName: auth.user?.profile?.given_name,
-                lastName: auth.user?.profile?.family_name,
-                avatarURL: auth.user?.profile?.picture
+                firstName:
+                  authUser.user?.human?.profile?.firstName ||
+                  auth.user?.profile?.given_name,
+                lastName:
+                  authUser.user?.human?.profile?.lastName ||
+                  auth.user?.profile?.family_name,
+                avatarURL:
+                  authUser.user?.human?.profile?.avatarUrl ||
+                  auth.user?.profile?.picture
               }
             : {
                 username: 'Guest'

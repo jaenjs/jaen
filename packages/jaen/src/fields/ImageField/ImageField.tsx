@@ -35,7 +35,7 @@ export interface ImageFieldProps extends ImageProps {
    * @example
    * ```tsx
    *
-   * import {Field, PhotoProvider} from '@atsnek/jaen'
+   * import {Field, PhotoProvider} from 'jaen'
    *
    * <PhotoProvider maskOpacity={0.8}>
    *  <Field.Image ... lightboxGroup />
@@ -51,7 +51,7 @@ export interface ImageFieldProps extends ImageProps {
    *
    * @example
    * ```tsx
-   * import {Field} from '@atsnek/jaen'
+   * import {Field} from 'jaen'
    *
    * <Field.Image ... overload defaultValue="https://i.giphy.com/media/duzpaTbCUy9Vu/giphy.webp" />
    * ```
@@ -87,6 +87,7 @@ export const ImageField = connectField<ImageFieldMediaId, ImageFieldProps>(
     const {jaenPage} = usePageContext()
 
     const context = useMediaModal({
+      id: jaenField.id || jaenField.name,
       jaenPageId: jaenPage.id,
       onSelect: media => {
         jaenField.onUpdateValue(media.id)

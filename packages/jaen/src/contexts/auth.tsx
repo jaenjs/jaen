@@ -1,9 +1,11 @@
-import {Alert, AlertIcon, Box, Center, Spinner, Text} from '@chakra-ui/react'
+import {Alert, AlertIcon, Box, Center} from '@chakra-ui/react'
 import React, {useEffect, useMemo} from 'react'
 import {AuthProvider} from 'react-oidc-context'
 import {PageProps} from '../types'
 
 import {useAuth as useOIDCAuth} from 'react-oidc-context'
+import {AuthUserProvider} from './auth-user'
+import {useNotificationsContext} from './notifications'
 
 export const useAuth = () => {
   const oidcAuth = useOIDCAuth()
@@ -29,11 +31,11 @@ export const useAuth = () => {
 
       const data = await response.json()
 
-      const userRoles = data.result.map((grant: any) => {
+      const userRoles = (data.result?.map((grant: any) => {
         return (grant.roles || []).map((role: any) => {
           return `${grant.projectId}:${role}`
         })
-      })
+      }) || []) as string[][]
 
       const projectScopedRoles = userRoles.flat()
 
@@ -120,7 +122,7 @@ export const AuthenticationProvider: React.FC<{
           window.location.pathname
         )
       }}>
-      {children}
+      <AuthUserProvider>{children}</AuthUserProvider>
     </AuthProvider>
   )
 }
@@ -135,6 +137,7 @@ export const withAuthSecurity = <
   const Wrapper: React.FC<P> = props => {
     const pageConfigAuth = props.pageContext.pageConfig?.auth
     const auth = useAuth()
+    const notify = useNotificationsContext()
 
     const loadingText = useMemo(() => {
       switch (auth.activeNavigator) {
@@ -151,40 +154,35 @@ export const withAuthSecurity = <
       }
     }, [auth.activeNavigator])
 
-    const isAuthRequired = pageConfigAuth?.isRequired
+    useEffect(() => {
+      if (auth.error) {
+        notify.toast({
+          title: 'Error',
+          description: auth.error.message,
+          status: 'error'
+        })
+      }
+    }, [auth.error, notify])
 
-    if (loadingText) {
-      return (
-        <Center height="100vh">
-          <Box textAlign="center">
-            <Spinner size="xl" color="blue.500" mb={4} />
-            <Text>{loadingText}</Text>
-            {auth.error && (
-              <Alert status="error" mt={4}>
-                <AlertIcon />
-                Error: {auth.error.message}
-              </Alert>
-            )}
-          </Box>
-        </Center>
-      )
-    }
+    useEffect(() => {
+      if (loadingText) {
+        notify.toast({
+          title: loadingText,
+          status: 'info'
+        })
+      }
+    }, [loadingText])
 
-    if (auth.error) {
-      return (
-        <Center height="100vh">
-          <Box textAlign="center">
-            <Alert status="error" mb={4}>
-              <AlertIcon />
-              Error: {auth.error.message}
-            </Alert>
-          </Box>
-        </Center>
-      )
-    }
+    if (pageConfigAuth?.isRequired) {
+      let roles = pageConfigAuth?.roles
 
-    if (isAuthRequired) {
-      const roles = pageConfigAuth?.roles
+      if (pageConfigAuth.isAdminRequired) {
+        if (!roles) {
+          roles = ['jaen:admin']
+        } else {
+          roles.push('jaen:admin')
+        }
+      }
 
       if (roles) {
         const hasRoles = checkUserRoles(auth.user, roles)
