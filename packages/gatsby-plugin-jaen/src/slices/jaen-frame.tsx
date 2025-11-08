@@ -87,23 +87,23 @@ const Slice: React.FC<SliceProps> = props => {
     const isJaenAdmin = checkUserRoles(auth.user, ['jaen:admin'])
 
     if (isJaenAdmin) {
-      extendMenu('user', {
-        group: 'add',
-        items: {
-          addPage: {
-            label: 'New page',
-            icon: FaSitemap,
-            path: `/cms/pages/new/#${btoa(props.jaenPageId)}`
-          },
-          addMedia: {
-            label: 'New media',
-            icon: FaImage,
-            onClick: () => {
-              mediaModal.toggleModal()
-            }
-          }
-        }
-      })
+      // extendMenu('user', {
+      //   group: 'add',
+      //   items: {
+      //     addPage: {
+      //       label: 'New page',
+      //       icon: FaSitemap,
+      //       path: `/cms/pages/new/#${btoa(props.jaenPageId)}`
+      //     },
+      //     addMedia: {
+      //       label: 'New media',
+      //       icon: FaImage,
+      //       onClick: () => {
+      //         mediaModal.toggleModal()
+      //       }
+      //     }
+      //   }
+      // })
 
       // Add jaenCMS user menu
       extendMenu('user', {
