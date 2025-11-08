@@ -49,6 +49,7 @@
     "gatsby-plugin-google-gtag": "^5.12.0",
     "gatsby-plugin-image": "^3.13.1",
     "gatsby-plugin-manifest": "^5.12.0",
+    "gatsby-plugin-remove-console": "^0.0.2",
     "gatsby-plugin-sharp": "^5.11.0",
     "gatsby-plugin-sitemap": "^6.12.0",
     "gatsby-plugin-ts-config": "^2.1.3",
