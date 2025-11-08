@@ -4,6 +4,7 @@ import {
   ButtonGroup,
   Center,
   HStack,
+  Icon,
   IconButton,
   Image,
   Input,
@@ -18,7 +19,7 @@ import {
   Spinner,
   Text
 } from '@chakra-ui/react'
-import {MediaNode} from '@atsnek/jaen'
+import {MediaNode} from 'jaen'
 import {useEffect} from 'react'
 import FilerobotImageEditor, {TABS} from 'react-filerobot-image-editor'
 
@@ -28,6 +29,8 @@ import {FaClone} from '@react-icons/all-files/fa/FaClone'
 import {FaDownload} from '@react-icons/all-files/fa/FaDownload'
 import {FaSlidersH} from '@react-icons/all-files/fa/FaSlidersH'
 import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
+import {FaCheck} from '@react-icons/all-files/fa/FaCheck'
+import {FaFile} from '@react-icons/all-files/fa/FaFile'
 
 import {TransformComponent, TransformWrapper} from 'react-zoom-pan-pinch'
 
@@ -37,6 +40,8 @@ export interface MediaPreviewProps {
   selectedMediaNode: MediaNode | null
   onSelectMediaNode: (node: MediaNode | null) => void
   mediaNodes: MediaNode[]
+  isSelector?: boolean
+  onSelect?: (id: string) => void
   isPreview: MediaPreviewState
   onPreview: (state: MediaPreviewState) => void
 
@@ -57,6 +62,8 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   selectedMediaNode,
   onSelectMediaNode,
   mediaNodes,
+  isSelector,
+  onSelect,
   isPreview,
   onPreview,
   onDelete,
@@ -191,6 +198,11 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                 aria-label="Customize selected image"
                 icon={<FaSlidersH />}
                 onClick={handleEdit}
+                isDisabled={
+                  selectedMediaNode?.mimeType
+                    ? !selectedMediaNode.mimeType.startsWith('image/')
+                    : true
+                }
               />
 
               <IconButton
@@ -209,6 +221,19 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                 icon={<FaTrash />}
                 onClick={handleDelete}
               />
+
+              {isSelector && (
+                <Button
+                  variant="solid"
+                  leftIcon={<FaCheck />}
+                  onClick={() => {
+                    if (selectedMediaNode && onSelect) {
+                      onSelect(selectedMediaNode.id)
+                    }
+                  }}>
+                  Choose
+                </Button>
+              )}
             </ButtonGroup>
           </HStack>
         </ModalHeader>
@@ -222,6 +247,40 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
               useEffect(() => {
                 resetTransform()
               }, [selectedMediaNode?.url])
+
+              if (selectedMediaNode?.mimeType) {
+                // If the mimeType is set, we can check if it's an image or PDF
+                if (
+                  !selectedMediaNode.mimeType.startsWith('image/') &&
+                  selectedMediaNode.mimeType !== 'application/pdf'
+                ) {
+                  return (
+                    <Center boxSize="full">
+                      <Icon as={FaFile} height={16} width={16} />
+                    </Center>
+                  )
+                }
+
+                if (selectedMediaNode.mimeType === 'application/pdf') {
+                  // If the mimeType is a PDF, we can render a placeholder
+                  return (
+                    <TransformComponent>
+                      <Image
+                        w="100%"
+                        h="100%"
+                        objectFit="contain"
+                        src={selectedMediaNode?.preview?.url}
+                        alt={selectedMediaNode?.description}
+                        fallback={
+                          <Center boxSize="full">
+                            <Spinner color="brand.300" />
+                          </Center>
+                        }
+                      />
+                    </TransformComponent>
+                  )
+                }
+              }
 
               return (
                 <TransformComponent>
@@ -280,8 +339,8 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                 TABS.ANNOTATE,
                 TABS.WATERMARK
               ]}
-              savingPixelRatio={0}
-              previewPixelRatio={0}
+              savingPixelRatio={8}
+              // previewPixelRatio={0}
             />
           )}
         </ModalBody>
@@ -331,6 +390,20 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
 
                 if (!node) {
                   return <Text>{nodeIndex}</Text>
+                }
+
+                if (node.mimeType) {
+                  // Only check if the mimeType is set. Legacy media nodes might not have it.
+
+                  if (
+                    !node.mimeType.startsWith('image/') &&
+                    node.mimeType !== 'application/pdf'
+                  ) {
+                    // If the mimeType is not an image or PDF, fall back to a placeholder
+                    return (
+                      <Icon as={FaFile} height={16} width={16} key={node.id} />
+                    )
+                  }
                 }
 
                 return (

@@ -1,5 +1,4 @@
 import React, {createContext, useContext, useEffect, useState} from 'react'
-import {v4 as uuidv4} from 'uuid' // Import uuid to generate unique IDs
 import {MediaNode} from '../types'
 
 // Define the context type
@@ -11,6 +10,7 @@ type MediaModalContextType = {
     isSelector?: boolean
     id?: string
     defaultSelected?: string
+    accept?: Record<string, string[]>
   }) => void
 }
 
@@ -37,6 +37,7 @@ export const MediaModalProvider: React.FC<MediaModalProviderProps> = ({
     id: string
     defaultSelected?: string
     jaenPageId?: string
+    accept?: Record<string, string[]>
   }>({
     isOpen: false,
     isSelector: false,
@@ -48,13 +49,15 @@ export const MediaModalProvider: React.FC<MediaModalProviderProps> = ({
     id?: string
     defaultSelected?: string
     jaenPageId?: string
+    accept?: Record<string, string[]>
   }) => {
     setOpen({
       isOpen: !open.isOpen,
       isSelector: !!args?.isSelector,
       id: args?.id || 'default',
       defaultSelected: args?.defaultSelected,
-      jaenPageId: args?.jaenPageId
+      jaenPageId: args?.jaenPageId,
+      accept: args?.accept
     })
   }
 
@@ -67,6 +70,8 @@ export const MediaModalProvider: React.FC<MediaModalProviderProps> = ({
     })
     window.dispatchEvent(onSelectEvent)
   }
+
+  const memoedChildren = React.useMemo(() => children, [children])
 
   return (
     <MediaModalContext.Provider
@@ -82,16 +87,19 @@ export const MediaModalProvider: React.FC<MediaModalProviderProps> = ({
             isSelector={open.isSelector}
             defaultSelected={open.defaultSelected}
             jaenPageId={open.jaenPageId}
+            accept={open.accept}
           />
         </React.Suspense>
       )}
-      {children}
+      {memoedChildren}
     </MediaModalContext.Provider>
   )
 }
 
 export interface UseMediaModalArgs {
+  id: string
   jaenPageId?: string
+  accept?: Record<string, string[]>
   onSelect?: (mediaNode: MediaNode) => void
 }
 
@@ -101,8 +109,6 @@ export const useMediaModal = (args?: UseMediaModalArgs) => {
     throw new Error('useMediaModal must be used within a MediaModalProvider')
   }
 
-  const [uniqueId] = useState<string>(uuidv4())
-
   useEffect(() => {
     if (!args?.onSelect) return
 
@@ -110,7 +116,7 @@ export const useMediaModal = (args?: UseMediaModalArgs) => {
       // Check if the event is the 'mediaNodeSelected' event
       if (
         event.type === 'mediaNodeSelected' &&
-        event.detail.uniqueId === uniqueId
+        event.detail.uniqueId === `${args.id}-${args.jaenPageId}`
       ) {
         const selectedMediaNode = event.detail.mediaNode
         // Call the onSelect callback with the selected media node
@@ -137,10 +143,11 @@ export const useMediaModal = (args?: UseMediaModalArgs) => {
   return {
     toggleModal: (options?: {defaultSelected?: string}) =>
       context.toggleModal({
-        id: uniqueId,
+        id: `${args?.id}-${args?.jaenPageId}`,
         isSelector: !!args?.onSelect,
         defaultSelected: options?.defaultSelected,
-        jaenPageId: args?.jaenPageId
+        jaenPageId: args?.jaenPageId,
+        accept: args?.accept
       }),
     isOpen: context.isOpen
   }

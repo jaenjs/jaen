@@ -22,6 +22,8 @@ import {useSiteMetadataContext} from './site-metadata'
 import {uploadFile} from '../utils/open-storage-gateway'
 import {useNotificationsContext} from './notifications'
 import {sqJaen} from '../clients/jaen/src'
+import {useAuth} from './auth'
+// import {diffObjects} from '../utils/diff-objects'
 
 // Errors
 
@@ -110,6 +112,8 @@ interface CMSManagementProviderProps {
 // Create the CMSManagementProvider component
 export const CMSManagementProvider = withRedux(
   ({staticPages, children, templates}: CMSManagementProviderProps) => {
+    const auth = useAuth()
+
     const dispatch = useAppDispatch()
 
     const notification = useNotificationsContext()
@@ -277,6 +281,8 @@ export const CMSManagementProvider = withRedux(
         throw new DuplicateSlugError(slug)
       }
 
+      page.createdBy = auth.user?.profile?.sub || 'unknown'
+
       dispatch(pageActions.page_updateOrCreate(page))
 
       return store.getState().page.pages.lastAddedNodeId
@@ -286,56 +292,9 @@ export const CMSManagementProvider = withRedux(
       pageId: string,
       updatedPage: Partial<JaenPage>
     ): void => {
-      console.log('updatedPage', updatedPage, 'pageId', pageId)
-
       const page = pagesDict[pageId]
 
-      function deepObjectDiff(
-        obj1: Partial<JaenPage>,
-        obj2: Partial<JaenPage>
-      ) {
-        function compareObjects(
-          o1: {[x: string]: any},
-          o2: {[x: string]: any; hasOwnProperty: (arg0: string) => any}
-        ) {
-          for (const key in o2) {
-            if (o2.hasOwnProperty(key)) {
-              if (
-                o1[key] &&
-                typeof o1[key] === 'object' &&
-                o2[key] &&
-                typeof o2[key] === 'object'
-              ) {
-                if (!compareObjects(o1[key], o2[key])) {
-                  return false
-                }
-              } else if (o1[key] !== o2[key]) {
-                return false
-              }
-            }
-          }
-          return true
-        }
-
-        const diff: Partial<JaenPage> = {}
-
-        for (const key in obj2) {
-          if (
-            !obj1.hasOwnProperty(key) ||
-            (typeof obj2[key] === 'object' &&
-              !compareObjects(obj1[key], obj2[key])) ||
-            (typeof obj2[key] !== 'object' && obj1[key] !== obj2[key])
-          ) {
-            diff[key] = obj2[key]
-          }
-        }
-
-        return diff
-      }
-
-      updatedPage = deepObjectDiff(page || {}, updatedPage)
-
-      console.log('updatedPage', updatedPage, 'page', page)
+      // updatedPage = diffObjects<Partial<JaenPage>>(page || {}, updatedPage)
 
       // check if slug is unique when updating slug
       const slug = updatedPage.slug || 'new-page'
@@ -350,15 +309,17 @@ export const CMSManagementProvider = withRedux(
         throw new DuplicateSlugError(slug)
       }
 
+      const fromId =
+        updatedPage?.parentPage?.id !== undefined &&
+        page?.parentPage?.id !== updatedPage?.parentPage?.id
+          ? page?.parentPage?.id
+          : undefined
+
       dispatch(
         pageActions.page_updateOrCreate({
           id: pageId,
           ...updatedPage,
-          fromId:
-            // Only set the fromId if the parentPage has changed
-            updatedPage?.parentPage?.id || updatedPage?.parentPage === null
-              ? page?.parentPage?.id
-              : undefined
+          fromId: fromId
         })
       )
     }

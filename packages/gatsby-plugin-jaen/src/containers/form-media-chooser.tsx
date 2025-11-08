@@ -1,4 +1,4 @@
-import {MediaNode, useMediaModal} from '@atsnek/jaen'
+import {MediaNode, useMediaModal} from 'jaen'
 
 import {FormMediaChooser} from '../components/shared/FormMediaChooser'
 
@@ -11,6 +11,7 @@ export interface FormMediaChooserProps {
 
 const FormMediaChooserContainer: React.FC<FormMediaChooserProps> = props => {
   const context = useMediaModal({
+    id: 'FormMediaChooser',
     onSelect: media => {
       props.onChoose(media)
     }

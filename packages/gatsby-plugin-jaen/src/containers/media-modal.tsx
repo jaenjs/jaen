@@ -5,7 +5,7 @@ import {
   ModalContent,
   ModalOverlay
 } from '@chakra-ui/react'
-import {JaenPage, MediaNode, PageProvider, useMediaModal} from '@atsnek/jaen'
+import {JaenPage, MediaNode, PageProvider, useMediaModal} from 'jaen'
 import {useEffect, useState} from 'react'
 
 import Media from './media'
@@ -15,10 +15,13 @@ export interface MediaSelectorProps {
   defaultSelected?: string
   jaenPageId?: string
   onSelect: (mediaNode: MediaNode) => void
+  accept?: Record<string, string[]>
 }
 
 const MediaModal: React.FC<MediaSelectorProps> = props => {
-  const context = useMediaModal()
+  const context = useMediaModal({
+    id: 'MediaModal'
+  })
 
   const [jaenPage, setJaenPage] = useState<
     {
@@ -60,6 +63,7 @@ const MediaModal: React.FC<MediaSelectorProps> = props => {
               onSelect={props.onSelect}
               defaultSelected={props.defaultSelected}
               jaenPageId={props.jaenPageId}
+              accept={props.accept}
             />
           </PageProvider>
         </ModalBody>

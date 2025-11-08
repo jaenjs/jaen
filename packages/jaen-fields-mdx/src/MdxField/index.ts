@@ -4,3 +4,4 @@ export {
   UncontrolledMdxField,
   MdxFieldProps
 } from './MdxField.js'
+export {useInjectMdxPropContext} from './inject-mdx-prop-context.js'

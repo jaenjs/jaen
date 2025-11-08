@@ -1,4 +1,4 @@
-import {PageProps, PageProvider, useDynamicPaths, withRedux} from '@atsnek/jaen'
+import {PageProps, PageProvider, useDynamicPaths, withRedux} from 'jaen'
 
 import React, {lazy, useEffect, useMemo} from 'react'
 import {useJaenPagePaths} from './jaen-page-paths'
@@ -46,8 +46,6 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> =
     }
 
     if (dynamic) {
-      console.log('dynamic', dynamic)
-
       return (
         <PageProvider jaenPage={{id: dynamic.jaenPageId}}>
           <React.Suspense fallback={<div>Loading...</div>}>
