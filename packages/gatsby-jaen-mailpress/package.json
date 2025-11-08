@@ -2,11 +2,11 @@
   "name": "gatsby-jaen-mailpress",
   "version": "0.0.6",
   "description": "Mailpress management plugin for Jaen",
-  "main": "index.js",
-  "types": "./dist/index.d.ts",
   "keywords": [
     "gatsby"
   ],
+  "main": "index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "src",
     "dist",
@@ -24,16 +24,16 @@
     "isomorphic-dompurify": "^1.9.0",
     "react-hook-form": "^7.46.1"
   },
+  "devDependencies": {
+    "gqty": "^3.2.2",
+    "graphql": "^16.9.0",
+    "typescript": "^5.7.2"
+  },
   "peerDependencies": {
     "@chakra-ui/icons": "^2.1.1",
     "@chakra-ui/react": "^2.8.1",
     "gatsby": "^5.12.4",
     "jaen": "^1.0.0",
     "react": "^18.2.0"
-  },
-  "devDependencies": {
-    "gqty": "^3.2.2",
-    "graphql": "^16.9.0",
-    "typescript": "^5.7.2"
   }
 }

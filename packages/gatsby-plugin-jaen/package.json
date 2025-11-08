@@ -11,6 +11,7 @@
     "babel-plugin-remove-page-config.js"
   ],
   "scripts": {
+    "build": "tsc gatsby/* --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule && yarn build:css",
     "build:css": "tailwindcss -i ./src/styles/globals.css -o dist/jaen.css",
     "build:css:watch": "tailwindcss -i ./src/styles/globals.css -o dist/jaen.css --watch",
     "build": "tsc gatsby/* --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule && yarn build:css"
@@ -81,5 +82,11 @@
     "@types/react-beautiful-dnd": "^13.1.8",
     "gatsby": "^5.11.0",
     "tailwindcss": "^3.4.1"
+  },
+  "peerDependencies": {
+    "@react-icons/all-files": "https://github.com/react-icons/react-icons/releases/download/v4.11.0/react-icons-all-files-4.11.0.tgz",
+    "gatsby": "^5.11.0",
+    "jaen": "^1.0.0",
+    "react": "^18.2.0"
   }
 }
