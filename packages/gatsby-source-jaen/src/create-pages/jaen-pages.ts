@@ -3,6 +3,7 @@ import {CreatePagesArgs} from 'gatsby'
 import {onCreatePage} from '../on-create-page/jaen-page'
 import {readPageConfig} from '../utils/page-config-reader'
 import {generatePageOriginPath} from '../utils/path'
+import {normalizePath, shouldSkipPageCreation} from '../utils/path-filters'
 
 export const createPages = async (args: CreatePagesArgs) => {
   const {actions, graphql, reporter} = args
@@ -64,6 +65,12 @@ export const createPages = async (args: CreatePagesArgs) => {
       if (!pagePath) {
         reporter.panicOnBuild(`Error while generating path for page ${node.id}`)
         return
+      }
+
+      const normalizedPath = normalizePath(pagePath)
+
+      if (shouldSkipPageCreation(normalizedPath)) {
+        continue
       }
 
       const jaenTemplate = allJaenTemplate.nodes.find(
