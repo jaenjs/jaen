@@ -1,15 +1,22 @@
+import path from 'path'
+
 import {PageConfig} from 'jaen'
 import {CreatePageArgs, Node} from 'gatsby'
 
 import {getJaenPageParentId} from '../utils/get-jaen-page-parent-id'
 import {readPageConfig} from '../utils/page-config-reader'
+import {normalizePath, shouldSkipPageCreation} from '../utils/path-filters'
+import {ensureSitemapManager} from '../utils/sitemap-manager'
 
 export const onCreatePage = async ({
   actions,
   page,
   getNode,
-  createContentDigest
+  createContentDigest,
+  store,
+  reporter
 }: CreatePageArgs) => {
+  const normalizedPath = normalizePath(page.path)
   const expectedJaenPageId = `JaenPage ${page.path}`
   // Gatsby attaches this property at runtime, but it's not declared on the Page TS type.
   // Use a narrowed shape to make TypeScript happy without changing runtime behavior.
@@ -20,40 +27,55 @@ export const onCreatePage = async ({
     (page as unknown as MaybeStateful).isCreatedByStatefulCreatePages
   )
 
-  let jaenPageId = page.context?.jaenPageId as string | undefined
+  const existingJaenPageId = page.context?.jaenPageId as string | undefined
   let pageConfig = page.context?.pageConfig as PageConfig | undefined
 
   const shouldEnsureJaenPageId =
-    jaenPageId === undefined || (isStateful && jaenPageId !== expectedJaenPageId)
+    existingJaenPageId === undefined ||
+    (isStateful && existingJaenPageId !== expectedJaenPageId)
 
   const shouldEnsurePageConfig = pageConfig === undefined
+
+  if (shouldSkipPageCreation(normalizedPath)) {
+    actions.deletePage(page)
+
+    return
+  }
 
   if (shouldEnsureJaenPageId || shouldEnsurePageConfig) {
     pageConfig = pageConfig ?? readPageConfig(page.component)
 
     const nextJaenPageId = isStateful
       ? expectedJaenPageId
-      : jaenPageId ?? expectedJaenPageId
+      : existingJaenPageId ?? expectedJaenPageId
+
+    const preservedIntl = (page.context as {intl?: unknown} | undefined)?.intl
+
+    const nextContext = (page.context ?? {}) as Record<string, unknown>
+
+    if (preservedIntl !== undefined && nextContext.intl === undefined) {
+      nextContext.intl = preservedIntl
+    }
+
+    nextContext.jaenPageId = nextJaenPageId
+    nextContext.pageConfig = pageConfig
 
     actions.deletePage(page)
 
     actions.createPage({
       ...page,
-      context: {
-        ...page.context,
-        jaenPageId: nextJaenPageId,
-        pageConfig
-      }
+      context: nextContext
     })
 
-    jaenPageId = nextJaenPageId
+    return
   }
+
+  const jaenPageId = existingJaenPageId ?? expectedJaenPageId
 
   // Find the JaenPage node with the same id
   const jaenPageNode = getNode(jaenPageId) as any | undefined
 
-  const path = page.path.replace(/\/+$/, '') // Remove trailing slashes from the path
-  const lastPathElement = path.split('/').pop() || '' // Extract the last element
+  const lastPathElement = normalizedPath.split('/').pop() || ''
 
   const createdAt = (page as any).createdAt
     ? new Date((page as any).createdAt)
@@ -102,4 +124,54 @@ export const onCreatePage = async ({
   }
 
   await actions.createNode(node)
+
+  const programDirectory =
+    (store?.getState().program?.directory as string | undefined) ?? process.cwd()
+  const publicDirectory = path.join(programDirectory, 'public')
+  type GatsbyStoreState = {
+    config?: {
+      siteMetadata?: {
+        siteUrl?: string
+      }
+    }
+  }
+
+  const siteUrlFromConfig = (
+    store?.getState() as GatsbyStoreState | undefined
+  )?.config?.siteMetadata?.siteUrl
+
+  const siteUrlFromEnv =
+    siteUrlFromConfig ??
+    (page.context?.siteUrl as string | undefined) ??
+    process.env.GATSBY_SITE_URL ??
+    process.env.SITE_URL ??
+    'https://page.jaen.io'
+
+  const sitemapManager = ensureSitemapManager({
+    publicDirectory,
+    siteUrl: siteUrlFromEnv,
+    reporter
+  })
+
+  type PageContextWithLocales = {
+    locale?: string | null
+    localePagesId?: string | null
+    translations?: Array<{locale?: string | null; path: string}>
+    defaultLocale?: string | null
+    intl?: {defaultLocale?: string | null} | null
+  }
+
+  const contextWithLocales = (page.context ?? {}) as PageContextWithLocales
+  const defaultLocale =
+    contextWithLocales.intl?.defaultLocale ?? contextWithLocales.defaultLocale ?? null
+
+  await sitemapManager.trackPage({
+    path: normalizedPath,
+    createdAt,
+    lastModified: modifiedAt,
+    locale: contextWithLocales.locale ?? null,
+    defaultLocale,
+    localePagesId: contextWithLocales.localePagesId ?? null,
+    translations: contextWithLocales.translations
+  })
 }
