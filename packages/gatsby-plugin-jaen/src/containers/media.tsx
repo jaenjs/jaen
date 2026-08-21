@@ -51,12 +51,29 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
       const uploadedMediaNodes = await Promise.all(
         files.map(async file => {
           const {data, fileUrl, fileThumbUrl} = await uploadFile(file)
+          /**
+           * Dimensions come from actually loading the image, and the failure
+           * path matters: without an `onerror` this promise never settles, so
+           * anything the browser refuses to render -- a wrong content type, a
+           * blocked request, a file that is not an image at all -- left the
+           * upload hanging forever with nothing in the console. It is treated
+           * as "unknown size" instead, which the media node tolerates.
+           */
           const dimensions = await new Promise<{width: number; height: number}>(
             resolve => {
               const img = new Image()
+
               img.onload = () => {
                 resolve({width: img.width, height: img.height})
               }
+              img.onerror = () => {
+                console.warn(
+                  'jaen: could not read the dimensions of the uploaded file',
+                  fileUrl
+                )
+                resolve({width: 0, height: 0})
+              }
+
               img.src = fileUrl
             }
           )
