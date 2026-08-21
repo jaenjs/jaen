@@ -7,6 +7,15 @@ export interface JaenPluginOptions extends PluginOptions {
     cwd?: string
   }
   pylonUrl?: string
+  /**
+   * Origin of the storage gateway holding CMS media, without a trailing path
+   * -- `/graphql` and `/storage/<id>` are derived from it.
+   *
+   * Unset, jaen uses the public osg.snek.at, which is what every site did
+   * before this option existed. Anything with a data-governance obligation
+   * should point this at its own gateway.
+   */
+  storageUrl?: string
   zitadelGql: {
     organizationId: string
     clientId: string
@@ -52,6 +61,7 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
       cwd: Joi.string()
     }).required(),
     pylonUrl: Joi.string(),
+    storageUrl: Joi.string().uri(),
     zitadelGql: Joi.object({
       organizationId: Joi.string().required(),
       clientId: Joi.string().required(),
@@ -166,6 +176,7 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] =
 
           __JAEN_REMOTE__: JSON.stringify(pluginOptions.remote),
           __JAEN_PYLON_URL__: JSON.stringify(pluginOptions.pylonUrl),
+          __JAEN_STORAGE_URL__: JSON.stringify(pluginOptions.storageUrl),
           __JAEN_ZITADEL_GQL__: JSON.stringify(pluginOptions.zitadelGql)
         })
       ]

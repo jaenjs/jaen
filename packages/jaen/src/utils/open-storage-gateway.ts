@@ -1,6 +1,15 @@
-// Updated URL to reflect its purpose as a storage service endpoint
-const STORAGE_URL = 'https://osg.snek.at/storage'
+import {osg, storageOrigin} from '../clients/osg'
 
+/**
+ * Uploads to the storage gateway, through the client Pylon generates for it.
+ *
+ * This used to be a hand-rolled fetch to a `const STORAGE_URL` pointing at
+ * osg.snek.at: REST where the rest of jaen uses generated clients, and not
+ * configurable at all, so every jaen site sent its media to one third-party
+ * host with no way to opt out.
+ */
+
+/** What callers get back. Unchanged, so no call site has to move. */
 interface UploadedFileData {
   data: {
     file_id: string
@@ -21,103 +30,97 @@ interface UploadedFileData {
 }
 
 /**
- * Uploads a file to the storage service.
+ * Stores a file, or an object wrapped as JSON.
  *
- * @param fileData - The file payload as a JSON object, Blob, or File.
- * @param filename - (Optional) The name of the file to be uploaded. Default: 'jaen-index.json'.
- * @returns A Promise that resolves to an object containing the uploaded file's data and the URL of the uploaded file.
+ * @param fileData - a Blob/File, or any object to be stored as JSON.
+ * @param filename - name for the JSON case. Ignored for a Blob/File.
+ * @param options.driver - which backend to write to. Omitted, the gateway
+ *   picks its own default.
  */
 export const uploadFile = async (
   fileData: object | Blob | File,
-  filename: string = 'jaen-index.json'
+  filename: string = 'jaen-index.json',
+  options?: {driver?: string}
 ): Promise<UploadedFileData> => {
-  const formData = new FormData()
+  const file =
+    fileData instanceof File
+      ? fileData
+      : fileData instanceof Blob
+        ? new File([fileData], filename, {type: fileData.type})
+        : new File([JSON.stringify(fileData)], filename, {
+            type: 'application/json'
+          })
 
-  // Convert payload to Blob if it's not already a Blob or File
-  if (fileData instanceof Blob || fileData instanceof File) {
-    formData.append('file', fileData)
-  } else {
-    formData.append(
-      'file',
-      new File([JSON.stringify(fileData)], filename, {
-        type: 'application/json'
-      })
-    )
-  }
+  const uploaded = await osg.mutate(mutation => {
+    const result = mutation.upload({
+      args: {file, driver: options?.driver ?? null}
+    })
 
-  const resp = await fetch(STORAGE_URL, {
-    body: formData,
-    method: 'POST'
+    // gqty resolves exactly the fields that are read here, so this selection
+    // is the query.
+    return {
+      file_id: result.file_id,
+      file_unique_id: result.file_unique_id,
+      file_name: result.file_name,
+      mime_type: result.mime_type,
+      file_size: result.file_size,
+      url: result.url,
+      thumbUrl: result.thumbUrl,
+      thumb: result.thumb
+        ? {
+            file_id: result.thumb.file_id,
+            file_unique_id: result.thumb.file_unique_id,
+            file_size: result.thumb.file_size,
+            width: result.thumb.width,
+            height: result.thumb.height
+          }
+        : null
+    }
   })
 
-  const data = await resp.json()
-  const fileUrl = `${STORAGE_URL}/${data.file_id}`
-  const fileThumbUrl = data.thumb?.file_id
-    ? `${STORAGE_URL}/${data.thumb.file_id}`
-    : undefined
-
-  return {data, fileUrl, fileThumbUrl}
+  return {
+    data: {
+      file_id: uploaded.file_id,
+      file_unique_id: uploaded.file_unique_id,
+      file_name: uploaded.file_name ?? file.name,
+      file_size: uploaded.file_size ?? file.size,
+      mime_type: uploaded.mime_type ?? file.type,
+      ...(uploaded.thumb
+        ? {
+            thumb: {
+              file_id: uploaded.thumb.file_id,
+              file_unique_id: uploaded.thumb.file_unique_id,
+              file_size: uploaded.thumb.file_size ?? 0,
+              width: uploaded.thumb.width ?? 0,
+              height: uploaded.thumb.height ?? 0
+            }
+          }
+        : {})
+    },
+    fileUrl: uploaded.url,
+    fileThumbUrl: uploaded.thumbUrl ?? undefined
+  }
 }
 
 /**
- * Uploads a file to the storage service from a Node.js environment.
+ * The same upload from a Node process.
  *
- * @param options - An object containing the file payload and optional filename.
- * @param options.payload - The file payload as a string (in Node.js).
- * @param options.fileName - (Optional) The name of the file to be uploaded. Default: 'jaen-index.json'.
- * @returns A Promise that resolves to an object containing the uploaded file's data and the URL of the uploaded file.
+ * It used to need `form-data` and a callback-style submit. Node has had
+ * FormData, File and fetch as globals since 18, so it is the browser path
+ * with the payload wrapped, and the dependency is gone.
  */
 export const uploadFileFromNode = async (options: {
   payload: string
   fileName?: string
-}): Promise<UploadedFileData> => {
-  const FormData = (await import('form-data')).default
-  const form = new FormData({
-    maxDataSize: 20971520
-  })
+  driver?: string
+}): Promise<UploadedFileData> =>
+  await uploadFile(
+    new File([options.payload], options.fileName || 'jaen-index.json', {
+      type: 'application/json'
+    }),
+    options.fileName,
+    {driver: options.driver}
+  )
 
-  form.append('file', options.payload, {
-    filename: options.fileName || 'jaen-index.json'
-  })
-
-  // Here we create and await our promise:
-  return await new Promise<UploadedFileData>((resolve, reject) => {
-    form.submit(
-      STORAGE_URL,
-      (
-        err: any,
-        res: {
-          setEncoding: (arg0: string) => void
-          on: (
-            arg0: string,
-            arg1: {(chunk: any): void; (err: any): void}
-          ) => void
-        }
-      ) => {
-        if (err) {
-          reject(err)
-        }
-
-        let responseData = ''
-        res.setEncoding('utf8')
-        res.on('data', chunk => {
-          responseData += chunk
-        })
-
-        res.on('end', () => {
-          const data = JSON.parse(responseData)
-          const fileUrl = `${STORAGE_URL}/${data.file_id}`
-          const fileThumbUrl = data.thumb?.file_id
-            ? `${STORAGE_URL}/${data.thumb.file_id}`
-            : undefined
-
-          resolve({data, fileUrl, fileThumbUrl})
-        })
-
-        res.on('error', err => {
-          reject(err)
-        })
-      }
-    )
-  })
-}
+export {storageOrigin}
+export {storageFileUrl} from '../clients/osg'

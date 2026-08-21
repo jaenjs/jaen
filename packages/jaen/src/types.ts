@@ -7,6 +7,12 @@ declare global {
   }
 
   var __JAEN_PYLON_URL__: string | undefined
+  /**
+   * Origin of the storage gateway that holds CMS media. Undefined falls back
+   * to the public osg.snek.at, which is what every site used before this was
+   * configurable.
+   */
+  var __JAEN_STORAGE_URL__: string | undefined
   var __JAEN_EMAILWERK_URL__: string | undefined
 
   /**

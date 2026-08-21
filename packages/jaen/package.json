@@ -29,6 +29,7 @@
     "deepmerge": "^4.3.1",
     "form-data": "^4.0.0",
     "gatsby-plugin-image": "^3.11.0",
+    "gqty": "^3.2.2",
     "imtool": "^1.2.1",
     "isomorphic-dompurify": "^1.8.0",
     "oidc-client-ts": "^2.4.0",
