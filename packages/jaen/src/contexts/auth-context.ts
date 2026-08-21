@@ -149,3 +149,48 @@ export const needsOidcRuntime = (pathname?: string): boolean => {
     route => withoutLocale === route || withoutLocale.startsWith(`${route}/`)
   )
 }
+
+/**
+ * Where a signed-out visitor was headed before being sent to the login page.
+ *
+ * The OIDC round trip always lands back on the configured `redirect_uri`, one
+ * fixed URL, because `/login` calls `signinRedirect()` with no arguments.
+ * Without somewhere to park the intended path, every gated page dropped the
+ * visitor on the site root after signing in. sessionStorage survives the trip
+ * through the identity provider and is scoped to the tab.
+ */
+const RETURN_TO_KEY = 'jaen:return-to'
+
+/** Records where to come back to. Ignores the auth routes themselves. */
+export const rememberReturnTo = (path: string): void => {
+  try {
+    // Parking an auth route would bounce the visitor straight back into the
+    // flow they just finished.
+    const withoutLocale = path.replace(/^\/[a-z]{2}(?=\/|$)/, '')
+
+    if (
+      AUTH_ROUTES.some(
+        route =>
+          withoutLocale === route || withoutLocale.startsWith(`${route}/`)
+      )
+    ) {
+      return
+    }
+
+    sessionStorage.setItem(RETURN_TO_KEY, path)
+  } catch {
+    // Private mode, or storage disabled. Losing the path is not worth failing
+    // the sign-in over.
+  }
+}
+
+/** Reads and clears the parked path. Returns null when there is none. */
+export const takeReturnTo = (): string | null => {
+  try {
+    const value = sessionStorage.getItem(RETURN_TO_KEY)
+    sessionStorage.removeItem(RETURN_TO_KEY)
+    return value
+  } catch {
+    return null
+  }
+}

@@ -1,7 +1,7 @@
 import React from 'react'
 import {AuthProvider, useAuth as useOIDCAuth} from 'react-oidc-context'
 
-import {OidcAuthContext} from './auth-context'
+import {OidcAuthContext, takeReturnTo} from './auth-context'
 
 /**
  * The OIDC runtime, in a module of its own.
@@ -58,6 +58,15 @@ const OidcRuntime: React.FC<OidcRuntimeProps> = ({
           document.title,
           window.location.pathname
         )
+
+        // The provider always returns to the one configured redirect_uri, so
+        // a visitor who was sent here from a gated page lands on the wrong
+        // one. Carry them the rest of the way.
+        const returnTo = takeReturnTo()
+
+        if (returnTo && returnTo !== window.location.pathname) {
+          window.location.assign(returnTo)
+        }
       }}>
       <Bridge>{children}</Bridge>
     </AuthProvider>

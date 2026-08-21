@@ -3,7 +3,12 @@ import React, {useContext, useEffect, useMemo} from 'react'
 import {PageProps} from '../types'
 
 import {fetchCurrentUserRoles} from '../clients/zitadel-gql'
-import {ANONYMOUS_AUTH, needsOidcRuntime, OidcAuthContext} from './auth-context'
+import {
+  ANONYMOUS_AUTH,
+  needsOidcRuntime,
+  OidcAuthContext,
+  rememberReturnTo
+} from './auth-context'
 import {AuthUserProvider} from './auth-user'
 import {useNotificationsContext} from './notifications'
 
@@ -287,6 +292,31 @@ export const withAuthSecurity = <
       }
     }, [loadingText])
 
+    /**
+     * A signed-out visitor of a gated page is sent to the login page instead
+     * of being shown a message they cannot act on. The page they wanted is
+     * parked first, so the sign-in callback can bring them back to it rather
+     * than dropping them on the site root.
+     *
+     * Guarded on `isLoading` and `activeNavigator`: while the OIDC runtime is
+     * still resolving a stored session, `isAuthenticated` is false without
+     * meaning it, and redirecting on that would throw an already-signed-in
+     * visitor back through the whole flow.
+     */
+    useEffect(() => {
+      if (!pageConfigAuth?.isRequired) return
+      if (auth.isLoading || auth.isAuthenticated) return
+      if (auth.activeNavigator) return
+
+      rememberReturnTo(window.location.pathname + window.location.search)
+      window.location.assign('/login')
+    }, [
+      pageConfigAuth?.isRequired,
+      auth.isLoading,
+      auth.isAuthenticated,
+      auth.activeNavigator
+    ])
+
     if (pageConfigAuth?.isRequired) {
       let roles = pageConfigAuth?.roles
 
@@ -319,16 +349,10 @@ export const withAuthSecurity = <
         return <Component {...props} />
       }
 
-      return (
-        <Center height="100vh">
-          <Box textAlign="center">
-            <Alert.Root status="error" mb={4}>
-              <Alert.Indicator />
-              You need to be logged in to view this page
-            </Alert.Root>
-          </Box>
-        </Center>
-      )
+      // The effect above is already on its way to /login. Rendering the old
+      // "You need to be logged in" alert here would only flash an error at
+      // someone who did nothing wrong.
+      return null
     }
 
     return <Component {...props} />
