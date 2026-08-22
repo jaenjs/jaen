@@ -1,5 +1,6 @@
 import {useState} from 'react'
 import {Controller, useForm} from 'react-hook-form'
+import {useIntl} from 'react-intl'
 import {
   Alert,
   Badge,
@@ -67,6 +68,7 @@ export function SenderModal({
   onVerify,
   onDelete
 }: SenderModalProps) {
+  const intl = useIntl()
   const {open, onOpen, onClose} = useDisclosure()
   const [error, setError] = useState<string | null>(null)
   const [busySenderId, setBusySenderId] = useState<string | null>(null)
@@ -93,9 +95,20 @@ export function SenderModal({
       reset()
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message || 'An error occurred while submitting the form.')
+        setError(
+          err.message ||
+            intl.formatMessage({
+              id: 'EmailwerkSenderModalSubmitError',
+              defaultMessage: 'An error occurred while submitting the form.'
+            })
+        )
       } else {
-        setError('An unknown error occurred.')
+        setError(
+          intl.formatMessage({
+            id: 'EmailwerkSenderModalUnknownError',
+            defaultMessage: 'An unknown error occurred.'
+          })
+        )
       }
     }
   }
@@ -110,9 +123,20 @@ export function SenderModal({
       await action(id)
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message || 'Sender action failed.')
+        setError(
+          err.message ||
+            intl.formatMessage({
+              id: 'EmailwerkSenderModalActionFailed',
+              defaultMessage: 'Sender action failed.'
+            })
+        )
       } else {
-        setError('An unknown error occurred.')
+        setError(
+          intl.formatMessage({
+            id: 'EmailwerkSenderModalUnknownError',
+            defaultMessage: 'An unknown error occurred.'
+          })
+        )
       }
     } finally {
       setBusySenderId(null)
@@ -125,7 +149,10 @@ export function SenderModal({
         onClick={onOpen}
         loading={formState.isSubmitting}
         variant="outline">
-        Manage Senders
+        {intl.formatMessage({
+          id: 'EmailwerkSenderModalOpenButton',
+          defaultMessage: 'Manage Senders'
+        })}
       </Button>
 
       <Dialog.Root
@@ -140,7 +167,12 @@ export function SenderModal({
           <Dialog.Backdrop />
           <Dialog.Positioner>
             <Dialog.Content>
-              <Dialog.Header>Senders</Dialog.Header>
+              <Dialog.Header>
+                {intl.formatMessage({
+                  id: 'EmailwerkSenderModalTitle',
+                  defaultMessage: 'Senders'
+                })}
+              </Dialog.Header>
               {/* v3's CloseTrigger draws nothing of its own, so the X that
                   v2's ModalCloseButton brought has to be handed to it, at the
                   32px and neutral hover v2 gave it. */}
@@ -153,7 +185,12 @@ export function SenderModal({
                     {error && (
                       <Alert.Root status="error">
                         <Alert.Indicator />
-                        <Alert.Title mr={2}>Error!</Alert.Title>
+                        <Alert.Title mr={2}>
+                          {intl.formatMessage({
+                            id: 'EmailwerkSenderModalErrorAlertTitle',
+                            defaultMessage: 'Error!'
+                          })}
+                        </Alert.Title>
                         <Alert.Description>{error}</Alert.Description>
                       </Alert.Root>
                     )}
@@ -162,8 +199,18 @@ export function SenderModal({
                       <Table.Root size="sm">
                         <Table.Header>
                           <Table.Row>
-                            <Table.ColumnHeader>Address</Table.ColumnHeader>
-                            <Table.ColumnHeader>Transport</Table.ColumnHeader>
+                            <Table.ColumnHeader>
+                              {intl.formatMessage({
+                                id: 'EmailwerkSenderModalColumnAddress',
+                                defaultMessage: 'Address'
+                              })}
+                            </Table.ColumnHeader>
+                            <Table.ColumnHeader>
+                              {intl.formatMessage({
+                                id: 'EmailwerkSenderModalColumnTransport',
+                                defaultMessage: 'Transport'
+                              })}
+                            </Table.ColumnHeader>
                             <Table.ColumnHeader></Table.ColumnHeader>
                           </Table.Row>
                         </Table.Header>
@@ -174,10 +221,20 @@ export function SenderModal({
                                 <HStack>
                                   <Text>{sender.address}</Text>
                                   {sender.isDefault && (
-                                    <Badge colorPalette="green">default</Badge>
+                                    <Badge colorPalette="green">
+                                      {intl.formatMessage({
+                                        id: 'EmailwerkSenderModalBadgeDefault',
+                                        defaultMessage: 'default'
+                                      })}
+                                    </Badge>
                                   )}
                                   {!sender.enabled && (
-                                    <Badge colorPalette="red">disabled</Badge>
+                                    <Badge colorPalette="red">
+                                      {intl.formatMessage({
+                                        id: 'EmailwerkSenderModalBadgeDisabled',
+                                        defaultMessage: 'disabled'
+                                      })}
+                                    </Badge>
                                   )}
                                 </HStack>
                               </Table.Cell>
@@ -189,7 +246,10 @@ export function SenderModal({
                                       onClick={() =>
                                         runSenderAction(sender.id, onSetDefault)
                                       }>
-                                      Make default
+                                      {intl.formatMessage({
+                                        id: 'EmailwerkSenderModalMakeDefaultButton',
+                                        defaultMessage: 'Make default'
+                                      })}
                                     </Button>
                                   )}
                                   <Button
@@ -197,7 +257,10 @@ export function SenderModal({
                                       runSenderAction(sender.id, onVerify)
                                     }
                                     disabled={busySenderId === sender.id}>
-                                    Verify
+                                    {intl.formatMessage({
+                                      id: 'EmailwerkSenderModalVerifyButton',
+                                      defaultMessage: 'Verify'
+                                    })}
                                   </Button>
                                   <Button
                                     colorPalette="red"
@@ -205,7 +268,10 @@ export function SenderModal({
                                       runSenderAction(sender.id, onDelete)
                                     }
                                     disabled={busySenderId === sender.id}>
-                                    Delete
+                                    {intl.formatMessage({
+                                      id: 'EmailwerkSenderModalDeleteButton',
+                                      defaultMessage: 'Delete'
+                                    })}
                                   </Button>
                                 </ButtonGroup>
                               </Table.Cell>
@@ -214,21 +280,47 @@ export function SenderModal({
                         </Table.Body>
                       </Table.Root>
                     ) : (
-                      <Text color="gray.500">No senders configured yet.</Text>
+                      <Text color="gray.500">
+                        {intl.formatMessage({
+                          id: 'EmailwerkSenderModalEmpty',
+                          defaultMessage: 'No senders configured yet.'
+                        })}
+                      </Text>
                     )}
 
                     <Separator />
 
-                    <Text fontWeight="semibold">Add SMTP sender</Text>
+                    <Text fontWeight="semibold">
+                      {intl.formatMessage({
+                        id: 'EmailwerkSenderModalAddHeading',
+                        defaultMessage: 'Add SMTP sender'
+                      })}
+                    </Text>
 
                     <Controller
                       name="address"
                       control={control}
-                      rules={{required: 'Address is required'}}
+                      rules={{
+                        required: intl.formatMessage({
+                          id: 'EmailwerkSenderModalValidationAddressRequired',
+                          defaultMessage: 'Address is required'
+                        })
+                      }}
                       render={({field, fieldState: {error}}) => (
                         <Field.Root invalid={!!error}>
-                          <Field.Label>Email Address</Field.Label>
-                          <Input {...field} placeholder="noreply@example.com" />
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'EmailwerkSenderModalAddressLabel',
+                              defaultMessage: 'Email Address'
+                            })}
+                          </Field.Label>
+                          <Input
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'EmailwerkSenderModalAddressPlaceholder',
+                              defaultMessage: 'noreply@example.com'
+                            })}
+                          />
                           {error && (
                             <Text color="red.500">{error.message}</Text>
                           )}
@@ -240,7 +332,12 @@ export function SenderModal({
                       control={control}
                       render={({field}) => (
                         <Field.Root>
-                          <Field.Label>Display Name</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'EmailwerkSenderModalDisplayNameLabel',
+                              defaultMessage: 'Display Name'
+                            })}
+                          </Field.Label>
                           <Input {...field} />
                         </Field.Root>
                       )}
@@ -248,10 +345,20 @@ export function SenderModal({
                     <Controller
                       name="smtp.host"
                       control={control}
-                      rules={{required: 'SMTP Host is required'}}
+                      rules={{
+                        required: intl.formatMessage({
+                          id: 'EmailwerkSenderModalValidationHostRequired',
+                          defaultMessage: 'SMTP Host is required'
+                        })
+                      }}
                       render={({field, fieldState: {error}}) => (
                         <Field.Root invalid={!!error}>
-                          <Field.Label>SMTP Host</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'EmailwerkSenderModalHostLabel',
+                              defaultMessage: 'SMTP Host'
+                            })}
+                          </Field.Label>
                           <Input {...field} />
                           {error && (
                             <Text color="red.500">{error.message}</Text>
@@ -262,10 +369,20 @@ export function SenderModal({
                     <Controller
                       name="smtp.port"
                       control={control}
-                      rules={{required: 'SMTP Port is required'}}
+                      rules={{
+                        required: intl.formatMessage({
+                          id: 'EmailwerkSenderModalValidationPortRequired',
+                          defaultMessage: 'SMTP Port is required'
+                        })
+                      }}
                       render={({field, fieldState: {error}}) => (
                         <Field.Root invalid={!!error}>
-                          <Field.Label>SMTP Port</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'EmailwerkSenderModalPortLabel',
+                              defaultMessage: 'SMTP Port'
+                            })}
+                          </Field.Label>
                           <Input {...field} type="number" />
                           {error && (
                             <Text color="red.500">{error.message}</Text>
@@ -279,7 +396,10 @@ export function SenderModal({
                       render={({field: {onChange, value, ref}}) => (
                         <Field.Root display="flex" alignItems="center">
                           <Field.Label htmlFor="secure" mb="0">
-                            Secure
+                            {intl.formatMessage({
+                              id: 'EmailwerkSenderModalSecureLabel',
+                              defaultMessage: 'Secure'
+                            })}
                           </Field.Label>
                           {/* The id goes on the hidden input, not on
                               Switch.Root: Switch.Root would derive its own
@@ -300,10 +420,20 @@ export function SenderModal({
                     <Controller
                       name="smtp.username"
                       control={control}
-                      rules={{required: 'SMTP Username is required'}}
+                      rules={{
+                        required: intl.formatMessage({
+                          id: 'EmailwerkSenderModalValidationUsernameRequired',
+                          defaultMessage: 'SMTP Username is required'
+                        })
+                      }}
                       render={({field, fieldState: {error}}) => (
                         <Field.Root invalid={!!error}>
-                          <Field.Label>SMTP Username</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'EmailwerkSenderModalUsernameLabel',
+                              defaultMessage: 'SMTP Username'
+                            })}
+                          </Field.Label>
                           <Input {...field} />
                           {error && (
                             <Text color="red.500">{error.message}</Text>
@@ -314,10 +444,20 @@ export function SenderModal({
                     <Controller
                       name="smtp.password"
                       control={control}
-                      rules={{required: 'SMTP Password is required'}}
+                      rules={{
+                        required: intl.formatMessage({
+                          id: 'EmailwerkSenderModalValidationPasswordRequired',
+                          defaultMessage: 'SMTP Password is required'
+                        })
+                      }}
                       render={({field, fieldState: {error}}) => (
                         <Field.Root invalid={!!error}>
-                          <Field.Label>SMTP Password</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'EmailwerkSenderModalPasswordLabel',
+                              defaultMessage: 'SMTP Password'
+                            })}
+                          </Field.Label>
                           <Input {...field} type="password" />
                           {error && (
                             <Text color="red.500">{error.message}</Text>
@@ -331,7 +471,10 @@ export function SenderModal({
                       render={({field: {onChange, value, ref}}) => (
                         <Field.Root display="flex" alignItems="center">
                           <Field.Label htmlFor="isDefault" mb="0">
-                            Set as default sender
+                            {intl.formatMessage({
+                              id: 'EmailwerkSenderModalIsDefaultLabel',
+                              defaultMessage: 'Set as default sender'
+                            })}
                           </Field.Label>
                           <Switch.Root
                             checked={value}
@@ -352,10 +495,16 @@ export function SenderModal({
                     mr={3}
                     type="submit"
                     loading={formState.isSubmitting}>
-                    Create Sender
+                    {intl.formatMessage({
+                      id: 'EmailwerkSenderModalCreateButton',
+                      defaultMessage: 'Create Sender'
+                    })}
                   </Button>
                   <Button variant="ghost" onClick={onClose}>
-                    Close
+                    {intl.formatMessage({
+                      id: 'EmailwerkSenderModalCloseButton',
+                      defaultMessage: 'Close'
+                    })}
                   </Button>
                 </Dialog.Footer>
               </form>

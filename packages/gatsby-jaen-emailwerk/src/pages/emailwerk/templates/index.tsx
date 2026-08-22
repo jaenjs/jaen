@@ -14,8 +14,10 @@ import {
 import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
 import {Link as GatsbyLink, graphql} from 'gatsby'
 import {useEffect} from 'react'
+import {useIntl} from 'react-intl'
 import {SenderTransport, resolve, useQuery} from '../../../client/index'
 import {SenderModal} from '../../../SenderModal'
+import {intlText} from '../../../lib/intl'
 
 const SkeletonRow = () => (
   <Table.Row>
@@ -28,6 +30,7 @@ const SkeletonRow = () => (
 )
 
 const Page: React.FC = () => {
+  const intl = useIntl()
   const {prompt, toast} = useNotificationsContext()
 
   const data = useQuery({})
@@ -39,7 +42,13 @@ const Page: React.FC = () => {
   useEffect(() => {
     if (data.$state.error) {
       toast({
-        title: `Failed to load templates (${data.$state.error.name})`,
+        title: intl.formatMessage(
+          {
+            id: 'EmailwerkTemplatesLoadFailedTitle',
+            defaultMessage: 'Failed to load templates ({name})'
+          },
+          {name: data.$state.error.name}
+        ),
         description: data.$state.error.message,
         status: 'error'
       })
@@ -62,8 +71,14 @@ const Page: React.FC = () => {
 
   const handleAddTemplateClick = async () => {
     const description = await prompt({
-      title: 'Add Template',
-      message: 'Please enter a description for the new template'
+      title: intl.formatMessage({
+        id: 'EmailwerkTemplatesAddPromptTitle',
+        defaultMessage: 'Add Template'
+      }),
+      message: intl.formatMessage({
+        id: 'EmailwerkTemplatesAddPromptMessage',
+        defaultMessage: 'Please enter a description for the new template'
+      })
     })
 
     if (description) {
@@ -91,7 +106,10 @@ const Page: React.FC = () => {
         await data.$refetch(true)
       } catch (error) {
         toast({
-          title: 'Failed to create template',
+          title: intl.formatMessage({
+            id: 'EmailwerkTemplatesCreateFailedTitle',
+            defaultMessage: 'Failed to create template'
+          }),
           description: error.message,
           status: 'error'
         })
@@ -102,19 +120,38 @@ const Page: React.FC = () => {
   return (
     <>
       <Stack gap="4">
-        <Heading size="md">Email Templates</Heading>
+        <Heading size="md">
+          {intl.formatMessage({
+            id: 'EmailwerkTemplatesHeading',
+            defaultMessage: 'Email Templates'
+          })}
+        </Heading>
 
         <HStack gap="4" justifyContent="space-between">
           <HStack>
             {defaultSender?.address ? (
               <Text>
-                Default sender: <strong>{defaultSender.address}</strong>{' '}
+                {intl.formatMessage(
+                  {
+                    id: 'EmailwerkTemplatesDefaultSender',
+                    defaultMessage: 'Default sender: <strong>{address}</strong>'
+                  },
+                  {
+                    address: defaultSender.address,
+                    strong: chunks => <strong>{chunks}</strong>
+                  }
+                )}{' '}
                 <Badge colorPalette={defaultSender.enabled ? 'green' : 'red'}>
                   {defaultSender.transport}
                 </Badge>
               </Text>
             ) : (
-              <Text color="yellow.500">No sender configured</Text>
+              <Text color="yellow.500">
+                {intl.formatMessage({
+                  id: 'EmailwerkTemplatesNoSenderConfigured',
+                  defaultMessage: 'No sender configured'
+                })}
+              </Text>
             )}
           </HStack>
           <HStack>
@@ -157,7 +194,15 @@ const Page: React.FC = () => {
                 )
 
                 toast({
-                  title: result.ok ? 'Sender verified' : 'Verification failed',
+                  title: result.ok
+                    ? intl.formatMessage({
+                        id: 'EmailwerkTemplatesSenderVerifiedTitle',
+                        defaultMessage: 'Sender verified'
+                      })
+                    : intl.formatMessage({
+                        id: 'EmailwerkTemplatesSenderVerificationFailedTitle',
+                        defaultMessage: 'Verification failed'
+                      }),
                   description: result.error ?? undefined,
                   status: result.ok ? 'success' : 'error'
                 })
@@ -175,7 +220,10 @@ const Page: React.FC = () => {
               <Icon asChild>
                 <FaPlus />
               </Icon>
-              Add Template
+              {intl.formatMessage({
+                id: 'EmailwerkTemplatesAddButton',
+                defaultMessage: 'Add Template'
+              })}
             </Button>
           </HStack>
         </HStack>
@@ -187,12 +235,42 @@ const Page: React.FC = () => {
             zIndex={1}
             borderColor="black">
             <Table.Row my=".8rem">
-              <Table.ColumnHeader>Description</Table.ColumnHeader>
-              <Table.ColumnHeader>Subject</Table.ColumnHeader>
-              <Table.ColumnHeader>To</Table.ColumnHeader>
-              <Table.ColumnHeader>Reply-To</Table.ColumnHeader>
-              <Table.ColumnHeader>Updated at</Table.ColumnHeader>
-              <Table.ColumnHeader>Created at</Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {intl.formatMessage({
+                  id: 'EmailwerkTemplatesTableDescription',
+                  defaultMessage: 'Description'
+                })}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {intl.formatMessage({
+                  id: 'EmailwerkTemplatesTableSubject',
+                  defaultMessage: 'Subject'
+                })}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {intl.formatMessage({
+                  id: 'EmailwerkTemplatesTableTo',
+                  defaultMessage: 'To'
+                })}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {intl.formatMessage({
+                  id: 'EmailwerkTemplatesTableReplyTo',
+                  defaultMessage: 'Reply-To'
+                })}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {intl.formatMessage({
+                  id: 'EmailwerkTemplatesTableUpdatedAt',
+                  defaultMessage: 'Updated at'
+                })}
+              </Table.ColumnHeader>
+              <Table.ColumnHeader>
+                {intl.formatMessage({
+                  id: 'EmailwerkTemplatesTableCreatedAt',
+                  defaultMessage: 'Created at'
+                })}
+              </Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -228,7 +306,12 @@ const Page: React.FC = () => {
             {data.templates().totalCount === 0 && (
               <Table.Row
                 visibility={data.$state.isLoading ? 'hidden' : 'visible'}>
-                <Table.Cell colSpan={6}>No templates found</Table.Cell>
+                <Table.Cell colSpan={6}>
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplatesNoTemplatesFound',
+                    defaultMessage: 'No templates found'
+                  })}
+                </Table.Cell>
               </Table.Row>
             )}
           </Table.Body>
@@ -241,12 +324,12 @@ const Page: React.FC = () => {
 export default Page
 
 export const pageConfig: PageConfig = {
-  label: 'Templates',
+  label: intlText('EmailwerkTemplatesPageTitle', 'Templates'),
   icon: 'FaEnvelope',
   menu: {
     type: 'app',
     group: 'emailwerk',
-    groupLabel: 'Emailwerk',
+    groupLabel: intlText('EmailwerkMenuGroupLabel', 'Emailwerk'),
     order: 500
   },
   layout: {
@@ -254,11 +337,11 @@ export const pageConfig: PageConfig = {
   },
   breadcrumbs: [
     {
-      label: 'Emailwerk',
+      label: intlText('EmailwerkBreadcrumbsRoot', 'Emailwerk'),
       path: '/emailwerk/'
     },
     {
-      label: 'Templates',
+      label: intlText('EmailwerkBreadcrumbsTemplates', 'Templates'),
       path: '/emailwerk/templates/'
     }
   ],

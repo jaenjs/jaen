@@ -4,6 +4,8 @@ import {z} from 'zod'
 import {useForm} from 'react-hook-form'
 import {zodResolver} from '@hookform/resolvers/zod'
 import {PageConfig, useNotificationsContext} from 'jaen'
+import {useIntl, IntlShape} from 'react-intl'
+import {intlText} from '../../../lib/intl'
 
 // Tiptap
 import {EditorContent, useEditor} from '@tiptap/react'
@@ -58,33 +60,70 @@ import {sendTemplateMail} from '../../../index'
 // Sanitize HTML content
 import DOMPurify from 'isomorphic-dompurify'
 
-// Define the schema using Zod
-const EmailSendSchema = z.object({
-  templateId: z.string().nonempty('Template is required'),
-  subject: z.string().nonempty('Subject is required'),
-  message: z.string().nonempty('Message is required'),
-  to: z
-    .string()
-    .nonempty('To is required')
-    .refine(val => {
-      // Simple email validation
-      const emails = val.split(',').map(email => email.trim())
-      return emails.every(email => /\S+@\S+\.\S+/.test(email))
-    }, 'Invalid email address(es)'),
-  bcc: z
-    .string()
-    .optional()
-    .refine(val => {
-      if (!val) return true
-      const emails = val.split(',').map(email => email.trim())
-      return emails.every(email => /\S+@\S+\.\S+/.test(email))
-    }, 'Invalid BCC email address(es)'),
-  sendEmailOnSubmitConsent: z.boolean().refine(val => val === true, {
-    message: 'Consent is required.'
+// Define the schema using Zod (built per locale so the validation messages
+// go through react-intl)
+const createEmailSendSchema = (intl: IntlShape) =>
+  z.object({
+    templateId: z.string().nonempty(
+      intl.formatMessage({
+        id: 'EmailwerkEmailValidationTemplateRequired',
+        defaultMessage: 'Template is required'
+      })
+    ),
+    subject: z.string().nonempty(
+      intl.formatMessage({
+        id: 'EmailwerkEmailValidationSubjectRequired',
+        defaultMessage: 'Subject is required'
+      })
+    ),
+    message: z.string().nonempty(
+      intl.formatMessage({
+        id: 'EmailwerkEmailValidationMessageRequired',
+        defaultMessage: 'Message is required'
+      })
+    ),
+    to: z
+      .string()
+      .nonempty(
+        intl.formatMessage({
+          id: 'EmailwerkEmailValidationToRequired',
+          defaultMessage: 'To is required'
+        })
+      )
+      .refine(
+        val => {
+          // Simple email validation
+          const emails = val.split(',').map(email => email.trim())
+          return emails.every(email => /\S+@\S+\.\S+/.test(email))
+        },
+        intl.formatMessage({
+          id: 'EmailwerkEmailValidationInvalidEmail',
+          defaultMessage: 'Invalid email address(es)'
+        })
+      ),
+    bcc: z
+      .string()
+      .optional()
+      .refine(
+        val => {
+          if (!val) return true
+          const emails = val.split(',').map(email => email.trim())
+          return emails.every(email => /\S+@\S+\.\S+/.test(email))
+        },
+        intl.formatMessage({
+          id: 'EmailwerkEmailValidationInvalidBccEmail',
+          defaultMessage: 'Invalid BCC email address(es)'
+        })
+      ),
+    sendEmailOnSubmitConsent: z.boolean().refine(val => val === true, {
+      message: intl.formatMessage({
+        id: 'EmailwerkEmailValidationConsentRequired',
+        defaultMessage: 'Consent is required.'
+      })
+    })
   })
-})
 
-type EmailPopupForm = z.infer<typeof EmailSendSchema>
+type EmailPopupForm = z.infer<ReturnType<typeof createEmailSendSchema>>
 
 // Define the EmailTemplate interface
 interface EmailTemplate {
@@ -119,6 +158,7 @@ const replaceVariables = (
 
 // Define the component
 const EmailSendFormComponent: React.FC = () => {
+  const intl = useIntl()
   const {toast} = useNotificationsContext()
 
   // Local state for controlling the "Preview" modal
@@ -165,7 +205,12 @@ const EmailSendFormComponent: React.FC = () => {
       const {allTemplates} = result
 
       if (!allTemplates) {
-        throw new Error('No templates found')
+        throw new Error(
+          intl.formatMessage({
+            id: 'EmailwerkEmailTemplatesNotFound',
+            defaultMessage: 'No templates found'
+          })
+        )
       }
 
       // Keep only "simple message" templates: every variable is named
@@ -195,18 +240,33 @@ const EmailSendFormComponent: React.FC = () => {
       console.error('Failed to fetch templates:', error)
       if (error instanceof GQtyError) {
         setFetchTemplatesError(
-          'Failed to fetch templates due to GraphQL error.'
+          intl.formatMessage({
+            id: 'EmailwerkEmailTemplatesFetchGraphqlError',
+            defaultMessage: 'Failed to fetch templates due to GraphQL error.'
+          })
         )
       } else {
         setFetchTemplatesError(
-          error.message || 'An unknown error occurred while fetching templates.'
+          error.message ||
+            intl.formatMessage({
+              id: 'EmailwerkEmailTemplatesFetchUnknownError',
+              defaultMessage:
+                'An unknown error occurred while fetching templates.'
+            })
         )
       }
 
       toast({
-        title: 'Error fetching templates',
+        title: intl.formatMessage({
+          id: 'EmailwerkEmailTemplatesFetchErrorTitle',
+          defaultMessage: 'Error fetching templates'
+        }),
         description:
-          error.message || 'An error occurred while fetching templates.',
+          error.message ||
+          intl.formatMessage({
+            id: 'EmailwerkEmailTemplatesFetchErrorDescription',
+            defaultMessage: 'An error occurred while fetching templates.'
+          }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -214,7 +274,7 @@ const EmailSendFormComponent: React.FC = () => {
     } finally {
       setIsLoadingEmailTemplates(false)
     }
-  }, [toast])
+  }, [toast, intl])
 
   // Fetch email templates on component mount
   useEffect(() => {
@@ -222,8 +282,9 @@ const EmailSendFormComponent: React.FC = () => {
   }, [getAllTemplates])
 
   // Initialize react-hook-form with Zod resolver
+  const emailSendSchema = useMemo(() => createEmailSendSchema(intl), [intl])
   const form = useForm<EmailPopupForm>({
-    resolver: zodResolver(EmailSendSchema),
+    resolver: zodResolver(emailSendSchema),
     defaultValues: {
       templateId: '', // Changed from undefined to empty string for Select component compatibility
       sendEmailOnSubmitConsent: false, // Changed to false as default
@@ -244,7 +305,11 @@ const EmailSendFormComponent: React.FC = () => {
         placeholder:
           emailTemplates[form.watch('templateId')]?.variables.find(
             variable => variable.name === 'message'
-          )?.description || 'Enter your message here'
+          )?.description ||
+          intl.formatMessage({
+            id: 'EmailwerkEmailMessagePlaceholder',
+            defaultMessage: 'Enter your message here'
+          })
       })
     ],
     content:
@@ -279,7 +344,13 @@ const EmailSendFormComponent: React.FC = () => {
   // Generate the template content for preview
   const templateContent = useMemo(() => {
     if (!selectedTemplate) {
-      return form.watch('message') || 'No content available'
+      return (
+        form.watch('message') ||
+        intl.formatMessage({
+          id: 'EmailwerkEmailPreviewNoContent',
+          defaultMessage: 'No content available'
+        })
+      )
     }
 
     // Create a variables mapping using defaultValue
@@ -303,13 +374,18 @@ const EmailSendFormComponent: React.FC = () => {
 
     // Sanitize the replaced message
     return DOMPurify.sanitize(replacedMessage)
-  }, [selectedTemplate, currentMessage, form])
+  }, [selectedTemplate, currentMessage, form, intl])
 
   // Handle form submission
   const onSubmit = async (values: EmailPopupForm) => {
     try {
       if (!values.templateId) {
-        throw new Error('No template selected.')
+        throw new Error(
+          intl.formatMessage({
+            id: 'EmailwerkEmailNoTemplateSelectedError',
+            defaultMessage: 'No template selected.'
+          })
+        )
       }
 
       // Mailpress-era semantics kept on purpose: the form's `to` becomes the
@@ -329,7 +405,10 @@ const EmailSendFormComponent: React.FC = () => {
       if (!result.ok) {
         console.error('Mail failed:', result.errors ?? result.message)
         toast({
-          title: 'Email Sending Failed',
+          title: intl.formatMessage({
+            id: 'EmailwerkEmailSendFailedTitle',
+            defaultMessage: 'Email Sending Failed'
+          }),
           description: result.errors
             ? result.errors.map((err: any) => err.message).join(', ')
             : result.message,
@@ -340,8 +419,14 @@ const EmailSendFormComponent: React.FC = () => {
       } else {
         console.log('Mail sent:', result.message)
         toast({
-          title: 'Email sent',
-          description: 'The email has been sent successfully.',
+          title: intl.formatMessage({
+            id: 'EmailwerkEmailSentTitle',
+            defaultMessage: 'Email sent'
+          }),
+          description: intl.formatMessage({
+            id: 'EmailwerkEmailSentDescription',
+            defaultMessage: 'The email has been sent successfully.'
+          }),
           status: 'success',
           duration: 3000,
           isClosable: true
@@ -356,8 +441,16 @@ const EmailSendFormComponent: React.FC = () => {
     } catch (error: any) {
       console.error('Submission Error:', error)
       toast({
-        title: 'Submission Error',
-        description: error.message || 'An unexpected error occurred.',
+        title: intl.formatMessage({
+          id: 'EmailwerkEmailSubmissionErrorTitle',
+          defaultMessage: 'Submission Error'
+        }),
+        description:
+          error.message ||
+          intl.formatMessage({
+            id: 'EmailwerkEmailUnexpectedError',
+            defaultMessage: 'An unexpected error occurred.'
+          }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -375,10 +468,18 @@ const EmailSendFormComponent: React.FC = () => {
               justifyContent="space-between"
               alignItems="center">
               <Box>
-                <Heading size="sm">Send Email</Heading>
+                <Heading size="sm">
+                  {intl.formatMessage({
+                    id: 'EmailwerkEmailFormHeading',
+                    defaultMessage: 'Send Email'
+                  })}
+                </Heading>
               </Box>
               <Button variant="outline" onClick={() => setIsPreviewOpen(true)}>
-                Preview
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailPreviewButton',
+                  defaultMessage: 'Preview'
+                })}
               </Button>
             </Box>
           </Card.Header>
@@ -386,33 +487,62 @@ const EmailSendFormComponent: React.FC = () => {
           <Card.Body>
             {/* Email Template Select */}
             <Field.Root mb={5} invalid={!!form.formState.errors.templateId}>
-              <Field.Label>Email Template</Field.Label>
+              <Field.Label>
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailTemplateLabel',
+                  defaultMessage: 'Email Template'
+                })}
+              </Field.Label>
               {isLoadingEmailTemplates ? (
                 <HStack>
                   <Spinner size="sm" />
-                  <Text>Loading templates...</Text>
+                  <Text>
+                    {intl.formatMessage({
+                      id: 'EmailwerkEmailTemplatesLoading',
+                      defaultMessage: 'Loading templates...'
+                    })}
+                  </Text>
                 </HStack>
               ) : fetchTemplatesError ? (
                 <Alert.Root status="error">
                   <Alert.Indicator />
-                  <Alert.Title mr={2}>Error!</Alert.Title>
+                  <Alert.Title mr={2}>
+                    {intl.formatMessage({
+                      id: 'EmailwerkEmailErrorAlertTitle',
+                      defaultMessage: 'Error!'
+                    })}
+                  </Alert.Title>
                   <Alert.Description>{fetchTemplatesError}</Alert.Description>
                 </Alert.Root>
               ) : Object.keys(emailTemplates).length === 0 ? (
                 <Alert.Root status="warning">
                   <Alert.Indicator />
-                  <Alert.Title mr={2}>No Templates Found!</Alert.Title>
+                  <Alert.Title mr={2}>
+                    {intl.formatMessage({
+                      id: 'EmailwerkEmailNoTemplatesAlertTitle',
+                      defaultMessage: 'No Templates Found!'
+                    })}
+                  </Alert.Title>
                   <Alert.Description>
-                    There are no email templates available. Please create one
-                    first.
+                    {intl.formatMessage({
+                      id: 'EmailwerkEmailNoTemplatesAlertDescription',
+                      defaultMessage:
+                        'There are no email templates available. Please create one first.'
+                    })}
                   </Alert.Description>
                 </Alert.Root>
               ) : (
                 <NativeSelect.Root>
                   <NativeSelect.Field
-                    placeholder="Select an email template"
+                    placeholder={intl.formatMessage({
+                      id: 'EmailwerkEmailTemplateSelectPlaceholder',
+                      defaultMessage: 'Select an email template'
+                    })}
                     {...form.register('templateId', {
-                      required: 'Template is required',
+                      required: intl.formatMessage({
+                        id: 'EmailwerkEmailValidationTemplateRequired',
+                        defaultMessage: 'Template is required'
+                      }),
                       onChange: e => {
                         form.setValue('templateId', e.target.value)
                         if (editor) {
@@ -439,7 +569,11 @@ const EmailSendFormComponent: React.FC = () => {
                     {Object.values(emailTemplates).map(
                       (template: EmailTemplate) => (
                         <option key={template.id} value={template.id}>
-                          {template.description || 'Unnamed Template'}
+                          {template.description ||
+                            intl.formatMessage({
+                              id: 'EmailwerkEmailUnnamedTemplate',
+                              defaultMessage: 'Unnamed Template'
+                            })}
                         </option>
                       )
                     )}
@@ -447,7 +581,12 @@ const EmailSendFormComponent: React.FC = () => {
                   <NativeSelect.Indicator />
                 </NativeSelect.Root>
               )}
-              <Field.HelperText>The template for the email.</Field.HelperText>
+              <Field.HelperText>
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailTemplateHelperText',
+                  defaultMessage: 'The template for the email.'
+                })}
+              </Field.HelperText>
               <Field.ErrorText>
                 {form.formState.errors.templateId &&
                   form.formState.errors.templateId.message}
@@ -456,15 +595,26 @@ const EmailSendFormComponent: React.FC = () => {
 
             {/* To */}
             <Field.Root mb={5} invalid={!!form.formState.errors.to}>
-              <Field.Label>To</Field.Label>
+              <Field.Label>
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailToLabel',
+                  defaultMessage: 'To'
+                })}
+              </Field.Label>
               <Input
-                placeholder="jane.doe@snek.at"
+                placeholder={intl.formatMessage({
+                  id: 'EmailwerkEmailToPlaceholder',
+                  defaultMessage: 'jane.doe@snek.at'
+                })}
                 bg="white !important"
                 {...form.register('to')}
               />
               <Field.HelperText>
-                The recipient(s) of the email. Add multiple recipients separated
-                by a comma.
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailToHelperText',
+                  defaultMessage:
+                    'The recipient(s) of the email. Add multiple recipients separated by a comma.'
+                })}
               </Field.HelperText>
               <Field.ErrorText>
                 {form.formState.errors.to && form.formState.errors.to.message}
@@ -473,13 +623,26 @@ const EmailSendFormComponent: React.FC = () => {
 
             {/* Subject */}
             <Field.Root mb={5} invalid={!!form.formState.errors.subject}>
-              <Field.Label>Subject</Field.Label>
+              <Field.Label>
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailSubjectLabel',
+                  defaultMessage: 'Subject'
+                })}
+              </Field.Label>
               <Input
-                placeholder="Hi there"
+                placeholder={intl.formatMessage({
+                  id: 'EmailwerkEmailSubjectPlaceholder',
+                  defaultMessage: 'Hi there'
+                })}
                 bg="white !important"
                 {...form.register('subject')}
               />
-              <Field.HelperText>The subject of the email.</Field.HelperText>
+              <Field.HelperText>
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailSubjectHelperText',
+                  defaultMessage: 'The subject of the email.'
+                })}
+              </Field.HelperText>
               <Field.ErrorText>
                 {form.formState.errors.subject &&
                   form.formState.errors.subject.message}
@@ -499,12 +662,20 @@ const EmailSendFormComponent: React.FC = () => {
                   pointerEvents: 'none'
                 }
               }}>
-              <Field.Label>Message</Field.Label>
+              <Field.Label>
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailMessageLabel',
+                  defaultMessage: 'Message'
+                })}
+              </Field.Label>
               {editor && (
                 <HStack mb={2} gap={1}>
                   <IconButton
                     size="sm"
-                    aria-label="Bold"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorBold',
+                      defaultMessage: 'Bold'
+                    })}
                     variant={editor.isActive('bold') ? 'solid' : 'outline'}
                     disabled={!editor.can().chain().focus().toggleBold().run()}
                     onClick={() => editor.chain().focus().toggleBold().run()}>
@@ -512,7 +683,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Italic"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorItalic',
+                      defaultMessage: 'Italic'
+                    })}
                     variant={editor.isActive('italic') ? 'solid' : 'outline'}
                     disabled={
                       !editor.can().chain().focus().toggleItalic().run()
@@ -522,7 +696,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Underline"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorUnderline',
+                      defaultMessage: 'Underline'
+                    })}
                     variant={editor.isActive('underline') ? 'solid' : 'outline'}
                     disabled={
                       !editor.can().chain().focus().toggleUnderline().run()
@@ -534,7 +711,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Heading1"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorHeading1',
+                      defaultMessage: 'Heading1'
+                    })}
                     variant={
                       editor.isActive('heading', {level: 1})
                         ? 'solid'
@@ -555,7 +735,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Heading2"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorHeading2',
+                      defaultMessage: 'Heading2'
+                    })}
                     variant={
                       editor.isActive('heading', {level: 2})
                         ? 'solid'
@@ -576,7 +759,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Heading3"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorHeading3',
+                      defaultMessage: 'Heading3'
+                    })}
                     variant={
                       editor.isActive('heading', {level: 3})
                         ? 'solid'
@@ -597,7 +783,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Bullet List"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorBulletList',
+                      defaultMessage: 'Bullet List'
+                    })}
                     variant={
                       editor.isActive('bulletList') ? 'solid' : 'outline'
                     }
@@ -611,7 +800,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Ordered List"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorOrderedList',
+                      defaultMessage: 'Ordered List'
+                    })}
                     variant={
                       editor.isActive('orderedList') ? 'solid' : 'outline'
                     }
@@ -625,7 +817,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Quote"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorQuote',
+                      defaultMessage: 'Quote'
+                    })}
                     variant={
                       editor.isActive('blockquote') ? 'solid' : 'outline'
                     }
@@ -639,13 +834,21 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Set Link"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorSetLink',
+                      defaultMessage: 'Set Link'
+                    })}
                     variant={editor.isActive('link') ? 'solid' : 'outline'}
                     disabled={
                       !editor.can().chain().focus().setLink({href: ''}).run()
                     }
                     onClick={() => {
-                      const url = prompt('Enter the URL')
+                      const url = prompt(
+                        intl.formatMessage({
+                          id: 'EmailwerkEmailEditorLinkPrompt',
+                          defaultMessage: 'Enter the URL'
+                        })
+                      )
                       if (url) {
                         editor.chain().focus().setLink({href: url}).run()
                       }
@@ -654,7 +857,10 @@ const EmailSendFormComponent: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="sm"
-                    aria-label="Unset Link"
+                    aria-label={intl.formatMessage({
+                      id: 'EmailwerkEmailEditorUnsetLink',
+                      defaultMessage: 'Unset Link'
+                    })}
                     variant="outline"
                     disabled={!editor.can().chain().focus().unsetLink().run()}
                     onClick={() => editor.chain().focus().unsetLink().run()}>
@@ -700,7 +906,12 @@ const EmailSendFormComponent: React.FC = () => {
                 }}>
                 <EditorContent editor={editor} />
               </Box>
-              <Field.HelperText>The message of the email.</Field.HelperText>
+              <Field.HelperText>
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailMessageHelperText',
+                  defaultMessage: 'The message of the email.'
+                })}
+              </Field.HelperText>
               <Field.ErrorText>
                 {form.formState.errors.message &&
                   form.formState.errors.message.message}
@@ -712,15 +923,26 @@ const EmailSendFormComponent: React.FC = () => {
               mb={5}
               invalid={!!form.formState.errors.bcc}
               display="none">
-              <Field.Label>BCC</Field.Label>
+              <Field.Label>
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailBccLabel',
+                  defaultMessage: 'BCC'
+                })}
+              </Field.Label>
               <Input
-                placeholder="john.doe@snek.at"
+                placeholder={intl.formatMessage({
+                  id: 'EmailwerkEmailBccPlaceholder',
+                  defaultMessage: 'john.doe@snek.at'
+                })}
                 bg="white"
                 {...form.register('bcc')}
               />
               <Field.HelperText>
-                Additional hidden recipient(s) of the email. Add multiple
-                recipients separated by a comma.
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailBccHelperText',
+                  defaultMessage:
+                    'Additional hidden recipient(s) of the email. Add multiple recipients separated by a comma.'
+                })}
               </Field.HelperText>
               <Field.ErrorText>
                 {form.formState.errors.bcc && form.formState.errors.bcc.message}
@@ -743,8 +965,11 @@ const EmailSendFormComponent: React.FC = () => {
                 </Checkbox.Control>
               </Checkbox.Root>
               <Field.Label mb={0}>
-                By checking this box, you agree that clicking the "Send" button
-                will send an email.
+                {intl.formatMessage({
+                  id: 'EmailwerkEmailConsentLabel',
+                  defaultMessage:
+                    'By checking this box, you agree that clicking the "Send" button will send an email.'
+                })}
               </Field.Label>
               <Field.ErrorText>
                 {form.formState.errors.sendEmailOnSubmitConsent &&
@@ -756,7 +981,10 @@ const EmailSendFormComponent: React.FC = () => {
           <Card.Footer>
             {/* Use Chakra theme color brand.500 */}
             <Button type="submit" colorPalette="brand">
-              Send
+              {intl.formatMessage({
+                id: 'EmailwerkEmailSendButton',
+                defaultMessage: 'Send'
+              })}
             </Button>
           </Card.Footer>
         </Card.Root>
@@ -774,7 +1002,12 @@ const EmailSendFormComponent: React.FC = () => {
             <Dialog.Backdrop />
             <Dialog.Positioner>
               <Dialog.Content>
-                <Dialog.Header>Email Preview</Dialog.Header>
+                <Dialog.Header>
+                  {intl.formatMessage({
+                    id: 'EmailwerkEmailPreviewTitle',
+                    defaultMessage: 'Email Preview'
+                  })}
+                </Dialog.Header>
                 {/* v3's CloseTrigger draws nothing of its own, so the X that
                     v2's ModalCloseButton brought has to be handed to it, at
                     the 32px and neutral hover v2 gave it. */}
@@ -784,11 +1017,19 @@ const EmailSendFormComponent: React.FC = () => {
                 <Dialog.Body>
                   {/* Display selected template name */}
                   <Heading size="sm" mb={2}>
-                    {selectedTemplate?.description || 'No Template Selected'}
+                    {selectedTemplate?.description ||
+                      intl.formatMessage({
+                        id: 'EmailwerkEmailPreviewNoTemplate',
+                        defaultMessage: 'No Template Selected'
+                      })}
                   </Heading>
                   {/* Display email subject */}
                   <Heading size="md" mb={2}>
-                    {form.watch('subject') || 'No Subject'}
+                    {form.watch('subject') ||
+                      intl.formatMessage({
+                        id: 'EmailwerkEmailPreviewNoSubject',
+                        defaultMessage: 'No Subject'
+                      })}
                   </Heading>
                   {/* Render the processed message with variables replaced */}
                   <Box
@@ -801,7 +1042,12 @@ const EmailSendFormComponent: React.FC = () => {
                   />
                 </Dialog.Body>
                 <Dialog.Footer>
-                  <Button onClick={() => setIsPreviewOpen(false)}>Close</Button>
+                  <Button onClick={() => setIsPreviewOpen(false)}>
+                    {intl.formatMessage({
+                      id: 'EmailwerkEmailPreviewCloseButton',
+                      defaultMessage: 'Close'
+                    })}
+                  </Button>
                 </Dialog.Footer>
               </Dialog.Content>
             </Dialog.Positioner>
@@ -822,12 +1068,12 @@ export {Head} from 'jaen'
 
 // Export the PageConfig
 export const pageConfig: PageConfig = {
-  label: 'Email',
+  label: intlText('EmailwerkEmailPageTitle', 'Email'),
   icon: 'FaEnvelope',
   menu: {
     type: 'app',
     group: 'emailwerk',
-    groupLabel: 'Emailwerk',
+    groupLabel: intlText('EmailwerkMenuGroupLabel', 'Emailwerk'),
     order: 500
   },
   layout: {
@@ -835,11 +1081,11 @@ export const pageConfig: PageConfig = {
   },
   breadcrumbs: [
     {
-      label: 'Emailwerk',
+      label: intlText('EmailwerkBreadcrumbsRoot', 'Emailwerk'),
       path: '/emailwerk/'
     },
     {
-      label: 'Email',
+      label: intlText('EmailwerkEmailBreadcrumbsEmail', 'Email'),
       path: '/emailwerk/email/'
     }
   ],

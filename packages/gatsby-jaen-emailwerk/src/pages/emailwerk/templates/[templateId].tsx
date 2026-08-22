@@ -1,5 +1,6 @@
 import {PageConfig, PageProps, useNotificationsContext} from 'jaen'
 import {useEffect, useMemo, useState} from 'react'
+import {useIntl} from 'react-intl'
 
 import {CopyIcon, DeleteIcon} from '../../../icons'
 import {
@@ -32,6 +33,7 @@ import {
   VariableType,
   resolve
 } from '../../../client'
+import {intlText} from '../../../lib/intl'
 
 const Page: React.FC<PageProps> = ({params}) => {
   const templateId = params.templateId
@@ -40,6 +42,7 @@ const Page: React.FC<PageProps> = ({params}) => {
     throw new Error('Template ID is required')
   }
 
+  const intl = useIntl()
   const {toast, confirm} = useNotificationsContext()
 
   const {
@@ -220,7 +223,13 @@ const Page: React.FC<PageProps> = ({params}) => {
   useEffect(() => {
     if (state.error) {
       toast({
-        title: `Failed to load template (${state.error.name})`,
+        title: intl.formatMessage(
+          {
+            id: 'EmailwerkTemplateLoadFailedTitle',
+            defaultMessage: 'Failed to load template ({name})'
+          },
+          {name: state.error.name}
+        ),
         description: state.error.message,
         status: 'error'
       })
@@ -260,16 +269,34 @@ const Page: React.FC<PageProps> = ({params}) => {
       })
 
       toast({
-        title: 'Template Updated!',
-        description: `Template ID ${templateId} updated`,
+        title: intl.formatMessage({
+          id: 'EmailwerkTemplateUpdatedTitle',
+          defaultMessage: 'Template Updated!'
+        }),
+        description: intl.formatMessage(
+          {
+            id: 'EmailwerkTemplateUpdatedDescription',
+            defaultMessage: 'Template ID {templateId} updated'
+          },
+          {templateId}
+        ),
         status: 'success'
       })
 
       await fetchData()
     } catch (e) {
       toast({
-        title: 'Error!',
-        description: `Error updating template ${templateId}`,
+        title: intl.formatMessage({
+          id: 'EmailwerkTemplateErrorTitle',
+          defaultMessage: 'Error!'
+        }),
+        description: intl.formatMessage(
+          {
+            id: 'EmailwerkTemplateUpdateErrorDescription',
+            defaultMessage: 'Error updating template {templateId}'
+          },
+          {templateId}
+        ),
         status: 'error'
       })
     }
@@ -277,10 +304,22 @@ const Page: React.FC<PageProps> = ({params}) => {
 
   const handleDeleteClick = async () => {
     const confirmed = await confirm({
-      title: 'Delete Template',
-      message: `Are you sure you want to delete this template?`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel'
+      title: intl.formatMessage({
+        id: 'EmailwerkTemplateDeleteConfirmTitle',
+        defaultMessage: 'Delete Template'
+      }),
+      message: intl.formatMessage({
+        id: 'EmailwerkTemplateDeleteConfirmMessage',
+        defaultMessage: 'Are you sure you want to delete this template?'
+      }),
+      confirmText: intl.formatMessage({
+        id: 'EmailwerkTemplateDeleteConfirmButton',
+        defaultMessage: 'Delete'
+      }),
+      cancelText: intl.formatMessage({
+        id: 'EmailwerkTemplateDeleteCancelButton',
+        defaultMessage: 'Cancel'
+      })
     })
     if (confirmed) {
       try {
@@ -293,16 +332,34 @@ const Page: React.FC<PageProps> = ({params}) => {
         })
 
         toast({
-          title: 'Template Deleted!',
-          description: `Template ID ${templateId} deleted`,
+          title: intl.formatMessage({
+            id: 'EmailwerkTemplateDeletedTitle',
+            defaultMessage: 'Template Deleted!'
+          }),
+          description: intl.formatMessage(
+            {
+              id: 'EmailwerkTemplateDeletedDescription',
+              defaultMessage: 'Template ID {templateId} deleted'
+            },
+            {templateId}
+          ),
           status: 'success'
         })
 
         navigate('..')
       } catch (e) {
         toast({
-          title: 'Error!',
-          description: `Error deleting template ${templateId}`,
+          title: intl.formatMessage({
+            id: 'EmailwerkTemplateErrorTitle',
+            defaultMessage: 'Error!'
+          }),
+          description: intl.formatMessage(
+            {
+              id: 'EmailwerkTemplateDeleteErrorDescription',
+              defaultMessage: 'Error deleting template {templateId}'
+            },
+            {templateId}
+          ),
           status: 'error'
         })
       }
@@ -340,8 +397,14 @@ const Page: React.FC<PageProps> = ({params}) => {
       setServerPreview(sanitize(preview))
     } catch (e) {
       toast({
-        title: 'Error!',
-        description: 'Error rendering the server preview',
+        title: intl.formatMessage({
+          id: 'EmailwerkTemplateErrorTitle',
+          defaultMessage: 'Error!'
+        }),
+        description: intl.formatMessage({
+          id: 'EmailwerkTemplateServerPreviewErrorDescription',
+          defaultMessage: 'Error rendering the server preview'
+        }),
         status: 'error'
       })
     }
@@ -353,19 +416,36 @@ const Page: React.FC<PageProps> = ({params}) => {
     navigator.clipboard.writeText(value)
 
     toast({
-      title: 'Copied!',
-      description: `Template ID ${value} copied to clipboard`,
+      title: intl.formatMessage({
+        id: 'EmailwerkTemplateCopiedTitle',
+        defaultMessage: 'Copied!'
+      }),
+      description: intl.formatMessage(
+        {
+          id: 'EmailwerkTemplateCopiedDescription',
+          defaultMessage: 'Template ID {templateId} copied to clipboard'
+        },
+        {templateId: value}
+      ),
       status: 'success'
     })
   }
 
   return (
     <Stack gap="4">
-      <Heading size="md">Email Template</Heading>
+      <Heading size="md">
+        {intl.formatMessage({
+          id: 'EmailwerkTemplateHeading',
+          defaultMessage: 'Email Template'
+        })}
+      </Heading>
 
       <Skeleton loading={!!state.isLoading}>
         <InputGroup
-          startAddon="Template ID"
+          startAddon={intl.formatMessage({
+            id: 'EmailwerkTemplateIdAddon',
+            defaultMessage: 'Template ID'
+          })}
           // v2's InputRightElement was exactly one input-height wide with no
           // padding, and `as={IconButton}` made the button that box. v3's
           // InputElement adds px="3", which would push the button off the
@@ -373,7 +453,10 @@ const Page: React.FC<PageProps> = ({params}) => {
           endElementProps={{px: '0'}}
           endElement={
             <IconButton
-              aria-label="copy template id"
+              aria-label={intl.formatMessage({
+                id: 'EmailwerkTemplateCopyIdAriaLabel',
+                defaultMessage: 'copy template id'
+              })}
               onClick={onCopy}
               variant="outline">
               <CopyIcon />
@@ -391,7 +474,12 @@ const Page: React.FC<PageProps> = ({params}) => {
                 id="description"
                 required
                 invalid={!!errors.description}>
-                <Field.Label>Description</Field.Label>
+                <Field.Label>
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplateDescriptionLabel',
+                    defaultMessage: 'Description'
+                  })}
+                </Field.Label>
                 <Input type="text" {...register('description')} />
                 <Field.ErrorText>{errors.description?.message}</Field.ErrorText>
               </Field.Root>
@@ -399,11 +487,19 @@ const Page: React.FC<PageProps> = ({params}) => {
 
             <Skeleton loading={!!state.isLoading}>
               <Field.Root id="parent">
-                <Field.Label>Parent</Field.Label>
+                <Field.Label>
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplateParentLabel',
+                    defaultMessage: 'Parent'
+                  })}
+                </Field.Label>
                 <NativeSelect.Root>
                   <NativeSelect.Field
                     {...register('parentId')}
-                    placeholder="Kein Template">
+                    placeholder={intl.formatMessage({
+                      id: 'EmailwerkTemplateParentPlaceholder',
+                      defaultMessage: 'Kein Template'
+                    })}>
                     {parentTemplates.map(t => (
                       <option key={t.id} value={t.id}>
                         {t.description} ({t.id})
@@ -417,7 +513,12 @@ const Page: React.FC<PageProps> = ({params}) => {
 
             <Skeleton loading={!!state.isLoading}>
               <Field.Root id="engine">
-                <Field.Label>Engine</Field.Label>
+                <Field.Label>
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplateEngineLabel',
+                    defaultMessage: 'Engine'
+                  })}
+                </Field.Label>
                 <NativeSelect.Root>
                   <NativeSelect.Field {...register('engine')}>
                     {Object.values(TemplateEngine).map(engine => (
@@ -433,7 +534,12 @@ const Page: React.FC<PageProps> = ({params}) => {
 
             <Skeleton loading={!!state.isLoading}>
               <Field.Root id="verifyReplyTo">
-                <Field.Label>Verify Reply To</Field.Label>
+                <Field.Label>
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplateVerifyReplyToLabel',
+                    defaultMessage: 'Verify Reply To'
+                  })}
+                </Field.Label>
                 {/* v3's Checkbox.Root is the label, so register's ref lands on
                     it instead of the input and the box no longer follows the
                     reset() that fetchData does. The form value has to drive it
@@ -451,7 +557,12 @@ const Page: React.FC<PageProps> = ({params}) => {
 
             <Skeleton loading={!!state.isLoading}>
               <Field.Root id="linked">
-                <Field.Label>Linked</Field.Label>
+                <Field.Label>
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplateLinkedLabel',
+                    defaultMessage: 'Linked'
+                  })}
+                </Field.Label>
                 {linkedTemplates.length ? (
                   <List.Root as="ul">
                     {linkedTemplates.map(t => (
@@ -465,19 +576,34 @@ const Page: React.FC<PageProps> = ({params}) => {
                     ))}
                   </List.Root>
                 ) : (
-                  <Text>No linked templates</Text>
+                  <Text>
+                    {intl.formatMessage({
+                      id: 'EmailwerkTemplateNoLinkedTemplates',
+                      defaultMessage: 'No linked templates'
+                    })}
+                  </Text>
                 )}
               </Field.Root>
             </Skeleton>
 
             <Card.Root>
               <Card.Header>
-                <Heading size="sm">Envelope</Heading>
+                <Heading size="sm">
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplateEnvelopeHeading',
+                    defaultMessage: 'Envelope'
+                  })}
+                </Heading>
               </Card.Header>
               <Card.Body>
                 <Stack gap={4}>
                   <Field.Root id="subject">
-                    <Field.Label htmlFor="subject">Subject</Field.Label>
+                    <Field.Label htmlFor="subject">
+                      {intl.formatMessage({
+                        id: 'EmailwerkTemplateSubjectLabel',
+                        defaultMessage: 'Subject'
+                      })}
+                    </Field.Label>
                     <Input
                       type="text"
                       id="subject"
@@ -486,7 +612,12 @@ const Page: React.FC<PageProps> = ({params}) => {
                   </Field.Root>
 
                   <Card.Root>
-                    <Card.Header>To</Card.Header>
+                    <Card.Header>
+                      {intl.formatMessage({
+                        id: 'EmailwerkTemplateToHeading',
+                        defaultMessage: 'To'
+                      })}
+                    </Card.Header>
                     <Card.Body>
                       <Stack>
                         {envelopeToField.fields.map((_, index) => (
@@ -496,7 +627,10 @@ const Page: React.FC<PageProps> = ({params}) => {
                               endElementProps={{px: '0'}}
                               endElement={
                                 <IconButton
-                                  aria-label="delete to field"
+                                  aria-label={intl.formatMessage({
+                                    id: 'EmailwerkTemplateDeleteToFieldAriaLabel',
+                                    defaultMessage: 'delete to field'
+                                  })}
                                   onClick={() => envelopeToField.remove(index)}
                                   variant="ghost">
                                   <DeleteIcon />
@@ -504,7 +638,10 @@ const Page: React.FC<PageProps> = ({params}) => {
                               }>
                               <Input
                                 type="text"
-                                placeholder="Enter email address"
+                                placeholder={intl.formatMessage({
+                                  id: 'EmailwerkTemplateEmailAddressPlaceholder',
+                                  defaultMessage: 'Enter email address'
+                                })}
                                 {...register(`envelope.to.${index}.email`)}
                               />
                             </InputGroup>
@@ -515,17 +652,28 @@ const Page: React.FC<PageProps> = ({params}) => {
                     <Card.Footer>
                       <Button
                         onClick={() => envelopeToField.append({email: ''})}>
-                        Add To
+                        {intl.formatMessage({
+                          id: 'EmailwerkTemplateAddToButton',
+                          defaultMessage: 'Add To'
+                        })}
                       </Button>
                     </Card.Footer>
                   </Card.Root>
 
                   <Field.Root id="replyTo">
-                    <Field.Label htmlFor="replyTo">Reply To</Field.Label>
+                    <Field.Label htmlFor="replyTo">
+                      {intl.formatMessage({
+                        id: 'EmailwerkTemplateReplyToLabel',
+                        defaultMessage: 'Reply To'
+                      })}
+                    </Field.Label>
                     <Input
                       type="text"
                       id="replyTo"
-                      placeholder="Enter email address"
+                      placeholder={intl.formatMessage({
+                        id: 'EmailwerkTemplateEmailAddressPlaceholder',
+                        defaultMessage: 'Enter email address'
+                      })}
                       {...register('envelope.replyTo')}
                     />
                   </Field.Root>
@@ -535,7 +683,12 @@ const Page: React.FC<PageProps> = ({params}) => {
 
             <Card.Root>
               <Card.Header>
-                <Heading size="sm">Content</Heading>
+                <Heading size="sm">
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplateContentHeading',
+                    defaultMessage: 'Content'
+                  })}
+                </Heading>
               </Card.Header>
               <Card.Body>
                 <Stack>
@@ -567,7 +720,12 @@ const Page: React.FC<PageProps> = ({params}) => {
                   </Stack>
 
                   <Stack>
-                    <Heading size="sm">Preview</Heading>
+                    <Heading size="sm">
+                      {intl.formatMessage({
+                        id: 'EmailwerkTemplatePreviewHeading',
+                        defaultMessage: 'Preview'
+                      })}
+                    </Heading>
                     <Skeleton loading={!!state.isLoading}>
                       <Box
                         dangerouslySetInnerHTML={{__html: templateContent}}
@@ -576,12 +734,20 @@ const Page: React.FC<PageProps> = ({params}) => {
                   </Stack>
 
                   <Stack>
-                    <Heading size="sm">Rendered Preview</Heading>
+                    <Heading size="sm">
+                      {intl.formatMessage({
+                        id: 'EmailwerkTemplateRenderedPreviewHeading',
+                        defaultMessage: 'Rendered Preview'
+                      })}
+                    </Heading>
                     <Button
                       alignSelf="start"
                       variant="outline"
                       onClick={handleServerPreviewClick}>
-                      Render Preview
+                      {intl.formatMessage({
+                        id: 'EmailwerkTemplateRenderPreviewButton',
+                        defaultMessage: 'Render Preview'
+                      })}
                     </Button>
                     {serverPreview !== null && (
                       <Box dangerouslySetInnerHTML={{__html: serverPreview}} />
@@ -593,19 +759,54 @@ const Page: React.FC<PageProps> = ({params}) => {
 
             <Card.Root>
               <Card.Header>
-                <Heading size="sm">Variables</Heading>
+                <Heading size="sm">
+                  {intl.formatMessage({
+                    id: 'EmailwerkTemplateVariablesHeading',
+                    defaultMessage: 'Variables'
+                  })}
+                </Heading>
               </Card.Header>
               <Card.Body>
                 <Stack gap={4}>
                   <Table.Root striped colorPalette="gray">
                     <Table.Header>
                       <Table.Row>
-                        <Table.ColumnHeader>Name</Table.ColumnHeader>
-                        <Table.ColumnHeader>Type</Table.ColumnHeader>
-                        <Table.ColumnHeader>Description</Table.ColumnHeader>
-                        <Table.ColumnHeader>Default Value</Table.ColumnHeader>
-                        <Table.ColumnHeader>Required</Table.ColumnHeader>
-                        <Table.ColumnHeader>Constant</Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {intl.formatMessage({
+                            id: 'EmailwerkTemplateVariablesTableName',
+                            defaultMessage: 'Name'
+                          })}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {intl.formatMessage({
+                            id: 'EmailwerkTemplateVariablesTableType',
+                            defaultMessage: 'Type'
+                          })}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {intl.formatMessage({
+                            id: 'EmailwerkTemplateVariablesTableDescription',
+                            defaultMessage: 'Description'
+                          })}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {intl.formatMessage({
+                            id: 'EmailwerkTemplateVariablesTableDefaultValue',
+                            defaultMessage: 'Default Value'
+                          })}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {intl.formatMessage({
+                            id: 'EmailwerkTemplateVariablesTableRequired',
+                            defaultMessage: 'Required'
+                          })}
+                        </Table.ColumnHeader>
+                        <Table.ColumnHeader>
+                          {intl.formatMessage({
+                            id: 'EmailwerkTemplateVariablesTableConstant',
+                            defaultMessage: 'Constant'
+                          })}
+                        </Table.ColumnHeader>
                         <Table.ColumnHeader></Table.ColumnHeader>
                       </Table.Row>
                     </Table.Header>
@@ -670,7 +871,10 @@ const Page: React.FC<PageProps> = ({params}) => {
                             <Button
                               colorPalette="red"
                               onClick={() => variablesField.remove(index)}>
-                              Remove
+                              {intl.formatMessage({
+                                id: 'EmailwerkTemplateVariablesRemoveButton',
+                                defaultMessage: 'Remove'
+                              })}
                             </Button>
                           </Table.Cell>
                         </Table.Row>
@@ -685,7 +889,10 @@ const Page: React.FC<PageProps> = ({params}) => {
                         type: VariableType.STRING
                       })
                     }>
-                    Add Variable
+                    {intl.formatMessage({
+                      id: 'EmailwerkTemplateAddVariableButton',
+                      defaultMessage: 'Add Variable'
+                    })}
                   </Button>
                 </Stack>
               </Card.Body>
@@ -703,7 +910,10 @@ const Page: React.FC<PageProps> = ({params}) => {
               colorPalette="red"
               disabled={state.isLoading || isSubmitting}
               onClick={handleDeleteClick}>
-              Delete
+              {intl.formatMessage({
+                id: 'EmailwerkTemplateDeleteButton',
+                defaultMessage: 'Delete'
+              })}
             </Button>
 
             <Button
@@ -713,14 +923,20 @@ const Page: React.FC<PageProps> = ({params}) => {
               onClick={async () => {
                 await fetchData()
               }}>
-              Cancel
+              {intl.formatMessage({
+                id: 'EmailwerkTemplateCancelButton',
+                defaultMessage: 'Cancel'
+              })}
             </Button>
 
             <Button
               type="submit"
               loading={state.isLoading || isSubmitting}
               disabled={state.isLoading || isSubmitting}>
-              Save
+              {intl.formatMessage({
+                id: 'EmailwerkTemplateSaveButton',
+                defaultMessage: 'Save'
+              })}
             </Button>
           </ButtonGroup>
         </Stack>
@@ -730,18 +946,18 @@ const Page: React.FC<PageProps> = ({params}) => {
 }
 
 export const pageConfig: PageConfig = {
-  label: 'Templates',
+  label: intlText('EmailwerkTemplatesPageTitle', 'Templates'),
   icon: 'FaEnvelope',
   layout: {
     name: 'jaen'
   },
   breadcrumbs: [
     {
-      label: 'Emailwerk',
+      label: intlText('EmailwerkBreadcrumbsRoot', 'Emailwerk'),
       path: '/emailwerk/'
     },
     {
-      label: 'Templates',
+      label: intlText('EmailwerkBreadcrumbsTemplates', 'Templates'),
       path: '/emailwerk/templates/'
     }
   ],
