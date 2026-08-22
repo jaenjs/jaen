@@ -37,6 +37,19 @@ interface UploadedFileData {
  * @param options.driver - which backend to write to. Omitted, the gateway
  *   picks its own default.
  */
+/**
+ * One upload at a time. See the comment inside uploadFile for why; the queue
+ * is a promise chain that never rejects so one failed upload cannot wedge the
+ * ones behind it.
+ */
+let uploadChain: Promise<unknown> = Promise.resolve()
+
+const enqueue = <T>(task: () => Promise<T>): Promise<T> => {
+  const run = uploadChain.then(task, task)
+  uploadChain = run.catch(() => undefined)
+  return run
+}
+
 export const uploadFile = async (
   fileData: object | Blob | File,
   filename: string = 'jaen-index.json',
@@ -51,32 +64,40 @@ export const uploadFile = async (
             type: 'application/json'
           })
 
-  const uploaded = await osg.mutate(mutation => {
-    const result = mutation.upload({
-      args: {file, driver: options?.driver ?? null}
-    })
+  // gqty batches concurrent mutate() calls into one request and keys their
+  // selections by a hash of the arguments, in which a File serialises to {}.
+  // Two uploads in flight at once therefore collapsed onto a single alias and
+  // only the last file was sent, while every caller received that one result:
+  // a multi-file drop in the media library stored one file N times. Uploads
+  // are queued so that one request carries one file.
+  const uploaded = await enqueue(() =>
+    osg.mutate(mutation => {
+      const result = mutation.upload({
+        args: {file, driver: options?.driver ?? null}
+      })
 
-    // gqty resolves exactly the fields that are read here, so this selection
-    // is the query.
-    return {
-      file_id: result.file_id,
-      file_unique_id: result.file_unique_id,
-      file_name: result.file_name,
-      mime_type: result.mime_type,
-      file_size: result.file_size,
-      url: result.url,
-      thumbUrl: result.thumbUrl,
-      thumb: result.thumb
-        ? {
-            file_id: result.thumb.file_id,
-            file_unique_id: result.thumb.file_unique_id,
-            file_size: result.thumb.file_size,
-            width: result.thumb.width,
-            height: result.thumb.height
-          }
-        : null
-    }
-  })
+      // gqty resolves exactly the fields that are read here, so this selection
+      // is the query.
+      return {
+        file_id: result.file_id,
+        file_unique_id: result.file_unique_id,
+        file_name: result.file_name,
+        mime_type: result.mime_type,
+        file_size: result.file_size,
+        url: result.url,
+        thumbUrl: result.thumbUrl,
+        thumb: result.thumb
+          ? {
+              file_id: result.thumb.file_id,
+              file_unique_id: result.thumb.file_unique_id,
+              file_size: result.thumb.file_size,
+              width: result.thumb.width,
+              height: result.thumb.height
+            }
+          : null
+      }
+    })
+  )
 
   return {
     data: {

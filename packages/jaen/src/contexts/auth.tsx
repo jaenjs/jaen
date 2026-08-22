@@ -5,6 +5,7 @@ import {PageProps} from '../types'
 import {fetchCurrentUserRoles} from '../clients/zitadel-gql'
 import {
   ANONYMOUS_AUTH,
+  isAuthFlowRoute,
   needsOidcRuntime,
   OidcAuthContext,
   rememberReturnTo
@@ -353,6 +354,12 @@ export const withAuthSecurity = <
       if (!auth.isRuntimeLoaded && needsOidcRuntime(window.location.pathname)) {
         return
       }
+
+      // /logout is itself gated, so a signed-out visitor who reaches it (Back
+      // after signing out, a bookmark, a second tab) was pushed into a fresh
+      // sign-in. The flow routes handle their own state; they are not sent
+      // anywhere.
+      if (isAuthFlowRoute(window.location.pathname)) return
 
       rememberReturnTo(window.location.pathname + window.location.search)
       window.location.assign('/login')

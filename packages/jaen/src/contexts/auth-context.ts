@@ -123,6 +123,26 @@ const hasStoredSession = (storage: Storage | undefined): boolean => {
 const AUTH_ROUTES = ['/login', '/signup', '/logout', '/cms', '/oidc']
 
 /**
+ * The sign-in and sign-out flows themselves. Parking one of these as the
+ * return-to would bounce the visitor straight back into the flow they just
+ * finished, so they are never remembered. /cms is deliberately NOT here: it
+ * is a destination, the one most worth coming back to, and it sat in this
+ * list only because AUTH_ROUTES (which decides where the runtime loads) was
+ * reused as the skip list, so a bookmarked /cms/accounts always landed on
+ * the site root after signing in.
+ */
+const AUTH_FLOW_ROUTES = ['/login', '/signup', '/logout', '/oidc']
+
+/** Whether a (locale-stripped) path is one of the sign-in/sign-out flows. */
+export const isAuthFlowRoute = (pathname: string): boolean => {
+  const withoutLocale = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '')
+
+  return AUTH_FLOW_ROUTES.some(
+    route => withoutLocale === route || withoutLocale.startsWith(`${route}/`)
+  )
+}
+
+/**
  * Whether this page has to load the OIDC runtime.
  *
  * Deliberately conservative in the direction of loading it: a false negative
@@ -182,14 +202,7 @@ export const rememberReturnTo = (path: string): void => {
   try {
     // Parking an auth route would bounce the visitor straight back into the
     // flow they just finished.
-    const withoutLocale = path.replace(/^\/[a-z]{2}(?=\/|$)/, '')
-
-    if (
-      AUTH_ROUTES.some(
-        route =>
-          withoutLocale === route || withoutLocale.startsWith(`${route}/`)
-      )
-    ) {
+    if (isAuthFlowRoute(path)) {
       return
     }
 
