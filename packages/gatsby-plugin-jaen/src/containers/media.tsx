@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react'
-import {MediaNode, uploadFile, useField} from 'jaen'
+import {MediaNode, uploadFile, useField, useNotificationsContext} from 'jaen'
 import {v4 as uuidv4} from 'uuid'
 
 import {Media, MediaProps} from '../components/cms/Media/Media'
@@ -13,6 +13,8 @@ export interface MediaContainerProps {
 }
 
 const MediaContainer: React.FC<MediaContainerProps> = props => {
+  const {toast} = useNotificationsContext()
+
   const [jaenPageId, setJaenPageId] = useState<string | undefined>(
     props.jaenPageId
   )
@@ -97,35 +99,6 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
         })
       )
 
-      // for (const file of files) {
-      //   const {data, fileUrl, fileThumbUrl} = await uploadFile(file)
-      //   const dimensions = await new Promise<{width: number; height: number}>(
-      //     resolve => {
-      //       const img = new Image()
-      //       img.onload = () => {
-      //         resolve({width: img.width, height: img.height})
-      //       }
-      //       img.src = fileUrl
-      //     }
-      //   )
-
-      //   const newMediaNode: MediaNode = {
-      //     id: data.file_unique_id,
-      //     createdAt: new Date().toISOString(),
-      //     modifiedAt: new Date().toISOString(),
-      //     preview: fileThumbUrl ? {url: fileThumbUrl} : undefined,
-      //     url: fileUrl,
-      //     width: dimensions.width,
-      //     height: dimensions.height,
-      //     revisions: []
-      //   }
-
-      //   field.write({
-      //     ...mediaNodes,
-      //     [newMediaNode.id]: newMediaNode
-      //   })
-      // }
-
       field.write({
         ...mediaNodes,
         ...uploadedMediaNodes.reduce<{[id: string]: MediaNode}>(
@@ -137,7 +110,21 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
         )
       })
     } catch (error) {
-      return
+      /**
+       * This used to swallow the error and return. An upload that failed for
+       * any reason -- a rejected request, a gateway error, an expired session
+       * -- therefore looked exactly like a button that does nothing, with an
+       * empty console. Two separate upload defects hid behind it.
+       */
+      console.error('jaen: uploading media failed', error)
+
+      toast({
+        position: 'top-right',
+        title: 'Upload failed',
+        description:
+          error instanceof Error ? error.message : 'Could not upload the file',
+        status: 'error'
+      })
     }
   }
 

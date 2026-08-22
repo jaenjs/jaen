@@ -6,6 +6,10 @@ export {
   withAuthSecurity,
   checkUserRoles
 } from './contexts/auth'
+// The login page needs to collect a parked path too, not only the OIDC
+// callback: someone who reaches /login already signed in has to be sent back
+// where they came from rather than through the provider a second time.
+export {rememberReturnTo, takeReturnTo} from './contexts/auth-context'
 export {
   AuthUserProvider,
   AuthUser,
