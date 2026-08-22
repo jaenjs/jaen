@@ -33,6 +33,13 @@ const LoginPage: React.FC<PageProps> = () => {
     if (auth.isLoading || auth.activeNavigator) return
 
     if (auth.isAuthenticated) {
+      // isLoading flips again while the roles load, so this branch can run
+      // twice before the browser has left. The first run already took the
+      // parked path out of storage; a second would find nothing and send the
+      // visitor home instead. One navigation, then done.
+      if (started.current) return
+      started.current = true
+
       const returnTo = takeReturnTo()
 
       // replace, not assign: /login has no business in the history of someone

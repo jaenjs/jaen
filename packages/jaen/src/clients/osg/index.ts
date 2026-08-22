@@ -27,7 +27,13 @@ import {
 
 /** Gateway origin. `/graphql` and `/storage/<id>` hang off it. */
 export const storageOrigin = (): string =>
-  (__JAEN_STORAGE_URL__ || 'https://osg.snek.at').replace(/\/+$/, '')
+  // typeof, not a bare read: a site built against a plugin dist that predates
+  // the storageUrl option never gets this define replaced, and a bare
+  // identifier then throws ReferenceError at the first upload.
+  (
+    (typeof __JAEN_STORAGE_URL__ !== 'undefined' && __JAEN_STORAGE_URL__) ||
+    'https://osg.snek.at'
+  ).replace(/\/+$/, '')
 
 /** Public URL of a stored file, without a round trip. */
 export const storageFileUrl = (fileId: string): string =>

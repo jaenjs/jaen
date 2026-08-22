@@ -532,7 +532,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                           </Field.Label>
                           <NativeSelect.Root>
                             <NativeSelect.Field
-                              defaultValue={user?.human?.profile?.gender}
+                              value={
+                                user?.human?.profile?.gender ||
+                                'GENDER_UNSPECIFIED'
+                              }
                               onChange={e => {
                                 setUser({
                                   ...user,
@@ -570,8 +573,12 @@ export const Settings: React.FC<SettingsProps> = props => {
                                 and choosing it again fires no change. The
                                 disabled placeholder keeps "not set" visible
                                 until a real choice is made. */}
+                            {/* Controlled, not defaultValue: on a hard load this
+                                form mounts before the profile has arrived, and
+                                React never re-applies a later default to a
+                                select that is already on the page. */}
                             <NativeSelect.Field
-                              defaultValue={
+                              value={
                                 user?.human?.profile?.preferredLanguage || ''
                               }
                               onChange={e => {
