@@ -137,6 +137,9 @@ export interface ZgProfile {
   phone: string | null
   firstName: string | null
   lastName: string | null
+  nickName: string | null
+  /** One of the GENDER_* names zitadel-gql exposes, or null when unset. */
+  gender: string | null
   displayName: string | null
   avatarUrl: string | null
   preferredLanguage: string | null
@@ -212,6 +215,8 @@ const HUMAN_DETAIL_FRAGMENT = `
           phone
           firstName
           lastName
+          nickName
+          gender
           displayName
           avatarUrl
           preferredLanguage
@@ -424,6 +429,9 @@ export interface ZgProfileChanges {
   familyName?: string
   displayName?: string
   preferredLanguage?: string
+  nickName?: string
+  /** A GENDER_* name; GENDER_UNSPECIFIED clears a previously set value. */
+  gender?: string
 }
 
 export interface ZgUserChanges {

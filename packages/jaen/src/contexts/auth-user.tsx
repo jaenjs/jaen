@@ -65,9 +65,8 @@ const FALLBACK_PASSWORD_POLICY: AuthPasswordPolicy = {
 
 /**
  * Adapt a zitadel-gql user node into the AuthUser shape the CMS components
- * consume. zitadel-gql's profile node has no verification flags or
- * nickName/gender; verification is assumed for values the identity server
- * hands out, the unsupported fields stay empty.
+ * consume. zitadel-gql's profile node carries no verification flags, so
+ * verification is assumed for values the identity server hands out.
  */
 const toAuthUser = (user: ZgUser): AuthUser => {
   const profile = primaryProfile(user)
@@ -85,10 +84,10 @@ const toAuthUser = (user: ZgUser): AuthUser => {
       profile: {
         firstName: profile?.firstName ?? '',
         lastName: profile?.lastName ?? '',
-        nickName: '',
+        nickName: profile?.nickName ?? '',
         displayName: profile?.displayName ?? user.userName,
         preferredLanguage,
-        gender: '',
+        gender: profile?.gender ?? '',
         avatarUrl: profile?.avatarUrl ?? ''
       },
       email: {
@@ -338,14 +337,17 @@ export const AuthUserProvider: React.FC<{
   }
 
   const profileUpdate = async (profile: AuthUser['human']['profile']) => {
-    // REST profile fields map onto zitadel-gql's ProfileInput; nickName and
-    // gender have no equivalent there and are not sent.
     await applyChanges({
       profile: {
         givenName: profile.firstName,
         familyName: profile.lastName,
         displayName: profile.displayName,
-        preferredLanguage: profile.preferredLanguage
+        preferredLanguage: profile.preferredLanguage,
+        nickName: profile.nickName,
+        // Empty means "not set" in the form, and Zitadel spells that
+        // GENDER_UNSPECIFIED. Sending the empty string instead would be
+        // rejected as an unknown enum value.
+        gender: profile.gender || 'GENDER_UNSPECIFIED'
       }
     })
   }
