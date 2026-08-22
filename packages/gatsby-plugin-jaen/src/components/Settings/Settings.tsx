@@ -27,6 +27,7 @@ import {FaCheck} from '@react-icons/all-files/fa6/FaCheck'
 import {FaX} from '@react-icons/all-files/fa6/FaX'
 import {MdRefresh} from '@react-icons/all-files/md/MdRefresh'
 import {useEffect, useState} from 'react'
+import {useUiLocale} from '../../locales/ui-locale'
 
 export interface SettingsProps {
   user: AuthUser
@@ -73,9 +74,19 @@ const genderOptions = {
   GENDER_DIVERSE: 'Other'
 }
 
+/**
+ * One entry per catalog the CMS ships, keyed by the language tag stored on the
+ * account. Names are in their own language, which is how every language list
+ * that respects its readers is written.
+ */
 const localOptions = {
-  de: 'German',
-  en: 'English'
+  en: 'English',
+  de: 'Deutsch',
+  sl: 'Slovenščina',
+  it: 'Italiano',
+  ja: '日本語',
+  tr: 'Türkçe',
+  ar: 'العربية'
 }
 
 export const Settings: React.FC<SettingsProps> = props => {
@@ -83,6 +94,7 @@ export const Settings: React.FC<SettingsProps> = props => {
   const initialTab = query.get('activeTab') || 'GENERAL' // replace 'GENERAL' with your default tab value
 
   const notify = useNotificationsContext()
+  const {setPreviewLocale} = useUiLocale()
 
   const [user, setUser] = useState(props.user)
 
@@ -464,6 +476,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                                 user?.human?.profile?.preferredLanguage || ''
                               }
                               onChange={e => {
+                                // The UI follows the pick at once; Save is
+                                // what writes it to the account.
+                                setPreviewLocale(e.target.value)
+
                                 setUser({
                                   ...user,
                                   human: {

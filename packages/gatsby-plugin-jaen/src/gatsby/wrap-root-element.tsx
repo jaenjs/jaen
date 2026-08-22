@@ -20,6 +20,8 @@ import {
 } from 'react'
 import {IntlProvider} from 'react-intl'
 
+import {UiLocaleProvider, useUiLocale} from '../locales/ui-locale'
+
 import {JaenWidgetProvider} from '../contexts/jaen-widget'
 import {JaenPluginOptions} from './types'
 import {SiteMetadataProvider} from '../connectors/site-metadata'
@@ -67,6 +69,7 @@ const matchLocale = (candidate?: string | null): LocaleKey | undefined => {
 export const JaenIntlProvider: FC<{children: ReactNode}> = ({children}) => {
   const authUser = useAuthUser()
   const auth = useAuth()
+  const {previewLocale} = useUiLocale()
 
   const preferredLanguage = authUser?.user?.human?.profile?.preferredLanguage
   const claimLocale = auth.user?.profile?.locale
@@ -85,12 +88,15 @@ export const JaenIntlProvider: FC<{children: ReactNode}> = ({children}) => {
 
   const locale = useMemo<LocaleKey>(() => {
     return (
+      // An unsaved pick on the settings page wins for as long as the page
+      // lives; the account's language takes over again on the next visit.
+      matchLocale(previewLocale) ??
       matchLocale(preferredLanguage) ??
       matchLocale(claimLocale) ??
       matchLocale(browserLocale) ??
       DEFAULT_LOCALE
     )
-  }, [preferredLanguage, claimLocale, browserLocale])
+  }, [previewLocale, preferredLanguage, claimLocale, browserLocale])
 
   // No key={locale}: react-intl propagates locale/messages changes through
   // context, so strings update in place instead of remounting (and thereby
@@ -214,34 +220,36 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
           {/* The path decides whether the OIDC runtime is loaded at all, so it
               has to be re-read on navigation rather than once at mount. */}
           <AuthenticationProvider pathname={pathname}>
-            <JaenIntlProvider>
-              <Toaster />
+            <UiLocaleProvider>
+              <JaenIntlProvider>
+                <Toaster />
 
-              {/* The banner is markup now, so both of these have to be known
+                {/* The banner is markup now, so both of these have to be known
                   while the HTML is generated: the locale decides which of the
                   five translations is written into this page, and the
                   analytics flag decides the settings modal's cookie table for
                   whenever the plugin is loaded. */}
-              <CookieConsentProvider
-                locale={localeForPathname(pathname, options.i18n)}
-                useGoogleAnalytics={Boolean(
-                  options.googleAnalytics?.trackingIds?.[0]
-                )}>
-                <JaenUpdateModalProvider>
-                  <SiteMetadataProvider>
-                    <JaenFrameMenuProvider>
-                      <MediaModalProvider
-                        MediaModalComponent={MediaModalComponent}>
-                        <JaenWidgetProvider>
-                          <Popup />
-                          {element}
-                        </JaenWidgetProvider>
-                      </MediaModalProvider>
-                    </JaenFrameMenuProvider>
-                  </SiteMetadataProvider>
-                </JaenUpdateModalProvider>
-              </CookieConsentProvider>
-            </JaenIntlProvider>
+                <CookieConsentProvider
+                  locale={localeForPathname(pathname, options.i18n)}
+                  useGoogleAnalytics={Boolean(
+                    options.googleAnalytics?.trackingIds?.[0]
+                  )}>
+                  <JaenUpdateModalProvider>
+                    <SiteMetadataProvider>
+                      <JaenFrameMenuProvider>
+                        <MediaModalProvider
+                          MediaModalComponent={MediaModalComponent}>
+                          <JaenWidgetProvider>
+                            <Popup />
+                            {element}
+                          </JaenWidgetProvider>
+                        </MediaModalProvider>
+                      </JaenFrameMenuProvider>
+                    </SiteMetadataProvider>
+                  </JaenUpdateModalProvider>
+                </CookieConsentProvider>
+              </JaenIntlProvider>
+            </UiLocaleProvider>
           </AuthenticationProvider>
         </NotificationsProvider>
       </ChakraProvider>
