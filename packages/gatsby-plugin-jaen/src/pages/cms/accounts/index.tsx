@@ -294,8 +294,8 @@ const AccountsPage: React.FC = () => {
                         name={user.displayName ?? user.userName}
                       />
                     </Avatar.Root>
-                    <Box flex="1">
-                      <Heading size="sm">
+                    <Box flex="1" minW="0">
+                      <Heading size="sm" lineClamp={2} wordBreak="break-word">
                         {user.displayName ||
                           user.userName ||
                           intl.formatMessage({
@@ -314,6 +314,7 @@ const AccountsPage: React.FC = () => {
                     </Box>
                     {user.state ? (
                       <Badge
+                        flexShrink="0"
                         colorPalette={
                           user.state === 'USER_STATE_ACTIVE'
                             ? 'green'
@@ -517,8 +518,11 @@ export const pageConfig: PageConfig = {
   label: intlText('CmsAccountsPageTitle', 'Jaen CMS | Accounts'),
   icon: 'FaUsers',
   layout: {
+    // A browsable grid, not a form. 'form' caps the container at
+    // container.md, which squeezes the three-column grid into ~220px
+    // columns and makes every card wrap its own heading.
     name: 'jaen',
-    type: 'form'
+    type: 'content'
   },
   menu: {
     label: intlText('CmsAccountsMenuLabel', 'Accounts'),
