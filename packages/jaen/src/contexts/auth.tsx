@@ -49,10 +49,26 @@ const rolesFromTokenClaim = (claim: unknown): string[] => {
   })
 }
 
-export const useAuth = () => {
-  // jaen's own context, filled either by the lazily loaded OIDC runtime or by
-  // the signed-out constant. Reading react-oidc-context's hook directly here
-  // is what used to pin oidc-client-ts into every page.
+type RolesState = {roles: string[]; isRolesLoading: boolean}
+
+/**
+ * The signed-in user's roles, fetched once per session rather than once per
+ * hook instance.
+ *
+ * useAuth() is called from sixteen files. When each call owned its own roles
+ * state and effect, every mount of every one of them issued its own
+ * zitadel-gql query, and a page that happened to remount in a loop turned
+ * that into thousands of requests a minute against the identity server. The
+ * roles now live in this one provider; the hook only reads them.
+ */
+const RolesContext = React.createContext<RolesState>({
+  roles: [],
+  isRolesLoading: false
+})
+
+export const RolesProvider: React.FC<{children: React.ReactNode}> = ({
+  children
+}) => {
   const oidcAuth = useContext(OidcAuthContext) ?? ANONYMOUS_AUTH
 
   const [isRolesLoading, setIsRolesLoading] = React.useState<boolean>(false)
@@ -103,6 +119,21 @@ export const useAuth = () => {
       cancelled = true
     }
   }, [oidcAuth.user])
+
+  const value = useMemo(
+    () => ({roles, isRolesLoading}),
+    [roles, isRolesLoading]
+  )
+
+  return <RolesContext.Provider value={value}>{children}</RolesContext.Provider>
+}
+
+export const useAuth = () => {
+  // jaen's own context, filled either by the lazily loaded OIDC runtime or by
+  // the signed-out constant. Reading react-oidc-context's hook directly here
+  // is what used to pin oidc-client-ts into every page.
+  const oidcAuth = useContext(OidcAuthContext) ?? ANONYMOUS_AUTH
+  const {roles, isRolesLoading} = useContext(RolesContext)
 
   const auth = useMemo(() => {
     return {
@@ -233,7 +264,9 @@ export const AuthenticationProvider: React.FC<{
           redirectUri={__JAEN_ZITADEL_GQL__.redirectUri}
           authority={__JAEN_ZITADEL_GQL__.authority}
           scope={scope}>
-          <AuthUserProvider>{children}</AuthUserProvider>
+          <RolesProvider>
+            <AuthUserProvider>{children}</AuthUserProvider>
+          </RolesProvider>
         </OidcRuntime>
       </React.Suspense>
     )
@@ -308,13 +341,27 @@ export const withAuthSecurity = <
       if (auth.isLoading || auth.isAuthenticated) return
       if (auth.activeNavigator) return
 
+      /**
+       * On a hard load the first render carries the signed-out placeholder
+       * for the instant before the OIDC runtime chunk mounts, and the
+       * placeholder says "not loading, not authenticated" about a visitor who
+       * may well have a session in storage. Acting on that instant sent every
+       * signed-in visitor to /login, /login sent them back, and the two
+       * pages bounced each other indefinitely. While a runtime is on its way,
+       * this effect waits for it; the deps below re-run it once it answers.
+       */
+      if (!auth.isRuntimeLoaded && needsOidcRuntime(window.location.pathname)) {
+        return
+      }
+
       rememberReturnTo(window.location.pathname + window.location.search)
       window.location.assign('/login')
     }, [
       pageConfigAuth?.isRequired,
       auth.isLoading,
       auth.isAuthenticated,
-      auth.activeNavigator
+      auth.activeNavigator,
+      auth.isRuntimeLoaded
     ])
 
     if (pageConfigAuth?.isRequired) {

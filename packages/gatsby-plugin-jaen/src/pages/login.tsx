@@ -25,6 +25,11 @@ const LoginPage: React.FC<PageProps> = () => {
      * So: wait for the runtime to settle, and only start a flow for someone
      * who actually needs one.
      */
+    // The signed-out placeholder answers before the runtime chunk has
+    // mounted. Its signinRedirect is a stub that throws, and starting on it
+    // would also set the guard below, so the real call never happened and an
+    // anonymous visitor stayed on a blank page.
+    if (!auth.isRuntimeLoaded) return
     if (auth.isLoading || auth.activeNavigator) return
 
     if (auth.isAuthenticated) {
@@ -41,7 +46,12 @@ const LoginPage: React.FC<PageProps> = () => {
     started.current = true
 
     void auth.signinRedirect()
-  }, [auth.isLoading, auth.isAuthenticated, auth.activeNavigator])
+  }, [
+    auth.isRuntimeLoaded,
+    auth.isLoading,
+    auth.isAuthenticated,
+    auth.activeNavigator
+  ])
 
   return null
 }

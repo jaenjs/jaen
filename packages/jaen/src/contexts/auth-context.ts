@@ -15,8 +15,23 @@ import type {AuthContextProps} from 'react-oidc-context'
  * module in the package that imports `react-oidc-context` for its value. The
  * type import here is erased at compile time and pulls in nothing.
  */
-export const OidcAuthContext = createContext<AuthContextProps>(
-  undefined as unknown as AuthContextProps
+/**
+ * react-oidc-context's shape plus one flag of jaen's own.
+ *
+ * `isRuntimeLoaded` tells a consumer whether it is looking at the real
+ * provider or at the signed-out placeholder below. The two are deliberately
+ * indistinguishable in every other field, and that is exactly what made the
+ * login gate misfire: on a hard load of a gated page the first render carries
+ * the placeholder (isLoading false, isAuthenticated false) for the instant
+ * before the runtime chunk mounts, and a gate that acted on that instant sent
+ * a signed-in visitor to /login, which sent them straight back, and so on.
+ */
+export type JaenAuthContextProps = AuthContextProps & {
+  isRuntimeLoaded: boolean
+}
+
+export const OidcAuthContext = createContext<JaenAuthContextProps>(
+  undefined as unknown as JaenAuthContextProps
 )
 
 /**
@@ -41,6 +56,7 @@ const notLoaded = async (): Promise<never> => {
 }
 
 export const ANONYMOUS_AUTH = {
+  isRuntimeLoaded: false,
   isAuthenticated: false,
   isLoading: false,
   user: null,
@@ -66,7 +82,7 @@ export const ANONYMOUS_AUTH = {
   revokeTokens: notLoaded,
   startSilentRenew: () => {},
   stopSilentRenew: () => {}
-} as unknown as AuthContextProps
+} as unknown as JaenAuthContextProps
 
 /**
  * The prefix oidc-client-ts stores a session under.

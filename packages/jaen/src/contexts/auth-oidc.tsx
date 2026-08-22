@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useMemo} from 'react'
 import {AuthProvider, useAuth as useOIDCAuth} from 'react-oidc-context'
 
 import {OidcAuthContext, takeReturnTo} from './auth-context'
@@ -25,8 +25,15 @@ import {OidcAuthContext, takeReturnTo} from './auth-context'
 const Bridge: React.FC<React.PropsWithChildren> = ({children}) => {
   const auth = useOIDCAuth()
 
+  // Stamped here, and only here: this is the one place the real provider's
+  // state enters jaen's context, so a consumer reading the flag knows it is
+  // not looking at the signed-out placeholder.
+  const value = useMemo(() => ({...auth, isRuntimeLoaded: true}), [auth])
+
   return (
-    <OidcAuthContext.Provider value={auth}>{children}</OidcAuthContext.Provider>
+    <OidcAuthContext.Provider value={value}>
+      {children}
+    </OidcAuthContext.Provider>
   )
 }
 
