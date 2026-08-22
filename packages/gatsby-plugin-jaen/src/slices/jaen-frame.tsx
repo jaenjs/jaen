@@ -34,6 +34,9 @@ type SliceProps = SliceComponentProps<
         path: string
         pageContext: {
           pageConfig: PageConfig
+          /** Set by gatsby-source-jaen on the per-locale clones of a page. */
+          locale?: string
+          localePagesId?: string
         }
       }>
     }
@@ -274,7 +277,35 @@ const Slice: React.FC<SliceProps> = props => {
       })
     }
 
-    const sortedNodes = props.data.allSitePage.nodes.sort((a, b) => {
+    // Stateful pages fan out into one SitePage per locale, and every clone
+    // carries the same pageConfig, so a page with a menu entry turned up once
+    // per locale: five "Blog" items on a five-locale site. One item per
+    // localePagesId; among the clones the shortest path is the unprefixed
+    // one, which is the default locale and the address the menu should use.
+    const byLocalePages = new Map<
+      string,
+      (typeof props.data.allSitePage.nodes)[number]
+    >()
+    const singles: typeof props.data.allSitePage.nodes = []
+
+    for (const node of props.data.allSitePage.nodes) {
+      const key = node.pageContext?.localePagesId
+
+      if (!key) {
+        singles.push(node)
+        continue
+      }
+
+      const kept = byLocalePages.get(key)
+
+      if (!kept || node.path.length < kept.path.length) {
+        byLocalePages.set(key, node)
+      }
+    }
+
+    const uniqueNodes = [...singles, ...byLocalePages.values()]
+
+    const sortedNodes = uniqueNodes.sort((a, b) => {
       const aOrder = a.pageContext.pageConfig?.menu?.order || 0
       const bOrder = b.pageContext.pageConfig?.menu?.order || 0
       return aOrder - bOrder
