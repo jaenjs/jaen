@@ -20,7 +20,7 @@ import {
 } from 'react'
 import {IntlProvider} from 'react-intl'
 
-import {UiLocaleProvider, useUiLocale} from '../locales/ui-locale'
+import {useUiLocale} from '../locales/ui-locale'
 
 import {JaenWidgetProvider} from '../contexts/jaen-widget'
 import {JaenPluginOptions} from './types'
@@ -220,36 +220,34 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
           {/* The path decides whether the OIDC runtime is loaded at all, so it
               has to be re-read on navigation rather than once at mount. */}
           <AuthenticationProvider pathname={pathname}>
-            <UiLocaleProvider>
-              <JaenIntlProvider>
-                <Toaster />
+            <JaenIntlProvider>
+              <Toaster />
 
-                {/* The banner is markup now, so both of these have to be known
+              {/* The banner is markup now, so both of these have to be known
                   while the HTML is generated: the locale decides which of the
                   five translations is written into this page, and the
                   analytics flag decides the settings modal's cookie table for
                   whenever the plugin is loaded. */}
-                <CookieConsentProvider
-                  locale={localeForPathname(pathname, options.i18n)}
-                  useGoogleAnalytics={Boolean(
-                    options.googleAnalytics?.trackingIds?.[0]
-                  )}>
-                  <JaenUpdateModalProvider>
-                    <SiteMetadataProvider>
-                      <JaenFrameMenuProvider>
-                        <MediaModalProvider
-                          MediaModalComponent={MediaModalComponent}>
-                          <JaenWidgetProvider>
-                            <Popup />
-                            {element}
-                          </JaenWidgetProvider>
-                        </MediaModalProvider>
-                      </JaenFrameMenuProvider>
-                    </SiteMetadataProvider>
-                  </JaenUpdateModalProvider>
-                </CookieConsentProvider>
-              </JaenIntlProvider>
-            </UiLocaleProvider>
+              <CookieConsentProvider
+                locale={localeForPathname(pathname, options.i18n)}
+                useGoogleAnalytics={Boolean(
+                  options.googleAnalytics?.trackingIds?.[0]
+                )}>
+                <JaenUpdateModalProvider>
+                  <SiteMetadataProvider>
+                    <JaenFrameMenuProvider>
+                      <MediaModalProvider
+                        MediaModalComponent={MediaModalComponent}>
+                        <JaenWidgetProvider>
+                          <Popup />
+                          {element}
+                        </JaenWidgetProvider>
+                      </MediaModalProvider>
+                    </JaenFrameMenuProvider>
+                  </SiteMetadataProvider>
+                </JaenUpdateModalProvider>
+              </CookieConsentProvider>
+            </JaenIntlProvider>
           </AuthenticationProvider>
         </NotificationsProvider>
       </ChakraProvider>
