@@ -337,13 +337,20 @@ export const AuthUserProvider: React.FC<{
   }
 
   const profileUpdate = async (profile: AuthUser['human']['profile']) => {
+    // Zitadel validates every profile string it receives with a minimum
+    // length of one, so an empty value is not "clear this" but a rejected
+    // request. The adapter fills absent fields with the empty string, which
+    // means a user without a nickname could never save anything. Leaving a
+    // field out keeps its current value, which is what empty means here.
+    const nonEmpty = (value?: string) => value?.trim() || undefined
+
     await applyChanges({
       profile: {
-        givenName: profile.firstName,
-        familyName: profile.lastName,
-        displayName: profile.displayName,
-        preferredLanguage: profile.preferredLanguage,
-        nickName: profile.nickName,
+        givenName: nonEmpty(profile.firstName),
+        familyName: nonEmpty(profile.lastName),
+        displayName: nonEmpty(profile.displayName),
+        preferredLanguage: nonEmpty(profile.preferredLanguage),
+        nickName: nonEmpty(profile.nickName),
         // Empty means "not set" in the form, and Zitadel spells that
         // GENDER_UNSPECIFIED. Sending the empty string instead would be
         // rejected as an unknown enum value.
