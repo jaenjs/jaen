@@ -454,9 +454,14 @@ export const Settings: React.FC<SettingsProps> = props => {
                         <Field.Root id="preferredLanguage">
                           <Field.Label>Language</Field.Label>
                           <NativeSelect.Root>
+                            {/* An account without a language would otherwise
+                                display the first option as if it were set,
+                                and choosing it again fires no change. The
+                                disabled placeholder keeps "not set" visible
+                                until a real choice is made. */}
                             <NativeSelect.Field
                               defaultValue={
-                                user?.human?.profile?.preferredLanguage
+                                user?.human?.profile?.preferredLanguage || ''
                               }
                               onChange={e => {
                                 setUser({
@@ -470,6 +475,9 @@ export const Settings: React.FC<SettingsProps> = props => {
                                   }
                                 })
                               }}>
+                              <option value="" disabled>
+                                Not set
+                              </option>
                               {Object.entries(localOptions).map(
                                 ([key, value]) => (
                                   <option key={key} value={key}>
