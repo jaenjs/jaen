@@ -13,6 +13,7 @@ import {
   Field
 } from '@chakra-ui/react'
 import {useState} from 'react'
+import {useIntl} from 'react-intl'
 import {SubmitHandler, useForm} from 'react-hook-form'
 import {FaArrowLeft} from '@react-icons/all-files/fa/FaArrowLeft'
 
@@ -38,6 +39,7 @@ interface FormData {
 }
 
 export const Signup: React.FC<SignupProps> = props => {
+  const intl = useIntl()
   const {
     handleSubmit,
     register,
@@ -62,13 +64,22 @@ export const Signup: React.FC<SignupProps> = props => {
 
       setAlert({
         status: 'success',
-        message: `Successfully signed up.`,
-        description: `Please check your email for a verification link.`
+        message: intl.formatMessage({
+          id: 'SignupSuccessTitle',
+          defaultMessage: 'Successfully signed up.'
+        }),
+        description: intl.formatMessage({
+          id: 'SignupSuccessDescription',
+          defaultMessage: 'Please check your email for a verification link.'
+        })
       })
     } catch (e) {
       setAlert({
         status: 'error',
-        message: `Unable to sign up.`,
+        message: intl.formatMessage({
+          id: 'SignupErrorTitle',
+          defaultMessage: 'Unable to sign up.'
+        }),
         description: e.message
       })
     }
@@ -86,18 +97,30 @@ export const Signup: React.FC<SignupProps> = props => {
                 to={props.goBackPath}
                 onClick={props.onGoBack}>
                 <FaArrowLeft />
-                Back to website
+                {intl.formatMessage({
+                  id: 'SignupBackToWebsiteButton',
+                  defaultMessage: 'Back to website'
+                })}
               </Link>
             </HStack>
 
             <Stack gap={{base: '2', md: '3'}} textAlign="center">
               <Heading size={{base: 'xs', md: 'sm'}}>
-                Create your account
+                {intl.formatMessage({
+                  id: 'SignupHeading',
+                  defaultMessage: 'Create your account'
+                })}
               </Heading>
               <Text color="fg.muted">
-                Already a user?{' '}
+                {intl.formatMessage({
+                  id: 'SignupAlreadyUserPrompt',
+                  defaultMessage: 'Already a user?'
+                })}{' '}
                 <Link to={props.signInPath} onClick={props.onSignIn}>
-                  Login
+                  {intl.formatMessage({
+                    id: 'SignupLoginLink',
+                    defaultMessage: 'Login'
+                  })}
                 </Link>
               </Text>
             </Stack>
@@ -144,7 +167,12 @@ export const Signup: React.FC<SignupProps> = props => {
                       id="login_form_first_name"
                       required
                       invalid={!!errors.firstName}>
-                      <Field.Label htmlFor="firstName">First name</Field.Label>
+                      <Field.Label htmlFor="firstName">
+                        {intl.formatMessage({
+                          id: 'SignupFirstNameLabel',
+                          defaultMessage: 'First name'
+                        })}
+                      </Field.Label>
                       <Input
                         autoFocus
                         id="firstName"
@@ -153,14 +181,23 @@ export const Signup: React.FC<SignupProps> = props => {
                         })}
                       />
                       <Field.ErrorText>
-                        {errors.firstName && 'First name is required'}
+                        {errors.firstName &&
+                          intl.formatMessage({
+                            id: 'SignupFirstNameRequiredError',
+                            defaultMessage: 'First name is required'
+                          })}
                       </Field.ErrorText>
                     </Field.Root>
                     <Field.Root
                       id="login_form_last_name"
                       required
                       invalid={!!errors.lastName}>
-                      <Field.Label htmlFor="lastName">Last name</Field.Label>
+                      <Field.Label htmlFor="lastName">
+                        {intl.formatMessage({
+                          id: 'SignupLastNameLabel',
+                          defaultMessage: 'Last name'
+                        })}
+                      </Field.Label>
                       <Input
                         id="lastName"
                         {...register('lastName', {
@@ -168,7 +205,11 @@ export const Signup: React.FC<SignupProps> = props => {
                         })}
                       />
                       <Field.ErrorText>
-                        {errors.lastName && 'Last name is required'}
+                        {errors.lastName &&
+                          intl.formatMessage({
+                            id: 'SignupLastNameRequiredError',
+                            defaultMessage: 'Last name is required'
+                          })}
                       </Field.ErrorText>
                     </Field.Root>
                   </Stack>
@@ -177,7 +218,12 @@ export const Signup: React.FC<SignupProps> = props => {
                     id="login_form_email"
                     required
                     invalid={!!errors.email}>
-                    <Field.Label htmlFor="email">Email</Field.Label>
+                    <Field.Label htmlFor="email">
+                      {intl.formatMessage({
+                        id: 'SignupEmailLabel',
+                        defaultMessage: 'Email'
+                      })}
+                    </Field.Label>
                     <Input
                       id="email"
                       {...register('email', {
@@ -185,12 +231,21 @@ export const Signup: React.FC<SignupProps> = props => {
                       })}
                     />
                     <Field.ErrorText>
-                      {errors.email && 'Email is required'}
+                      {errors.email &&
+                        intl.formatMessage({
+                          id: 'SignupEmailRequiredError',
+                          defaultMessage: 'Email is required'
+                        })}
                     </Field.ErrorText>
                   </Field.Root>
 
                   <Field.Root>
-                    <Field.Label htmlFor="username">Username</Field.Label>
+                    <Field.Label htmlFor="username">
+                      {intl.formatMessage({
+                        id: 'SignupUsernameLabel',
+                        defaultMessage: 'Username'
+                      })}
+                    </Field.Label>
                     <Input
                       id="username"
                       {...register('username', {
@@ -217,7 +272,10 @@ export const Signup: React.FC<SignupProps> = props => {
                     variant="primary"
                     size="lg"
                     loading={isSubmitting}>
-                    Sign up
+                    {intl.formatMessage({
+                      id: 'SignupSubmitButton',
+                      defaultMessage: 'Sign up'
+                    })}
                   </Button>
                   {/* <HStack>
             <Divider />

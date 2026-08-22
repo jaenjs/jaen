@@ -1,6 +1,7 @@
 import React from 'react'
 import {Input, Stack, Text, Button, ButtonGroup, Field} from '@chakra-ui/react'
 import {useForm, Controller} from 'react-hook-form'
+import {useIntl} from 'react-intl'
 
 import {FieldGroup} from '../../../../components/shared/FieldGroup'
 
@@ -14,6 +15,8 @@ export interface PasswordFormProps {
 }
 
 export const PasswordForm: React.FC<PasswordFormProps> = ({onSubmit}) => {
+  const intl = useIntl()
+
   const {
     handleSubmit,
     control,
@@ -29,7 +32,11 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({onSubmit}) => {
 
   return (
     <form onSubmit={onFormSubmit}>
-      <FieldGroup title="Password">
+      <FieldGroup
+        title={intl.formatMessage({
+          id: 'PasswordFormTitle',
+          defaultMessage: 'Password'
+        })}>
         <Stack width="full" gap="6" maxW="2xl">
           <Input
             type="email"
@@ -39,11 +46,21 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({onSubmit}) => {
           />
 
           <Field.Root id="password">
-            <Field.Label>Password</Field.Label>
+            <Field.Label>
+              {intl.formatMessage({
+                id: 'PasswordFormPasswordLabel',
+                defaultMessage: 'Password'
+              })}
+            </Field.Label>
             <Controller
               control={control}
               name="password"
-              rules={{required: 'This field is required'}}
+              rules={{
+                required: intl.formatMessage({
+                  id: 'PasswordFormRequiredError',
+                  defaultMessage: 'This field is required'
+                })
+              }}
               render={({field}) => (
                 <Input
                   maxW="xs"
@@ -56,14 +73,26 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({onSubmit}) => {
           </Field.Root>
 
           <Field.Root id="confirmPassword" invalid={!!errors.confirmPassword}>
-            <Field.Label>Confirm Password</Field.Label>
+            <Field.Label>
+              {intl.formatMessage({
+                id: 'PasswordFormConfirmPasswordLabel',
+                defaultMessage: 'Confirm Password'
+              })}
+            </Field.Label>
             <Controller
               control={control}
               name="confirmPassword"
               rules={{
-                required: 'This field is required',
+                required: intl.formatMessage({
+                  id: 'PasswordFormRequiredError',
+                  defaultMessage: 'This field is required'
+                }),
                 validate: value =>
-                  value === password || 'Passwords do not match'
+                  value === password ||
+                  intl.formatMessage({
+                    id: 'PasswordFormMismatchError',
+                    defaultMessage: 'Passwords do not match'
+                  })
               }}
               render={({field}) => (
                 <Input
@@ -85,13 +114,19 @@ export const PasswordForm: React.FC<PasswordFormProps> = ({onSubmit}) => {
           }
           <Stack>
             <Text fontSize="sm" color="muted">
-              Make sure your password is at least 15 characters OR at least 8
-              characters including a number and a lowercase letter.
+              {intl.formatMessage({
+                id: 'PasswordFormHelpText',
+                defaultMessage:
+                  'Make sure your password is at least 15 characters OR at least 8 characters including a number and a lowercase letter.'
+              })}
             </Text>
 
             <ButtonGroup>
               <Button loading={isSubmitting} type="submit" variant="outline">
-                Update password
+                {intl.formatMessage({
+                  id: 'PasswordFormUpdateButton',
+                  defaultMessage: 'Update password'
+                })}
               </Button>
             </ButtonGroup>
           </Stack>

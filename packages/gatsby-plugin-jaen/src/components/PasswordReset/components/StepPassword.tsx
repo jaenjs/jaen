@@ -1,4 +1,5 @@
 import React from 'react'
+import {useIntl} from 'react-intl'
 import {useForm, Controller} from 'react-hook-form'
 import {Input, Button, Stack, Field} from '@chakra-ui/react'
 
@@ -12,6 +13,7 @@ export interface StepEmailProps {
 }
 
 const StepPassword: React.FC<StepEmailProps> = props => {
+  const intl = useIntl()
   const {
     handleSubmit,
     control,
@@ -31,11 +33,21 @@ const StepPassword: React.FC<StepEmailProps> = props => {
         <Input type="email" name="email" autoComplete="email" display="none" />
 
         <Field.Root id="password" required invalid={!!errors.password}>
-          <Field.Label>Password</Field.Label>
+          <Field.Label>
+            {intl.formatMessage({
+              id: 'PasswordResetStepPasswordPasswordLabel',
+              defaultMessage: 'Password'
+            })}
+          </Field.Label>
           <Controller
             control={control}
             name="password"
-            rules={{required: 'This field is required'}}
+            rules={{
+              required: intl.formatMessage({
+                id: 'PasswordResetStepPasswordRequiredError',
+                defaultMessage: 'This field is required'
+              })
+            }}
             render={({field}) => (
               <Input
                 autoFocus
@@ -51,13 +63,26 @@ const StepPassword: React.FC<StepEmailProps> = props => {
           id="confirmPassword"
           required
           invalid={!!errors.confirmPassword}>
-          <Field.Label>Confirm Password</Field.Label>
+          <Field.Label>
+            {intl.formatMessage({
+              id: 'PasswordResetStepPasswordConfirmPasswordLabel',
+              defaultMessage: 'Confirm Password'
+            })}
+          </Field.Label>
           <Controller
             control={control}
             name="confirmPassword"
             rules={{
-              required: 'This field is required',
-              validate: value => value === password || 'Passwords do not match'
+              required: intl.formatMessage({
+                id: 'PasswordResetStepPasswordRequiredError',
+                defaultMessage: 'This field is required'
+              }),
+              validate: value =>
+                value === password ||
+                intl.formatMessage({
+                  id: 'PasswordResetStepPasswordMismatchError',
+                  defaultMessage: 'Passwords do not match'
+                })
             }}
             render={({field}) => (
               <Input {...field} type="password" autoComplete="new-password" />
@@ -77,7 +102,10 @@ const StepPassword: React.FC<StepEmailProps> = props => {
           variant="primary"
           size="lg"
           loading={isSubmitting}>
-          Send password reset mail
+          {intl.formatMessage({
+            id: 'PasswordResetStepPasswordSubmitButton',
+            defaultMessage: 'Send password reset mail'
+          })}
         </Button>
       </Stack>
     </form>

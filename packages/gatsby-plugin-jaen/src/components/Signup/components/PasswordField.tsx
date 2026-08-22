@@ -8,6 +8,7 @@ import {
   useDisclosure
 } from '@chakra-ui/react'
 import {forwardRef, useMemo, useRef} from 'react'
+import {useIntl} from 'react-intl'
 import {FaEye} from '@react-icons/all-files/fa/FaEye'
 import {FaEyeSlash} from '@react-icons/all-files/fa/FaEyeSlash'
 
@@ -24,6 +25,7 @@ export interface PasswordFieldProps extends InputProps {
 
 export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
   ({invalid, required, ...props}, ref) => {
+    const intl = useIntl()
     const {open, onToggle} = useDisclosure()
     const inputRef = useRef<HTMLInputElement>(null)
 
@@ -47,7 +49,12 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
         id="login_form_password"
         invalid={invalid}
         required={required}>
-        <Field.Label htmlFor="password">Password</Field.Label>
+        <Field.Label htmlFor="password">
+          {intl.formatMessage({
+            id: 'PasswordFieldLabel',
+            defaultMessage: 'Password'
+          })}
+        </Field.Label>
         <InputGroup
           endElement={
             // `text` is defined in theme/recipes/button.ts, but v3 takes the
@@ -57,7 +64,17 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
             <IconButton
               variant="text"
               color="brand.500"
-              aria-label={open ? 'Mask password' : 'Reveal password'}
+              aria-label={
+                open
+                  ? intl.formatMessage({
+                      id: 'PasswordFieldMaskAriaLabel',
+                      defaultMessage: 'Mask password'
+                    })
+                  : intl.formatMessage({
+                      id: 'PasswordFieldRevealAriaLabel',
+                      defaultMessage: 'Reveal password'
+                    })
+              }
               onClick={onClickReveal}>
               {open ? <FaEyeSlash /> : <FaEye />}
             </IconButton>
@@ -73,7 +90,11 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
           />
         </InputGroup>
         <Field.ErrorText>
-          {props.name === 'password' && 'Password is required'}
+          {props.name === 'password' &&
+            intl.formatMessage({
+              id: 'PasswordFieldRequiredError',
+              defaultMessage: 'Password is required'
+            })}
         </Field.ErrorText>
       </Field.Root>
     )

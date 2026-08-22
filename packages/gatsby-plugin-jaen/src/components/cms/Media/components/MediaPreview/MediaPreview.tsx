@@ -371,7 +371,11 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                     return (
                       <AspectRatio
                         key={node.id}
-                        ratio={node.width / node.height}
+                        ratio={
+                          node.width > 0 && node.height > 0
+                            ? node.width / node.height
+                            : 4 / 3
+                        }
                         objectFit="contain"
                         w="16"
                         h="16"

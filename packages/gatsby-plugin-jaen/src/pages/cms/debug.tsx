@@ -9,12 +9,15 @@ import {
   StackSeparator
 } from '@chakra-ui/react'
 import {graphql, PageProps, useStaticQuery} from 'gatsby'
+import {useIntl} from 'react-intl'
 
 import {intlText} from '../../lib/intl'
 
 import {JaenWidgetProvider} from '../../contexts/jaen-widget'
 
 const Page: React.FC<PageProps> = () => {
+  const intl = useIntl()
+
   const data = useStaticQuery<{
     allSitePlugin: {
       nodes: {
@@ -39,12 +42,18 @@ const Page: React.FC<PageProps> = () => {
     <Stack gap={6} separator={<StackSeparator />}>
       <Stack gap="6">
         <Heading as="h1" size="lg">
-          Version Information
+          {intl.formatMessage({
+            id: 'CmsDebugVersionInformationHeading',
+            defaultMessage: 'Version Information'
+          })}
         </Heading>
 
         <Text fontSize="md">
-          Below, you'll find information about the versions of Gatsby, Jaen, and
-          plugins installed in your project.
+          {intl.formatMessage({
+            id: 'CmsDebugVersionInformationDescription',
+            defaultMessage:
+              "Below, you'll find information about the versions of Gatsby, Jaen, and plugins installed in your project."
+          })}
         </Text>
 
         <Accordion.Root collapsible multiple>
@@ -56,7 +65,10 @@ const Page: React.FC<PageProps> = () => {
                   fontWeight: 'bold'
                 }}>
                 <Box as="span" flex="1" textAlign="left">
-                  Gatsby
+                  {intl.formatMessage({
+                    id: 'CmsDebugGatsbyTitle',
+                    defaultMessage: 'Gatsby'
+                  })}
                 </Box>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
@@ -65,21 +77,32 @@ const Page: React.FC<PageProps> = () => {
               <Accordion.ItemBody>
                 <Stack gap="4">
                   <Text fontSize="md">
-                    Gatsby is a popular static site generator used for building
-                    modern web applications. Below, you'll find information
-                    about the Gatsby and Gatsby CLI versions installed in your
-                    project.
+                    {intl.formatMessage({
+                      id: 'CmsDebugGatsbyDescription',
+                      defaultMessage:
+                        "Gatsby is a popular static site generator used for building modern web applications. Below, you'll find information about the Gatsby and Gatsby CLI versions installed in your project."
+                    })}
                   </Text>
                   <Table.Root variant="line">
                     <Table.Body>
                       <Table.Row>
-                        <Table.Cell>Gatsby version:</Table.Cell>
+                        <Table.Cell>
+                          {intl.formatMessage({
+                            id: 'CmsDebugGatsbyVersionLabel',
+                            defaultMessage: 'Gatsby version:'
+                          })}
+                        </Table.Cell>
                         <Table.Cell>
                           {require('gatsby/package.json').version}
                         </Table.Cell>
                       </Table.Row>
                       <Table.Row>
-                        <Table.Cell>Gatsby CLI version:</Table.Cell>
+                        <Table.Cell>
+                          {intl.formatMessage({
+                            id: 'CmsDebugGatsbyCliVersionLabel',
+                            defaultMessage: 'Gatsby CLI version:'
+                          })}
+                        </Table.Cell>
                         <Table.Cell>
                           {require('gatsby-cli/package.json').version}
                         </Table.Cell>
@@ -99,7 +122,10 @@ const Page: React.FC<PageProps> = () => {
                   fontWeight: 'bold'
                 }}>
                 <Box as="span" flex="1" textAlign="left">
-                  Jaen
+                  {intl.formatMessage({
+                    id: 'CmsDebugJaenTitle',
+                    defaultMessage: 'Jaen'
+                  })}
                 </Box>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
@@ -108,15 +134,21 @@ const Page: React.FC<PageProps> = () => {
               <Accordion.ItemBody>
                 <Stack gap="4">
                   <Text fontSize="md">
-                    Jaen is a headless content management system (CMS) for
-                    managing your website's content. Below, you'll find
-                    information about the Jaen version installed in your
-                    project.
+                    {intl.formatMessage({
+                      id: 'CmsDebugJaenDescription',
+                      defaultMessage:
+                        "Jaen is a headless content management system (CMS) for managing your website's content. Below, you'll find information about the Jaen version installed in your project."
+                    })}
                   </Text>
                   <Table.Root variant="line">
                     <Table.Body>
                       <Table.Row>
-                        <Table.Cell>Jaen version:</Table.Cell>
+                        <Table.Cell>
+                          {intl.formatMessage({
+                            id: 'CmsDebugJaenVersionLabel',
+                            defaultMessage: 'Jaen version:'
+                          })}
+                        </Table.Cell>
                         <Table.Cell>
                           {require('jaen/package.json').version}
                         </Table.Cell>
@@ -136,7 +168,10 @@ const Page: React.FC<PageProps> = () => {
                   fontWeight: 'bold'
                 }}>
                 <Box as="span" flex="1" textAlign="left">
-                  Plugins
+                  {intl.formatMessage({
+                    id: 'CmsDebugPluginsTitle',
+                    defaultMessage: 'Plugins'
+                  })}
                 </Box>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
@@ -145,8 +180,11 @@ const Page: React.FC<PageProps> = () => {
               <Accordion.ItemBody>
                 <Stack gap="4">
                   <Text fontSize="md">
-                    Plugins extend the functionality of your website. Below,
-                    you'll find a list of installed plugins and their versions.
+                    {intl.formatMessage({
+                      id: 'CmsDebugPluginsDescription',
+                      defaultMessage:
+                        "Plugins extend the functionality of your website. Below, you'll find a list of installed plugins and their versions."
+                    })}
                   </Text>
                   <Table.Root variant="line">
                     <Table.Body>
@@ -167,12 +205,18 @@ const Page: React.FC<PageProps> = () => {
 
       <Stack gap="6">
         <Heading as="h1" size="lg">
-          Widgets
+          {intl.formatMessage({
+            id: 'CmsDebugWidgetsHeading',
+            defaultMessage: 'Widgets'
+          })}
         </Heading>
 
         <Text fontSize="md">
-          Below, you'll find a list of widgets and their data. This is a preview
-          feature and will be improved in the future.
+          {intl.formatMessage({
+            id: 'CmsDebugWidgetsDescription',
+            defaultMessage:
+              "Below, you'll find a list of widgets and their data. This is a preview feature and will be improved in the future."
+          })}
         </Text>
 
         <JaenWidgetProvider>
@@ -184,16 +228,37 @@ const Page: React.FC<PageProps> = () => {
 }
 
 const WidgetsTable: React.FC = () => {
+  const intl = useIntl()
   const widgets = useWidgetContext()
 
   return (
     <Table.Root variant="line">
       <Table.Header>
         <Table.Row>
-          <Table.ColumnHeader>Name</Table.ColumnHeader>
-          <Table.ColumnHeader>Created At</Table.ColumnHeader>
-          <Table.ColumnHeader>Modified At</Table.ColumnHeader>
-          <Table.ColumnHeader>Data</Table.ColumnHeader>
+          <Table.ColumnHeader>
+            {intl.formatMessage({
+              id: 'CmsDebugWidgetsColumnName',
+              defaultMessage: 'Name'
+            })}
+          </Table.ColumnHeader>
+          <Table.ColumnHeader>
+            {intl.formatMessage({
+              id: 'CmsDebugWidgetsColumnCreatedAt',
+              defaultMessage: 'Created At'
+            })}
+          </Table.ColumnHeader>
+          <Table.ColumnHeader>
+            {intl.formatMessage({
+              id: 'CmsDebugWidgetsColumnModifiedAt',
+              defaultMessage: 'Modified At'
+            })}
+          </Table.ColumnHeader>
+          <Table.ColumnHeader>
+            {intl.formatMessage({
+              id: 'CmsDebugWidgetsColumnData',
+              defaultMessage: 'Data'
+            })}
+          </Table.ColumnHeader>
         </Table.Row>
       </Table.Header>
 

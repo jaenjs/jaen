@@ -27,6 +27,7 @@ import {FaCheck} from '@react-icons/all-files/fa6/FaCheck'
 import {FaX} from '@react-icons/all-files/fa6/FaX'
 import {MdRefresh} from '@react-icons/all-files/md/MdRefresh'
 import {useEffect, useState} from 'react'
+import {MessageDescriptor, defineMessages, useIntl} from 'react-intl'
 import {useUiLocale} from '../../locales/ui-locale'
 
 export interface SettingsProps {
@@ -51,28 +52,51 @@ export interface SettingsProps {
 }
 
 type TabType = {
-  label: string
+  label: MessageDescriptor
   value: 'GENERAL' | 'PASSWD'
 }
 
+const tabMessages = defineMessages({
+  general: {
+    id: 'SettingsTabGeneral',
+    defaultMessage: 'General'
+  },
+  password: {
+    id: 'SettingsTabPasswordSecurity',
+    defaultMessage: 'Password & Security'
+  }
+})
+
 const TABS: TabType[] = [
   {
-    label: 'General',
+    label: tabMessages.general,
     value: 'GENERAL'
   },
   {
-    label: 'Password & Security',
+    label: tabMessages.password,
     value: 'PASSWD'
   }
 ]
 
 // GENDER_UNSPECIFIED, GENDER_FEMALE, GENDER_MALE, GENDER_DIVERSE
-const genderOptions = {
-  GENDER_UNSPECIFIED: 'Unspecified',
-  GENDER_MALE: 'Male',
-  GENDER_FEMALE: 'Female',
-  GENDER_DIVERSE: 'Other'
-}
+const genderOptions = defineMessages({
+  GENDER_UNSPECIFIED: {
+    id: 'SettingsProfileGenderUnspecified',
+    defaultMessage: 'Unspecified'
+  },
+  GENDER_MALE: {
+    id: 'SettingsProfileGenderMale',
+    defaultMessage: 'Male'
+  },
+  GENDER_FEMALE: {
+    id: 'SettingsProfileGenderFemale',
+    defaultMessage: 'Female'
+  },
+  GENDER_DIVERSE: {
+    id: 'SettingsProfileGenderOther',
+    defaultMessage: 'Other'
+  }
+})
 
 /**
  * One entry per catalog the CMS ships, keyed by the language tag stored on the
@@ -93,6 +117,7 @@ export const Settings: React.FC<SettingsProps> = props => {
   const query = new URLSearchParams(window.location.search)
   const initialTab = query.get('activeTab') || 'GENERAL' // replace 'GENERAL' with your default tab value
 
+  const intl = useIntl()
   const notify = useNotificationsContext()
   const {setPreviewLocale} = useUiLocale()
 
@@ -147,8 +172,14 @@ export const Settings: React.FC<SettingsProps> = props => {
 
   const handleUsernameChange = async () => {
     const userName = await notify.prompt({
-      title: 'Change Username',
-      message: 'Please enter your new username'
+      title: intl.formatMessage({
+        id: 'SettingsUsernamePromptTitle',
+        defaultMessage: 'Change Username'
+      }),
+      message: intl.formatMessage({
+        id: 'SettingsUsernamePromptMessage',
+        defaultMessage: 'Please enter your new username'
+      })
     })
 
     if (userName) {
@@ -163,8 +194,14 @@ export const Settings: React.FC<SettingsProps> = props => {
 
   const handleEmailChange = async () => {
     const email = await notify.prompt({
-      title: 'Change Email',
-      message: 'Please enter your new email'
+      title: intl.formatMessage({
+        id: 'SettingsEmailPromptTitle',
+        defaultMessage: 'Change Email'
+      }),
+      message: intl.formatMessage({
+        id: 'SettingsEmailPromptMessage',
+        defaultMessage: 'Please enter your new email'
+      })
     })
 
     if (email) {
@@ -189,8 +226,14 @@ export const Settings: React.FC<SettingsProps> = props => {
 
   const handlePhoneChange = async () => {
     const phone = await notify.prompt({
-      title: 'Change Phone Number',
-      message: 'Please enter your new phone number'
+      title: intl.formatMessage({
+        id: 'SettingsPhonePromptTitle',
+        defaultMessage: 'Change Phone Number'
+      }),
+      message: intl.formatMessage({
+        id: 'SettingsPhonePromptMessage',
+        defaultMessage: 'Please enter your new phone number'
+      })
     })
 
     if (phone) {
@@ -205,8 +248,14 @@ export const Settings: React.FC<SettingsProps> = props => {
 
   const handlephoneDelete = async () => {
     const confirm = await notify.confirm({
-      title: 'Delete Phone Number',
-      message: 'Are you sure you want to delete your phone number?'
+      title: intl.formatMessage({
+        id: 'SettingsPhoneDeleteConfirmTitle',
+        defaultMessage: 'Delete Phone Number'
+      }),
+      message: intl.formatMessage({
+        id: 'SettingsPhoneDeleteConfirmMessage',
+        defaultMessage: 'Are you sure you want to delete your phone number?'
+      })
     })
 
     if (confirm) {
@@ -221,8 +270,14 @@ export const Settings: React.FC<SettingsProps> = props => {
 
   const handlephoneVerify = async () => {
     const code = await notify.prompt({
-      title: 'Verify Phone Number',
-      message: 'Please enter the verification code'
+      title: intl.formatMessage({
+        id: 'SettingsPhoneVerifyPromptTitle',
+        defaultMessage: 'Verify Phone Number'
+      }),
+      message: intl.formatMessage({
+        id: 'SettingsPhoneVerifyPromptMessage',
+        defaultMessage: 'Please enter the verification code'
+      })
     })
 
     if (code) {
@@ -272,7 +327,7 @@ export const Settings: React.FC<SettingsProps> = props => {
               onClick={() => handleTabChange(tab.value)}
               variant="ghost"
               color={tab.value === activeTab ? 'brand.500' : undefined}>
-              {tab.label}
+              {intl.formatMessage(tab.label)}
             </Button>
           ))}
         </VStack>
@@ -282,7 +337,10 @@ export const Settings: React.FC<SettingsProps> = props => {
           <Stack gap="8">
             <Card.Root>
               <Card.Header fontWeight="bold" fontSize="lg">
-                Profile
+                {intl.formatMessage({
+                  id: 'SettingsProfileTitle',
+                  defaultMessage: 'Profile'
+                })}
               </Card.Header>
               <Card.Body>
                 <Stack gap="6">
@@ -304,7 +362,10 @@ export const Settings: React.FC<SettingsProps> = props => {
 
                                   if (!file) {
                                     notify.toast({
-                                      title: 'No file selected',
+                                      title: intl.formatMessage({
+                                        id: 'SettingsProfileAvatarNoFileSelected',
+                                        defaultMessage: 'No file selected'
+                                      }),
                                       status: 'error'
                                     })
                                     return
@@ -327,7 +388,12 @@ export const Settings: React.FC<SettingsProps> = props => {
                     </HStack>
                     <Stack gap="4">
                       <Field.Root id="userName">
-                        <Field.Label>Username</Field.Label>
+                        <Field.Label>
+                          {intl.formatMessage({
+                            id: 'SettingsProfileUsernameLabel',
+                            defaultMessage: 'Username'
+                          })}
+                        </Field.Label>
                         <HStack>
                           <Input
                             disabled
@@ -341,7 +407,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                           />
                           <IconButton
                             size="lg"
-                            aria-label="Edit userName"
+                            aria-label={intl.formatMessage({
+                              id: 'SettingsProfileUsernameEditAriaLabel',
+                              defaultMessage: 'Edit userName'
+                            })}
                             variant="ghost"
                             onClick={handleUsernameChange}
                             loading={isUsernameChanging}>
@@ -356,7 +425,12 @@ export const Settings: React.FC<SettingsProps> = props => {
                     <Stack gap="6">
                       <SimpleGrid columns={{base: 1, md: 2}} gap="6">
                         <Field.Root id="firstName">
-                          <Field.Label>First Name</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'SettingsProfileFirstNameLabel',
+                              defaultMessage: 'First Name'
+                            })}
+                          </Field.Label>
                           <Input
                             placeholder=""
                             value={user?.human?.profile?.firstName}
@@ -375,7 +449,12 @@ export const Settings: React.FC<SettingsProps> = props => {
                           />
                         </Field.Root>
                         <Field.Root id="lastName">
-                          <Field.Label>Last Name</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'SettingsProfileLastNameLabel',
+                              defaultMessage: 'Last Name'
+                            })}
+                          </Field.Label>
                           <Input
                             placeholder=""
                             value={user?.human?.profile?.lastName}
@@ -395,7 +474,12 @@ export const Settings: React.FC<SettingsProps> = props => {
                         </Field.Root>
 
                         <Field.Root id="nickName">
-                          <Field.Label>Nickname</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'SettingsProfileNicknameLabel',
+                              defaultMessage: 'Nickname'
+                            })}
+                          </Field.Label>
                           <Input
                             placeholder=""
                             value={user?.human?.profile?.nickName}
@@ -415,7 +499,12 @@ export const Settings: React.FC<SettingsProps> = props => {
                         </Field.Root>
 
                         <Field.Root id="displayName">
-                          <Field.Label>Full Name</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'SettingsProfileFullNameLabel',
+                              defaultMessage: 'Full Name'
+                            })}
+                          </Field.Label>
                           <Input
                             placeholder=""
                             value={user?.human?.profile?.displayName}
@@ -435,7 +524,12 @@ export const Settings: React.FC<SettingsProps> = props => {
                         </Field.Root>
 
                         <Field.Root id="gender">
-                          <Field.Label>Gender</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'SettingsProfileGenderLabel',
+                              defaultMessage: 'Gender'
+                            })}
+                          </Field.Label>
                           <NativeSelect.Root>
                             <NativeSelect.Field
                               defaultValue={user?.human?.profile?.gender}
@@ -454,7 +548,7 @@ export const Settings: React.FC<SettingsProps> = props => {
                               {Object.entries(genderOptions).map(
                                 ([key, value]) => (
                                   <option key={key} value={key}>
-                                    {value}
+                                    {intl.formatMessage(value)}
                                   </option>
                                 )
                               )}
@@ -464,7 +558,12 @@ export const Settings: React.FC<SettingsProps> = props => {
                         </Field.Root>
 
                         <Field.Root id="preferredLanguage">
-                          <Field.Label>Language</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'SettingsProfileLanguageLabel',
+                              defaultMessage: 'Language'
+                            })}
+                          </Field.Label>
                           <NativeSelect.Root>
                             {/* An account without a language would otherwise
                                 display the first option as if it were set,
@@ -492,7 +591,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                                 })
                               }}>
                               <option value="" disabled>
-                                Not set
+                                {intl.formatMessage({
+                                  id: 'SettingsProfileLanguageNotSet',
+                                  defaultMessage: 'Not set'
+                                })}
                               </option>
                               {Object.entries(localOptions).map(
                                 ([key, value]) => (
@@ -509,7 +611,10 @@ export const Settings: React.FC<SettingsProps> = props => {
 
                       <ButtonGroup>
                         <Button loading={isProfileUpdating} type="submit">
-                          Save
+                          {intl.formatMessage({
+                            id: 'SettingsSaveButton',
+                            defaultMessage: 'Save'
+                          })}
                         </Button>
                       </ButtonGroup>
                     </Stack>
@@ -521,10 +626,18 @@ export const Settings: React.FC<SettingsProps> = props => {
             <Card.Root>
               <Card.Header fontWeight="bold" fontSize="lg">
                 <HStack justifyContent="space-between">
-                  <Text>Contact Information</Text>
+                  <Text>
+                    {intl.formatMessage({
+                      id: 'SettingsContactTitle',
+                      defaultMessage: 'Contact Information'
+                    })}
+                  </Text>
                   <IconButton
                     size="lg"
-                    aria-label="Refresh"
+                    aria-label={intl.formatMessage({
+                      id: 'SettingsContactRefreshAriaLabel',
+                      defaultMessage: 'Refresh'
+                    })}
                     variant="ghost"
                     onClick={handleContactInformationRefresh}
                     loading={isContactInformationRefreshing}>
@@ -534,16 +647,27 @@ export const Settings: React.FC<SettingsProps> = props => {
               </Card.Header>
               <Card.Body>
                 <Text fontSize="sm" color="gray.600">
-                  The provided information is used to send important
-                  information, like password reset e-mails to you.
+                  {intl.formatMessage({
+                    id: 'SettingsContactDescription',
+                    defaultMessage:
+                      'The provided information is used to send important information, like password reset e-mails to you.'
+                  })}
                 </Text>
                 <Stack separator={<StackSeparator />} gap="6" my="4">
                   <Field.Root id="email">
                     <HStack justifyContent="space-between">
-                      <Field.Label>Email</Field.Label>
+                      <Field.Label>
+                        {intl.formatMessage({
+                          id: 'SettingsContactEmailLabel',
+                          defaultMessage: 'Email'
+                        })}
+                      </Field.Label>
                       <IconButton
                         size="lg"
-                        aria-label="Edit email"
+                        aria-label={intl.formatMessage({
+                          id: 'SettingsContactEmailEditAriaLabel',
+                          defaultMessage: 'Edit email'
+                        })}
                         variant="ghost"
                         onClick={handleEmailChange}
                         loading={isEmailChanging}>
@@ -561,8 +685,14 @@ export const Settings: React.FC<SettingsProps> = props => {
                             : 'red.500'
                         }>
                         {user?.human?.email?.isEmailVerified
-                          ? 'Verified'
-                          : 'Not verified'}
+                          ? intl.formatMessage({
+                              id: 'SettingsContactVerified',
+                              defaultMessage: 'Verified'
+                            })
+                          : intl.formatMessage({
+                              id: 'SettingsContactNotVerified',
+                              defaultMessage: 'Not verified'
+                            })}
                       </Text>
 
                       {!user?.human?.email?.isEmailVerified && (
@@ -573,7 +703,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                             fontWeight="normal"
                             onClick={handleEmailResendCode}
                             loading={isEmailResendingCode}>
-                            Resend Code
+                            {intl.formatMessage({
+                              id: 'SettingsContactResendCodeButton',
+                              defaultMessage: 'Resend Code'
+                            })}
                           </Button>
                         </>
                       )}
@@ -584,11 +717,19 @@ export const Settings: React.FC<SettingsProps> = props => {
                     {user?.human?.phone?.phone ? (
                       <>
                         <HStack justifyContent="space-between">
-                          <Field.Label>Phone number</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'SettingsContactPhoneLabel',
+                              defaultMessage: 'Phone number'
+                            })}
+                          </Field.Label>
                           <HStack>
                             <IconButton
                               size="lg"
-                              aria-label="Delete phone number"
+                              aria-label={intl.formatMessage({
+                                id: 'SettingsContactPhoneDeleteAriaLabel',
+                                defaultMessage: 'Delete phone number'
+                              })}
                               variant="ghost"
                               colorPalette="red"
                               onClick={handlephoneDelete}
@@ -599,7 +740,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                             </IconButton>
                             <IconButton
                               size="lg"
-                              aria-label="Edit phone number"
+                              aria-label={intl.formatMessage({
+                                id: 'SettingsContactPhoneEditAriaLabel',
+                                defaultMessage: 'Edit phone number'
+                              })}
                               variant="ghost"
                               onClick={handlePhoneChange}
                               loading={isPhoneChanging}>
@@ -618,8 +762,14 @@ export const Settings: React.FC<SettingsProps> = props => {
                                 : 'red.500'
                             }>
                             {user.human.phone.isPhoneVerified
-                              ? 'Verified'
-                              : 'Not verified'}
+                              ? intl.formatMessage({
+                                  id: 'SettingsContactVerified',
+                                  defaultMessage: 'Verified'
+                                })
+                              : intl.formatMessage({
+                                  id: 'SettingsContactNotVerified',
+                                  defaultMessage: 'Not verified'
+                                })}
                           </Text>
 
                           {!user.human.phone.isPhoneVerified && (
@@ -630,7 +780,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                                 fontWeight="normal"
                                 onClick={handlephoneVerify}
                                 loading={isPhoneVerifying}>
-                                Verify
+                                {intl.formatMessage({
+                                  id: 'SettingsContactVerifyButton',
+                                  defaultMessage: 'Verify'
+                                })}
                               </Button>
 
                               <Button
@@ -639,7 +792,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                                 fontWeight="normal"
                                 onClick={handlephoneResendCode}
                                 loading={isPhoneResendingCode}>
-                                Resend Code
+                                {intl.formatMessage({
+                                  id: 'SettingsContactResendCodeButton',
+                                  defaultMessage: 'Resend Code'
+                                })}
                               </Button>
                             </>
                           )}
@@ -648,17 +804,30 @@ export const Settings: React.FC<SettingsProps> = props => {
                     ) : (
                       <>
                         <HStack justifyContent="space-between">
-                          <Field.Label>Phone number</Field.Label>
+                          <Field.Label>
+                            {intl.formatMessage({
+                              id: 'SettingsContactPhoneLabel',
+                              defaultMessage: 'Phone number'
+                            })}
+                          </Field.Label>
                           <IconButton
                             size="lg"
-                            aria-label="Add phone number"
+                            aria-label={intl.formatMessage({
+                              id: 'SettingsContactPhoneAddAriaLabel',
+                              defaultMessage: 'Add phone number'
+                            })}
                             variant="ghost"
                             onClick={handlePhoneChange}
                             loading={isPhoneChanging}>
                             <FaPlus />
                           </IconButton>
                         </HStack>
-                        <Text mt="2">No phone number provided</Text>
+                        <Text mt="2">
+                          {intl.formatMessage({
+                            id: 'SettingsContactPhoneNone',
+                            defaultMessage: 'No phone number provided'
+                          })}
+                        </Text>
                       </>
                     )}
                   </Field.Root>
@@ -671,21 +840,36 @@ export const Settings: React.FC<SettingsProps> = props => {
         {activeTab === 'PASSWD' && (
           <Card.Root>
             <Card.Header fontWeight="bold" fontSize="lg">
-              Password
+              {intl.formatMessage({
+                id: 'SettingsPasswordTitle',
+                defaultMessage: 'Password'
+              })}
             </Card.Header>
 
             <Card.Body>
               {isChangingPassword ? (
                 <Stack gap="6">
                   <Field.Label>
-                    Enter the new password according to the policy below.
+                    {intl.formatMessage({
+                      id: 'SettingsPasswordPolicyIntro',
+                      defaultMessage:
+                        'Enter the new password according to the policy below.'
+                    })}
                   </Field.Label>
                   <Field.Root>
-                    <Field.Label>Current Password</Field.Label>
+                    <Field.Label>
+                      {intl.formatMessage({
+                        id: 'SettingsPasswordCurrentLabel',
+                        defaultMessage: 'Current Password'
+                      })}
+                    </Field.Label>
                     <Input
                       maxW="md"
                       type="password"
-                      placeholder="New password"
+                      placeholder={intl.formatMessage({
+                        id: 'SettingsPasswordCurrentPlaceholder',
+                        defaultMessage: 'New password'
+                      })}
                       onChange={e => setCurrentPassword(e.target.value)}
                     />
                   </Field.Root>
@@ -702,9 +886,17 @@ export const Settings: React.FC<SettingsProps> = props => {
                             <FaX />
                           </List.Indicator>
                         )}
-                        Has to be at least {props.passwordPolicy.minLength}{' '}
-                        characters long. ({password.length} /{' '}
-                        {props.passwordPolicy.minLength})
+                        {intl.formatMessage(
+                          {
+                            id: 'SettingsPasswordPolicyMinLength',
+                            defaultMessage:
+                              'Has to be at least {minLength} characters long. ({length} / {minLength})'
+                          },
+                          {
+                            minLength: props.passwordPolicy.minLength,
+                            length: password.length
+                          }
+                        )}
                       </List.Item>
                     )}
                     {props.passwordPolicy.hasSymbol && (
@@ -718,7 +910,11 @@ export const Settings: React.FC<SettingsProps> = props => {
                             <FaX />
                           </List.Indicator>
                         )}
-                        Must include a symbol or punctuation mark.
+                        {intl.formatMessage({
+                          id: 'SettingsPasswordPolicySymbol',
+                          defaultMessage:
+                            'Must include a symbol or punctuation mark.'
+                        })}
                       </List.Item>
                     )}
 
@@ -733,7 +929,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                             <FaX />
                           </List.Indicator>
                         )}
-                        Must include a number.
+                        {intl.formatMessage({
+                          id: 'SettingsPasswordPolicyNumber',
+                          defaultMessage: 'Must include a number.'
+                        })}
                       </List.Item>
                     )}
 
@@ -748,7 +947,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                             <FaX />
                           </List.Indicator>
                         )}
-                        Must include an uppercase letter.
+                        {intl.formatMessage({
+                          id: 'SettingsPasswordPolicyUppercase',
+                          defaultMessage: 'Must include an uppercase letter.'
+                        })}
                       </List.Item>
                     )}
 
@@ -763,7 +965,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                             <FaX />
                           </List.Indicator>
                         )}
-                        Must include a lowercase letter.
+                        {intl.formatMessage({
+                          id: 'SettingsPasswordPolicyLowercase',
+                          defaultMessage: 'Must include a lowercase letter.'
+                        })}
                       </List.Item>
                     )}
 
@@ -777,25 +982,44 @@ export const Settings: React.FC<SettingsProps> = props => {
                           <FaX />
                         </List.Indicator>
                       )}
-                      Passwords match.
+                      {intl.formatMessage({
+                        id: 'SettingsPasswordPolicyMatch',
+                        defaultMessage: 'Passwords match.'
+                      })}
                     </List.Item>
                   </List.Root>
 
                   <HStack>
                     <Field.Root>
-                      <Field.Label>New Password</Field.Label>
+                      <Field.Label>
+                        {intl.formatMessage({
+                          id: 'SettingsPasswordNewLabel',
+                          defaultMessage: 'New Password'
+                        })}
+                      </Field.Label>
                       <Input
                         type="password"
-                        placeholder="New password"
+                        placeholder={intl.formatMessage({
+                          id: 'SettingsPasswordNewPlaceholder',
+                          defaultMessage: 'New password'
+                        })}
                         autoComplete="new-password"
                         onChange={e => setPassword(e.target.value)}
                       />
                     </Field.Root>
                     <Field.Root>
-                      <Field.Label>Confirm Password</Field.Label>
+                      <Field.Label>
+                        {intl.formatMessage({
+                          id: 'SettingsPasswordConfirmLabel',
+                          defaultMessage: 'Confirm Password'
+                        })}
+                      </Field.Label>
                       <Input
                         type="password"
-                        placeholder="Confirm password"
+                        placeholder={intl.formatMessage({
+                          id: 'SettingsPasswordConfirmPlaceholder',
+                          defaultMessage: 'Confirm password'
+                        })}
                         autoComplete="new-password"
                         onChange={e => setPasswordConfirmation(e.target.value)}
                       />
@@ -807,10 +1031,16 @@ export const Settings: React.FC<SettingsProps> = props => {
                       loading={isPasswordChanging}
                       type="submit"
                       onClick={handlePasswordChange}>
-                      Reset Current Password
+                      {intl.formatMessage({
+                        id: 'SettingsPasswordResetButton',
+                        defaultMessage: 'Reset Current Password'
+                      })}
                     </Button>
                     <Button variant="outline" onClick={togglePasswordChange}>
-                      Cancel
+                      {intl.formatMessage({
+                        id: 'SettingsPasswordCancelButton',
+                        defaultMessage: 'Cancel'
+                      })}
                     </Button>
                   </ButtonGroup>
                 </Stack>
@@ -818,11 +1048,18 @@ export const Settings: React.FC<SettingsProps> = props => {
                 <Field.Root>
                   <HStack justifyContent="space-between">
                     <Field.Label>
-                      A secure password helps to protect the account
+                      {intl.formatMessage({
+                        id: 'SettingsPasswordHint',
+                        defaultMessage:
+                          'A secure password helps to protect the account'
+                      })}
                     </Field.Label>
                     <IconButton
                       size="lg"
-                      aria-label="Edit email"
+                      aria-label={intl.formatMessage({
+                        id: 'SettingsPasswordEditAriaLabel',
+                        defaultMessage: 'Edit email'
+                      })}
                       variant="ghost"
                       onClick={togglePasswordChange}
                       loading={isPasswordChanging}>

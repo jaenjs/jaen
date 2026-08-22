@@ -1,6 +1,7 @@
 import {MediaNode} from 'jaen'
 import {Flex, Heading, HStack, IconButton, Stack} from '@chakra-ui/react'
 import React, {useEffect, useMemo, useState} from 'react'
+import {useIntl} from 'react-intl'
 
 import {BsLayoutSidebarInset} from '@react-icons/all-files/bs/BsLayoutSidebarInset'
 
@@ -50,6 +51,8 @@ export const Media: React.FC<MediaProps> = ({
   defaultSelected,
   onJaenPageSelect
 }) => {
+  const intl = useIntl()
+
   const [isSidebarOpen, setSidebarOpen] = useState(false) // State variable for sidebar visibility
 
   const toggleSidebar = () => {
@@ -138,7 +141,10 @@ export const Media: React.FC<MediaProps> = ({
       >
         <HStack w="full" px="4" h="12">
           <IconButton
-            aria-label="close sidebar"
+            aria-label={intl.formatMessage({
+              id: 'MediaCloseSidebarAriaLabel',
+              defaultMessage: 'close sidebar'
+            })}
             fontSize="1.2em"
             variant="ghost"
             onClick={toggleSidebar}>
@@ -147,7 +153,12 @@ export const Media: React.FC<MediaProps> = ({
         </HStack>
         <Stack px="4" py="1" ml="2">
           <Stack>
-            <Heading size="xs">Pages</Heading>
+            <Heading size="xs">
+              {intl.formatMessage({
+                id: 'MediaPagesHeading',
+                defaultMessage: 'Pages'
+              })}
+            </Heading>
 
             <PageTree
               tree={tree}

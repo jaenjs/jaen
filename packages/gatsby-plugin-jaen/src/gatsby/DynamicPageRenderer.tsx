@@ -1,6 +1,7 @@
 import {PageProps, PageProvider, useDynamicPaths, withRedux} from 'jaen'
 
 import React, {lazy, useMemo} from 'react'
+import {useIntl} from 'react-intl'
 import {useJaenPagePaths} from './jaen-page-paths'
 
 /**
@@ -16,6 +17,7 @@ export interface DynamicPageRendererProps extends Omit<PageProps, 'children'> {
 
 export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> =
   withRedux(({Component, ...props}) => {
+    const intl = useIntl()
     const allJaenPagePaths = useJaenPagePaths() // Replace this with the actual hook you're using
 
     const paths = useDynamicPaths({
@@ -46,7 +48,12 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> =
     if (dynamicJaenPage?.isDeleted) {
       return (
         <Component {...props}>
-          <div>Page not found</div>
+          <div>
+            {intl.formatMessage({
+              id: 'DynamicPageNotFound',
+              defaultMessage: 'Page not found'
+            })}
+          </div>
         </Component>
       )
     }
@@ -54,7 +61,15 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> =
     if (dynamic) {
       return (
         <PageProvider jaenPage={{id: dynamic.jaenPageId}}>
-          <React.Suspense fallback={<div>Loading...</div>}>
+          <React.Suspense
+            fallback={
+              <div>
+                {intl.formatMessage({
+                  id: 'DynamicPageLoading',
+                  defaultMessage: 'Loading...'
+                })}
+              </div>
+            }>
             <Component
               {...props}
               pageContext={{

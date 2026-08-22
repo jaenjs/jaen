@@ -68,7 +68,9 @@ export const MediaItem: React.FC<MediaItemProps> = ({
   return (
     <Stack key={node.id} id={node.id} justifyContent="center" onClick={onClick}>
       <AspectRatio
-        ratio={node.width / node.height}
+        ratio={
+          node.width > 0 && node.height > 0 ? node.width / node.height : 4 / 3
+        }
         onDoubleClick={onDoubleClick}
         objectFit="contain"
         borderColor="border.emphasized"

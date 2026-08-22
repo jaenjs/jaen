@@ -12,6 +12,7 @@ import {
 } from '@chakra-ui/react'
 import React from 'react'
 import {useForm} from 'react-hook-form'
+import {useIntl} from 'react-intl'
 import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
 
 import {Link} from '../../../../components/shared/Link'
@@ -43,6 +44,8 @@ export const EmailForm: React.FC<EmailFormProps> = ({
   onResendVerification,
   defaultValues
 }) => {
+  const intl = useIntl()
+
   const {
     handleSubmit,
     register,
@@ -59,7 +62,11 @@ export const EmailForm: React.FC<EmailFormProps> = ({
   })
 
   return (
-    <FieldGroup title="Emails">
+    <FieldGroup
+      title={intl.formatMessage({
+        id: 'EmailFormTitle',
+        defaultMessage: 'Emails'
+      })}>
       <Stack gap="6">
         <Card.Root maxW="full">
           <Card.Body>
@@ -80,7 +87,10 @@ export const EmailForm: React.FC<EmailFormProps> = ({
                               <>
                                 -{'  '}
                                 <Text fontSize="sm" as="span" color="green.500">
-                                  Primary
+                                  {intl.formatMessage({
+                                    id: 'EmailFormPrimaryLabel',
+                                    defaultMessage: 'Primary'
+                                  })}
                                 </Text>
                               </>
                             )}
@@ -88,7 +98,10 @@ export const EmailForm: React.FC<EmailFormProps> = ({
                         </HStack>
                         <IconButton
                           size="xs"
-                          aria-label="Delete email address"
+                          aria-label={intl.formatMessage({
+                            id: 'EmailFormDeleteAriaLabel',
+                            defaultMessage: 'Delete email address'
+                          })}
                           variant="ghost"
                           color="red.500"
                           visibility={email.isPrimary ? 'hidden' : 'visible'}
@@ -100,20 +113,31 @@ export const EmailForm: React.FC<EmailFormProps> = ({
                       <List.Root as="ul">
                         {email.isPrimary && (
                           <List.Item fontSize="sm" color="muted">
-                            Primary email addresses are used for account-related
-                            communications (e.g. password resets).
+                            {intl.formatMessage({
+                              id: 'EmailFormPrimaryHelpText',
+                              defaultMessage:
+                                'Primary email addresses are used for account-related communications (e.g. password resets).'
+                            })}
                           </List.Item>
                         )}
 
                         {!email.isVerified && (
                           <List.Item fontSize="sm" color="muted">
                             <HStack>
-                              <Text>Unverified</Text>
+                              <Text>
+                                {intl.formatMessage({
+                                  id: 'EmailFormUnverifiedLabel',
+                                  defaultMessage: 'Unverified'
+                                })}
+                              </Text>
                               <Link
                                 onClick={() => {
                                   onResendVerification(email.id)
                                 }}>
-                                Resend verification email
+                                {intl.formatMessage({
+                                  id: 'EmailFormResendVerificationLink',
+                                  defaultMessage: 'Resend verification email'
+                                })}
                               </Link>
                             </HStack>
                           </List.Item>
@@ -128,29 +152,47 @@ export const EmailForm: React.FC<EmailFormProps> = ({
 
         <Stack gap="4">
           <Text fontSize="sm" color="muted">
-            Add an email address to your account.
+            {intl.formatMessage({
+              id: 'EmailFormAddDescription',
+              defaultMessage: 'Add an email address to your account.'
+            })}
           </Text>
           <form onSubmit={onFormSubmit}>
             <Stack direction="row" gap="4">
               <Input
                 maxW="xs"
                 {...register('emailAddress', {
-                  required: 'This field is required',
+                  required: intl.formatMessage({
+                    id: 'EmailFormRequiredError',
+                    defaultMessage: 'This field is required'
+                  }),
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address'
+                    message: intl.formatMessage({
+                      id: 'EmailFormInvalidEmailError',
+                      defaultMessage: 'Invalid email address'
+                    })
                   }
                 })}
                 type="email"
-                placeholder="Email"
+                placeholder={intl.formatMessage({
+                  id: 'EmailFormEmailPlaceholder',
+                  defaultMessage: 'Email'
+                })}
               />
               <ButtonGroup>
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  loadingText="Adding..."
+                  loadingText={intl.formatMessage({
+                    id: 'EmailFormAddingLoadingText',
+                    defaultMessage: 'Adding...'
+                  })}
                   variant="outline">
-                  Add
+                  {intl.formatMessage({
+                    id: 'EmailFormAddButton',
+                    defaultMessage: 'Add'
+                  })}
                 </Button>
               </ButtonGroup>
             </Stack>

@@ -10,6 +10,7 @@ import {
   Text
 } from '@chakra-ui/react'
 import React, {useState} from 'react'
+import {useIntl} from 'react-intl'
 import {FaArrowLeft} from '@react-icons/all-files/fa/FaArrowLeft'
 
 import {JaenFullLogo} from '../../components/shared/JaenLogo/JaenLogo'
@@ -45,6 +46,7 @@ interface FormData {
 }
 
 export const PasswordReset: React.FC<PasswordResetProps> = props => {
+  const intl = useIntl()
   const [formStep, setFormStep] = useState(FormStep.EMAIL)
   const [formData, setFormData] = useState<FormData>({
     emailAddress: '',
@@ -73,7 +75,10 @@ export const PasswordReset: React.FC<PasswordResetProps> = props => {
                   variant="outline"
                   onClick={() => setFormStep(FormStep.EMAIL)}>
                   <FaArrowLeft />
-                  Try another email
+                  {intl.formatMessage({
+                    id: 'PasswordResetTryAnotherEmailButton',
+                    defaultMessage: 'Try another email'
+                  })}
                 </Button>
               )}
 
@@ -84,7 +89,10 @@ export const PasswordReset: React.FC<PasswordResetProps> = props => {
                   to={props.goBackPath}
                   onClick={props.onGoBack}>
                   <FaArrowLeft />
-                  Back to website
+                  {intl.formatMessage({
+                    id: 'PasswordResetBackToWebsiteButton',
+                    defaultMessage: 'Back to website'
+                  })}
                 </Link>
               )}
             </HStack>
@@ -92,27 +100,66 @@ export const PasswordReset: React.FC<PasswordResetProps> = props => {
             <Stack gap={{base: '2', md: '3'}} textAlign="center">
               <>
                 <Heading size={{base: 'xs', md: 'sm'}}>
-                  {formStep === FormStep.EMAIL && 'Reset your password'}
-                  {formStep === FormStep.PASSWORD && 'Enter your new password'}
-                  {formStep === FormStep.OTP && 'Enter your code'}
+                  {formStep === FormStep.EMAIL &&
+                    intl.formatMessage({
+                      id: 'PasswordResetEmailHeading',
+                      defaultMessage: 'Reset your password'
+                    })}
+                  {formStep === FormStep.PASSWORD &&
+                    intl.formatMessage({
+                      id: 'PasswordResetPasswordHeading',
+                      defaultMessage: 'Enter your new password'
+                    })}
+                  {formStep === FormStep.OTP &&
+                    intl.formatMessage({
+                      id: 'PasswordResetOtpHeading',
+                      defaultMessage: 'Enter your code'
+                    })}
                 </Heading>
                 <Text color="fg.muted">
                   {formStep === FormStep.EMAIL && (
                     <>
-                      Don&apos;t have an account?{' '}
-                      <Link to={props.signUpPath}>Sign up</Link>
+                      {intl.formatMessage({
+                        id: 'PasswordResetNoAccountPrompt',
+                        defaultMessage: "Don't have an account?"
+                      })}{' '}
+                      <Link to={props.signUpPath}>
+                        {intl.formatMessage({
+                          id: 'PasswordResetSignUpLink',
+                          defaultMessage: 'Sign up'
+                        })}
+                      </Link>
                     </>
                   )}
                   {formStep === FormStep.PASSWORD && (
                     <>
-                      Enter a new password for <b>{formData.emailAddress}</b>.
+                      {intl.formatMessage(
+                        {
+                          id: 'PasswordResetPasswordDescription',
+                          defaultMessage:
+                            'Enter a new password for <b>{email}</b>.'
+                        },
+                        {
+                          email: formData.emailAddress,
+                          b: chunks => <b>{chunks}</b>
+                        }
+                      )}
                     </>
                   )}
 
                   {formStep === FormStep.OTP && (
                     <>
-                      A one-time password (OTP) has been sent to{' '}
-                      <strong>{formData.emailAddress}</strong>.
+                      {intl.formatMessage(
+                        {
+                          id: 'PasswordResetOtpDescription',
+                          defaultMessage:
+                            'A one-time password (OTP) has been sent to <strong>{email}</strong>.'
+                        },
+                        {
+                          email: formData.emailAddress,
+                          strong: chunks => <strong>{chunks}</strong>
+                        }
+                      )}
                     </>
                   )}
                 </Text>
