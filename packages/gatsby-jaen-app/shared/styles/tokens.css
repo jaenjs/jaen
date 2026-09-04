@@ -1,0 +1,58 @@
+/*
+ * Design tokens for the Jaen App.
+ * These are the default colors matching the preview exactly.
+ * Override in your project by redefining these CSS custom properties
+ * on .jaen-app (Gatsby) or :root (standalone).
+ */
+
+/* ── Light mode (default) ── */
+:root, .jaen-app {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  --primary: 48 96% 45%;
+  --primary-foreground: 0 0% 0%;
+  --accent: 48 96% 50%;
+  --accent-foreground: 0 0% 0%;
+  --success: 142.1 76.2% 36.3%;
+  --success-foreground: 210 40% 98%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+}
+
+/* ── Dark mode (use !important to override gatsby-plugin-jaen defaults) ── */
+.dark,
+.jaen-app.dark,
+.dark .jaen-app {
+  --background: 0 0% 10% !important;
+  --foreground: 0 0% 100% !important;
+  --card: 0 0% 10% !important;
+  --card-foreground: 0 0% 100% !important;
+  --popover: 0 0% 10% !important;
+  --popover-foreground: 0 0% 100% !important;
+  --muted: 0 0% 20% !important;
+  --muted-foreground: 0 0% 75% !important;
+  --border: 0 0% 20% !important;
+  --input: 0 0% 15% !important;
+  --ring: 48 96% 53% !important;
+  --primary: 48 96% 53% !important;
+  --primary-foreground: 0 0% 0% !important;
+  --accent: 0 0% 18% !important;
+  --accent-foreground: 0 0% 100% !important;
+  --success: 142.1 70% 45% !important;
+  --success-foreground: 0 0% 100% !important;
+  --warning: 48 96% 53% !important;
+  --warning-foreground: 0 0% 0% !important;
+  --destructive: 0 70% 55% !important;
+  --destructive-foreground: 0 0% 100% !important;
+}

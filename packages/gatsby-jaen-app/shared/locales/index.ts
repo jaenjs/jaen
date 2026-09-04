@@ -1,0 +1,5 @@
+export { getI18nCommon } from './i18nCommon'
+export { getI18nDashboard } from './i18nDashboard'
+export { getI18nTransfers } from './i18nTransfers'
+export { getI18nBookings } from './i18nBookings'
+export { getI18nUsers } from './i18nUsers'

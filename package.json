@@ -19,6 +19,7 @@
     "packages/gatsby-jaen-resource",
     "packages/gatsby-jaen-emailwerk",
     "packages/gatsby-jaen-lens",
+    "packages/gatsby-jaen-app",
     "packages/gatsby-source-jaen",
     "packages/jaen-fields-mdx",
     "examples/my-gatsby-site",
