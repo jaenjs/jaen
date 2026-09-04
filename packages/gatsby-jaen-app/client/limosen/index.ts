@@ -92,6 +92,20 @@ const cache = new Cache(
   }
 );
 
+/**
+ * The endpoint and the fetcher, for the one thing GQty cannot express.
+ *
+ * GQty builds its selections from the schema it was generated against, and the
+ * two deployments have drifted: the older one calls the same column amountEUR
+ * where the newer calls it price. A selection has to know which of the two it
+ * is talking to, and that is an introspection query, which has no place in a
+ * generated schema. Exporting the fetcher keeps that one exception on the same
+ * URL, with the same auth header, rather than growing a second client beside
+ * this one.
+ */
+export const endpointUrl = apiURL
+export const fetchGraphQL = queryFetcher
+
 export const client = createClient<GeneratedSchema>({
   schema: generatedSchema,
   scalars: scalarsEnumsHash,

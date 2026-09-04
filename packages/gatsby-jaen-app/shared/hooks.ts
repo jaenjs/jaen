@@ -18,7 +18,70 @@
  * endpoint with it, which is why this file no longer needs either.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { resolve } from '../client/limosen'
+import { fetchGraphQL, resolve } from '../client/limosen'
+
+/**
+ * Which fields the deployment's Transfer type actually has.
+ *
+ * The two brands do not run the same build. limosen serves the February pylon,
+ * booklimo still serves the one from January, and between them four columns
+ * were renamed: price was amountEUR, paymentMethode was payment, payingParty
+ * was billingParty, and extras, reference, referenceId and referencedBy did not
+ * exist yet. A selection written for one is rejected outright by the other with
+ * "Cannot query field price on type Transfer", which is what the app reported
+ * as a GraphQL error.
+ *
+ * So the selection is built from what the endpoint says it has. This is the one
+ * query GQty cannot express, introspection not being part of a generated
+ * schema, and it is asked once per session and then remembered. The mapping
+ * below already treats every one of these fields as optional, so a deployment
+ * that lacks them renders without a price rather than not at all.
+ *
+ * The right fix is for both brands to run the same pylon. This keeps the app
+ * usable until they do, and keeps it usable the next time they drift.
+ */
+let transferFieldsPromise: Promise<Set<string>> | undefined
+
+const transferFields = (): Promise<Set<string>> => {
+  if (!transferFieldsPromise) {
+    // The fetcher is allowed to answer synchronously, so it is wrapped rather
+    // than chained.
+    transferFieldsPromise = (async () => {
+      try {
+        const result: any = await fetchGraphQL(
+          {
+            query: 'query { __type(name: "Transfer") { fields { name } } }',
+            variables: undefined,
+            operationName: undefined
+          },
+          {}
+        )
+
+        const fields = result?.data?.__type?.fields
+
+        return new Set<string>(
+          Array.isArray(fields)
+            ? fields.map((f: any) => String(f?.name)).filter(Boolean)
+            : []
+        )
+      } catch {
+        // An endpoint that will not introspect is not a reason to render
+        // nothing: assume the current schema and let the read decide.
+        return new Set<string>()
+      }
+    })()
+  }
+
+  return transferFieldsPromise
+}
+
+/** Selects a field only where the deployment has it. */
+const selectIfPresent = (node: any, available: Set<string>, names: string[]) => {
+  for (const name of names) {
+    // An empty set means introspection did not answer, so nothing is held back.
+    if (available.size === 0 || available.has(name)) void node[name]
+  }
+}
 
 /**
  * A read that must not be served from the cache. Every hook here paginates or
@@ -256,9 +319,12 @@ export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?:
       if (fromISO) args.fromISO = fromISO
       if (toISO) args.toISO = toISO
 
+      const available = await transferFields()
+
       const result = await resolve(
         ({ query }) =>
           selectConnection((query as any).transfers({ args }), node => {
+            // Present on both builds.
             void node.id
             void node.customerId
             void node.driverId
@@ -266,15 +332,18 @@ export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?:
             void node.pickupLocation
             void node.dropoffLocation
             void node.subject
-            void node.price
-            void node.paymentMethode
-            void node.payingParty
             void node.state
             void node.requestedAt
             void node.carId
-            void node.referenceId
             void node.transferCategory
             void node.transferType
+            // Renamed or added after the January build.
+            selectIfPresent(node, available, [
+              'price',
+              'paymentMethode',
+              'payingParty',
+              'referenceId'
+            ])
           }),
         live
       )
