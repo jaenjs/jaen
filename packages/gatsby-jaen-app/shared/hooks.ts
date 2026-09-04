@@ -18,7 +18,7 @@
  * endpoint with it, which is why this file no longer needs either.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { fetchGraphQL, resolve } from '../client/limosen'
+import { fetchGraphQL } from '../client/limosen'
 
 /**
  * One GraphQL document, with its arguments written into the document itself.
@@ -41,7 +41,16 @@ import { fetchGraphQL, resolve } from '../client/limosen'
  * This is a workaround for two deployments running different builds. Once both
  * run the same pylon, the generated client can take these back.
  */
+/**
+ * A GraphQL enum member is spelled bare, not quoted, and it is indistinguishable
+ * from a string once it is a JavaScript value. Wrapping it says which it is.
+ */
+class EnumValue {
+  constructor(public readonly name: string) {}
+}
+
 const literal = (value: unknown): string => {
+  if (value instanceof EnumValue) return value.name
   if (value === null || value === undefined) return 'null'
   if (typeof value === 'boolean') return value ? 'true' : 'false'
   if (typeof value === 'number') return JSON.stringify(value)
@@ -59,7 +68,8 @@ const literal = (value: unknown): string => {
 const query = async (
   field: string,
   args: Record<string, unknown> | undefined,
-  selection: string
+  selection: string,
+  kind: 'query' | 'mutation' = 'query'
 ): Promise<any> => {
   const rendered = args
     ? `(${Object.entries(args)
@@ -70,7 +80,7 @@ const query = async (
 
   const result: any = await fetchGraphQL(
     {
-      query: `query { ${field}${rendered} ${selection} }`,
+      query: `${kind} { ${field}${rendered} ${selection} }`,
       variables: undefined,
       operationName: undefined
     },
@@ -775,57 +785,42 @@ export function useCars() {
 // --------------- Mutations ---------------
 
 export async function assignDriverMutation(transferId: string, driverId: string): Promise<ResourceTransfer> {
-  const result = await resolve(
-    ({ mutation }) => {
-      const t = (mutation as any).assignDriver({ transferId, driverId })
-      void t?.id; void t?.state; void t?.driverId
-      void t?.pickupLocation; void t?.dropoffLocation; void t?.pickupDateTime
-      void t?.referenceId; void t?.price
-      return t
-    },
-    { cachePolicy: 'no-store' }
+  const result = await query(
+    'assignDriver',
+    { transferId, driverId },
+    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
+    'mutation'
   )
   return mapTransferRow(result)
 }
 
 export async function assignCarMutation(transferId: string, carId: string): Promise<ResourceTransfer> {
-  const result = await resolve(
-    ({ mutation }) => {
-      const t = (mutation as any).assignCar({ transferId, carId })
-      void t?.id; void t?.state; void t?.carId
-      void t?.pickupLocation; void t?.dropoffLocation; void t?.pickupDateTime
-      void t?.referenceId; void t?.price
-      return t
-    },
-    { cachePolicy: 'no-store' }
+  const result = await query(
+    'assignCar',
+    { transferId, carId },
+    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
+    'mutation'
   )
   return mapTransferRow(result)
 }
 
 export async function updateTransferStateMutation(transferId: string, state: string): Promise<ResourceTransfer> {
-  const result = await resolve(
-    ({ mutation }) => {
-      const t = (mutation as any).updateTransferState({ transferId, state })
-      void t?.id; void t?.state; void t?.driverId
-      void t?.pickupLocation; void t?.dropoffLocation; void t?.pickupDateTime
-      void t?.referenceId; void t?.price
-      return t
-    },
-    { cachePolicy: 'no-store' }
+  // state is an enum member on the server, so it goes into the document bare.
+  const result = await query(
+    'updateTransferState',
+    { transferId, state: new EnumValue(state) },
+    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
+    'mutation'
   )
   return mapTransferRow(result)
 }
 
 export async function setPriceMutation(transferId: string, price: number): Promise<ResourceTransfer> {
-  const result = await resolve(
-    ({ mutation }) => {
-      const t = (mutation as any).setPrice({ transferId, price })
-      void t?.id; void t?.state; void t?.price
-      void t?.pickupLocation; void t?.dropoffLocation; void t?.pickupDateTime
-      void t?.referenceId
-      return t
-    },
-    { cachePolicy: 'no-store' }
+  const result = await query(
+    'setPrice',
+    { transferId, price },
+    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
+    'mutation'
   )
   return mapTransferRow(result)
 }
@@ -850,30 +845,21 @@ export interface BookTransferArgs {
 }
 
 export async function createTransferMutation(args: CreateTransferArgs): Promise<ResourceTransfer> {
-  const result = await resolve(
-    ({ mutation }) => {
-      const t = (mutation as any).createTransfer({ args })
-      void t?.id; void t?.state
-      void t?.pickupLocation; void t?.dropoffLocation; void t?.pickupDateTime
-      void t?.referenceId; void t?.price; void t?.customerId
-      return t
-    },
-    { cachePolicy: 'no-store' }
+  const result = await query(
+    'createTransfer',
+    { args },
+    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
+    'mutation'
   )
   return mapTransferRow(result)
 }
 
 export async function bookTransferMutation(args: BookTransferArgs): Promise<ResourceTransfer> {
-  const result = await resolve(
-    ({ mutation }) => {
-      const t = (mutation as any).bookTransfer({ args })
-      void t?.id; void t?.state
-      void t?.pickupLocation; void t?.dropoffLocation; void t?.pickupDateTime
-      void t?.referenceId; void t?.price; void t?.customerId
-      void t?.subject; void t?.paymentMethode
-      return t
-    },
-    { cachePolicy: 'no-store' }
+  const result = await query(
+    'bookTransfer',
+    { args },
+    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
+    'mutation'
   )
   return mapTransferRow(result)
 }
@@ -885,9 +871,6 @@ export async function fetchDriverColor(userId: string): Promise<string | undefin
 }
 
 export async function setDriverColorMutation(userId: string, color: string): Promise<boolean> {
-  const result = await resolve(
-    ({ mutation }) => (mutation as any).setDriverColor({ userId, color }),
-    { cachePolicy: 'no-store' }
-  )
+  const result = await query('setDriverColor', { userId, color }, '', 'mutation')
   return !!result
 }
