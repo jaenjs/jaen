@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react'
+import {resolve} from '../client/limosen'
 
 export type I18nCode = 'en-US' | 'de-AT' | 'tr-TR' | 'ar-EG'
 
@@ -59,6 +60,39 @@ const readAccountLocale = (): string | undefined => {
   }
 }
 
+/**
+ * The account's language as the identity server holds it right now.
+ *
+ * readAccountLocale above reads the `locale` claim, and that claim is minted at
+ * login: changing the language in the CMS settings writes preferredLanguage on
+ * the account but leaves the session token alone, so the app kept rendering the
+ * language the driver had when they signed in. Reading the field the settings
+ * page actually writes is what makes the switch take effect without a new login.
+ *
+ * It is one small request against the identity facade, not the fleet database,
+ * and every failure is swallowed: the claim and the browser language are still
+ * there, so a driver never ends up worse off than before.
+ */
+const fetchAccountLocale = async (): Promise<string | undefined> => {
+  try {
+    const edges = await resolve(
+      ({query}) => {
+        const profiles = (query as any).currentUser?.profiles
+        const node = profiles?.edges?.[0]?.node
+        if (node) void node.preferredLanguage
+        return profiles?.edges
+      },
+      {cachePolicy: 'no-store'}
+    )
+
+    const language = (edges as any[])?.[0]?.node?.preferredLanguage
+
+    return typeof language === 'string' && language ? language : undefined
+  } catch {
+    return undefined
+  }
+}
+
 const readBrowserLocale = (): string | undefined => {
   if (typeof navigator === 'undefined') return undefined
 
@@ -102,6 +136,28 @@ export function I18nProvider({
     // The session appears after the OIDC redirect, so this also has to run when
     // the app is entered straight from /loading.
   }, [code])
+
+  /**
+   * The claim settles the language immediately, without a request, so the app
+   * never renders in the wrong one while waiting. Then the account is asked,
+   * because a language picked in the settings after signing in is only there.
+   * Runs once per mount, which covers a driver returning to the app.
+   */
+  useEffect(() => {
+    let cancelled = false
+
+    void fetchAccountLocale().then(locale => {
+      if (cancelled || chosenByHand.current) return
+
+      const resolved = matchCode(locale)
+
+      if (resolved) setCode(current => (resolved === current ? current : resolved))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleSetCode = useCallback((c: I18nCode) => {
     chosenByHand.current = true

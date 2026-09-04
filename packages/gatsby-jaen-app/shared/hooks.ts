@@ -1,185 +1,66 @@
-declare const __JAEN_ZITADEL_GQL__: {authority?: string; clientId?: string} | undefined
-
 /**
- * Data hooks for the preview app.
+ * Data hooks for the app.
  * Server-side cursor pagination: each hook fetches only one page at a time.
+ *
+ * Every read goes through the GQty client generated from the pylon's schema.
+ * There used to be a second path beside it, a hand-written document sent with
+ * fetch, and it was the reason the app could not talk to both brands: those
+ * documents declare their variables by type name, `query($args:
+ * TransfersArgsInput)`, and Pylon derives those names from the resolver
+ * signature. The booklimo deployment is an older build whose equivalent input
+ * is called ArgsInput_4Input, so every such document failed validation there
+ * with "Unknown type TransfersArgsInput" and the screen showed nothing but
+ * "Loading failed".
+ *
+ * GQty builds its selections from the generated schema and passes arguments
+ * inline, so no input type is ever named in a document and the same code works
+ * against either deployment. It also brings the auth header and the per-brand
+ * endpoint with it, which is why this file no longer needs either.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { resolve } from '../client/limosen'
 
-// --------------- Raw GraphQL fetch (bypasses GQty) ---------------
+/**
+ * A read that must not be served from the cache. Every hook here paginates or
+ * refetches on demand, so a cached connection would show a stale page.
+ */
+const live = { cachePolicy: 'no-store' } as const
 
 /**
- * The backend comes from the plugin's `pylonUrl` option, not from a constant.
- *
- * Both endpoints were hardcoded to limosen's pylon, which is invisible as long as
- * only limosen mounts the plugin and wrong the moment a second brand does: the
- * booklimo build carried api.booklimo.at in its config and still read limosen's
- * transfers, users and locations. `__JAEN_APP_PYLON_URL__` is the define
- * gatsby-node injects from that option; the literal stays as the fallback so a
- * consumer that sets no option behaves exactly as before.
+ * Selecting a connection with GQty means touching the fields, which is what
+ * records them in the selection set. The `void` reads below are that, not dead
+ * code: without them the generated query asks for nothing.
  */
-declare const __JAEN_APP_PYLON_URL__: string | undefined
+function selectConnection(
+  connection: any,
+  selectNode: (node: any) => void
+) {
+  void connection?.totalCount
+  void connection?.pageInfo?.endCursor
+  void connection?.pageInfo?.startCursor
+  void connection?.pageInfo?.hasNextPage
+  void connection?.pageInfo?.hasPreviousPage
+  const firstNode = connection?.edges?.[0]?.node
+  if (firstNode) selectNode(firstNode)
+  return connection
+}
 
-const PYLON_URL =
-  typeof __JAEN_APP_PYLON_URL__ !== 'undefined' && __JAEN_APP_PYLON_URL__
-    ? __JAEN_APP_PYLON_URL__
-    : 'https://api.limosen.at/graphql'
-
-const API_URL = PYLON_URL
-
-function getAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+/**
+ * getDriverColor is a plain scalar field, and it is absent from the booklimo
+ * schema entirely. A caller that cannot read it gets undefined rather than an
+ * error, which is what every call site already expected.
+ */
+async function resolveDriverColor(userId: string): Promise<string | undefined> {
   try {
-    // A DefinePlugin value is substituted for the bare IDENTIFIER only, never for
-    // a `globalThis.` member access, so the old spelling read undefined at runtime
-    // no matter which name it used. Renamed with jaen's zitadel -> zitadelGql move
-    // and unwrapped, the way client/limosen/index.ts already does it.
-    const z: any =
-      typeof __JAEN_ZITADEL_GQL__ !== 'undefined' ? __JAEN_ZITADEL_GQL__ : null
-    if (z?.authority && z?.clientId) {
-      const raw = sessionStorage.getItem(`oidc.user:${z.authority}:${z.clientId}`)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed?.access_token) headers['Authorization'] = `Bearer ${parsed.access_token}`
-      }
-    }
-  } catch { /* ignore */ }
-  return headers
+    const color = await resolve(
+      ({ query }) => (query as any).getDriverColor({ userId }),
+      live
+    )
+    return typeof color === 'string' && color !== '#C0C0C0' ? color : undefined
+  } catch {
+    return undefined
+  }
 }
-
-async function gqlFetch<T = any>(query: string, variables?: Record<string, any>): Promise<T> {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ query, variables }),
-    mode: 'cors',
-  })
-  const json = await response.json()
-  if (json.errors?.length) {
-    throw new Error(json.errors[0]?.message || 'GraphQL error')
-  }
-  return json.data
-}
-
-const TRANSFERS_QUERY = `
-  query($args: TransfersArgsInput) {
-    transfers(args: $args) {
-      totalCount
-      pageInfo {
-        endCursor
-        startCursor
-        hasNextPage
-        hasPreviousPage
-      }
-      edges {
-        node {
-          id
-          customerId
-          driverId
-          pickupDateTime
-          pickupLocation
-          dropoffLocation
-          subject
-          price
-          paymentMethode
-          payingParty
-          state
-          requestedAt
-          carId
-          referenceId
-          transferCategory
-          transferType
-        }
-      }
-    }
-  }
-`
-
-const USER_QUERY = `
-  query($args: UserArgsInput!) {
-    user(args: $args) {
-      __typename
-      id
-      userName
-      state
-      preferredLoginName
-      creationDate
-      changeDate
-      loginNames
-    }
-  }
-`
-
-const USER_PROFILES_QUERY = `
-  query($args: UserArgsInput!) {
-    user(args: $args) {
-      ... on HumanUser {
-        profiles {
-          edges {
-            node {
-              id
-              email
-              firstName
-              lastName
-              avatarUrl
-              displayName
-              phone
-              preferredLanguage
-            }
-          }
-        }
-      }
-    }
-  }
-`
-
-const USER_ROLES_QUERY = `
-  query($args: UserArgsInput!) {
-    user(args: $args) {
-      roles {
-        edges {
-          node {
-            id
-            key
-            displayName
-          }
-        }
-      }
-    }
-  }
-`
-
-const USERS_QUERY = `
-  query($args: UsersArgsInput) {
-    users(args: $args) {
-      totalCount
-      pageInfo {
-        endCursor
-        startCursor
-        hasNextPage
-        hasPreviousPage
-      }
-      edges {
-        node {
-          __typename
-          id
-          userName
-          state
-          preferredLoginName
-          creationDate
-          changeDate
-        }
-      }
-    }
-  }
-`
-
-const DRIVER_COLOR_QUERY = `
-  query($userId: String!) {
-    getDriverColor(userId: $userId)
-  }
-`
 
 // --------------- Domain Types ---------------
 
@@ -375,8 +256,28 @@ export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?:
       if (fromISO) args.fromISO = fromISO
       if (toISO) args.toISO = toISO
 
-      const data = await gqlFetch(TRANSFERS_QUERY, { args })
-      const result = data?.transfers
+      const result = await resolve(
+        ({ query }) =>
+          selectConnection((query as any).transfers({ args }), node => {
+            void node.id
+            void node.customerId
+            void node.driverId
+            void node.pickupDateTime
+            void node.pickupLocation
+            void node.dropoffLocation
+            void node.subject
+            void node.price
+            void node.paymentMethode
+            void node.payingParty
+            void node.state
+            void node.requestedAt
+            void node.carId
+            void node.referenceId
+            void node.transferCategory
+            void node.transferType
+          }),
+        live
+      )
 
       const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
       const items = edges.map((e: any) => e?.node).filter(Boolean).map(mapTransferRow)
@@ -462,23 +363,29 @@ export function useUsers(pageSize = DEFAULT_USER_PAGE_SIZE) {
       const args: any = { first: pageSize }
       if (after) args.after = after
 
-      const data = await gqlFetch(USERS_QUERY, { args })
-      const result = data?.users
+      const result = await resolve(
+        ({ query }) =>
+          selectConnection((query as any).users({ args }), node => {
+            void node.__typename
+            void node.id
+            void node.userName
+            void node.state
+            void node.preferredLoginName
+            void node.creationDate
+            void node.changeDate
+          }),
+        live
+      )
 
       const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
       const items = edges.map((e: any) => e?.node).filter(Boolean).map(mapUserRow)
       const totalCount = typeof result?.totalCount === 'number' ? result.totalCount : 0
 
       const enriched = await Promise.all(
-        items.map(async (u) => {
-          try {
-            const colorData = await gqlFetch(DRIVER_COLOR_QUERY, { userId: u.id })
-            const color = colorData?.getDriverColor
-            return { ...u, driverColor: color && color !== '#C0C0C0' ? color : undefined }
-          } catch {
-            return u
-          }
-        })
+        items.map(async u => ({
+          ...u,
+          driverColor: await resolveDriverColor(u.id)
+        }))
       )
 
       setUsers(enriched)
@@ -541,21 +448,65 @@ export function useUser(userId: string) {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await gqlFetch(USER_QUERY, { args: { id: userId } })
-      const result = data?.user
+      const result = await resolve(
+        ({ query }) => {
+          const u = (query as any).user({ args: { id: userId } })
+          void u?.__typename
+          void u?.id
+          void u?.userName
+          void u?.state
+          void u?.preferredLoginName
+          void u?.creationDate
+          void u?.changeDate
+          void u?.loginNames
+          return u
+        },
+        live
+      )
       let mapped = result ? mapUserRowFull(result) : undefined
 
       if (mapped) {
-        const queryArgs = { args: { id: userId } }
-
-        const [profilesResult, rolesResult, colorResult] = await Promise.all([
-          gqlFetch(USER_PROFILES_QUERY, queryArgs).catch(() => null),
-          gqlFetch(USER_ROLES_QUERY, queryArgs).catch(() => null),
-          gqlFetch(DRIVER_COLOR_QUERY, { userId: mapped.id }).catch(() => null),
+        // Three reads rather than one: profiles is only on HumanUser, roles is
+        // absent from booklimo's user interface, and getDriverColor is not in
+        // its schema at all. Kept apart, a brand that lacks one still answers
+        // the other two instead of failing the whole screen.
+        const [profileEdges, roleEdges, color] = await Promise.all([
+          resolve(
+            ({ query }) => {
+              const profiles = (query as any).user({ args: { id: userId } })
+                ?.profiles
+              const node = profiles?.edges?.[0]?.node
+              if (node) {
+                void node.id
+                void node.email
+                void node.firstName
+                void node.lastName
+                void node.avatarUrl
+                void node.displayName
+                void node.phone
+                void node.preferredLanguage
+              }
+              return profiles?.edges
+            },
+            live
+          ).catch(() => null),
+          resolve(
+            ({ query }) => {
+              const roles = (query as any).user({ args: { id: userId } })?.roles
+              const node = roles?.edges?.[0]?.node
+              if (node) {
+                void node.id
+                void node.key
+                void node.displayName
+              }
+              return roles?.edges
+            },
+            live
+          ).catch(() => null),
+          resolveDriverColor(mapped.id)
         ])
 
-        const profileEdges = profilesResult?.user?.profiles?.edges || []
-        const firstProfile = profileEdges[0]?.node
+        const firstProfile = (profileEdges as any[])?.[0]?.node
         if (firstProfile) {
           mapped = {
             ...mapped,
@@ -568,8 +519,7 @@ export function useUser(userId: string) {
           }
         }
 
-        const roleEdges = rolesResult?.user?.roles?.edges || []
-        const roles = roleEdges
+        const roles = ((roleEdges as any[]) || [])
           .map((e: any) => e?.node)
           .filter(Boolean)
           .map((r: any) => ({ id: r.id ?? r.key ?? '', description: r.displayName ?? r.key ?? '' }))
@@ -577,8 +527,7 @@ export function useUser(userId: string) {
           mapped = { ...mapped, roles }
         }
 
-        const color = colorResult?.getDriverColor
-        if (color && color !== '#C0C0C0') {
+        if (color) {
           mapped = { ...mapped, driverColor: color }
         }
       }
@@ -746,29 +695,6 @@ export function useLocations(pageSize = DEFAULT_LOCATION_PAGE_SIZE) {
 
 // --------------- Cars ---------------
 
-const CARS_QUERY = `
-  query($args: CarsArgsInput) {
-    cars(args: $args) {
-      totalCount
-      pageInfo {
-        endCursor
-        hasNextPage
-      }
-      edges {
-        node {
-          id
-          carName
-          licensePlate
-          color
-          carClass
-          driverId
-          driverName
-        }
-      }
-    }
-  }
-`
-
 export interface ResourceCar {
   id: string
   carName?: string
@@ -788,33 +714,24 @@ export function useCars() {
     setIsLoading(true)
     setError(null)
     try {
-      let edges: any[] = []
-
-      try {
-        const data = await gqlFetch(CARS_QUERY, { args: { first: 200 } })
-        edges = Array.isArray(data?.cars?.edges) ? data.cars.edges : []
-      } catch {
-        const conn = await resolve(
-          ({ query }) => {
-            const c = (query as any).cars({ args: { first: 200 } })
-            void c?.pageInfo?.endCursor
-            void c?.pageInfo?.hasNextPage
-            const firstNode = c?.edges?.[0]?.node
-            if (firstNode) {
-              void firstNode.id
-              void firstNode.carName
-              void firstNode.licensePlate
-              void firstNode.color
-              void firstNode.carClass
-              void firstNode.driverId
-              void firstNode.driverName
-            }
-            return c
-          },
-          { cachePolicy: 'no-store' }
-        )
-        edges = Array.isArray(conn?.edges) ? conn.edges : []
-      }
+      // One path now. The try/catch around a raw document with the GQty call
+      // as its fallback existed because the document failed on booklimo; the
+      // fallback is the only half that ever worked there, so it is all that
+      // is left.
+      const conn = await resolve(
+        ({ query }) =>
+          selectConnection((query as any).cars({ args: { first: 200 } }), node => {
+            void node.id
+            void node.carName
+            void node.licensePlate
+            void node.color
+            void node.carClass
+            void node.driverId
+            void node.driverName
+          }),
+        live
+      )
+      const edges: any[] = Array.isArray(conn?.edges) ? conn.edges : []
 
       const items: ResourceCar[] = edges.map((e: any) => {
         const n = e?.node
@@ -950,13 +867,7 @@ export async function bookTransferMutation(args: BookTransferArgs): Promise<Reso
 // --------------- Driver Color ---------------
 
 export async function fetchDriverColor(userId: string): Promise<string | undefined> {
-  try {
-    const data = await gqlFetch(DRIVER_COLOR_QUERY, { userId })
-    const result = data?.getDriverColor
-    return typeof result === 'string' && result !== '#C0C0C0' ? result : undefined
-  } catch {
-    return undefined
-  }
+  return resolveDriverColor(userId)
 }
 
 export async function setDriverColorMutation(userId: string, color: string): Promise<boolean> {
