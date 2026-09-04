@@ -94,6 +94,33 @@ const query = async (
   return result?.data?.[field]
 }
 
+declare const __JAEN_ZITADEL_GQL__:
+  | {authority?: string; clientId?: string; organizationId?: string}
+  | undefined
+
+/**
+ * The Zitadel organization this brand's users live in.
+ *
+ * Every user field takes it and none of them require it, and leaving it out is
+ * why the driver picker was empty: without it the identity facade answers from
+ * whatever organization its own service token belongs to, which is neither
+ * brand's. limosen and booklimo have separate organizations on purpose, that
+ * being the whole point of running two brands off one codebase.
+ *
+ * It comes from the same plugin option the CMS signs in against, so it is
+ * always the organization the signed-in account actually belongs to.
+ */
+const organizationId = (): string | undefined => {
+  try {
+    const z =
+      typeof __JAEN_ZITADEL_GQL__ !== 'undefined' ? __JAEN_ZITADEL_GQL__ : null
+
+    return z?.organizationId || undefined
+  } catch {
+    return undefined
+  }
+}
+
 /**
  * Which fields the deployment's Transfer type actually has.
  *
@@ -457,7 +484,7 @@ export function useUsers(pageSize = DEFAULT_USER_PAGE_SIZE) {
 
       const result = await query(
         'users',
-        { args },
+        { args: { ...args, organizationId: organizationId() } },
         `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { __typename id userName state ` +
           `preferredLoginName creationDate changeDate } } }`
       )
@@ -535,7 +562,7 @@ export function useUser(userId: string) {
     try {
       const result = await query(
         'user',
-        { args: { id: userId } },
+        { args: { id: userId, organizationId: organizationId() } },
         '{ __typename id userName state preferredLoginName creationDate changeDate loginNames }'
       )
       let mapped = result ? mapUserRowFull(result) : undefined
@@ -548,13 +575,13 @@ export function useUser(userId: string) {
         const [profileEdges, roleEdges, color] = await Promise.all([
           query(
             'user',
-            { args: { id: userId } },
+            { args: { id: userId, organizationId: organizationId() } },
             '{ ... on HumanUser { profiles { edges { node { id email firstName lastName ' +
               'avatarUrl displayName phone preferredLanguage } } } } }'
           )
             .then((u: any) => u?.profiles?.edges)
             .catch(() => null),
-          query('user', { args: { id: userId } },
+          query('user', { args: { id: userId, organizationId: organizationId() } },
             '{ roles { edges { node { id key displayName } } } }')
             .then((u: any) => u?.roles?.edges)
             .catch(() => null),
