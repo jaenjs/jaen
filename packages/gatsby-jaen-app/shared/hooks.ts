@@ -194,9 +194,14 @@ const transferFields = (): Promise<Set<string>> => {
 }
 
 /**
- * getDriverColor is a plain scalar field, and it is absent from the booklimo
- * schema entirely. A caller that cannot read it gets undefined rather than an
- * error, which is what every call site already expected.
+ * getDriverColor is a plain scalar field. Both brands deploy it today, but it
+ * was missing from one of them for a while and every colour quietly became
+ * undefined, so a caller that cannot read it still gets undefined rather than
+ * an error.
+ *
+ * The silver default means "nobody chose a colour" and is mapped to undefined
+ * on purpose: painting every row the same silver says less than painting none
+ * of them.
  */
 async function resolveDriverColor(userId: string): Promise<string | undefined> {
   try {
@@ -702,6 +707,17 @@ export function useDrivers() {
               }
             : mapped
         })
+
+      // The colour, once per driver rather than once per transfer row. A
+      // dispatcher has a handful of drivers and a page has fifteen transfers,
+      // so this is the cheap end of the join, and it is what feeds both the
+      // picker swatch and the coloured border on the transfer list.
+      const colours = await Promise.all(
+        rows.map((row: ResourceUser) => resolveDriverColor(row.id))
+      )
+      colours.forEach((colour, index) => {
+        if (colour) rows[index].driverColor = colour
+      })
 
       // By name, so the picker reads the way a person would look through it.
       rows.sort((a: ResourceUser, b: ResourceUser) =>

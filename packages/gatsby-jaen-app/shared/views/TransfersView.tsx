@@ -552,18 +552,31 @@ export function TransfersView() {
   const totalMinWidth = visibleColumns.reduce((s, c) => s + (COLUMN_WIDTHS[c.id] || 100), 60)
 
   const enrichedTransfers = useMemo(() => {
-    const userMap = new Map(users.map(u => [u.id, u]))
+    // Drivers first, then the current page of accounts. `drivers` comes from
+    // usersByRole and is the whole list, so a driver is found whatever page of
+    // `users` happens to be loaded, and it is the only one of the two that
+    // carries a colour.
+    const userMap = new Map<string, (typeof users)[number]>()
+    users.forEach(u => userMap.set(u.id, u))
+    drivers.forEach(d => userMap.set(d.id, d))
     const carMap = new Map(cars.map(c => [c.id, c]))
     return paginatedRows.map(tr => {
       const enriched = { ...tr }
+      const driver = tr.driverId ? userMap.get(tr.driverId) : undefined
+
+      // The colour is set even when the transfer already carries a driver
+      // name. It used to hang off the same `!tr.driverName` branch as the name
+      // lookup, so any transfer that arrived named came out uncoloured.
+      if (driver?.driverColor) {
+        enriched.driverColor = driver.driverColor
+      }
+
       if (tr.driverId && !tr.driverName) {
-        const driver = userMap.get(tr.driverId)
         if (driver) {
           enriched.driverName = driver.details?.firstName && driver.details?.lastName
             ? `${driver.details.firstName} ${driver.details.lastName}`
             : driver.username
           enriched.driverPhone = undefined
-          enriched.driverColor = driver.driverColor
         } else {
           enriched.driverName = tr.driverId
         }
@@ -580,7 +593,7 @@ export function TransfersView() {
       }
       return enriched
     })
-  }, [paginatedRows, users, cars])
+  }, [paginatedRows, users, drivers, cars])
 
   const enrichedRowsByDate = useMemo(() => {
     const m: Record<string, ResourceTransfer[]> = {}

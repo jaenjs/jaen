@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useAppNavigate } from '../navigation'
-import { useTransfers } from '../hooks'
+import { useTransfers, useDrivers } from '../hooks'
 import {
   cx, formatPrice,
   StatusPill, LoadingOverlay, ErrorBanner,
@@ -12,10 +12,23 @@ import { getI18nCommon } from '../locales/i18nCommon'
 
 export function DashboardView() {
   const { transfers, isLoading, error, pagination, refetch } = useTransfers(20)
+  // The card below paints a border in the assigned driver's colour, and until
+  // now nothing on this screen ever loaded one, so that border could not
+  // render at all. A transfer carries a driverId and the colour hangs off the
+  // driver, so the list has to be here to join against.
+  const { drivers } = useDrivers()
   const navigate = useAppNavigate()
   const i18nCode = useI18nCode()
   const { strings: t } = getI18nDashboard(i18nCode)
   const { strings: tc } = getI18nCommon(i18nCode)
+
+  const coloured = useMemo(() => {
+    const byId = new Map(drivers.map(d => [d.id, d]))
+    return transfers.map(tr => {
+      const colour = tr.driverId ? byId.get(tr.driverId)?.driverColor : undefined
+      return colour ? { ...tr, driverColor: colour } : tr
+    })
+  }, [transfers, drivers])
 
   const today = useMemo(() => new Date().toISOString().split('T')[0], [])
   const tomorrow = useMemo(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0] }, [])
@@ -28,8 +41,8 @@ export function DashboardView() {
     return 'Planned'
   }
 
-  const todayTransfers = useMemo(() => transfers.filter(t => t.rideDateISO === today), [transfers, today])
-  const tomorrowTransfers = useMemo(() => transfers.filter(t => t.rideDateISO === tomorrow), [transfers, tomorrow])
+  const todayTransfers = useMemo(() => coloured.filter(t => t.rideDateISO === today), [coloured, today])
+  const tomorrowTransfers = useMemo(() => coloured.filter(t => t.rideDateISO === tomorrow), [coloured, tomorrow])
 
   const notAssignedToday = useMemo(() => todayTransfers.filter(t => {
     const status = mapStatus(t.state)
