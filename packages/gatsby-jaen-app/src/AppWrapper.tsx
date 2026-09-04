@@ -15,7 +15,11 @@ export function AppWrapper({nav, children}: AppWrapperProps) {
     <NavigationProvider value={nav}>
       <div className="dark">
         <div className="jaen-app flex flex-col">
-          <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+          {/* jaen-app-main carries the bottom clearance, see app.css: it has
+              to grow with the home indicator, and only below the md breakpoint
+              where the navigation is actually on screen. An inline style could
+              not express the media query and would beat md:pb-0. */}
+          <main className="jaen-app-main flex-1 overflow-y-auto">
             {children}
           </main>
           <MobileBottomNav />
@@ -43,12 +47,12 @@ function MobileBottomNav() {
   }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card flex items-center justify-around h-14">
+    <nav className="jaen-app-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card flex items-stretch justify-around">
       {NAV_ITEMS.map(item => (
         <button
           key={item.path}
           onClick={() => navigate(item.path)}
-          className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs transition-colors ${
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 text-xs transition-colors ${
             isActive(item.path) ? 'text-primary' : 'text-muted-foreground'
           }`}
         >

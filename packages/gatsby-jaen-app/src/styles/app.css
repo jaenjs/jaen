@@ -82,3 +82,35 @@ body:has(.dark) {
   z-index: 9999;
 }
 
+
+/* ── Safe area, iOS ──────────────────────────────────────────────────────────
+   The bottom navigation is `position: fixed; bottom: 0`, so in the installed
+   PWA it reaches the physical bottom edge of the screen. On a device with a
+   home indicator, an iPhone 15 Pro Max for instance, the swipe-up line then
+   draws straight across the labels and the lowest few pixels of the buttons
+   are inside the system's gesture area.
+
+   env(safe-area-inset-bottom) is the height iOS reserves for that, and it is
+   only a real number when the document asks for `viewport-fit=cover`, which
+   the site's gatsby-ssr adds. Everywhere without a safe area, and in every
+   browser that does not know env(), the fallback 0px applies and these rules
+   change nothing.
+
+   The bar keeps its 3.5rem of touch target and grows by the inset; the padding
+   pushes its content back out of the gesture area. The scroll container above
+   clears the whole thing, otherwise the last row of a list ends up behind it.
+   Both are scoped below md, where the navigation is on screen at all. */
+.jaen-app-bottom-nav {
+  height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.jaen-app-main {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .jaen-app-main {
+    padding-bottom: 0;
+  }
+}
