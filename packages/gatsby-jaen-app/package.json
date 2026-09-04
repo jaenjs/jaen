@@ -19,7 +19,7 @@
     "tailwind.config.ts"
   ],
   "scripts": {
-    "build": "tsc gatsby/gatsby-config.ts gatsby/gatsby-node.ts --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule --noCheck && tsc -p tsconfig.build.json --noCheck",
+    "build": "tsc gatsby/gatsby-config.ts gatsby/gatsby-node.ts gatsby/gatsby-browser.ts --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule --noCheck && tsc -p tsconfig.build.json --noCheck",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

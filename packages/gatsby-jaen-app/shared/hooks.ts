@@ -21,6 +21,70 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchGraphQL, resolve } from '../client/limosen'
 
 /**
+ * One GraphQL document, with its arguments written into the document itself.
+ *
+ * This is the whole reason a hand-built document is still here. GQty does not
+ * inline arguments: it declares them as variables, and it takes the type name
+ * for each from the schema it was generated against, so it sends
+ * `query($a: TransfersArgsInput)`. Pylon derives those names from the resolver
+ * signature and they are not stable across builds, so that document is refused
+ * outright by the booklimo deployment with `Unknown type "TransfersArgsInput"`,
+ * which is the error the app showed instead of a list. Switching the reads to
+ * the generated client did not fix that, it only moved where the name came
+ * from.
+ *
+ * An argument written as a literal names no type, so the same document is valid
+ * against either deployment. The generated client stays in use for everything
+ * that is not a top level read, and the fetcher below is the client's own, so
+ * the auth header and the per brand endpoint are still its business.
+ *
+ * This is a workaround for two deployments running different builds. Once both
+ * run the same pylon, the generated client can take these back.
+ */
+const literal = (value: unknown): string => {
+  if (value === null || value === undefined) return 'null'
+  if (typeof value === 'boolean') return value ? 'true' : 'false'
+  if (typeof value === 'number') return JSON.stringify(value)
+  if (typeof value === 'string') return JSON.stringify(value)
+  if (Array.isArray(value)) return `[${value.map(literal).join(', ')}]`
+  if (typeof value === 'object') {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${k}: ${literal(v)}`)
+      .join(', ')}}`
+  }
+  return 'null'
+}
+
+const query = async (
+  field: string,
+  args: Record<string, unknown> | undefined,
+  selection: string
+): Promise<any> => {
+  const rendered = args
+    ? `(${Object.entries(args)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => `${k}: ${literal(v)}`)
+        .join(', ')})`
+    : ''
+
+  const result: any = await fetchGraphQL(
+    {
+      query: `query { ${field}${rendered} ${selection} }`,
+      variables: undefined,
+      operationName: undefined
+    },
+    {}
+  )
+
+  if (result?.errors?.length) {
+    throw new Error(String(result.errors[0]?.message || 'GraphQL error'))
+  }
+
+  return result?.data?.[field]
+}
+
+/**
  * Which fields the deployment's Transfer type actually has.
  *
  * The two brands do not run the same build. limosen serves the February pylon,
@@ -75,39 +139,6 @@ const transferFields = (): Promise<Set<string>> => {
   return transferFieldsPromise
 }
 
-/** Selects a field only where the deployment has it. */
-const selectIfPresent = (node: any, available: Set<string>, names: string[]) => {
-  for (const name of names) {
-    // An empty set means introspection did not answer, so nothing is held back.
-    if (available.size === 0 || available.has(name)) void node[name]
-  }
-}
-
-/**
- * A read that must not be served from the cache. Every hook here paginates or
- * refetches on demand, so a cached connection would show a stale page.
- */
-const live = { cachePolicy: 'no-store' } as const
-
-/**
- * Selecting a connection with GQty means touching the fields, which is what
- * records them in the selection set. The `void` reads below are that, not dead
- * code: without them the generated query asks for nothing.
- */
-function selectConnection(
-  connection: any,
-  selectNode: (node: any) => void
-) {
-  void connection?.totalCount
-  void connection?.pageInfo?.endCursor
-  void connection?.pageInfo?.startCursor
-  void connection?.pageInfo?.hasNextPage
-  void connection?.pageInfo?.hasPreviousPage
-  const firstNode = connection?.edges?.[0]?.node
-  if (firstNode) selectNode(firstNode)
-  return connection
-}
-
 /**
  * getDriverColor is a plain scalar field, and it is absent from the booklimo
  * schema entirely. A caller that cannot read it gets undefined rather than an
@@ -115,10 +146,7 @@ function selectConnection(
  */
 async function resolveDriverColor(userId: string): Promise<string | undefined> {
   try {
-    const color = await resolve(
-      ({ query }) => (query as any).getDriverColor({ userId }),
-      live
-    )
+    const color = await query('getDriverColor', { userId }, '')
     return typeof color === 'string' && color !== '#C0C0C0' ? color : undefined
   } catch {
     return undefined
@@ -321,31 +349,16 @@ export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?:
 
       const available = await transferFields()
 
-      const result = await resolve(
-        ({ query }) =>
-          selectConnection((query as any).transfers({ args }), node => {
-            // Present on both builds.
-            void node.id
-            void node.customerId
-            void node.driverId
-            void node.pickupDateTime
-            void node.pickupLocation
-            void node.dropoffLocation
-            void node.subject
-            void node.state
-            void node.requestedAt
-            void node.carId
-            void node.transferCategory
-            void node.transferType
-            // Renamed or added after the January build.
-            selectIfPresent(node, available, [
-              'price',
-              'paymentMethode',
-              'payingParty',
-              'referenceId'
-            ])
-          }),
-        live
+      const optional = ['price', 'paymentMethode', 'payingParty', 'referenceId']
+        .filter(name => available.size === 0 || available.has(name))
+        .join(' ')
+
+      const result = await query(
+        'transfers',
+        { args },
+        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id customerId driverId pickupDateTime ` +
+          `pickupLocation dropoffLocation subject state requestedAt carId ` +
+          `transferCategory transferType ${optional} } } }`
       )
 
       const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
@@ -432,18 +445,11 @@ export function useUsers(pageSize = DEFAULT_USER_PAGE_SIZE) {
       const args: any = { first: pageSize }
       if (after) args.after = after
 
-      const result = await resolve(
-        ({ query }) =>
-          selectConnection((query as any).users({ args }), node => {
-            void node.__typename
-            void node.id
-            void node.userName
-            void node.state
-            void node.preferredLoginName
-            void node.creationDate
-            void node.changeDate
-          }),
-        live
+      const result = await query(
+        'users',
+        { args },
+        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { __typename id userName state ` +
+          `preferredLoginName creationDate changeDate } } }`
       )
 
       const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
@@ -517,20 +523,10 @@ export function useUser(userId: string) {
     setIsLoading(true)
     setError(null)
     try {
-      const result = await resolve(
-        ({ query }) => {
-          const u = (query as any).user({ args: { id: userId } })
-          void u?.__typename
-          void u?.id
-          void u?.userName
-          void u?.state
-          void u?.preferredLoginName
-          void u?.creationDate
-          void u?.changeDate
-          void u?.loginNames
-          return u
-        },
-        live
+      const result = await query(
+        'user',
+        { args: { id: userId } },
+        '{ __typename id userName state preferredLoginName creationDate changeDate loginNames }'
       )
       let mapped = result ? mapUserRowFull(result) : undefined
 
@@ -540,38 +536,18 @@ export function useUser(userId: string) {
         // its schema at all. Kept apart, a brand that lacks one still answers
         // the other two instead of failing the whole screen.
         const [profileEdges, roleEdges, color] = await Promise.all([
-          resolve(
-            ({ query }) => {
-              const profiles = (query as any).user({ args: { id: userId } })
-                ?.profiles
-              const node = profiles?.edges?.[0]?.node
-              if (node) {
-                void node.id
-                void node.email
-                void node.firstName
-                void node.lastName
-                void node.avatarUrl
-                void node.displayName
-                void node.phone
-                void node.preferredLanguage
-              }
-              return profiles?.edges
-            },
-            live
-          ).catch(() => null),
-          resolve(
-            ({ query }) => {
-              const roles = (query as any).user({ args: { id: userId } })?.roles
-              const node = roles?.edges?.[0]?.node
-              if (node) {
-                void node.id
-                void node.key
-                void node.displayName
-              }
-              return roles?.edges
-            },
-            live
-          ).catch(() => null),
+          query(
+            'user',
+            { args: { id: userId } },
+            '{ ... on HumanUser { profiles { edges { node { id email firstName lastName ' +
+              'avatarUrl displayName phone preferredLanguage } } } } }'
+          )
+            .then((u: any) => u?.profiles?.edges)
+            .catch(() => null),
+          query('user', { args: { id: userId } },
+            '{ roles { edges { node { id key displayName } } } }')
+            .then((u: any) => u?.roles?.edges)
+            .catch(() => null),
           resolveDriverColor(mapped.id)
         ])
 
@@ -636,41 +612,17 @@ export function useLocations(pageSize = DEFAULT_LOCATION_PAGE_SIZE) {
       const args: any = { first: pageSize }
       if (after) args.after = after
 
-      const driverConn = await resolve(
-        ({ query }) => {
-          const q: any = query
-          const c = typeof q.driverLocations === 'function' ? q.driverLocations({ args }) : q.driverLocations
-          void c?.pageInfo?.endCursor
-          void c?.pageInfo?.hasNextPage
-          void c?.totalCount
-          const firstNode = c?.edges?.[0]?.node
-          if (firstNode) {
-            void firstNode.id; void firstNode.driverId
-            void firstNode.latitude; void firstNode.longitude
-            void firstNode.accuracy; void firstNode.recordedAt; void firstNode.updatedAt
-          }
-          return c
-        },
-        { cachePolicy: 'no-store' }
+      const driverConn = await query(
+        'driverLocations',
+        { args },
+        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id latitude longitude accuracy recordedAt updatedAt driverId } } }`
       )
 
-      const customerConn = await resolve(
-        ({ query }) => {
-          const q: any = query
-          const c = typeof q.customerLocations === 'function' ? q.customerLocations({ args }) : q.customerLocations
-          void c?.pageInfo?.endCursor
-          void c?.pageInfo?.hasNextPage
-          void c?.totalCount
-          const firstNode = c?.edges?.[0]?.node
-          if (firstNode) {
-            void firstNode.id; void firstNode.customerId
-            void firstNode.latitude; void firstNode.longitude
-            void firstNode.accuracy; void firstNode.recordedAt; void firstNode.updatedAt
-          }
-          return c
-        },
-        { cachePolicy: 'no-store' }
-      )
+      const customerConn = await query(
+        'customerLocations',
+        { args },
+        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id latitude longitude accuracy recordedAt updatedAt customerId } } }`
+      ).catch(() => null)
 
       const out: ResourceLocationRow[] = []
 
@@ -787,18 +739,11 @@ export function useCars() {
       // as its fallback existed because the document failed on booklimo; the
       // fallback is the only half that ever worked there, so it is all that
       // is left.
-      const conn = await resolve(
-        ({ query }) =>
-          selectConnection((query as any).cars({ args: { first: 200 } }), node => {
-            void node.id
-            void node.carName
-            void node.licensePlate
-            void node.color
-            void node.carClass
-            void node.driverId
-            void node.driverName
-          }),
-        live
+      const conn = await query(
+        'cars',
+        { args: { first: 200 } },
+        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id carName licensePlate color ` +
+          `carClass driverId driverName } } }`
       )
       const edges: any[] = Array.isArray(conn?.edges) ? conn.edges : []
 
