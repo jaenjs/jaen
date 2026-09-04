@@ -9,7 +9,24 @@ import { resolve } from '../client/limosen'
 
 // --------------- Raw GraphQL fetch (bypasses GQty) ---------------
 
-const API_URL = 'https://api.limosen.at/graphql'
+/**
+ * The backend comes from the plugin's `pylonUrl` option, not from a constant.
+ *
+ * Both endpoints were hardcoded to limosen's pylon, which is invisible as long as
+ * only limosen mounts the plugin and wrong the moment a second brand does: the
+ * booklimo build carried api.booklimo.at in its config and still read limosen's
+ * transfers, users and locations. `__JAEN_APP_PYLON_URL__` is the define
+ * gatsby-node injects from that option; the literal stays as the fallback so a
+ * consumer that sets no option behaves exactly as before.
+ */
+declare const __JAEN_APP_PYLON_URL__: string | undefined
+
+const PYLON_URL =
+  typeof __JAEN_APP_PYLON_URL__ !== 'undefined' && __JAEN_APP_PYLON_URL__
+    ? __JAEN_APP_PYLON_URL__
+    : 'https://api.limosen.at/graphql'
+
+const API_URL = PYLON_URL
 
 function getAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
