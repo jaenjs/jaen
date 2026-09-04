@@ -37,7 +37,17 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] =
     actions.setWebpackConfig({
       plugins: [
         plugins.define({
-          __JAEN_APP_PYLON_URL__: JSON.stringify(pluginOptions.pylonUrl)
+          __JAEN_APP_PYLON_URL__: JSON.stringify(pluginOptions.pylonUrl),
+          /**
+           * The project role that marks somebody as a driver, per brand:
+           * `krc:driver` for one, `limosen:driver` for the other. The dispatch
+           * screen filters its driver picker by it, because listing every
+           * account there put customers, hotel front desks and machine users
+           * in a dropdown meant for drivers.
+           */
+          __JAEN_APP_DRIVER_ROLE__: JSON.stringify(
+            pluginOptions.driverRoleKey ?? null
+          )
         })
       ]
     })

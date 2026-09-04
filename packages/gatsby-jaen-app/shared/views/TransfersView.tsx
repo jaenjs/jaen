@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { getPortalRoot } from '../portal'
 import {
-  useTransfers, useUsers, useCars,
+  useTransfers, useUsers, useCars, useDrivers,
   assignDriverMutation, assignCarMutation, setPriceMutation, createTransferMutation,
   type ResourceTransfer, type ResourceUser, type ResourceCar, type CreateTransferArgs,
   type TransferDateFilter,
@@ -16,6 +16,16 @@ import {
   type ColumnConfig, type SortOrder, type DateFilterValue,
 } from '../components/ui'
 import { useI18nCode } from '../i18n'
+
+/**
+ * A driver's name, as a dispatcher would say it. Falls back to the login name
+ * only if the account has no profile at all, which should not happen for
+ * someone holding the driver role.
+ */
+const driverDisplayName = (u: ResourceUser): string => {
+  const full = `${u.details?.firstName ?? ''} ${u.details?.lastName ?? ''}`.trim()
+  return full || u.username || u.primaryEmailAddress
+}
 import { getI18nTransfers } from '../locales/i18nTransfers'
 import { getI18nCommon } from '../locales/i18nCommon'
 
@@ -115,7 +125,7 @@ function DriverAssignmentPopover({ open, onOpenChange, onSelect, buttonRef, driv
   const filtered = useMemo(() => {
     if (!search.trim()) return drivers
     const q = search.toLowerCase()
-    return drivers.filter(u => u.username.toLowerCase().includes(q) || u.primaryEmailAddress.toLowerCase().includes(q) || (u.details?.firstName?.toLowerCase().includes(q)) || (u.details?.lastName?.toLowerCase().includes(q)))
+    return drivers.filter(u => driverDisplayName(u).toLowerCase().includes(q))
   }, [drivers, search])
 
   if (!open) return null
@@ -143,9 +153,11 @@ function DriverAssignmentPopover({ open, onOpenChange, onSelect, buttonRef, driv
             <button key={u.id} className="w-full text-left p-3 rounded-lg border bg-background hover:bg-accent hover:text-white cursor-pointer transition-colors group mb-2 disabled:opacity-50" onClick={() => { onSelect(u.id); onOpenChange(false) }} disabled={loading}>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: u.driverColor || '#888' }} />
-                <div className="font-medium text-sm">{u.details?.firstName && u.details?.lastName ? `${u.details.firstName} ${u.details.lastName}` : u.username}</div>
+                {/* The name and nothing else. A login name here is a mail
+                    address for anyone created from one, which is not what a
+                    dispatcher is looking for. */}
+                <div className="font-medium text-sm">{driverDisplayName(u)}</div>
               </div>
-              <div className="text-xs text-muted-foreground group-hover:text-white/80 transition-colors ml-5">{u.primaryEmailAddress}</div>
             </button>
           ))}
         </div>
@@ -412,6 +424,9 @@ function NotAssignedPriceBadge({ transfer, onSetPrice, loading }: {
 
 export function TransfersView() {
   const { users } = useUsers()
+  // The picker offers drivers, not every account. See useDrivers: it asks for
+  // the brand's driver role and drops deactivated people.
+  const { drivers } = useDrivers()
   const { cars } = useCars()
 
   const i18nCode = useI18nCode()
@@ -471,7 +486,7 @@ export function TransfersView() {
 
   // ---------- Mutation handlers (optimistic) ----------
   const handleAssignDriver = useCallback(async (transferId: string, driverId: string) => {
-    const driver = users.find(u => u.id === driverId)
+    const driver = drivers.find(u => u.id === driverId)
     setMutating(true)
     setToast({ message: t.ToastAssigning.replace('{name}', driver?.username || 'driver'), type: 'success' })
     try {
@@ -606,7 +621,7 @@ export function TransfersView() {
             ) : isCancelled ? (
               <span className="text-sm text-muted-foreground">-</span>
             ) : (
-              <NotAssignedDriverBadge transfer={tr} drivers={users} onAssign={handleAssignDriver} loading={mutating} />
+              <NotAssignedDriverBadge transfer={tr} drivers={drivers} onAssign={handleAssignDriver} loading={mutating} />
             )}
           </td>
         )
@@ -730,7 +745,7 @@ export function TransfersView() {
                           <div className="flex items-center justify-between"><span className="font-medium text-sm">{tr.referenceId || tr.id.replace(/^transfer:/, '').replace(/^legacy:/, '#')}</span><StatusPill status={tr.state} /></div>
                           <div className="text-sm"><div className="font-medium">{tr.pickup}</div><div className="text-muted-foreground">{tr.dropoff}</div></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">{formatDateDisplay(tr.rideDateISO)} {tr.rideTime}</span>{tr.price != null && tr.price > 0 ? <span className="font-semibold">{formatPrice(tr.price)}</span> : mapStatus(tr.state) !== 'Cancelled' && <NotAssignedPriceBadge transfer={tr} onSetPrice={handleSetPrice} loading={mutating} />}</div>
-                          {tr.driverName ? <div className="text-xs text-muted-foreground">Driver: {tr.driverName}</div> : mapStatus(tr.state) !== 'Cancelled' && <NotAssignedDriverBadge transfer={tr} drivers={users} onAssign={handleAssignDriver} loading={mutating} />}
+                          {tr.driverName ? <div className="text-xs text-muted-foreground">Driver: {tr.driverName}</div> : mapStatus(tr.state) !== 'Cancelled' && <NotAssignedDriverBadge transfer={tr} drivers={drivers} onAssign={handleAssignDriver} loading={mutating} />}
                         </div>
                       ))}
                     </React.Fragment>

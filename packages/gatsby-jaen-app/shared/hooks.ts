@@ -94,6 +94,23 @@ const query = async (
   return result?.data?.[field]
 }
 
+declare const __JAEN_APP_DRIVER_ROLE__: string | null | undefined
+
+/**
+ * The project role that marks somebody as a driver, `krc:driver` or
+ * `limosen:driver` depending on the brand. Injected from the plugin option.
+ */
+const driverRoleKey = (): string | undefined => {
+  try {
+    return typeof __JAEN_APP_DRIVER_ROLE__ !== 'undefined' &&
+      __JAEN_APP_DRIVER_ROLE__
+      ? __JAEN_APP_DRIVER_ROLE__
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
 declare const __JAEN_ZITADEL_GQL__:
   | {authority?: string; clientId?: string; organizationId?: string}
   | undefined
@@ -624,6 +641,86 @@ export function useUser(userId: string) {
   useEffect(() => { fetchUser() }, [fetchUser])
 
   return { user, isLoading, error }
+}
+
+/**
+ * The people who may be assigned a transfer.
+ *
+ * The dispatch screen used to offer the whole account list, which is customers,
+ * hotel front desks and machine users as well as drivers, identified by login
+ * name because a bulk user listing carries no profiles. So the picker showed
+ * mail addresses of people who cannot drive.
+ *
+ * usersByRole answers with the brand's driver role and loads profiles, so this
+ * is a short list of actual drivers with actual names. Deactivated accounts are
+ * dropped here rather than in the view, because an inactive driver is not a
+ * choice on any screen.
+ */
+export function useDrivers() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [drivers, setDrivers] = useState<ResourceUser[]>([])
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchDrivers = useCallback(async () => {
+    const roleKey = driverRoleKey()
+
+    if (!roleKey) {
+      // A consumer that configures no role gets the old behaviour rather than
+      // an empty screen.
+      setDrivers([])
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = await query(
+        'usersByRole',
+        { args: { roleKey, first: 200, organizationId: organizationId() } },
+        `{ edges { node { __typename id userName preferredLoginName state creationDate ` +
+          `... on HumanUser { profiles { edges { node { firstName lastName avatarUrl } } } } } } }`
+      )
+
+      const rows = (Array.isArray(result?.edges) ? result.edges : [])
+        .map((e: any) => e?.node)
+        .filter(Boolean)
+        .filter((n: any) => n?.state === 'USER_STATE_ACTIVE')
+        .map((n: any) => {
+          const mapped = mapUserRow(n)
+          const profile = (n?.profiles?.edges ?? [])[0]?.node
+
+          return profile
+            ? {
+                ...mapped,
+                details: {
+                  avatarURL: profile.avatarUrl ?? undefined,
+                  firstName: profile.firstName ?? undefined,
+                  lastName: profile.lastName ?? undefined
+                }
+              }
+            : mapped
+        })
+
+      // By name, so the picker reads the way a person would look through it.
+      rows.sort((a: ResourceUser, b: ResourceUser) =>
+        `${a.details?.firstName ?? ''} ${a.details?.lastName ?? ''}`.trim().localeCompare(
+          `${b.details?.firstName ?? ''} ${b.details?.lastName ?? ''}`.trim()
+        )
+      )
+
+      setDrivers(rows)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load drivers')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchDrivers() }, [fetchDrivers])
+
+  return { drivers, isLoading, error, refetch: fetchDrivers }
 }
 
 // --------------- useLocations (paginated) ---------------
