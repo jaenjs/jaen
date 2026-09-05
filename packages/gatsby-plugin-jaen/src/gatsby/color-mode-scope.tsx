@@ -65,18 +65,27 @@ interface ColorModeScopeProps {
   children: ReactNode
 }
 
-export const ColorModeScope: FC<ColorModeScopeProps> = ({
-  ssrPathname,
-  defaultMode,
-  children
-}) => {
-  const pathname = useSyncExternalStore(
+/**
+ * The current pathname, live across client-side navigation, and on the
+ * server the one build-html handed in. The one place the route is read for
+ * the decisions that follow the route list above, so ColorModeScope and the
+ * consent banner's scope in wrap-root-element.tsx agree on every page.
+ */
+export const useScopedPathname = (ssrPathname?: string): string =>
+  useSyncExternalStore(
     subscribe,
     getSnapshot,
     () =>
       ssrPathname ??
       (typeof window !== 'undefined' ? window.location.pathname : '/')
   )
+
+export const ColorModeScope: FC<ColorModeScopeProps> = ({
+  ssrPathname,
+  defaultMode,
+  children
+}) => {
+  const pathname = useScopedPathname(ssrPathname)
 
   return (
     <NextThemeProvider

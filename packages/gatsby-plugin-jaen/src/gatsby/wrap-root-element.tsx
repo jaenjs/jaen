@@ -23,7 +23,7 @@ import {useUiLocale} from '../locales/ui-locale'
 
 import {JaenWidgetProvider} from '../contexts/jaen-widget'
 import {JaenPluginOptions} from './types'
-import {ColorModeScope} from './color-mode-scope'
+import {ColorModeScope, hasColorMode, useScopedPathname} from './color-mode-scope'
 import {SiteMetadataProvider} from '../connectors/site-metadata'
 import {system} from '../theme/system'
 import {JaenFrameMenuProvider} from '../contexts/jaen-frame-menu'
@@ -152,6 +152,37 @@ const localeForPathname = (
   return match?.locale ?? i18n.defaultLocale
 }
 
+/**
+ * The consent banner belongs to the public website, not to the tool behind
+ * the sign-in.
+ *
+ * The routes with a colour mode are exactly the routes that carry the CMS and
+ * the app (see color-mode-scope.tsx), and on those the banner has no
+ * business: they set no analytics and no marketing cookies, and on a phone
+ * the banner covered the lower third of every app screen until answered. So
+ * the same list decides here, through the same live pathname, and nothing is
+ * duplicated. The provider, the settings modal and the cookie stay, only the
+ * first layer is left out; a visitor who never answered is asked again on
+ * the next public page.
+ */
+const CookieConsentScope: FC<{
+  ssrPathname?: string
+  locale?: string
+  useGoogleAnalytics: boolean
+  children: ReactNode
+}> = ({ssrPathname, locale, useGoogleAnalytics, children}) => {
+  const pathname = useScopedPathname(ssrPathname)
+
+  return (
+    <CookieConsentProvider
+      locale={locale}
+      useGoogleAnalytics={useGoogleAnalytics}
+      banner={!hasColorMode(pathname)}>
+      {children}
+    </CookieConsentProvider>
+  )
+}
+
 export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
   args,
   pluginOptions
@@ -231,7 +262,8 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
                   five translations is written into this page, and the
                   analytics flag decides the settings modal's cookie table for
                   whenever the plugin is loaded. */}
-              <CookieConsentProvider
+              <CookieConsentScope
+                ssrPathname={pathname}
                 locale={localeForPathname(pathname, options.i18n)}
                 useGoogleAnalytics={Boolean(
                   options.googleAnalytics?.trackingIds?.[0]
@@ -249,7 +281,7 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
                     </JaenFrameMenuProvider>
                   </SiteMetadataProvider>
                 </JaenUpdateModalProvider>
-              </CookieConsentProvider>
+              </CookieConsentScope>
             </JaenIntlProvider>
           </AuthenticationProvider>
         </NotificationsProvider>
