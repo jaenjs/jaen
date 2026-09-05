@@ -88,6 +88,14 @@ const Slice: React.FC<SliceProps> = props => {
     })
   }, [props.pageConfig])
 
+  // Runs again when the language changes. The frame's own entries, Settings
+  // and Logout among them, are registered with strings formatted at the
+  // moment this effect runs, and on the first pass that moment comes before
+  // the account's preferredLanguage has been read and before the browser
+  // languages have been looked at, so the locale is still the en-US default.
+  // Without intl.locale in the list the drawer kept "Settings" and "Logout"
+  // beside a page that had long switched to German. extendMenu merges by
+  // group and item id, so a second pass overwrites the labels in place.
   useEffect(() => {
     const isJaenAdmin = checkUserRoles(auth.user, ['jaen:admin'])
 
@@ -350,7 +358,7 @@ const Slice: React.FC<SliceProps> = props => {
         }
       })
     })
-  }, [auth.user, props.data.allSitePage.nodes, manager.isEditing])
+  }, [auth.user, props.data.allSitePage.nodes, manager.isEditing, intl.locale])
 
   return (
     <JaenFrame
