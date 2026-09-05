@@ -6,6 +6,7 @@ import {
 } from 'jaen'
 import {Flex} from '@chakra-ui/react'
 import {GatsbyBrowser, Slice} from 'gatsby'
+import {JaenIntlProvider} from './wrap-root-element'
 import React from 'react'
 
 // Deliberately not `import * as Sentry from '@sentry/gatsby'`. That single
@@ -52,12 +53,20 @@ const CustomPageElement: React.FC<CustomPageElementProps> = ({
             ? 'hidden'
             : 'visible'
         }>
+        {/* The frame follows the account's language, as the Layout below
+            does for the page. Without this the nearest provider is the
+            locale plugin's, which takes the language off the path prefix,
+            en-US on every unprefixed route: measured 2026-09-05 on
+            limosen.at, the drawer said Einstellungen on /de/ and Settings
+            and Logout on /cms/ and /app/transfers/ beside a German page. */}
         {auth.isAuthenticated && (
-          <Slice
-            alias="jaen-frame"
-            jaenPageId={props.pageContext?.jaenPageId}
-            pageConfig={props.pageContext?.pageConfig as any}
-          />
+          <JaenIntlProvider>
+            <Slice
+              alias="jaen-frame"
+              jaenPageId={props.pageContext?.jaenPageId}
+              pageConfig={props.pageContext?.pageConfig as any}
+            />
+          </JaenIntlProvider>
         )}
 
         <Layout pageProps={props}>{children}</Layout>
