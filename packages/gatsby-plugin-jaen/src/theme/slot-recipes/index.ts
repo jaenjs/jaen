@@ -51,7 +51,8 @@ export const cardSlotRecipe = defineSlotRecipe({
       }
     },
     variant: {
-      elevated: {root: {boxShadow: 'base', bg: {_dark: 'gray.700'}}},
+      // bg.muted is jaen's gray.700 in dark, the literal that stood here.
+      elevated: {root: {boxShadow: 'base', bg: {_dark: 'bg.muted'}}},
       outline: {root: {borderWidth: '1px', borderColor: 'border.emphasized'}},
       subtle: {root: {bg: 'bg.subtle'}}
     }
@@ -152,7 +153,9 @@ export const menuSlotRecipe = defineSlotRecipe({
   base: {
     content: {bg: 'bg.surface', boxShadow: 'lg'},
     item: {
-      color: {base: 'gray.700', _dark: 'gray.200'},
+      // fg.emphasized: gray.700 in light and gray.200 in dark in jaen's own
+      // foundations, the pair that stood here as literals.
+      color: 'fg.emphasized',
       bg: 'transparent',
       _hover: {
         bg: {base: 'brand.50', _dark: 'brand.800'},

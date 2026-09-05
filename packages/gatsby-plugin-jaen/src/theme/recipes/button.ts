@@ -65,10 +65,12 @@ export const buttonRecipe = defineRecipe({
 
       /**
        * secondary and secondary.subtle differ in exactly one value, the hover
-       * and active background in light mode: gray.50 against gray.100. Both
-       * keep gray.800 in dark mode, so neither maps cleanly onto bg.subtle or
-       * bg.muted, whose dark values are gray.800 and gray.700. The literals are
-       * kept so the rendering is identical rather than nearly identical.
+       * and active background in light mode: gray.50 against gray.100. The
+       * light literals are kept so the rendering is identical rather than
+       * nearly identical. The dark half is `bg.subtle`, whose value in jaen's
+       * own foundations is the gray.800 that used to be written here, so jaen
+       * renders as before and a site with its own dark surfaces (see
+       * ../system.ts) gets its own hover under these buttons too.
        */
       secondary: secondaryVariant('gray.50'),
       'secondary.subtle': secondaryVariant('gray.100'),
@@ -122,14 +124,19 @@ export const buttonRecipe = defineRecipe({
       // Deltas on top of v3's own ghost and outline, which stay underneath.
       // v2's outline remapped a brand colorScheme to gray before spreading;
       // the explicit gray values do that without the branch.
+      // The label colours are the semantic names whose jaen values are the
+      // greys that used to be written here (fg.emphasized is gray.700 in light
+      // and gray.200 in dark, fg.muted is gray.600 in light), so jaen renders
+      // as before and a site that redefines the names in its theme shadow
+      // recolours these labels with the rest of its dark mode.
       ghost: {
         borderRadius: 'lg',
-        color: {base: 'gray.700', _dark: 'gray.200'}
+        color: 'fg.emphasized'
       },
       outline: {
         borderRadius: 'lg',
         borderColor: 'border.emphasized',
-        color: {base: 'gray.600', _dark: 'gray.200'},
+        color: {base: 'fg.muted', _dark: 'fg.emphasized'},
         '& > svg': {color: 'fg.muted'}
       },
 
@@ -227,7 +234,7 @@ export const buttonRecipe = defineRecipe({
 /** The 65 lines `secondary` and `secondary.subtle` shared verbatim in v2. */
 function secondaryVariant(hoverBg: string) {
   const active = {
-    bg: {base: hoverBg, _dark: 'gray.800'},
+    bg: {base: hoverBg, _dark: 'bg.subtle'},
     color: {base: 'gray.900', _dark: 'white'}
   }
 
@@ -236,13 +243,13 @@ function secondaryVariant(hoverBg: string) {
     borderColor: 'border.emphasized',
     borderRadius: 'lg',
     flexShrink: 0,
-    color: {base: 'gray.700', _dark: 'gray.200'},
+    color: 'fg.emphasized',
     '& > svg': {color: 'fg.muted'},
     _hover: {
-      bg: {base: hoverBg, _dark: 'gray.800'},
+      bg: {base: hoverBg, _dark: 'bg.subtle'},
       color: {base: 'gray.800', _dark: 'white'}
     },
-    _checked: {bg: {base: hoverBg, _dark: 'gray.800'}},
+    _checked: {bg: {base: hoverBg, _dark: 'bg.subtle'}},
     _active: active,
     _selected: active,
     _disabled: {

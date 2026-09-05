@@ -128,7 +128,9 @@ export const inputRecipe = defineRecipe({
       outline: {
         borderRadius: 'lg',
         borderColor: 'border.emphasized',
-        bg: {base: 'white', _dark: 'gray.800'},
+        // bg.subtle is jaen's gray.800 in dark, the literal that stood here,
+        // and a site's own dark surface where the site defines one.
+        bg: {base: 'white', _dark: 'bg.subtle'},
         _hover: {borderColor: 'border.active'},
         _focusVisible: {
           zIndex: 1,
