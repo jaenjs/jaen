@@ -181,22 +181,25 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
 
   return (
     /**
-     * What changed here is the provider, not the default it hands out.
-     *
      * next-themes sits OUTSIDE Chakra because it writes the class onto <html>
      * that v3's dark condition selects on, so the provider reading tokens has
      * to be inside the one setting the class.
      *
-     * defaultTheme="light" is what v2 actually shipped, and it stays. jaen's
-     * theme carried no `config`, so extendTheme filled in @chakra-ui/theme's
-     * own `initialColorMode: "light"` (measured: theme.config in the v2 tree is
-     * {useSystemColorMode:false, initialColorMode:"light", cssVarPrefix:
-     * "chakra"}), and that literal is what ColorModeScript wrote and what
-     * ColorModeProvider defaulted to. The site theme's initialColorMode:
-     * 'system' never reached a provider — the site's Layout mounted emotion's
-     * ThemeProvider, not ChakraProvider — so no visitor has ever been given an
-     * OS-following default here. Following the OS would flip every dark-OS
-     * visitor to a dark first paint, which is a redesign, not a migration.
+     * defaultTheme is the site's choice now, through the `colorMode.default`
+     * plugin option, and `light` when the site says nothing. Light is what v2
+     * actually shipped: jaen's theme carried no `config`, so extendTheme filled
+     * in @chakra-ui/theme's own `initialColorMode: "light"`, and that literal
+     * is what ColorModeScript wrote and what ColorModeProvider defaulted to.
+     * No visitor was ever given an OS-following default here, so a site that
+     * wants `system` opts into a dark first paint for its dark-OS visitors
+     * knowingly, and a site that wants `dark` gets it on every first visit.
+     * The visitor's own toggle is stored by next-themes under `theme` and wins
+     * over the default on the next visit, whichever the site chose.
+     *
+     * The dark palette itself is not decided here. jaen's own tokens carry a
+     * `_dark` half each, and the site's theme shadow may override them, see
+     * ../theme/system.ts. So a brand that turns dark on by default also owns
+     * what dark looks like, without touching jaen.
      *
      * enableSystem stays on regardless: it only adds 'system' to the set of
      * values setColorMode accepts, it does not make it the default. Choosing it
@@ -212,7 +215,7 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
      */
     <NextThemeProvider
       attribute="class"
-      defaultTheme="light"
+      defaultTheme={options.colorMode?.default ?? 'light'}
       enableSystem
       disableTransitionOnChange>
       <ChakraProvider value={system}>

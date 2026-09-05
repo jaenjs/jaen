@@ -50,6 +50,16 @@ export interface JaenPluginOptions extends PluginOptions {
   }
 
   sentry?: JaenSentryOptions
+
+  /**
+   * The colour mode a visitor lands on, read by wrap-root-element as the
+   * next-themes `defaultTheme`. `light` or `dark` is written onto <html> at
+   * the first paint, `system` follows the OS. Default `light`. Validated in
+   * gatsby-node's schema, so an unknown value fails the build.
+   */
+  colorMode?: {
+    default?: 'light' | 'dark' | 'system'
+  }
 }
 
 /**

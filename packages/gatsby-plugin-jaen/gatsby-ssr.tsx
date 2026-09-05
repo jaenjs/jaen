@@ -13,11 +13,14 @@ export {wrapRootElement} from './src/gatsby/wrap-root-element'
  * (`.dark, .dark .chakra-theme:not(.light)`), and `color-scheme` is what stops
  * the browser painting white scrollbars over a dark page.
  *
- * The fallback is 'light', not 'system', and has to stay in lockstep with
- * NextThemeProvider's defaultTheme in wrap-root-element.tsx: v2's effective
- * default was the literal "light" that extendTheme put in theme.config, so an
- * unconfigured visitor gets light here whatever the OS says. See the comment
- * over the provider for why the site's initialColorMode:'system' never counted.
+ * The fallback is the site's `colorMode.default` plugin option, 'light' when
+ * the site says nothing, and has to stay in lockstep with NextThemeProvider's
+ * defaultTheme in wrap-root-element.tsx, which reads the same option: v2's
+ * effective default was the literal "light" that extendTheme put in
+ * theme.config, so an unconfigured visitor gets light here whatever the OS
+ * says. A site that sets 'dark' gets the dark class on <html> before the first
+ * paint, which is the whole point of this script. See the comment over the
+ * provider for why the site's initialColorMode:'system' never counted.
  *
  * Before falling back it adopts v2's key once. v2's ColorModeScript did not
  * merely read `chakra-ui-color-mode`, it WROTE the resolved mode into it on
@@ -33,11 +36,11 @@ export {wrapRootElement} from './src/gatsby/wrap-root-element'
  * <html> from its own default-html.js and hydrates only #___gatsby, so React
  * never diffs the class this writes.
  */
-const NO_FLASH = `(function(){try{
+const noFlash = (defaultMode: 'light' | 'dark' | 'system') => `(function(){try{
 var d=document.documentElement,s=localStorage.getItem('theme');
 if(!s){var o=localStorage.getItem('chakra-ui-color-mode');
 if(o==='light'||o==='dark'){localStorage.setItem('theme',o);s=o}}
-s=s||'light';
+s=s||${JSON.stringify(defaultMode)};
 var m=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light',
 r=s==='system'?m:s;
 d.classList.remove('light','dark','c_darkmode');d.classList.add(r);
@@ -64,7 +67,7 @@ d.style.colorScheme=r;
  * disappears at hydration would be worse than the late one it replaces.
  *
  * The attribute name is jaen's `STATIC_BANNER_ATTRIBUTE`, repeated here rather
- * than imported, the same way NO_FLASH above repeats next-themes' storage
+ * than imported, the same way noFlash above repeats next-themes' storage
  * contract. Both sides say so.
  */
 const COOKIE_CONSENT_STYLE = `#cc--main[data-jaen-cc-banner] #cm{opacity:1;transform:scale(1);visibility:visible}
@@ -106,6 +109,9 @@ interface I18nRenderOptions {
   i18n?: {
     defaultLocale: string
   }
+  colorMode?: {
+    default?: 'light' | 'dark' | 'system'
+  }
 }
 
 interface LocalePageContext {
@@ -119,10 +125,12 @@ export const onRenderBody: GatsbySSR['onRenderBody'] = (
 ) => {
   const {setHtmlAttributes, setHeadComponents, pathname} = args
 
+  const {colorMode} = (pluginOptions ?? {}) as I18nRenderOptions
+
   setHeadComponents([
     <script
       key="jaen-color-mode"
-      dangerouslySetInnerHTML={{__html: NO_FLASH}}
+      dangerouslySetInnerHTML={{__html: noFlash(colorMode?.default ?? 'light')}}
     />,
     <style
       key="jaen-cookie-consent-style"
