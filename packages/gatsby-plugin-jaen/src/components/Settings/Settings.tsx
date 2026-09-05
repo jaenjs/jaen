@@ -653,7 +653,9 @@ export const Settings: React.FC<SettingsProps> = props => {
                 </HStack>
               </Card.Header>
               <Card.Body>
-                <Text fontSize="sm" color="gray.600">
+                {/* fg.muted: gray.600 in light as before, and legible in
+                    dark, where a literal gray.600 sat on a dark card. */}
+                <Text fontSize="sm" color="fg.muted">
                   {intl.formatMessage({
                     id: 'SettingsContactDescription',
                     defaultMessage:

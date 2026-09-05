@@ -73,7 +73,9 @@ export const DrawerRight: React.FC<DrawerRightProps> = ({
           bg="pink.500"
           rounded="full"
           border="0.2em solid"
-          borderColor={{base: 'white', _dark: 'gray.800'}}
+          // bg.subtle is the bar's own surface in both modes, white and jaen's
+          // gray.800, the literals that stood here.
+          borderColor={{base: 'white', _dark: 'bg.subtle'}}
           transform="translate(25%, 25%)"
           visibility={isBadgeVisible ? 'visible' : 'hidden'}
         />

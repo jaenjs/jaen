@@ -56,7 +56,9 @@ export const PageTree: React.FC<PageTreeProps> = ({
 
   const selectedBg = useColorModeValue('transparent', activeBg)
 
-  const color = useColorModeValue('gray.700', 'gray.200')
+  // fg.emphasized is gray.700 in light and gray.200 in dark, the literals
+  // this used to pick by mode, and a site's own text colour where it has one.
+  const color = 'fg.emphasized'
 
   return (
     <ControlledTreeEnvironment

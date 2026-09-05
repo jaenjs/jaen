@@ -213,8 +213,11 @@ const AccountsPage: React.FC = () => {
     }
   })
 
-  const emptyBg = useColorModeValue('gray.50', 'gray.800')
-  const emptyBorder = useColorModeValue('gray.200', 'gray.700')
+  // The semantic names whose jaen values are the greys that were picked by
+  // mode here: bg.subtle is gray.50 and gray.800, border.default gray.200 in
+  // light, border.emphasized gray.700 in dark.
+  const emptyBg = 'bg.subtle'
+  const emptyBorder = useColorModeValue('border.default', 'border.emphasized')
 
   return (
     <Stack gap="6">
