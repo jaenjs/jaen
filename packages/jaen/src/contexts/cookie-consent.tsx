@@ -1015,13 +1015,27 @@ const CookieConsentBanner: React.FC<{locale?: string}> = ({locale}) => {
 export interface CookieConsentProviderProps {
   locale?: string
   useGoogleAnalytics?: boolean
+  /**
+   * Whether the first layer of the banner is rendered at all. Default true.
+   *
+   * gatsby-plugin-jaen passes false on the routes that carry the CMS and the
+   * app: a signed-in tool with no analytics and no marketing cookies has
+   * nothing to ask, and on a phone the banner covered the lower third of
+   * every app screen until answered. The context, the settings modal and the
+   * consent cookie stay as they are, so a visitor who answered on a public
+   * page is remembered, and one who never saw the banner is asked the next
+   * time they open a public page. Decided per route, so it has to be right
+   * at build time too: the banner is baked into the generated HTML.
+   */
+  banner?: boolean
   children: React.ReactNode
 }
 
 export const CookieConsentProvider: React.FC<CookieConsentProviderProps> = ({
   children,
   useGoogleAnalytics,
-  locale
+  locale,
+  banner = true
 }) => {
   const {colorMode} = useColorMode()
 
@@ -1049,7 +1063,7 @@ export const CookieConsentProvider: React.FC<CookieConsentProviderProps> = ({
     <CookieContext.Provider value={consentApi}>
       {children}
 
-      <CookieConsentBanner locale={locale} />
+      {banner && <CookieConsentBanner locale={locale} />}
     </CookieContext.Provider>
   )
 }
