@@ -1,18 +1,20 @@
 // src/sw-push.js
-// Appended to gatsby-plugin-offline's service worker.
+// Appended raw to gatsby-plugin-offline's service worker at build time. This
+// file never passes through webpack, so no DefinePlugin value reaches it: the
+// backend URL and the bearer token arrive in the message the page posts, read
+// on the page from __JAEN_APP_PYLON_URL__ like every other request. Nothing
+// brand specific is hardcoded here, see okf/decisions/hard-rules.md.
 
 self.addEventListener("push", (event) => {
   event.waitUntil(
     (async () => {
-      // Try to parse payload (if backend sends one)
+      // The pylon sends JSON. Anything else is shown with the defaults.
       let payload = {};
       try {
         if (event.data) {
-          // Most push payloads are JSON
           payload = await event.data.json();
         }
       } catch (e) {
-        // Fallback if payload is text JSON
         try {
           payload = JSON.parse(event.data ? await event.data.text() : "{}");
         } catch {
@@ -22,27 +24,30 @@ self.addEventListener("push", (event) => {
 
       const data = payload.data || {};
 
-      // Build URL:
-      // - prefer payload.data.url if present
-      // - else if this is a transfer assignment, build transfer URL from transferId
-      // - else fallback to dashboard
+      // The tap opens the transfer. Accept and reject live there, on the
+      // slider screen, never in the notification shade: a driver should see
+      // the job before answering it, so this notification carries no actions.
       let url = data.url;
       if (!url && data.type === "transfer-assigned" && data.transferId) {
         url = `/app/transfers/${data.transferId}/`;
       }
-      if (!url) url = "/app/dashboard";
+      if (!url) url = "/app/transfers/";
 
-      const title = payload.title || "LIMOSEN";
-      const body =
-        payload.body || "A new transfer has been assigned";
+      // The sender knows the driver's locale and sends title and body already
+      // translated. The defaults are for a payload without them and are brand
+      // neutral: the host name is the brand on both sites.
+      const title =
+        payload.title || self.location.hostname.replace(/^www\./, "");
+      const body = payload.body || "Neue Fahrt zugewiesen";
       const icon = payload.icon || "/icons/icon-192x192.png";
 
-      // Use a stable tag so repeated updates don't spam multiple notifications
+      // One notification per transfer: a second push about the same transfer
+      // replaces the first rather than stacking.
       const tag =
         payload.tag ||
-        (data.transferId ? `transfer-${data.transferId}` : "limosen-push");
+        (data.transferId ? `transfer-${data.transferId}` : "app-push");
 
-      const options = {
+      await self.registration.showNotification(title, {
         body,
         icon,
         tag,
@@ -50,9 +55,7 @@ self.addEventListener("push", (event) => {
           ...data,
           url
         }
-      };
-
-      await self.registration.showNotification(title, options);
+      });
     })()
   );
 });
@@ -71,7 +74,7 @@ self.addEventListener("notificationclick", (event) => {
         includeUncontrolled: true
       });
 
-      // If we already have a tab, focus it AND navigate it to the transfer
+      // An open tab is focused and sent to the transfer. Otherwise a new one.
       for (const client of windowClients) {
         if ("focus" in client) {
           await client.focus();
@@ -81,12 +84,11 @@ self.addEventListener("notificationclick", (event) => {
             await client.navigate(targetUrl);
             return;
           } catch {
-            // ignore and fall through to openWindow
+            // fall through to openWindow
           }
         }
       }
 
-      // Otherwise open a new tab
       if (self.clients.openWindow) {
         return self.clients.openWindow(targetUrl);
       }
@@ -95,68 +97,64 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 // ------------------------------------------------------------
-// Location sending (best-effort) via postMessage from the app.
-// NOTE: Service Workers cannot read GPS themselves.
+// Position relay, best effort. The page reads the GPS (a worker cannot) and
+// posts the position here when its own request failed, typically because the
+// tab is being closed. The message carries the pylon URL and the bearer
+// token, because the worker has neither of its own.
 // ------------------------------------------------------------
-
-const LIMOSEN_GRAPHQL_URL = "https://api.limosen.at/graphql";
 
 self.addEventListener("message", (event) => {
   const msg = event.data || {};
   if (msg.type !== "LIMOSEN_SET_DRIVER_LOCATION") return;
 
+  const pylonUrl = typeof msg.pylonUrl === "string" ? msg.pylonUrl : "";
+  if (!pylonUrl) return;
+
   const location = msg.location || {};
   const latitude = location.latitude;
   const longitude = location.longitude;
-
   if (typeof latitude !== "number" || typeof longitude !== "number") return;
 
   const authorization =
     typeof msg.authorization === "string" ? msg.authorization : undefined;
+  if (!authorization) return;
 
-  const query = `
-    mutation SetDriverLocation(
-      $latitude: Number!
-      $longitude: Number!
-      $accuracy: Number
-      $altitude: Number
-      $altitudeAccuracy: Number
-      $heading: Number
-      $speed: Number
-      $recordedAtISO: String
-    ) {
-      setDriverLocation(
-        args: {
-          latitude: $latitude
-          longitude: $longitude
-          accuracy: $accuracy
-          altitude: $altitude
-          altitudeAccuracy: $altitudeAccuracy
-          heading: $heading
-          speed: $speed
-          recordedAtISO: $recordedAtISO
-        }
-      ) {
-        id
-        updatedAt
-      }
-    }
-  `;
+  // Arguments are inlined so the document names no input type, which is what
+  // keeps it valid against either brand's pylon build.
+  const literal = (v) => (typeof v === "number" && Number.isFinite(v) ? String(v) : null);
+  const fields = [
+    ["latitude", literal(latitude)],
+    ["longitude", literal(longitude)],
+    ["accuracy", literal(location.accuracy)],
+    ["altitude", literal(location.altitude)],
+    ["altitudeAccuracy", literal(location.altitudeAccuracy)],
+    ["heading", literal(location.heading)],
+    ["speed", literal(location.speed)],
+    [
+      "recordedAtISO",
+      typeof location.recordedAtISO === "string"
+        ? JSON.stringify(location.recordedAtISO)
+        : null
+    ]
+  ]
+    .filter(([, v]) => v !== null)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(", ");
+
+  const query = `mutation { setDriverLocation(args: {${fields}}) { id updatedAt } }`;
 
   event.waitUntil(
-    fetch(LIMOSEN_GRAPHQL_URL, {
+    fetch(pylonUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(authorization ? { Authorization: authorization } : {})
+        Authorization: authorization
       },
-      body: JSON.stringify({
-        query,
-        variables: location
-      }),
+      body: JSON.stringify({ query }),
       mode: "cors"
     }).catch(() => {
-      // ignore
+      // Best effort: the page already failed once, and a position that did
+      // not arrive is replaced by the next one.
     })
   );
 });

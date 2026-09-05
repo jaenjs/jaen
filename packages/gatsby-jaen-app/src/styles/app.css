@@ -1,116 +1,37 @@
-@import '../../shared/styles/tokens.css';
+/* Every screen is Chakra now. There is no Tailwind, no token sheet and no
+   portal root in this file any more: what remains is the frame the CMS puts
+   around a page, which a full-height app has to undo. */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ── The CMS chrome around the app ──────────────────────────────────────────
+   .jaen-app is the marker the shell puts on its root. The page background and
+   the text colour are Chakra's (bg.canvas, fg.default from jaen's system, both
+   with a dark half that follows next-themes' class on <html>), so nothing here
+   paints a colour. What remains is the frame the site layout would otherwise
+   add around a full-height app. */
 
-/* ── Scoped base surface (Gatsby context) ── */
-.jaen-app {
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
-  line-height: 1.5;
-  -webkit-text-size-adjust: 100%;
-  -moz-tab-size: 4;
-  tab-size: 4;
-  min-height: 100vh;
-  flex: 1;
-  width: 100%;
-}
-
-/* ── Hide the JaenPageLayout Footer when .jaen-app is present ── */
-/* jaen renamed its root element from coco to momo. Both are listed so the
-   rule survives the rename in either direction. */
+/* Hide the jaen page footer beneath the app. jaen renamed its root element
+   from coco to momo. Both are listed so the rule survives the rename in either
+   direction. */
 #coco:has(.jaen-app) > *:last-child,
 #momo:has(.jaen-app) > *:last-child {
   display: none !important;
 }
 
-/* ── Propagate dark background to parent containers ── */
 #coco:has(.jaen-app),
 #momo:has(.jaen-app) {
-  background: hsl(var(--background));
   padding-top: 0 !important;
   margin: 0 !important;
 }
 
-/* ── Remove white margins from html/body when app is present ── */
 html:has(.jaen-app),
 body:has(.jaen-app) {
   margin: 0 !important;
   padding: 0 !important;
-  background: hsl(var(--background)) !important;
   overflow-x: hidden !important;
 }
 
-/* ── Gatsby wrapper containers should not add padding ── */
 #___gatsby:has(.jaen-app),
 #gatsby-focus-wrapper:has(.jaen-app) {
   margin: 0 !important;
   padding: 0 !important;
-}
-
-/* ── Propagate dark-mode CSS vars to body for portals (modals, popovers) ── */
-body:has(.dark) {
-  --background: 0 0% 10% !important;
-  --foreground: 0 0% 100% !important;
-  --card: 0 0% 10% !important;
-  --card-foreground: 0 0% 100% !important;
-  --muted: 0 0% 20% !important;
-  --muted-foreground: 0 0% 75% !important;
-  --border: 0 0% 20% !important;
-  --input: 0 0% 15% !important;
-  --ring: 48 96% 53% !important;
-  --primary: 48 96% 53% !important;
-  --primary-foreground: 0 0% 0% !important;
-  --accent: 0 0% 18% !important;
-  --accent-foreground: 0 0% 100% !important;
-  --success: 142.1 70% 45% !important;
-  --success-foreground: 0 0% 100% !important;
-  --warning: 48 96% 53% !important;
-  --warning-foreground: 0 0% 0% !important;
-  --destructive: 0 70% 55% !important;
-  --destructive-foreground: 0 0% 100% !important;
-  --popover: 0 0% 10% !important;
-  --popover-foreground: 0 0% 100% !important;
-}
-
-/* ── Portal root for modals/popovers (rendered outside .jaen-app) ── */
-#jaen-portal-root {
-  position: relative;
-  z-index: 9999;
-}
-
-
-/* ── Safe area, iOS ──────────────────────────────────────────────────────────
-   The bottom navigation is `position: fixed; bottom: 0`, so in the installed
-   PWA it reaches the physical bottom edge of the screen. On a device with a
-   home indicator, an iPhone 15 Pro Max for instance, the swipe-up line then
-   draws straight across the labels and the lowest few pixels of the buttons
-   are inside the system's gesture area.
-
-   env(safe-area-inset-bottom) is the height iOS reserves for that, and it is
-   only a real number when the document asks for `viewport-fit=cover`, which
-   the site's gatsby-ssr adds. Everywhere without a safe area, and in every
-   browser that does not know env(), the fallback 0px applies and these rules
-   change nothing.
-
-   The bar keeps its 3.5rem of touch target and grows by the inset; the padding
-   pushes its content back out of the gesture area. The scroll container above
-   clears the whole thing, otherwise the last row of a list ends up behind it.
-   Both are scoped below md, where the navigation is on screen at all. */
-.jaen-app-bottom-nav {
-  height: calc(3.5rem + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.jaen-app-main {
-  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
-}
-
-@media (min-width: 768px) {
-  .jaen-app-main {
-    padding-bottom: 0;
-  }
 }

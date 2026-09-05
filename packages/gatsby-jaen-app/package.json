@@ -1,6 +1,6 @@
 {
   "name": "gatsby-jaen-app",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "description": "App plugin for Jaen",
   "keywords": [
     "gatsby"
@@ -15,8 +15,7 @@
     "gatsby-node.js",
     "gatsby-config.js",
     "gatsby-browser.tsx",
-    "gatsby-ssr.tsx",
-    "tailwind.config.ts"
+    "gatsby-ssr.tsx"
   ],
   "scripts": {
     "build": "tsc gatsby/gatsby-config.ts gatsby/gatsby-node.ts gatsby/gatsby-browser.ts --outDir dist/gatsby --esModuleInterop --skipLibCheck --resolveJsonModule --noCheck && tsc -p tsconfig.build.json --noCheck",
@@ -25,14 +24,10 @@
   "dependencies": {
     "@gqty/react": "^3.0.5",
     "@react-icons/all-files": "https://github.com/react-icons/react-icons/releases/download/v4.11.0/react-icons-all-files-4.11.0.tgz",
-    "autoprefixer": "^10.4.0",
     "gatsby-plugin-offline": "^6.15.0",
-    "gatsby-plugin-postcss": "^6.13.0",
     "gqty": "^3.2.2",
     "mapbox-gl": "^3.19.0",
-    "oidc-client-ts": "^2.4.0",
-    "postcss": "^8.4.0",
-    "tailwindcss": "^3.4.0"
+    "oidc-client-ts": "^2.4.0"
   },
   "devDependencies": {
     "@chakra-ui/react": "^3.36.1",

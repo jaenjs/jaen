@@ -1,189 +1,695 @@
-import { useMemo, useState } from 'react'
-import { useAppNavigate } from '../navigation'
-import { useUsers } from '../hooks'
-import { useI18nCode } from '../i18n'
-import { getI18nUsers } from '../locales/i18nUsers'
-import { getI18nCommon } from '../locales/i18nCommon'
+/**
+ * The directory, for the dispatcher.
+ *
+ * One page of accounts from Zitadel with the name, the roles, whether the
+ * account may sign in, and the driver's colour. Search narrows the page in
+ * the browser. "Create driver" is the one create path: a customer creates
+ * themselves by booking, a dispatcher is made by hand in Zitadel.
+ *
+ * Admin only. The shell offers the entry only to an admin and the backend
+ * refuses `users` to anyone else, so the screen itself only has to say so
+ * politely when a link brought somebody here who has no business here.
+ */
+import React, {useMemo, useState} from 'react'
 import {
-  cx,
-  IconSearch, IconRefresh,
-  LoadingOverlay, EmptyState, ErrorBanner, CursorPagination,
-} from '../components/ui'
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Card,
+  Clipboard,
+  CloseButton,
+  Code,
+  Dialog,
+  Field,
+  HStack,
+  IconButton,
+  Input,
+  InputGroup,
+  Portal,
+  SimpleGrid,
+  Stack,
+  Stat,
+  Table,
+  Text,
+  Wrap,
+  chakra,
+} from '@chakra-ui/react'
+import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
+import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
+import {FaUserPlus} from '@react-icons/all-files/fa/FaUserPlus'
+import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTriangle'
+import {useAppNavigate} from '../navigation'
+import {useI18nCode} from '../i18n'
+import {getI18nUsers, type UsersStrings} from '../locales/i18nUsers'
+import {getI18nCommon} from '../locales/i18nCommon'
+import {ADMIN_ROLE, CUSTOMER_ROLE, DRIVER_ROLE, useCaller} from '../auth'
+import {
+  DriverColorDot,
+  EmptyState,
+  ErrorBanner,
+  LoadingOverlay,
+  toaster,
+  PageHeader
+} from '../components'
+import {
+  createDriverMutation,
+  fullName,
+  useUserDirectory,
+  type CreateDriverArgs,
+  type CreatedDriver,
+  type DirectoryUser
+} from '../hooks/users'
 
-function getContrastColor(hex: string): string {
+/**
+ * The three role keys, as chips. booklimo's retired `krc:driver` is shown as
+ * the driver too, so an account that still carries it does not read as
+ * roleless while the key is phased out.
+ */
+export function roleLabel(key: string, t: UsersStrings): string | undefined {
+  if (key === ADMIN_ROLE) return t.RoleAdmin
+  if (key === DRIVER_ROLE || key.endsWith(':driver')) return t.RoleDriver
+  if (key === CUSTOMER_ROLE || key.endsWith(':customer')) return t.RoleCustomer
+  return undefined
+}
+
+const rolePalette = (key: string): string => {
+  if (key === ADMIN_ROLE) return 'purple'
+  if (key.endsWith(':driver')) return 'blue'
+  if (key.endsWith(':customer')) return 'green'
+  return 'gray'
+}
+
+export function RoleChips({roles, t}: {roles: string[]; t: UsersStrings}) {
+  // One chip per meaning, not one per key. A KRC driver holds `krc:driver` and
+  // `limosen:driver` at once while the first is being phased out, and both read
+  // as "Driver", so without this the row said Driver twice.
+  const seen = new Set<string>()
+  const known = roles.filter(r => {
+    const label = roleLabel(r, t)
+    if (!label || seen.has(label)) return false
+    seen.add(label)
+    return true
+  })
+  if (known.length === 0) {
+    return (
+      <Badge variant="outline" colorPalette="gray" size="sm">
+        {t.RoleNone}
+      </Badge>
+    )
+  }
+  return (
+    <Wrap gap="1">
+      {known.map(r => (
+        <Badge key={r} variant="subtle" colorPalette={rolePalette(r)} size="sm">
+          {roleLabel(r, t)}
+        </Badge>
+      ))}
+    </Wrap>
+  )
+}
+
+export function ActiveBadge({active, t}: {active: boolean; t: UsersStrings}) {
+  return (
+    <Badge
+      variant={active ? 'subtle' : 'outline'}
+      colorPalette={active ? 'green' : 'gray'}
+      size="sm">
+      {active ? t.StatusActive : t.StatusInactive}
+    </Badge>
+  )
+}
+
+/**
+ * The initial in a circle, painted in the driver's colour when there is one.
+ * Chakra picks a readable foreground for a named palette but not for a hex,
+ * so the contrast is decided here from the luminance.
+ */
+/**
+ * How a person is named everywhere on these screens: the big line is the
+ * profile name, "Vorname Nachname", and the muted line under it is the login
+ * name. An account without a profile name shows the login name as the big
+ * line and nothing under it, so the same string is never printed twice.
+ */
+export const profileName = (u: DirectoryUser): string =>
+  [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+
+export const loginName = (u: DirectoryUser): string =>
+  u.username || u.email || ''
+
+export function PersonName({
+  user,
+  size = 'md'
+}: {
+  user: DirectoryUser
+  /** md for list rows, lg for a detail header. */
+  size?: 'md' | 'lg'
+}) {
+  const name = profileName(user)
+  const login = loginName(user)
+  const primary = name || login
+  const secondary = name ? login : ''
+  return (
+    <Box minW="0">
+      <Text
+        textStyle={size === 'lg' ? {base: 'xl', md: '2xl'} : 'md'}
+        fontWeight={size === 'lg' ? 'semibold' : 'medium'}
+        lineClamp={1}>
+        {primary}
+      </Text>
+      {secondary ? (
+        <Text
+          textStyle={size === 'lg' ? 'sm' : 'xs'}
+          color="fg.muted"
+          lineClamp={1}>
+          {secondary}
+        </Text>
+      ) : null}
+    </Box>
+  )
+}
+
+export function UserAvatar({
+  user,
+  size = 'sm'
+}: {
+  user: DirectoryUser
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+}) {
+  const initial = (
+    user.firstName?.[0] ||
+    user.username?.[0] ||
+    user.email?.[0] ||
+    '?'
+  ).toUpperCase()
+  const colour = user.driverColor
+  return (
+    <Avatar.Root
+      size={size}
+      variant="subtle"
+      style={
+        colour
+          ? {backgroundColor: colour, color: contrastFor(colour)}
+          : undefined
+      }>
+      <Avatar.Fallback name={fullName(user)}>{initial}</Avatar.Fallback>
+    </Avatar.Root>
+  )
+}
+
+export const contrastFor = (hex: string): string => {
   const h = hex.replace('#', '')
-  const r = parseInt(h.substr(0, 2), 16)
-  const g = parseInt(h.substr(2, 2), 16)
-  const b = parseInt(h.substr(4, 2), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? '#000' : '#fff'
+  if (h.length !== 6) return '#000'
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5 ? '#000' : '#fff'
+}
+
+/** A whole row as one button, for the phone list. Box and HStack type as a div and refuse `type`. */
+const RowButton = chakra('button')
+
+const formatDate = (iso: string | null, code: string) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(code)
 }
 
 export function UsersView() {
-  const { users, isLoading, error, pagination, nextPage, prevPage, refetch } = useUsers()
+  const caller = useCaller()
   const navigate = useAppNavigate()
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nUsers(i18nCode)
-  const { strings: tc } = getI18nCommon(i18nCode)
-  const [searchQuery, setSearchQuery] = useState('')
+  const code = useI18nCode()
+  const {strings: t} = getI18nUsers(code)
+  const {strings: tc} = getI18nCommon(code)
+  const {users, isLoading, error, pagination, nextPage, prevPage, refetch} =
+    useUserDirectory()
+  const [search, setSearch] = useState('')
+  const [createOpen, setCreateOpen] = useState(false)
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return users
-    const q = searchQuery.toLowerCase()
+    const q = search.trim().toLowerCase()
+    if (!q) return users
     return users.filter(u =>
-      u.username?.toLowerCase().includes(q) ||
-      u.primaryEmailAddress?.toLowerCase().includes(q) ||
-      u.details?.firstName?.toLowerCase().includes(q) ||
-      u.details?.lastName?.toLowerCase().includes(q)
+      [u.username, u.email, u.firstName, u.lastName, fullName(u)].some(v =>
+        v?.toLowerCase().includes(q)
+      )
     )
-  }, [users, searchQuery])
+  }, [users, search])
 
-  const paginated = filtered
+  if (!caller.loading && !caller.isAdmin) {
+    // A driver or a customer landed on a dispatch screen: they have a role,
+    // just not this one. Only an account with no role at all is told so.
+    return (
+      <EmptyState
+        title={tc.NoAccessTitle}
+        description={caller.roles.length ? tc.AdminOnlyBody : tc.NoAccessBody}
+        icon={<FaExclamationTriangle />}
+      />
+    )
+  }
+
+  const activeOnPage = users.filter(u => u.isActive).length
 
   return (
-    <div className="p-4 md:p-6 max-w-full space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{t.Heading}</h1>
-          <p className="text-muted-foreground mt-1">{t.Subtitle}</p>
-        </div>
-        <button className="inline-flex items-center gap-2 border border-input rounded-md px-3 h-9 text-sm hover:bg-muted transition-colors" onClick={refetch}>
-          <IconRefresh className="h-4 w-4" /> {tc.Refresh}
-        </button>
-      </div>
+    <Stack gap="6" p={{base: '4', md: '6'}} maxW="full">
+      <PageHeader
+        title={t.Heading}
+        subtitle={t.Subtitle}
+        actions={
+          <>
+            <IconButton aria-label={tc.Refresh} variant="outline" onClick={refetch} loading={isLoading}>
+              <FaSyncAlt />
+            </IconButton>
+            <Button colorPalette="brand" onClick={() => setCreateOpen(true)}>
+              <FaUserPlus /> {t.CreateDriver}
+            </Button>
+          </>
+        }
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-sm text-muted-foreground">{t.StatTotalUsers}</div>
-          <div className="text-2xl font-bold mt-1">{pagination.totalCount}</div>
-        </div>
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-sm text-muted-foreground">{t.StatActivePage}</div>
-          <div className="text-2xl font-bold mt-1 text-success">{users.filter(u => u.isActive).length}</div>
-        </div>
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-sm text-muted-foreground">{t.StatInactivePage}</div>
-          <div className="text-2xl font-bold mt-1 text-muted-foreground">{users.filter(u => !u.isActive).length}</div>
-        </div>
-      </div>
+      <SimpleGrid columns={{base: 3}} gap="3">
+        <StatCard label={t.StatTotalUsers} value={pagination.totalCount} />
+        <StatCard
+          label={t.StatActivePage}
+          value={activeOnPage}
+          palette="green"
+        />
+        <StatCard
+          label={t.StatInactivePage}
+          value={users.length - activeOnPage}
+        />
+      </SimpleGrid>
 
-      {/* Search */}
-      <div className="w-full md:w-[300px]">
-        <div className="relative">
-          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            className="flex w-full rounded-md border border-input px-3 py-2 text-sm pl-9 h-9 bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            placeholder={t.SearchPlaceholder}
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
+      <InputGroup startElement={<FaSearch />} maxW={{md: 'sm'}}>
+        <Input
+          placeholder={t.SearchPlaceholder}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </InputGroup>
 
-      {error && <ErrorBanner message={error} />}
+      {error && <ErrorBanner message={error} onRetry={refetch} />}
 
-      {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm relative overflow-visible">
-        {isLoading && <LoadingOverlay />}
+      <Card.Root position="relative" overflow="hidden">
+        {isLoading && <LoadingOverlay overlay />}
         {!isLoading && filtered.length === 0 ? (
-          <EmptyState message={t.EmptyMessage} />
+          <EmptyState title={t.EmptyMessage} />
         ) : (
           <>
-            {/* Desktop */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="h-12 px-4 text-left font-medium text-muted-foreground">{t.ColUser}</th>
-                    <th className="h-12 px-4 text-left font-medium text-muted-foreground">{t.ColEmail}</th>
-                    <th className="h-12 px-4 text-left font-medium text-muted-foreground">{t.ColStatus}</th>
-                    <th className="h-12 px-4 text-left font-medium text-muted-foreground">{t.ColCreated}</th>
-                    <th className="h-12 px-4" style={{ width: 60 }} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map(u => (
-                    <tr key={u.id} className="border-b hover:bg-muted/50 transition-colors" style={{ borderLeft: u.driverColor ? `4px solid ${u.driverColor}` : undefined }}>
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
-                            style={u.driverColor ? { backgroundColor: u.driverColor, color: getContrastColor(u.driverColor) } : undefined}
-                          >
-                            {(u.details?.firstName?.[0] || u.username?.[0] || '?').toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-medium">{[u.details?.firstName, u.details?.lastName].filter(Boolean).join(' ') || u.username}</div>
-                            <div className="text-xs text-muted-foreground">@{u.username}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4 text-muted-foreground">{u.primaryEmailAddress}</td>
-                      <td className="p-4">
-                        <div className={cx(
-                          'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold',
-                          u.isActive ? 'bg-success/10 text-success border-success/20' : 'bg-muted text-muted-foreground border-border'
-                        )}>
-                          {u.isActive ? t.StatusActive : t.StatusInactive}
-                        </div>
-                      </td>
-                      <td className="p-4 text-muted-foreground text-sm">
-                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString('de-AT') : '-'}
-                      </td>
-                      <td className="p-4">
-                        <button className="text-sm text-primary hover:underline" onClick={() => navigate(`/users/${u.id}`)}>{tc.Details}</button>
-                      </td>
-                    </tr>
+            <Box display={{base: 'none', md: 'block'}} overflowX="auto">
+              <Table.Root size="md" interactive>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader>{t.ColUser}</Table.ColumnHeader>
+                    <Table.ColumnHeader>{t.ColEmail}</Table.ColumnHeader>
+                    <Table.ColumnHeader>{t.ColRoles}</Table.ColumnHeader>
+                    <Table.ColumnHeader>{t.ColStatus}</Table.ColumnHeader>
+                    <Table.ColumnHeader>{t.ColCreated}</Table.ColumnHeader>
+                    <Table.ColumnHeader />
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {filtered.map(u => (
+                    <Table.Row
+                      key={u.id}
+                      cursor="pointer"
+                      onClick={() => navigate(`/users/${u.id}`)}>
+                      <Table.Cell>
+                        <HStack gap="3">
+                          <DriverColorDot color={u.driverColor} />
+                          <UserAvatar user={u} />
+                          <PersonName user={u} />
+                        </HStack>
+                      </Table.Cell>
+                      <Table.Cell color="fg.muted">{u.email}</Table.Cell>
+                      <Table.Cell>
+                        <RoleChips roles={u.roles} t={t} />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <ActiveBadge active={u.isActive} t={t} />
+                      </Table.Cell>
+                      <Table.Cell color="fg.muted" whiteSpace="nowrap">
+                        {formatDate(u.createdAt, code)}
+                      </Table.Cell>
+                      <Table.Cell textAlign="end">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorPalette="brand"
+                          onClick={e => {
+                            e.stopPropagation()
+                            navigate(`/users/${u.id}`)
+                          }}>
+                          {tc.Details}
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </Table.Body>
+              </Table.Root>
+            </Box>
 
-            {/* Mobile */}
-            <div className="md:hidden space-y-3 p-4">
-              {paginated.map(u => (
-                <div
+            <Stack display={{base: 'flex', md: 'none'}} gap="0" divideY="1px">
+              {filtered.map(u => (
+                <RowButton
                   key={u.id}
-                  className="rounded-lg border bg-card p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                  style={{ borderLeft: u.driverColor ? `4px solid ${u.driverColor}` : undefined }}
-                  onClick={() => navigate(`/users/${u.id}`)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
-                      style={u.driverColor ? { backgroundColor: u.driverColor, color: getContrastColor(u.driverColor) } : undefined}
-                    >
-                      {(u.details?.firstName?.[0] || u.username?.[0] || '?').toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium">{[u.details?.firstName, u.details?.lastName].filter(Boolean).join(' ') || u.username}</div>
-                      <div className="text-xs text-muted-foreground truncate">{u.primaryEmailAddress}</div>
-                    </div>
-                    <div className={cx(
-                      'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold',
-                      u.isActive ? 'bg-success/10 text-success border-success/20' : 'bg-muted text-muted-foreground'
-                    )}>
-                      {u.isActive ? t.StatusActive : t.StatusInactive}
-                    </div>
-                  </div>
-                </div>
+                  type="button"
+                  display="flex"
+                  alignItems="center"
+                  textAlign="start"
+                  w="full"
+                  gap="3"
+                  p="3"
+                  borderStartWidth="4px"
+                  borderStartColor={u.driverColor || 'transparent'}
+                  _hover={{bg: 'bg.subtle'}}
+                  onClick={() => navigate(`/users/${u.id}`)}>
+                  <UserAvatar user={u} size="md" />
+                  <Box flex="1" minW="0">
+                    <PersonName user={u} />
+                    <Box mt="1">
+                      <RoleChips roles={u.roles} t={t} />
+                    </Box>
+                  </Box>
+                  <ActiveBadge active={u.isActive} t={t} />
+                </RowButton>
               ))}
-            </div>
+            </Stack>
           </>
         )}
-      </div>
+      </Card.Root>
 
-      <CursorPagination
-        currentPage={pagination.currentPage}
-        totalPages={pagination.totalPages}
-        totalCount={pagination.totalCount}
-        hasNextPage={pagination.hasNextPage}
-        hasPreviousPage={pagination.hasPreviousPage}
-        onNext={nextPage}
-        onPrev={prevPage}
+      <HStack justify="space-between">
+        <Text textStyle="sm" color="fg.muted">
+          {pagination.currentPage}{' '}
+          {tc.PaginationOf.replace(
+            '{totalPages}',
+            String(pagination.totalPages)
+          ).replace('{totalCount}', String(pagination.totalCount))}
+        </Text>
+        <HStack>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={prevPage}
+            disabled={!pagination.hasPreviousPage || isLoading}>
+            {tc.Previous}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={nextPage}
+            disabled={!pagination.hasNextPage || isLoading}>
+            {tc.Next}
+          </Button>
+        </HStack>
+      </HStack>
+
+      <CreateDriverDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={created => {
+          setCreateOpen(false)
+          refetch()
+          if (created.userId) navigate(`/users/${created.userId}`)
+        }}
       />
-    </div>
+    </Stack>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  palette
+}: {
+  label: string
+  value: number
+  palette?: string
+}) {
+  return (
+    <Card.Root size="sm">
+      <Card.Body>
+        <Stat.Root>
+          <Stat.Label>{label}</Stat.Label>
+          <Stat.ValueText
+            colorPalette={palette}
+            color={palette ? 'colorPalette.fg' : undefined}>
+            {value}
+          </Stat.ValueText>
+        </Stat.Root>
+      </Card.Body>
+    </Card.Root>
+  )
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+interface CreateDriverDialogProps {
+  open: boolean
+  onClose: () => void
+  /** Called when the dialog is done with the new account, after the password was shown if there was one. */
+  onCreated: (created: CreatedDriver) => void
+}
+
+const EMPTY: CreateDriverArgs = {
+  email: '',
+  givenName: '',
+  familyName: '',
+  phone: '',
+  password: ''
+}
+
+/**
+ * The form behind "Create driver". Four fields and an optional password.
+ * Left empty, the backend generates one and answers with it exactly once,
+ * so the dialog stays open on a second page showing it until the dispatcher
+ * has handed it over. A supplied password is never echoed back.
+ */
+function CreateDriverDialog({
+  open,
+  onClose,
+  onCreated
+}: CreateDriverDialogProps) {
+  const code = useI18nCode()
+  const {strings: t} = getI18nUsers(code)
+  const {strings: tc} = getI18nCommon(code)
+  const [form, setForm] = useState<CreateDriverArgs>(EMPTY)
+  const [touched, setTouched] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
+  const [created, setCreated] = useState<CreatedDriver | null>(null)
+
+  const set =
+    (key: keyof CreateDriverArgs) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm(f => ({...f, [key]: e.target.value}))
+
+  const errors = {
+    email: !form.email.trim()
+      ? t.ValidationRequired
+      : !EMAIL.test(form.email.trim())
+        ? t.ValidationEmail
+        : undefined,
+    givenName: !form.givenName.trim() ? t.ValidationRequired : undefined,
+    familyName: !form.familyName.trim() ? t.ValidationRequired : undefined
+  }
+  const valid = !errors.email && !errors.givenName && !errors.familyName
+
+  const reset = () => {
+    setForm(EMPTY)
+    setTouched(false)
+    setFailure(null)
+    setCreated(null)
+  }
+
+  const finish = () => {
+    const done = created
+    reset()
+    if (done) onCreated(done)
+    else onClose()
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setTouched(true)
+    if (!valid || saving) return
+    setSaving(true)
+    setFailure(null)
+    try {
+      const result = await createDriverMutation({
+        email: form.email.trim(),
+        givenName: form.givenName.trim(),
+        familyName: form.familyName.trim(),
+        phone: form.phone?.trim() || undefined,
+        password: form.password || undefined
+      })
+      toaster.success({title: t.CreateDriverSuccess})
+      if (result.temporaryPassword || !result.roleGranted) {
+        // Something to show first: the dialog turns into the hand-over page.
+        setCreated(result)
+      } else {
+        reset()
+        onCreated(result)
+      }
+    } catch (err) {
+      setFailure(err instanceof Error ? err.message : t.CreateDriverFailed)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={e => {
+        if (!e.open && !saving) finish()
+      }}
+      size="md"
+      placement="center"
+      lazyMount
+      unmountOnExit>
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          {created ? (
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>{t.CreateDriverSuccess}</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Stack gap="4">
+                  <Text textStyle="sm" color="fg.muted">
+                    {form.email.trim()}
+                  </Text>
+                  {created.temporaryPassword && (
+                    <Field.Root>
+                      <Field.Label>{t.TemporaryPasswordLabel}</Field.Label>
+                      <Clipboard.Root value={created.temporaryPassword}>
+                        <HStack>
+                          <Code textStyle="lg" px="3" py="2" userSelect="all">
+                            {created.temporaryPassword}
+                          </Code>
+                          <Clipboard.Trigger asChild>
+                            <IconButton
+                              variant="outline"
+                              size="sm"
+                              aria-label={t.TemporaryPasswordLabel}>
+                              <Clipboard.Indicator />
+                            </IconButton>
+                          </Clipboard.Trigger>
+                        </HStack>
+                      </Clipboard.Root>
+                      <Field.HelperText>
+                        {t.TemporaryPasswordHint}
+                      </Field.HelperText>
+                    </Field.Root>
+                  )}
+                  {!created.roleGranted && (
+                    <ErrorBanner
+                      title={t.RoleNone}
+                      message={t.RoleNotGranted}
+                    />
+                  )}
+                </Stack>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Button colorPalette="brand" onClick={finish}>
+                  {t.OpenAccount}
+                </Button>
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          ) : (
+            <Dialog.Content as="form" onSubmit={submit}>
+              <Dialog.Header>
+                <Dialog.Title>{t.CreateDriverTitle}</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Stack gap="4">
+                  <Text textStyle="sm" color="fg.muted">
+                    {t.CreateDriverBody}
+                  </Text>
+                  <Field.Root required invalid={touched && !!errors.email}>
+                    <Field.Label>
+                      {t.FieldEmail} <Field.RequiredIndicator />
+                    </Field.Label>
+                    <Input
+                      type="email"
+                      autoComplete="off"
+                      value={form.email}
+                      onChange={set('email')}
+                    />
+                    <Field.ErrorText>{errors.email}</Field.ErrorText>
+                  </Field.Root>
+                  <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
+                    <Field.Root
+                      required
+                      invalid={touched && !!errors.givenName}>
+                      <Field.Label>
+                        {t.FieldGivenName} <Field.RequiredIndicator />
+                      </Field.Label>
+                      <Input
+                        value={form.givenName}
+                        onChange={set('givenName')}
+                      />
+                      <Field.ErrorText>{errors.givenName}</Field.ErrorText>
+                    </Field.Root>
+                    <Field.Root
+                      required
+                      invalid={touched && !!errors.familyName}>
+                      <Field.Label>
+                        {t.FieldFamilyName} <Field.RequiredIndicator />
+                      </Field.Label>
+                      <Input
+                        value={form.familyName}
+                        onChange={set('familyName')}
+                      />
+                      <Field.ErrorText>{errors.familyName}</Field.ErrorText>
+                    </Field.Root>
+                  </SimpleGrid>
+                  <Field.Root>
+                    <Field.Label>{t.FieldPhone}</Field.Label>
+                    <Input
+                      type="tel"
+                      value={form.phone ?? ''}
+                      onChange={set('phone')}
+                    />
+                  </Field.Root>
+                  <Field.Root>
+                    <Field.Label>{t.FieldPassword}</Field.Label>
+                    <Input
+                      type="password"
+                      autoComplete="new-password"
+                      value={form.password ?? ''}
+                      onChange={set('password')}
+                    />
+                    <Field.HelperText>{t.FieldPasswordHint}</Field.HelperText>
+                  </Field.Root>
+                  {failure && (
+                    <ErrorBanner
+                      title={t.CreateDriverFailed}
+                      message={failure}
+                    />
+                  )}
+                </Stack>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Button variant="outline" onClick={finish} disabled={saving}>
+                  {tc.Cancel}
+                </Button>
+                <Button type="submit" colorPalette="brand" loading={saving}>
+                  {t.CreateDriver}
+                </Button>
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" disabled={saving} />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          )}
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }

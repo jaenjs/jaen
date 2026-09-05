@@ -1,245 +1,560 @@
-import React, { useMemo, useState } from 'react'
-import { useAppNavigate } from '../navigation'
-import { useTransfers, type ResourceTransfer, type TransferDateFilter } from '../hooks'
-import { useI18nCode } from '../i18n'
-import { getI18nBookings } from '../locales/i18nBookings'
-import { getI18nCommon } from '../locales/i18nCommon'
+/**
+ * The customer's bookings, and the button that makes a new one.
+ *
+ * Whose bookings is the backend's decision: `transfers` is read without a
+ * customerId and the resolver scopes it to the caller, so a customer sees
+ * their own rides and a dispatcher opening the same route sees every
+ * booking. The screen only changes its subtitle.
+ *
+ * The list is the dispatcher's board with the customer's columns: the same
+ * list state and chips (today, tomorrow, all, a custom range), the status
+ * filter, search and sort, BoardTable with the day header rows and the two
+ * stripes (the driver's colour on the left, today green and tomorrow yellow
+ * on the right), CardList on a phone, the Pager. Until 2026-09-05 this screen
+ * drew its own flat Table.Root beside it, one design for the same rows on
+ * two routes. The rows come through useTransferList, the board's own read,
+ * and the driver's name and colour through useBookingDrivers, because a
+ * customer may not call getDriverColor and transferTracking is the read the
+ * matrix gives them for the person picking them up.
+ *
+ * The modal is the sixteen strings in i18nBookings made into a form, plus
+ * the counts and the flight the driver's screen wants to show. It calls
+ * bookTransfer, never createTransfer, so the row belongs to whoever pressed
+ * the button and never to an id typed into a field.
+ */
+import React, {useMemo, useState} from 'react'
 import {
-  cx, formatDateDisplay, formatPrice,
-  StatusPill, ColumnPopover, SortDropdown, DateFilter, StatusFilter,
-  CursorPagination, LoadingOverlay, EmptyState, ErrorBanner, DateGroupHeader,
-  IconSearch, IconRefresh,
-  type ColumnConfig, type SortOrder, type DateFilterValue,
-} from '../components/ui'
+  Box,
+  Button,
+  CloseButton,
+  Dialog,
+  Field,
+  Flex,
+  Input,
+  InputGroup,
+  NativeSelect,
+  Portal,
+  SimpleGrid,
+  Stack,
+  Text,
+  Textarea,
+  chakra,
+} from '@chakra-ui/react'
+import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
+import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
+import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
+import {FaCalendarCheck} from '@react-icons/all-files/fa/FaCalendarCheck'
+import {useAppNavigate} from '../navigation'
+import {useI18nCode} from '../i18n'
+import {useCaller} from '../auth'
+import {getI18nBookings} from '../locales/i18nBookings'
+import {getI18nCommon} from '../locales/i18nCommon'
+import {
+  bookRide,
+  bookingPath,
+  PAYMENT_METHODS,
+  toPickupInstant,
+  useBookingDrivers,
+  type Booking,
+  type BookRideInput,
+  type PaymentMethod
+} from '../hooks/bookings'
+import {useTransferList} from '../hooks/transfers'
+import {TRANSFER_STATES} from '../locales/i18nStates'
+import {EmptyState, ErrorBanner, LoadingOverlay, toaster, PageHeader} from '../components'
+import {
+  applyClientFilters,
+  BoardTable,
+  CardList,
+  DateFilter,
+  groupByDay,
+  localDay,
+  Pager,
+  SortMenu,
+  StatusFilter,
+  useIsMobile,
+  useListState,
+  useServerArgs,
+  type BoardRow,
+  type ColumnConfig,
+  type ColumnId,
+  type RowActions
+} from './TransfersView'
 
-const _DEFAULT_COLUMNS: ColumnConfig[] = [
-  { id: 'code', label: 'Code', visible: true },
-  { id: 'status', label: 'Status', visible: true },
-  { id: 'route', label: 'Route', visible: true },
-  { id: 'pickup', label: 'Pickup', visible: true },
-  { id: 'vehicle', label: 'Vehicle', visible: true },
-  { id: 'fare', label: 'Price', visible: true },
-  { id: 'payment', label: 'Payment', visible: true },
-  { id: 'category', label: 'Category', visible: false },
-]
+type Strings = ReturnType<typeof getI18nBookings>['strings']
 
-const COLUMN_WIDTHS: Record<string, number> = {
-  code: 90, status: 110, route: 240, pickup: 140, vehicle: 150, fare: 100, payment: 100, category: 120,
+const fill = (template: string, values: Record<string, string | number>) =>
+  Object.entries(values).reduce(
+    (s, [k, v]) => s.replace(`{${k}}`, String(v)),
+    template
+  )
+
+const usePaymentLabel = (t: Strings) => (method: string | null | undefined): string => {
+  if (!method) return ''
+  const key = `Payment${method.toUpperCase()}` as keyof Strings
+  return (t[key] as string | undefined) ?? method
 }
 
-const ITEMS_PER_PAGE = 15
+// --------------- The modal ---------------
+
+interface BookRideDialogProps {
+  open: boolean
+  onClose: () => void
+  onBooked: (booking: Booking) => void
+}
+
+type FormState = {
+  date: string
+  time: string
+  pickup: string
+  dropoff: string
+  subject: string
+  paymentMethode: PaymentMethod | ''
+  passengers: string
+  luggage: string
+  childSeats: string
+  flightNumber: string
+  wishes: string
+}
+
+const EMPTY_FORM: FormState = {
+  date: '',
+  time: '',
+  pickup: '',
+  dropoff: '',
+  subject: '',
+  paymentMethode: '',
+  passengers: '1',
+  luggage: '',
+  childSeats: '',
+  flightNumber: '',
+  wishes: ''
+}
+
+const toInt = (raw: string): number | undefined => {
+  if (!raw.trim()) return undefined
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
+  const code = useI18nCode()
+  const {strings: t} = getI18nBookings(code)
+  const {strings: tc} = getI18nCommon(code)
+  const paymentLabel = usePaymentLabel(t)
+
+  const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [submitting, setSubmitting] = useState(false)
+  const [touched, setTouched] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
+
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm(prev => ({...prev, [key]: value}))
+
+  const pickupInPast = useMemo(() => {
+    if (!form.date || !form.time) return false
+    const instant = toPickupInstant(form.date, form.time)
+    return instant ? new Date(instant).getTime() < Date.now() - 60_000 : false
+  }, [form.date, form.time])
+
+  const missing = {
+    date: !form.date,
+    time: !form.time,
+    pickup: !form.pickup.trim(),
+    dropoff: !form.dropoff.trim()
+  }
+  const valid = !Object.values(missing).some(Boolean) && !pickupInPast
+
+  const reset = () => {
+    setForm(EMPTY_FORM)
+    setTouched(false)
+    setFailure(null)
+  }
+
+  const close = () => {
+    if (submitting) return
+    reset()
+    onClose()
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setTouched(true)
+    if (!valid) return
+
+    const input: BookRideInput = {
+      date: form.date,
+      time: form.time,
+      pickup: form.pickup,
+      dropoff: form.dropoff,
+      subject: form.subject,
+      paymentMethode: form.paymentMethode,
+      passengers: toInt(form.passengers),
+      luggage: toInt(form.luggage),
+      childSeats: toInt(form.childSeats),
+      flightNumber: form.flightNumber,
+      wishes: form.wishes,
+      language: code
+    }
+
+    setSubmitting(true)
+    setFailure(null)
+    try {
+      const booking = await bookRide(input)
+      toaster.success({title: t.BookingCreatedSuccess})
+      reset()
+      onBooked(booking)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setFailure(message)
+      toaster.error({title: t.BookingCreatedError, description: message})
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={e => {
+        if (!e.open) close()
+      }}
+      size="lg"
+      placement="center"
+      scrollBehavior="inside"
+      lazyMount
+      unmountOnExit>
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            {/* display: contents keeps the header, body and footer as the
+                content's own flex children, so the body still scrolls. */}
+            <chakra.form display="contents" onSubmit={submit} noValidate>
+            <Dialog.Header>
+              <Dialog.Title>{t.BookTransferModalHeading}</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              <Stack gap="4">
+                <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
+                  <Field.Root required invalid={touched && (missing.date || pickupInPast)}>
+                    <Field.Label>
+                      {t.ModalLabelDate}
+                      <Field.RequiredIndicator />
+                    </Field.Label>
+                    <Input
+                      type="date"
+                      value={form.date}
+                      onChange={e => update('date', e.target.value)}
+                      autoComplete="off"
+                    />
+                    {touched && missing.date && <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>}
+                    {touched && !missing.date && pickupInPast && (
+                      <Field.ErrorText>{t.ModalErrorPast}</Field.ErrorText>
+                    )}
+                  </Field.Root>
+                  <Field.Root required invalid={touched && missing.time}>
+                    <Field.Label>
+                      {t.ModalLabelTime}
+                      <Field.RequiredIndicator />
+                    </Field.Label>
+                    <Input
+                      type="time"
+                      value={form.time}
+                      onChange={e => update('time', e.target.value)}
+                      autoComplete="off"
+                    />
+                    {touched && missing.time && <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>}
+                  </Field.Root>
+                </SimpleGrid>
+
+                <Field.Root required invalid={touched && missing.pickup}>
+                  <Field.Label>
+                    {t.ModalLabelPickup}
+                    <Field.RequiredIndicator />
+                  </Field.Label>
+                  <Input
+                    placeholder={t.ModalPlaceholderPickup}
+                    value={form.pickup}
+                    onChange={e => update('pickup', e.target.value)}
+                    autoComplete="street-address"
+                  />
+                  {touched && missing.pickup && <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>}
+                </Field.Root>
+
+                <Field.Root required invalid={touched && missing.dropoff}>
+                  <Field.Label>
+                    {t.ModalLabelDropoff}
+                    <Field.RequiredIndicator />
+                  </Field.Label>
+                  <Input
+                    placeholder={t.ModalPlaceholderDropoff}
+                    value={form.dropoff}
+                    onChange={e => update('dropoff', e.target.value)}
+                    autoComplete="off"
+                  />
+                  {touched && missing.dropoff && <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>}
+                </Field.Root>
+
+                <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
+                  <Field.Root>
+                    <Field.Label>{t.ModalLabelRoomOrName}</Field.Label>
+                    <Input
+                      placeholder={t.ModalPlaceholderRoomOrName}
+                      value={form.subject}
+                      onChange={e => update('subject', e.target.value)}
+                    />
+                  </Field.Root>
+                  <Field.Root>
+                    <Field.Label>{t.ModalLabelPaymentMethod}</Field.Label>
+                    <NativeSelect.Root>
+                      <NativeSelect.Field
+                        placeholder={t.ModalPlaceholderSelectPayment}
+                        value={form.paymentMethode}
+                        onChange={e => update('paymentMethode', e.currentTarget.value as PaymentMethod | '')}>
+                        {PAYMENT_METHODS.map(m => (
+                          <option key={m} value={m}>
+                            {paymentLabel(m)}
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                  </Field.Root>
+                </SimpleGrid>
+
+                <SimpleGrid columns={3} gap="4">
+                  <Field.Root>
+                    <Field.Label>{t.ModalLabelPassengers}</Field.Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={50}
+                      value={form.passengers}
+                      onChange={e => update('passengers', e.target.value)}
+                    />
+                  </Field.Root>
+                  <Field.Root>
+                    <Field.Label>{t.ModalLabelLuggage}</Field.Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={50}
+                      value={form.luggage}
+                      onChange={e => update('luggage', e.target.value)}
+                    />
+                  </Field.Root>
+                  <Field.Root>
+                    <Field.Label>{t.ModalLabelChildSeats}</Field.Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={10}
+                      value={form.childSeats}
+                      onChange={e => update('childSeats', e.target.value)}
+                    />
+                  </Field.Root>
+                </SimpleGrid>
+
+                <Field.Root>
+                  <Field.Label>{t.ModalLabelFlight}</Field.Label>
+                  <Input
+                    placeholder={t.ModalPlaceholderFlight}
+                    value={form.flightNumber}
+                    onChange={e => update('flightNumber', e.target.value)}
+                    autoComplete="off"
+                  />
+                </Field.Root>
+
+                <Field.Root>
+                  <Field.Label>{t.ModalLabelWishes}</Field.Label>
+                  <Textarea
+                    placeholder={t.ModalPlaceholderWishes}
+                    value={form.wishes}
+                    onChange={e => update('wishes', e.target.value)}
+                    rows={3}
+                    autoresize
+                  />
+                </Field.Root>
+
+                <Text textStyle="sm" color="fg.muted">
+                  {t.ModalHintPrice}
+                </Text>
+
+                {failure && <ErrorBanner title={t.BookingCreatedError} message={failure} />}
+              </Stack>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="outline" onClick={close} disabled={submitting}>
+                {tc.Cancel}
+              </Button>
+              <Button
+                type="submit"
+                colorPalette="brand"
+                loading={submitting}
+                loadingText={t.BookingSubmitting}
+                disabled={touched && !valid}>
+                {t.BookingSubmit}
+              </Button>
+            </Dialog.Footer>
+            </chakra.form>
+            <Dialog.CloseTrigger asChild>
+              <CloseButton size="sm" disabled={submitting} />
+            </Dialog.CloseTrigger>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  )
+}
+
+// --------------- The list ---------------
+
+/**
+ * The customer's column set on the board's table: the code, when, where,
+ * how many, the state, who drives and what it costs. The driver's phone is
+ * not on it (the customer sees the name and the colour, never the number),
+ * nor the columns that are the dispatcher's alone.
+ */
+const CUSTOMER_COLUMNS: ColumnConfig[] = (
+  ['code', 'pickup', 'route', 'capacity', 'status', 'driver', 'price'] as ColumnId[]
+).map(id => ({id, visible: true}))
+
+const PAGE_SIZE = 25
 
 export function BookingView() {
   const navigate = useAppNavigate()
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nBookings(i18nCode)
-  const { strings: tc } = getI18nCommon(i18nCode)
+  const code = useI18nCode()
+  const {strings: t} = getI18nBookings(code)
+  const {strings: tc} = getI18nCommon(code)
+  const caller = useCaller()
+  const mobile = useIsMobile()
 
-  const i18nColumns = useMemo<ColumnConfig[]>(() => [
-    { id: 'code', label: t.ColCode, visible: true },
-    { id: 'status', label: t.ColStatus, visible: true },
-    { id: 'route', label: t.ColRoute, visible: true },
-    { id: 'pickup', label: t.ColPickup, visible: true },
-    { id: 'vehicle', label: t.ColVehicle, visible: true },
-    { id: 'fare', label: t.ColPrice, visible: true },
-    { id: 'payment', label: t.ColPayment, visible: true },
-    { id: 'category', label: t.ColCategory, visible: false },
-  ], [t])
-  const [columns, setColumns] = useState<ColumnConfig[]>(i18nColumns)
-  const [colPopoverOpen, setColPopoverOpen] = useState(false)
-  const [sortOrder, setSortOrder] = useState<SortOrder>('earliest')
-  const [dateFilter, setDateFilter] = useState<DateFilterValue>('all')
-  const [customRange, setCustomRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null })
-  const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set(['Completed', 'Planned', 'In Progress', 'Cancelled']))
-  const [searchQuery, setSearchQuery] = useState('')
+  const today = useMemo(() => localDay(new Date()), [])
+  const tomorrow = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return localDay(d)
+  }, [])
 
-  const today = useMemo(() => new Date().toISOString().split('T')[0] ?? '', [])
-  const tomorrow = useMemo(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0] ?? '' }, [])
+  // The same chips and filters as the board, with the board's defaults:
+  // today, every state. The list is scoped in the resolver, so a customer
+  // gets their own rows and a dispatcher every booking, from one read.
+  const list = useListState('today', new Set(TRANSFER_STATES))
+  const args = useServerArgs(list, today, tomorrow, PAGE_SIZE)
+  const {rows, isLoading, error, pagination, nextPage, prevPage, firstPage, refetch} = useTransferList(args)
+  const drivers = useBookingDrivers(rows)
 
-  const serverDateFilter = useMemo<TransferDateFilter | undefined>(() => {
-    if (dateFilter === 'today') return { fromISO: today, toISO: today }
-    if (dateFilter === 'tomorrow') return { fromISO: tomorrow, toISO: tomorrow }
-    if (dateFilter === 'custom' && customRange.start && customRange.end) {
-      const s = customRange.start.toISOString().split('T')[0] ?? ''
-      const e = customRange.end.toISOString().split('T')[0] ?? ''
-      return { fromISO: s, toISO: e }
-    }
-    return undefined
-  }, [dateFilter, today, tomorrow, customRange])
+  const enriched = useMemo<BoardRow[]>(
+    () =>
+      rows.map(r => {
+        const driver = r.driverId ? drivers[r.driverId] : undefined
+        return {
+          ...r,
+          driverName: driver?.name ?? (r.driverId ? t.DriverAssigned : undefined),
+          driverColor: driver?.color,
+          carName: r.car?.carName ?? r.car?.licensePlate,
+          carPlate: r.car?.licensePlate
+        }
+      }),
+    [rows, drivers, t.DriverAssigned]
+  )
+  const filtered = useMemo(() => applyClientFilters(enriched, list), [enriched, list])
+  const groups = useMemo(() => groupByDay(filtered), [filtered])
 
-  const { transfers, isLoading, error, pagination, nextPage, prevPage, goToPage, refetch } = useTransfers(ITEMS_PER_PAGE, serverDateFilter)
-  const bookings = transfers
+  const [dialogOpen, setDialogOpen] = useState(false)
 
-  const mapStatus = (state: string): string => {
-    const s = state?.toLowerCase?.() ?? ''
-    if (s === 'completed') return 'Completed'
-    if (s === 'planned' || s === 'pending') return 'Planned'
-    if (s === 'cancelled' || s === 'canceled' || s === 'terminated') return 'Cancelled'
-    if (s === 'in_progress' || s === 'active') return 'In Progress'
-    return 'Planned'
+  // Links carry the code, the pylon resolves it, see transfer-codes.md.
+  const actions: RowActions = {onOpen: row => navigate(bookingPath(row))}
+
+  const onBooked = (booking: Booking) => {
+    setDialogOpen(false)
+    // Land on the new booking. It also shows up on the list on the way back.
+    navigate(bookingPath(booking))
   }
 
-  const filteredRows = useMemo(() => {
-    let result = bookings.filter(t => selectedStatuses.has(mapStatus(t.state)))
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      result = result.filter(t =>
-        (t.referenceId?.toLowerCase().includes(q)) ||
-        (t.pickup?.toLowerCase().includes(q)) ||
-        (t.dropoff?.toLowerCase().includes(q)) ||
-        (t.customerName?.toLowerCase().includes(q))
-      )
-    }
-
-    result = [...result].sort((a, b) => {
-      const dtA = `${a.rideDateISO} ${a.rideTime}`
-      const dtB = `${b.rideDateISO} ${b.rideTime}`
-      return sortOrder === 'earliest' ? dtA.localeCompare(dtB) : dtB.localeCompare(dtA)
-    })
-
-    return result
-  }, [bookings, selectedStatuses, sortOrder, searchQuery])
-
-  const paginatedRows = filteredRows
-
-  const rowsByDate = useMemo(() => {
-    const map: Record<string, ResourceTransfer[]> = {}
-    paginatedRows.forEach(r => { const k = r.rideDateISO || 'unknown'; if (!map[k]) map[k] = []; map[k].push(r) })
-    return map
-  }, [paginatedRows])
-
-  const sortedDates = useMemo(() => Object.keys(rowsByDate).sort(), [rowsByDate])
-  const visibleColumns = columns.filter(c => c.visible)
-  const totalMinWidth = visibleColumns.reduce((sum, col) => sum + (COLUMN_WIDTHS[col.id] || 100), 60)
-
-  const renderCell = (t: ResourceTransfer, colId: string) => {
-    const w = COLUMN_WIDTHS[colId] || 100
-    const tdClass = 'p-4 align-middle'
-    switch (colId) {
-      case 'code': return <td key={colId} className={tdClass} style={{ width: w }}><span className="font-medium whitespace-nowrap">{t.referenceId || t.id.slice(0, 8)}</span></td>
-      case 'status': return <td key={colId} className={tdClass} style={{ width: w }}><StatusPill status={t.state} /></td>
-      case 'route': return <td key={colId} className={tdClass} style={{ width: w }}><div className="space-y-1"><div className="text-sm font-medium">{t.pickup}</div><div className="text-sm text-muted-foreground/60">{t.dropoff}</div></div></td>
-      case 'pickup': return <td key={colId} className={tdClass} style={{ width: w }}><div className="space-y-1 whitespace-nowrap"><div className="text-sm font-medium">{formatDateDisplay(t.rideDateISO)}</div><div className="text-sm text-muted-foreground/60">{t.rideTime}</div></div></td>
-      case 'vehicle': return <td key={colId} className={tdClass} style={{ width: w }}><div className="text-sm">{t.vehicle || '-'}</div></td>
-      case 'fare': return <td key={colId} className={tdClass} style={{ width: w }}><div className="font-semibold whitespace-nowrap">{formatPrice(t.price)}</div></td>
-      case 'payment': return <td key={colId} className={tdClass} style={{ width: w }}><div className="text-sm">{t.paymentMethode || '-'}</div></td>
-      case 'category': return <td key={colId} className={tdClass} style={{ width: w }}><div className="text-sm">{t.transferCategory || '-'}</div></td>
-      default: return null
-    }
+  // A driver has no booking form in the matrix: their rides are assigned to
+  // them. Somebody holding both roles books as the customer they also are.
+  if (!caller.loading && caller.isDriver && !caller.isCustomer && !caller.isAdmin) {
+    return (
+      <Box p={{base: '4', md: '6'}} maxW="full">
+        <EmptyState title={t.NotACustomer} description={t.NotACustomerHint} icon={<FaCalendarCheck />} />
+      </Box>
+    )
   }
 
-  const getDateBorderColor = (dateStr: string) => dateStr === today ? '#22c55e' : dateStr === tomorrow ? '#eab308' : 'transparent'
-  const getDateHeaderBg = (dateStr: string) => dateStr === today ? 'bg-success/10 text-success' : dateStr === tomorrow ? 'bg-warning/10 text-warning' : 'bg-muted/30 text-muted-foreground'
+  // Nothing at all, or nothing in the window the chips and filters cut.
+  const nothingBooked = pagination.totalCount === 0 && list.dateChip === 'all'
 
   return (
-    <div className="p-4 md:p-6 max-w-full space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{t.Heading}</h1>
-          <p className="text-muted-foreground mt-1">{t.Subtitle}</p>
-        </div>
-        <button className="inline-flex items-center gap-2 border border-input rounded-md px-3 h-9 text-sm hover:bg-muted transition-colors" onClick={refetch}>
-          <IconRefresh className="h-4 w-4" /> {tc.Refresh}
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-2 flex-wrap items-center">
-        <DateFilter value={dateFilter} onChange={setDateFilter} customRange={customRange} onCustomRangeChange={setCustomRange} />
-        <div className="w-full md:w-[180px]">
-          <div className="relative">
-            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input className="flex w-full rounded-md border border-input px-3 py-2 text-sm pl-9 h-9 bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder={tc.Search} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-          </div>
-        </div>
-        <StatusFilter selected={selectedStatuses} onChange={setSelectedStatuses} />
-        <SortDropdown value={sortOrder} onChange={setSortOrder} />
-      </div>
-
-      {/* Table */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">{t.CountLabel.replace('{count}', String(filteredRows.length))}</span>
-          <ColumnPopover columns={columns} onColumnsChange={setColumns} onReset={() => setColumns(i18nColumns)} open={colPopoverOpen} onOpenChange={setColPopoverOpen} />
-        </div>
-
-        {error && <ErrorBanner message={error} />}
-
-        <div className="rounded-lg border bg-card shadow-sm relative overflow-visible">
-          {isLoading && <LoadingOverlay />}
-          {!isLoading && filteredRows.length === 0 ? (
-            <EmptyState message={t.EmptyMessage} />
-          ) : (
+    <Box p={{base: '4', md: '6'}} maxW="full">
+      <Stack gap="5">
+        <PageHeader
+          title={t.Heading}
+          subtitle={caller.isAdmin && !caller.isCustomer ? t.SubtitleAll : t.SubtitleOwn}
+          actions={
             <>
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full caption-bottom text-sm table-fixed" style={{ minWidth: totalMinWidth }}>
-                  <thead className="[&_tr]:border-b">
-                    <tr className="border-b hover:bg-muted/50">
-                      {visibleColumns.map(col => (
-                        <th key={col.id} className="h-12 px-4 text-left align-middle font-medium text-muted-foreground" style={{ width: COLUMN_WIDTHS[col.id] || 100 }}>{col.label}</th>
-                      ))}
-                      <th className="h-12 px-4" style={{ width: 60 }} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedDates.map(dateStr => (
-                      <React.Fragment key={dateStr}>
-                        <tr style={{ borderLeft: `4px solid ${getDateBorderColor(dateStr)}` }}>
-                          <td colSpan={visibleColumns.length + 1} className="p-0">
-                            <div className={cx('px-4 py-2 font-semibold text-sm', getDateHeaderBg(dateStr))}>
-                              {new Date(dateStr + 'T00:00:00').toLocaleDateString('de-AT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
-                            </div>
-                          </td>
-                        </tr>
-                        {(rowsByDate[dateStr] ?? []).map(t => (
-                          <tr key={t.id} className={cx('border-b transition-colors hover:bg-muted/50', mapStatus(t.state) === 'Completed' ? 'bg-muted/30 text-muted-foreground/60' : '')}>
-                            {visibleColumns.map(col => renderCell(t, col.id))}
-                            <td className="p-4 align-middle" style={{ width: 60 }}>
-                              <button className="text-sm text-primary hover:underline" onClick={() => navigate(`/booking/${t.id}`)}>{tc.Details}</button>
-                            </td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="md:hidden space-y-3 p-4">
-                {sortedDates.map(dateStr => (
-                  <React.Fragment key={dateStr}>
-                    <DateGroupHeader dateStr={dateStr} today={today} tomorrow={tomorrow} />
-                    {(rowsByDate[dateStr] ?? []).map(t => (
-                      <div key={t.id} className="rounded-lg border bg-card p-4 space-y-3 cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/booking/${t.id}`)}>
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm">{t.referenceId || t.id.slice(0, 8)}</span>
-                          <StatusPill status={t.state} />
-                        </div>
-                        <div className="text-sm"><div className="font-medium">{t.pickup}</div><div className="text-muted-foreground">{t.dropoff}</div></div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">{formatDateDisplay(t.rideDateISO)} {t.rideTime}</span>
-                          <span className="font-semibold">{formatPrice(t.price)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </div>
+              <Button variant="outline" onClick={refetch} disabled={isLoading}>
+                <FaSyncAlt /> {tc.Refresh}
+              </Button>
+              <Button colorPalette="brand" onClick={() => setDialogOpen(true)} flex={{base: '1', md: 'none'}}>
+                <FaPlus /> {t.BookTransferButton}
+              </Button>
             </>
-          )}
-        </div>
-        <CursorPagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          totalCount={pagination.totalCount}
-          hasNextPage={pagination.hasNextPage}
-          hasPreviousPage={pagination.hasPreviousPage}
-          onNext={nextPage}
-          onPrev={prevPage}
-          onFirst={() => goToPage(1)}
+          }
         />
-      </div>
-    </div>
+
+        <Flex gap="2" flexWrap="wrap" align="center">
+          <DateFilter value={list.dateChip} onChange={list.setDateChip} range={list.range} onRangeChange={list.setRange} />
+          <Box w={{base: 'full', md: '52'}}>
+            <InputGroup startElement={<FaSearch />}>
+              <Input size="sm" placeholder={tc.Search} value={list.search} onChange={e => list.setSearch(e.target.value)} />
+            </InputGroup>
+          </Box>
+          <StatusFilter selected={list.statuses} onChange={list.setStatuses} />
+          <SortMenu value={list.sort} onChange={list.setSort} />
+        </Flex>
+
+        <Text textStyle="sm" color="fg.muted">
+          {fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
+        </Text>
+
+        {error && <ErrorBanner message={error} onRetry={refetch} />}
+
+        <Box position="relative" minH="40">
+          {isLoading && <LoadingOverlay overlay />}
+          {!isLoading && !error && filtered.length === 0 ? (
+            <EmptyState
+              title={nothingBooked ? t.EmptyMessage : t.EmptyFiltered}
+              description={nothingBooked ? t.EmptyHint : t.EmptyFilteredHint}
+              icon={<FaCalendarCheck />}>
+              <Button colorPalette="brand" onClick={() => setDialogOpen(true)}>
+                <FaPlus /> {t.BookTransferButton}
+              </Button>
+            </EmptyState>
+          ) : mobile ? (
+            <CardList groups={groups} today={today} tomorrow={tomorrow} actions={actions} />
+          ) : (
+            <BoardTable columns={CUSTOMER_COLUMNS} groups={groups} today={today} tomorrow={tomorrow} actions={actions} />
+          )}
+        </Box>
+
+        {(pagination.hasNextPage || pagination.currentPage > 1) && (
+          <Pager
+            page={pagination.currentPage}
+            pages={pagination.totalPages}
+            hasNext={pagination.hasNextPage}
+            onFirst={firstPage}
+            onPrev={prevPage}
+            onNext={nextPage}
+          />
+        )}
+      </Stack>
+
+      <BookRideDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onBooked={onBooked} />
+    </Box>
   )
 }

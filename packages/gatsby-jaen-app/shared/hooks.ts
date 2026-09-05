@@ -359,20 +359,6 @@ const mapUserRow = (user: any): ResourceUser => {
   }
 }
 
-const mapUserRowFull = (user: any): ResourceUser => {
-  return {
-    id: user?.id ?? '',
-    primaryEmailAddress: user?.preferredLoginName ?? '',
-    username: user?.userName ?? '',
-    createdAt: user?.creationDate ?? user?.changeDate ?? null,
-    details: {},
-    isActive: user?.state === 'USER_STATE_ACTIVE' || user?.state?.toLowerCase?.() === 'active',
-    isAdmin: false,
-    roles: [],
-    driverColor: undefined,
-  }
-}
-
 // --------------- useTransfers (paginated) ---------------
 
 const DEFAULT_TRANSFER_PAGE_SIZE = 15
@@ -569,83 +555,6 @@ export function useUsers(pageSize = DEFAULT_USER_PAGE_SIZE) {
   }, [fetchPage, pagination.currentPage])
 
   return { users, isLoading, error, pagination, nextPage, prevPage, refetch }
-}
-
-// --------------- useUser (single) ---------------
-
-export function useUser(userId: string) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<ResourceUser>()
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchUser = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const result = await query(
-        'user',
-        { args: { id: userId, organizationId: organizationId() } },
-        '{ __typename id userName state preferredLoginName creationDate changeDate loginNames }'
-      )
-      let mapped = result ? mapUserRowFull(result) : undefined
-
-      if (mapped) {
-        // Three reads rather than one: profiles is only on HumanUser, roles is
-        // absent from booklimo's user interface, and getDriverColor is not in
-        // its schema at all. Kept apart, a brand that lacks one still answers
-        // the other two instead of failing the whole screen.
-        const [profileEdges, roleEdges, color] = await Promise.all([
-          query(
-            'user',
-            { args: { id: userId, organizationId: organizationId() } },
-            '{ ... on HumanUser { profiles { edges { node { id email firstName lastName ' +
-              'avatarUrl displayName phone preferredLanguage } } } } }'
-          )
-            .then((u: any) => u?.profiles?.edges)
-            .catch(() => null),
-          query('user', { args: { id: userId, organizationId: organizationId() } },
-            '{ roles { edges { node { id key displayName } } } }')
-            .then((u: any) => u?.roles?.edges)
-            .catch(() => null),
-          resolveDriverColor(mapped.id)
-        ])
-
-        const firstProfile = (profileEdges as any[])?.[0]?.node
-        if (firstProfile) {
-          mapped = {
-            ...mapped,
-            primaryEmailAddress: firstProfile.email ?? mapped.primaryEmailAddress,
-            details: {
-              avatarURL: firstProfile.avatarUrl ?? mapped.details?.avatarURL,
-              firstName: firstProfile.firstName ?? mapped.details?.firstName,
-              lastName: firstProfile.lastName ?? mapped.details?.lastName,
-            },
-          }
-        }
-
-        const roles = ((roleEdges as any[]) || [])
-          .map((e: any) => e?.node)
-          .filter(Boolean)
-          .map((r: any) => ({ id: r.id ?? r.key ?? '', description: r.displayName ?? r.key ?? '' }))
-        if (roles.length) {
-          mapped = { ...mapped, roles }
-        }
-
-        if (color) {
-          mapped = { ...mapped, driverColor: color }
-        }
-      }
-      setUser(mapped)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load user')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [userId])
-
-  useEffect(() => { fetchUser() }, [fetchUser])
-
-  return { user, isLoading, error }
 }
 
 /**
@@ -920,88 +829,6 @@ export function useCars() {
   useEffect(() => { fetchCars() }, [fetchCars])
 
   return { cars, isLoading, error, refetch: fetchCars }
-}
-
-// --------------- Mutations ---------------
-
-export async function assignDriverMutation(transferId: string, driverId: string): Promise<ResourceTransfer> {
-  const result = await query(
-    'assignDriver',
-    { transferId, driverId },
-    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
-    'mutation'
-  )
-  return mapTransferRow(result)
-}
-
-export async function assignCarMutation(transferId: string, carId: string): Promise<ResourceTransfer> {
-  const result = await query(
-    'assignCar',
-    { transferId, carId },
-    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
-    'mutation'
-  )
-  return mapTransferRow(result)
-}
-
-export async function updateTransferStateMutation(transferId: string, state: string): Promise<ResourceTransfer> {
-  // state is an enum member on the server, so it goes into the document bare.
-  const result = await query(
-    'updateTransferState',
-    { transferId, state: new EnumValue(state) },
-    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
-    'mutation'
-  )
-  return mapTransferRow(result)
-}
-
-export async function setPriceMutation(transferId: string, price: number): Promise<ResourceTransfer> {
-  const result = await query(
-    'setPrice',
-    { transferId, price },
-    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
-    'mutation'
-  )
-  return mapTransferRow(result)
-}
-
-export interface CreateTransferArgs {
-  customerId: string
-  pickupLocation: string
-  dropoffLocation: string
-  pickupDateTime: string
-  payingParty?: string
-  paymentMethode?: string
-  carId?: string
-}
-
-export interface BookTransferArgs {
-  pickupLocation: string
-  dropoffLocation: string
-  pickupDateTime: string
-  subject?: string
-  paymentMethode?: string
-  payingParty?: string
-}
-
-export async function createTransferMutation(args: CreateTransferArgs): Promise<ResourceTransfer> {
-  const result = await query(
-    'createTransfer',
-    { args },
-    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
-    'mutation'
-  )
-  return mapTransferRow(result)
-}
-
-export async function bookTransferMutation(args: BookTransferArgs): Promise<ResourceTransfer> {
-  const result = await query(
-    'bookTransfer',
-    { args },
-    '{ id state driverId carId customerId pickupLocation dropoffLocation pickupDateTime referenceId price }',
-    'mutation'
-  )
-  return mapTransferRow(result)
 }
 
 // --------------- Driver Color ---------------

@@ -1,25 +1,63 @@
 import type { I18nCode } from '../i18n'
 
+/**
+ * The dispatcher's dashboard, in the four languages of the app.
+ *
+ * German is the product language and the source of the other three. Every key
+ * exists in every catalogue, so a missing translation is a type error rather
+ * than an English word on a Turkish screen.
+ */
 export function getI18nDashboard(code: I18nCode) {
   if (code === 'en-US') {
     return {
       code,
       strings: {
         Heading: 'Dashboard',
-        Subtitle: 'Manage your journeys and operations',
-        AlertNotAssigned: '{count} journeys for today are not assigned yet!',
-        AlertNotAssignedBody: 'There are {count} journeys without a driver or vehicle assigned, out of {total} scheduled for today.',
-        AlertActionNeeded: 'Action needed: Please assign a driver and vehicle.',
-        UpcomingTransfers: 'Upcoming transfers',
-        UpcomingTransfersBody: '{today} transfers today, {tomorrow} transfers tomorrow',
-        StatTotalTransfers: 'Total Transfers',
-        StatInProgress: 'In Progress',
-        StatCompleted: 'Completed',
-        StatPlanned: 'Planned',
-        TodayHeading: "Today's Transfers ({count})",
+        Subtitle: 'Today, tomorrow and the month at a glance',
+
+        AlertNotAssigned: '{count} rides today have no driver',
+        AlertNotAssignedBody: 'Assign a driver so the ride goes out.',
+        AlertRejected: '{count} rides today were rejected',
+        AlertRejectedBody: 'The driver said no. Somebody else has to take it.',
+
+        SectionToday: 'Today',
+        SectionTomorrow: 'Tomorrow',
+        SectionMonth: 'This month',
+        SectionDrivers: 'Per driver',
+
+        KpiRidesToday: 'Rides today',
+        KpiUnassigned: 'No driver',
+        KpiOnTheRoad: 'On the road',
+        KpiWaiting: 'Waiting for an answer',
+        KpiRejected: 'Rejected',
+        KpiRidesTomorrow: 'Rides tomorrow',
+        KpiTomorrowUnassigned: 'Tomorrow, no driver',
+
+        KpiRevenue: 'Revenue',
+        KpiCompleted: 'Completed rides',
+        KpiAverageFare: 'Average fare',
+        KpiCash: 'Cash taken',
+        KpiPayoutDue: 'Driver payout due',
+        KpiCancellationRate: 'Cancellation rate',
+        KpiSiteBookings: 'Bookings from the website',
+
+        ColDriver: 'Driver',
+        ColCompleted: 'Rides',
+        ColRevenue: 'Revenue',
+        ColCash: 'Cash',
+        ColPayout: 'Payout',
+        NoDrivers: 'No drivers with rides this month',
+
+        PrevMonth: 'Previous month',
+        NextMonth: 'Next month',
+
+        TodayList: "Today's rides ({count})",
+        TomorrowList: "Tomorrow's rides ({count})",
         ViewAll: 'View all',
-        NoTransfersToday: 'No transfers scheduled for today',
+        NoTransfersToday: 'No rides scheduled for today',
+        NoTransfersTomorrow: 'No rides scheduled for tomorrow',
         Unassigned: 'Unassigned',
+        NumbersUnavailable: 'The numbers could not be loaded',
       },
     }
   }
@@ -29,20 +67,51 @@ export function getI18nDashboard(code: I18nCode) {
       code,
       strings: {
         Heading: 'Panel',
-        Subtitle: 'Yolculukları ve operasyonları yönetin',
-        AlertNotAssigned: 'Bugün için {count} yolculuk henüz atanmadı!',
-        AlertNotAssignedBody: 'Bugün planlanan {total} yolculuktan {count} tanesine şoför veya araç atanmamış.',
-        AlertActionNeeded: 'İşlem gerekli: Lütfen bir şoför ve araç atayın.',
-        UpcomingTransfers: 'Yaklaşan transferler',
-        UpcomingTransfersBody: 'Bugün {today} transfer, yarın {tomorrow} transfer',
-        StatTotalTransfers: 'Toplam Transfer',
-        StatInProgress: 'Devam ediyor',
-        StatCompleted: 'Tamamlandı',
-        StatPlanned: 'Planlandı',
-        TodayHeading: 'Bugünkü Transferler ({count})',
+        Subtitle: 'Bugün, yarın ve bu ay bir bakışta',
+
+        AlertNotAssigned: 'Bugün {count} yolculuğun şoförü yok',
+        AlertNotAssignedBody: 'Yolculuğun çıkabilmesi için bir şoför atayın.',
+        AlertRejected: 'Bugün {count} yolculuk reddedildi',
+        AlertRejectedBody: 'Şoför hayır dedi. Başka biri almalı.',
+
+        SectionToday: 'Bugün',
+        SectionTomorrow: 'Yarın',
+        SectionMonth: 'Bu ay',
+        SectionDrivers: 'Şoför başına',
+
+        KpiRidesToday: 'Bugünkü yolculuklar',
+        KpiUnassigned: 'Şoförsüz',
+        KpiOnTheRoad: 'Yolda',
+        KpiWaiting: 'Yanıt bekliyor',
+        KpiRejected: 'Reddedildi',
+        KpiRidesTomorrow: 'Yarınki yolculuklar',
+        KpiTomorrowUnassigned: 'Yarın şoförsüz',
+
+        KpiRevenue: 'Ciro',
+        KpiCompleted: 'Tamamlanan yolculuklar',
+        KpiAverageFare: 'Ortalama ücret',
+        KpiCash: 'Nakit tahsilat',
+        KpiPayoutDue: 'Ödenecek şoför payı',
+        KpiCancellationRate: 'İptal oranı',
+        KpiSiteBookings: 'Web sitesinden rezervasyonlar',
+
+        ColDriver: 'Şoför',
+        ColCompleted: 'Yolculuk',
+        ColRevenue: 'Ciro',
+        ColCash: 'Nakit',
+        ColPayout: 'Ödeme',
+        NoDrivers: 'Bu ay yolculuğu olan şoför yok',
+
+        PrevMonth: 'Önceki ay',
+        NextMonth: 'Sonraki ay',
+
+        TodayList: 'Bugünkü yolculuklar ({count})',
+        TomorrowList: 'Yarınki yolculuklar ({count})',
         ViewAll: 'Tümünü gör',
-        NoTransfersToday: 'Bugün için planlanmış transfer yok',
+        NoTransfersToday: 'Bugün için planlanmış yolculuk yok',
+        NoTransfersTomorrow: 'Yarın için planlanmış yolculuk yok',
         Unassigned: 'Atanmamış',
+        NumbersUnavailable: 'Sayılar yüklenemedi',
       },
     }
   }
@@ -52,20 +121,51 @@ export function getI18nDashboard(code: I18nCode) {
       code,
       strings: {
         Heading: 'لوحة التحكم',
-        Subtitle: 'إدارة الرحلات والعمليات',
-        AlertNotAssigned: '{count} رحلات لم يتم تعيينها اليوم بعد!',
-        AlertNotAssignedBody: 'هناك {count} رحلة بدون سائق أو مركبة من أصل {total} مجدولة اليوم.',
-        AlertActionNeeded: 'مطلوب إجراء: يرجى تعيين سائق ومركبة.',
-        UpcomingTransfers: 'التحويلات القادمة',
-        UpcomingTransfersBody: '{today} تحويلات اليوم، {tomorrow} تحويلات غداً',
-        StatTotalTransfers: 'إجمالي التحويلات',
-        StatInProgress: 'قيد التنفيذ',
-        StatCompleted: 'مكتمل',
-        StatPlanned: 'مخطط',
-        TodayHeading: 'تحويلات اليوم ({count})',
+        Subtitle: 'اليوم وغدًا والشهر في نظرة واحدة',
+
+        AlertNotAssigned: '{count} رحلات اليوم بدون سائق',
+        AlertNotAssignedBody: 'عيّن سائقًا حتى تنطلق الرحلة.',
+        AlertRejected: '{count} رحلات اليوم تم رفضها',
+        AlertRejectedBody: 'السائق رفض. يجب أن يأخذها شخص آخر.',
+
+        SectionToday: 'اليوم',
+        SectionTomorrow: 'غدًا',
+        SectionMonth: 'هذا الشهر',
+        SectionDrivers: 'لكل سائق',
+
+        KpiRidesToday: 'رحلات اليوم',
+        KpiUnassigned: 'بدون سائق',
+        KpiOnTheRoad: 'على الطريق',
+        KpiWaiting: 'في انتظار الرد',
+        KpiRejected: 'مرفوضة',
+        KpiRidesTomorrow: 'رحلات الغد',
+        KpiTomorrowUnassigned: 'غدًا بدون سائق',
+
+        KpiRevenue: 'الإيرادات',
+        KpiCompleted: 'الرحلات المكتملة',
+        KpiAverageFare: 'متوسط الأجرة',
+        KpiCash: 'المحصّل نقدًا',
+        KpiPayoutDue: 'مستحقات السائقين',
+        KpiCancellationRate: 'نسبة الإلغاء',
+        KpiSiteBookings: 'حجوزات من الموقع',
+
+        ColDriver: 'السائق',
+        ColCompleted: 'رحلات',
+        ColRevenue: 'الإيرادات',
+        ColCash: 'نقدًا',
+        ColPayout: 'المستحق',
+        NoDrivers: 'لا يوجد سائقون برحلات هذا الشهر',
+
+        PrevMonth: 'الشهر السابق',
+        NextMonth: 'الشهر التالي',
+
+        TodayList: 'رحلات اليوم ({count})',
+        TomorrowList: 'رحلات الغد ({count})',
         ViewAll: 'عرض الكل',
-        NoTransfersToday: 'لا توجد تحويلات مجدولة اليوم',
+        NoTransfersToday: 'لا توجد رحلات مجدولة اليوم',
+        NoTransfersTomorrow: 'لا توجد رحلات مجدولة غدًا',
         Unassigned: 'غير معيّن',
+        NumbersUnavailable: 'تعذّر تحميل الأرقام',
       },
     }
   }
@@ -75,20 +175,51 @@ export function getI18nDashboard(code: I18nCode) {
     code,
     strings: {
       Heading: 'Dashboard',
-      Subtitle: 'Fahrten und Betrieb verwalten',
-      AlertNotAssigned: '{count} Fahrten für heute sind noch nicht zugewiesen!',
-      AlertNotAssignedBody: 'Es gibt {count} Fahrten ohne zugewiesenen Fahrer oder Fahrzeug, von {total} für heute geplanten.',
-      AlertActionNeeded: 'Handlung erforderlich: Bitte weisen Sie einen Fahrer und ein Fahrzeug zu.',
-      UpcomingTransfers: 'Anstehende Transfers',
-      UpcomingTransfersBody: '{today} Transfers heute, {tomorrow} Transfers morgen',
-      StatTotalTransfers: 'Transfers gesamt',
-      StatInProgress: 'In Bearbeitung',
-      StatCompleted: 'Abgeschlossen',
-      StatPlanned: 'Geplant',
-      TodayHeading: 'Heutige Transfers ({count})',
+      Subtitle: 'Heute, morgen und der Monat auf einen Blick',
+
+      AlertNotAssigned: '{count} Fahrten heute ohne Fahrer',
+      AlertNotAssignedBody: 'Bitte einen Fahrer zuweisen, damit die Fahrt rausgeht.',
+      AlertRejected: '{count} Fahrten heute abgelehnt',
+      AlertRejectedBody: 'Der Fahrer hat abgelehnt. Jemand anderer muss die Fahrt übernehmen.',
+
+      SectionToday: 'Heute',
+      SectionTomorrow: 'Morgen',
+      SectionMonth: 'Dieser Monat',
+      SectionDrivers: 'Pro Fahrer',
+
+      KpiRidesToday: 'Fahrten heute',
+      KpiUnassigned: 'Ohne Fahrer',
+      KpiOnTheRoad: 'Unterwegs',
+      KpiWaiting: 'Wartet auf Antwort',
+      KpiRejected: 'Abgelehnt',
+      KpiRidesTomorrow: 'Fahrten morgen',
+      KpiTomorrowUnassigned: 'Morgen ohne Fahrer',
+
+      KpiRevenue: 'Umsatz',
+      KpiCompleted: 'Abgeschlossene Fahrten',
+      KpiAverageFare: 'Durchschnittlicher Fahrpreis',
+      KpiCash: 'Bar kassiert',
+      KpiPayoutDue: 'Fällige Auszahlung',
+      KpiCancellationRate: 'Stornoquote',
+      KpiSiteBookings: 'Buchungen über die Website',
+
+      ColDriver: 'Fahrer',
+      ColCompleted: 'Fahrten',
+      ColRevenue: 'Umsatz',
+      ColCash: 'Bar',
+      ColPayout: 'Auszahlung',
+      NoDrivers: 'Keine Fahrer mit Fahrten in diesem Monat',
+
+      PrevMonth: 'Vormonat',
+      NextMonth: 'Nächster Monat',
+
+      TodayList: 'Fahrten heute ({count})',
+      TomorrowList: 'Fahrten morgen ({count})',
       ViewAll: 'Alle anzeigen',
-      NoTransfersToday: 'Keine Transfers für heute geplant',
+      NoTransfersToday: 'Keine Fahrten für heute geplant',
+      NoTransfersTomorrow: 'Keine Fahrten für morgen geplant',
       Unassigned: 'Nicht zugewiesen',
+      NumbersUnavailable: 'Die Zahlen konnten nicht geladen werden',
     },
   }
 }

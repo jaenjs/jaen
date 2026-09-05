@@ -16,6 +16,11 @@ import {
   scalarsEnumsHash,
   type GeneratedSchema
 } from './schema.generated'
+import {
+  setOnlineProbe,
+  throughCache,
+  type GraphQLResponse
+} from '../../shared/offline'
 
 /**
  * The backend comes from the plugin's `pylonUrl` option, not from a constant.
@@ -36,12 +41,13 @@ const PYLON_URL =
 
 const apiURL = PYLON_URL
 
-const queryFetcher: QueryFetcher = async function (
-  {query, variables, operationName},
-  fetchOptions
-) {
-  const headers: any = {}
-
+/**
+ * The session this tab holds, read from the same storage the GraphQL client
+ * takes its bearer token from. The token goes into the header, the subject
+ * into the offline cache key, so two accounts on one phone never read each
+ * other's stored answers.
+ */
+const readSession = (): {token?: string; subject?: string} => {
   try {
     // The define gatsby-plugin-jaen injects was renamed with the package it
     // configures, zitadel became zitadel-gql, and the option behind it is now
@@ -54,30 +60,72 @@ const queryFetcher: QueryFetcher = async function (
       )
       if (oidcStorage) {
         const user = User.fromStorageString(oidcStorage)
-        if (user?.access_token) {
-          headers['Authorization'] = `Bearer ${user.access_token}`
+        return {
+          token: user?.access_token || undefined,
+          subject: typeof user?.profile?.sub === 'string' ? user.profile.sub : undefined
         }
       }
     }
   } catch { /* auth not available */ }
+  return {}
+}
 
-  const response = await fetch(apiURL, {
+/** One POST to the pylon, with the session's bearer when there is one. */
+const send = async (
+  body: {query: string; variables?: unknown; operationName?: string | null},
+  fetchOptions: RequestInit = {}
+): Promise<Response> => {
+  const {token} = readSession()
+  const headers: Record<string, string> = {'Content-Type': 'application/json'}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  return fetch(apiURL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers
-    },
-    body: JSON.stringify({
-      query,
-      variables,
-      operationName
-    }),
+    headers,
+    body: JSON.stringify(body),
     mode: 'cors',
     ...fetchOptions
   })
-
-  return await defaultResponseHandler(response)
 }
+
+/**
+ * The fetcher, with the offline layer around it.
+ *
+ * Every request of the app goes through here, the hooks' inline documents
+ * and GQty's own. The layer (shared/offline.ts) stores the answer of a
+ * successful query per caller and serves it back when the network is gone,
+ * tagged `offline: true` with its `storedAt`, and refuses a mutation on the
+ * device while offline so that it reaches the pylon zero times. When
+ * storage is missing or throws it is a pass-through and this is the plain
+ * fetch it was. See okf/architecture/offline.md.
+ */
+const queryFetcher: QueryFetcher = async function (
+  {query, variables, operationName},
+  fetchOptions
+) {
+  const {subject} = readSession()
+  // The layer types the answer loosely, the client types it as GQty's
+  // ExecutionResult. It is the same JSON either way, and the layer never
+  // changes a field of it, it only adds `offline` and `storedAt`.
+  return (await throughCache(
+    {operationName, query, variables, subject},
+    async () =>
+      (await defaultResponseHandler(
+        await send({query, variables, operationName}, fetchOptions)
+      )) as GraphQLResponse
+  )) as Awaited<ReturnType<QueryFetcher>>
+}
+
+/**
+ * The layer's way back: while the state is offline and the browser does not
+ * say so, this is asked every ten seconds, and one answer flips the state and
+ * refetches the screens. The document is the smallest one there is, sent
+ * with the session's bearer, so a pylon that refuses anonymous callers still
+ * counts as reached.
+ */
+setOnlineProbe(async () => {
+  const response = await send({query: '{ __typename }'})
+  return response.ok
+})
 
 const cache = new Cache(
   undefined,

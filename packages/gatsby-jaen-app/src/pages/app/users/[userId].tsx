@@ -21,8 +21,11 @@ export default UserDetailPage
 
 export const pageConfig: PageConfig = {
   label: 'User Detail',
+  // Every /app route is for a signed-in person. jaen sends anybody else to
+  // /login and brings them back here afterwards. Which role they need is the
+  // backend's decision, made per field, and the shell's, made per nav item.
   auth: {
-    isRequired: false
+    isRequired: true
   },
   layout: {
     name: 'jaen',

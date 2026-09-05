@@ -1,916 +1,2784 @@
-import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
-import ReactDOM from 'react-dom'
-import { getPortalRoot } from '../portal'
+/**
+ * The transfers screen, in Chakra v3.
+ *
+ * For an admin it is the dispatcher's board: a table on a desktop, cards on a
+ * phone, the twelve states as a filter, a date window, search, sort, columns
+ * that can be hidden and reordered, the driver's colour as the left edge of a
+ * row, and the three dialogs of dispatch (create, assign, price) plus the
+ * state dialog. For a driver the same route is "My rides": the rows the
+ * backend scoped to them, without prices, each leading to the phone screen in
+ * TransferDetailView. A customer landing here gets their own bookings the same
+ * way.
+ *
+ * Nothing here decides what the caller may see. The list is scoped in the
+ * resolver from the token and a driver's rows arrive with the money fields
+ * null (okf/architecture/permissions.md). useCaller() only decides which
+ * screen to draw and which buttons to offer.
+ *
+ * The screen layout is carried over from the Chakra port of the dispatch
+ * prototype (limosen-dashboard-chakra, 2026-09-04): the date chips, the status
+ * and column popovers, the date-grouped rows with the driver stripe, the card
+ * with the expanding body. That port pins a shadcn theme of its own and
+ * hand-rolls its controls to match the prototype pixel for pixel. Here the
+ * system in scope is jaen's, so the same screens are drawn with the stock
+ * Chakra parts (Table, Popover, Menu, Dialog, Drawer, Checkbox, Switch,
+ * SegmentGroup) and jaen's semantic tokens.
+ *
+ * The dialogs are exported: TransferDetailView opens the same ones.
+ */
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {
-  useTransfers, useUsers, useCars, useDrivers,
-  assignDriverMutation, assignCarMutation, setPriceMutation, createTransferMutation,
-  type ResourceTransfer, type ResourceUser, type ResourceCar, type CreateTransferArgs,
-  type TransferDateFilter,
-} from '../hooks'
+  Badge,
+  Box,
+  Button,
+  Checkbox,
+  CloseButton,
+  Dialog,
+  Drawer,
+  Field,
+  Flex,
+  HStack,
+  IconButton,
+  Input,
+  InputGroup,
+  Menu,
+  NativeSelect,
+  NumberInput,
+  Popover,
+  Portal,
+  SegmentGroup,
+  Separator,
+  Stack,
+  Switch,
+  Table,
+  Text,
+  Textarea,
+  chakra,
+} from '@chakra-ui/react'
+import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
+import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
+import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
+import {FaColumns} from '@react-icons/all-files/fa/FaColumns'
+import {FaFilter} from '@react-icons/all-files/fa/FaFilter'
+import {FaSortAmountDown} from '@react-icons/all-files/fa/FaSortAmountDown'
+import {FaSortAmountUp} from '@react-icons/all-files/fa/FaSortAmountUp'
+import {FaChevronDown} from '@react-icons/all-files/fa/FaChevronDown'
+import {FaChevronUp} from '@react-icons/all-files/fa/FaChevronUp'
+import {FaChevronLeft} from '@react-icons/all-files/fa/FaChevronLeft'
+import {FaChevronRight} from '@react-icons/all-files/fa/FaChevronRight'
+import {FaAngleDoubleLeft} from '@react-icons/all-files/fa/FaAngleDoubleLeft'
+import {FaGripVertical} from '@react-icons/all-files/fa/FaGripVertical'
+import {FaUndo} from '@react-icons/all-files/fa/FaUndo'
+import {FaUsers} from '@react-icons/all-files/fa/FaUsers'
+import {FaSuitcase} from '@react-icons/all-files/fa/FaSuitcase'
+import {FaPlane} from '@react-icons/all-files/fa/FaPlane'
+import {FaMapMarkerAlt} from '@react-icons/all-files/fa/FaMapMarkerAlt'
+import {FaCalendarAlt} from '@react-icons/all-files/fa/FaCalendarAlt'
+import {FaCar} from '@react-icons/all-files/fa/FaCar'
+import {FaTimes} from '@react-icons/all-files/fa/FaTimes'
+import {useCaller} from '../auth'
+import {useI18nCode, type I18nCode} from '../i18n'
+import {useAppNavigate} from '../navigation'
+import {useCars, useDrivers, useUsers, type ResourceCar, type ResourceUser} from '../hooks'
 import {
-  cx, formatDateDisplay, formatPrice,
-  StatusPill, ColumnPopover, SortDropdown, DateFilter, StatusFilter,
-  CursorPagination, LoadingOverlay, EmptyState, ErrorBanner, DateGroupHeader,
-  IconSearch, IconUsers, IconRefresh, IconX, IconPlus, IconCheck,
-  IconMapPin, IconCalendar, IconClock, IconTriangleAlert, IconCar,
-  type ColumnConfig, type SortOrder, type DateFilterValue,
-} from '../components/ui'
-import { useI18nCode } from '../i18n'
+  assignCar,
+  assignDriver,
+  createTransfer,
+  isClosed,
+  setPrice,
+  updateTransferState,
+  passengerName,
+  transferPath,
+  useTransferList,
+  CAR_CLASSES,
+  EXTRA_TYPES,
+  PAYING_PARTIES,
+  PAYMENT_METHODS,
+  TRANSFER_CATEGORIES,
+  type CarClass,
+  type CreateTransferInput,
+  type ExtraType,
+  type PayingParty,
+  type PaymentMethod,
+  type TransferCategory,
+  type TransferRow
+} from '../hooks/transfers'
+import {
+  DriverColorDot,
+  EmptyState,
+  ErrorBanner,
+  LoadingOverlay,
+  MoneyText,
+  StatusBadge,
+  toaster,
+  useStateLabel,
+  PageHeader
+} from '../components'
+import {OfflineBanner} from '../components/OfflineBanner'
+import {useRefetchOnReconnect} from '../offline'
+import {getI18nCommon} from '../locales/i18nCommon'
+import {fill, getI18nTransfers, type TransfersStrings} from '../locales/i18nTransfers'
+import {asTransferState, TRANSFER_STATES, type TransferState} from '../locales/i18nStates'
+
+// ============================================================
+// Small shared helpers
+// ============================================================
+
+/** The account's catalogues, for every component on this screen. */
+export function useTransferStrings() {
+  const code = useI18nCode()
+  const {strings: t} = getI18nTransfers(code)
+  const {strings: tc} = getI18nCommon(code)
+  return {code, t, tc}
+}
 
 /**
- * A driver's name, as a dispatcher would say it. Falls back to the login name
- * only if the account has no profile at all, which should not happen for
- * someone holding the driver role.
+ * Below Chakra's `md` (48em) the board is cards and the driver's detail is
+ * the phone screen. matchMedia after mount, false during SSR, so the server
+ * and the first client render agree.
  */
-const driverDisplayName = (u: ResourceUser): string => {
+export function useIsMobile(): boolean {
+  const [mobile, setMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 47.99em)')
+    const update = () => setMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+  return mobile
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/** Local YYYY-MM-DD of a Date. */
+export const localDay = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+
+/** "Fr., 4. Sep. 2026" in the account's language. */
+export const formatDay = (iso: string, code: I18nCode): string => {
+  if (!iso) return ''
+  try {
+    return new Intl.DateTimeFormat(code, {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).format(new Date(`${iso}T00:00:00`))
+  } catch {
+    return iso
+  }
+}
+
+/** A full timestamp in the account's language, for requestedAt and the ride's actuals. */
+export const formatDateTime = (iso: string | undefined, code: I18nCode): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  try {
+    return new Intl.DateTimeFormat(code, {dateStyle: 'medium', timeStyle: 'short'}).format(d)
+  } catch {
+    return d.toLocaleString()
+  }
+}
+
+type EnumPrefix = 'Pay_' | 'Party_' | 'Class_' | 'Cat_' | 'Type_' | 'Extra_'
+
+/** The catalogue word for an enum member, the raw member when the catalogue has none. */
+export const enumLabel = (t: TransfersStrings, prefix: EnumPrefix, value: string | null | undefined): string => {
+  if (!value) return ''
+  const key = `${prefix}${value}` as keyof TransfersStrings
+  return (t[key] as string | undefined) ?? value.replace(/_/g, ' ')
+}
+
+export const driverDisplayName = (u: ResourceUser): string => {
   const full = `${u.details?.firstName ?? ''} ${u.details?.lastName ?? ''}`.trim()
   return full || u.username || u.primaryEmailAddress
 }
-import { getI18nTransfers } from '../locales/i18nTransfers'
-import { getI18nCommon } from '../locales/i18nCommon'
+
+export const carDisplayName = (c: ResourceCar): string => c.carName || c.licensePlate
+
+const errorMessage = (err: unknown, fallback: string): string =>
+  err instanceof Error && err.message ? err.message : fallback
 
 // ============================================================
-// Constants
+// A dialog that is a bottom drawer on a phone
 // ============================================================
 
-const COLUMN_WIDTHS: Record<string, number> = {
-  code: 90, status: 110, route: 220, pickup: 130, capacity: 100,
-  driver: 150, vehicle: 150, price: 120, customer: 150, category: 120, payment: 100,
+interface SheetProps {
+  open: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+  footer?: React.ReactNode
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  /** Blocks closing while a mutation is out. */
+  busy?: boolean
 }
 
-const ITEMS_PER_PAGE = 15
-
-// ============================================================
-// Toast
-// ============================================================
-
-function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
-  useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t) }, [onClose])
-  const bg = type === 'success' ? 'bg-green-600' : 'bg-red-600'
-  return (
-    <div className={`fixed bottom-4 right-4 z-[60] ${bg} text-white px-4 py-3 rounded-lg shadow-lg text-sm max-w-sm`}>
-      <div className="flex items-center justify-between gap-3">
-        <span>{message}</span>
-        <button className="text-white/80 hover:text-white" onClick={onClose}><IconX className="h-3 w-3" /></button>
-      </div>
-    </div>
-  )
-}
-
-// ============================================================
-// ModalShell (for Create Transfer)
-// ============================================================
-
-function ModalShell({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-card border rounded-lg shadow-lg w-full max-w-md mx-4 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button className="text-muted-foreground hover:text-foreground" onClick={onClose}><IconX className="h-4 w-4" /></button>
-        </div>
-        <div className="flex-1 overflow-y-auto">{children}</div>
-      </div>
-    </div>
-  )
-}
-
-// ============================================================
-// Driver Assignment Popover (portal, smart-positioned)
-// ============================================================
-
-const POPOVER_HEIGHT = 420
-const POPOVER_WIDTH = 320
-
-function DriverAssignmentPopover({ open, onOpenChange, onSelect, buttonRef, drivers, loading }: {
-  open: boolean; onOpenChange: (o: boolean) => void; onSelect: (userId: string) => void
-  buttonRef: React.RefObject<HTMLDivElement | null>; drivers: ResourceUser[]; loading: boolean
-}) {
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-
-  const popoverRef = useRef<HTMLDivElement>(null)
-  const [search, setSearch] = useState('')
-  const [sendSms, setSendSms] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0, openUp: false, openLeft: false })
-
-  useEffect(() => {
-    const update = () => {
-      if (buttonRef.current && open) {
-        const r = buttonRef.current.getBoundingClientRect()
-        const vh = window.innerHeight, vw = window.innerWidth
-        const openUp = (vh - r.top) < POPOVER_HEIGHT + 20 && r.bottom > (vh - r.top)
-        const openLeft = (vw - r.right) < POPOVER_WIDTH + 20
-        setPos({
-          top: openUp ? r.bottom - POPOVER_HEIGHT + 8 : r.top - 8,
-          left: openLeft ? r.left - POPOVER_WIDTH - 8 : r.right + 8,
-          openUp, openLeft,
-        })
-      }
-    }
-    const outside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node) && buttonRef.current && !buttonRef.current.contains(e.target as Node)) onOpenChange(false)
-    }
-    if (open) {
-      update()
-      const tid = setTimeout(() => document.addEventListener('mousedown', outside), 0)
-      window.addEventListener('scroll', update, true)
-      window.addEventListener('resize', update)
-      return () => { clearTimeout(tid); document.removeEventListener('mousedown', outside); window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update) }
-    }
-    return () => document.removeEventListener('mousedown', outside)
-  }, [open, onOpenChange, buttonRef])
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return drivers
-    const q = search.toLowerCase()
-    return drivers.filter(u => driverDisplayName(u).toLowerCase().includes(q))
-  }, [drivers, search])
-
-  if (!open) return null
-
-  // The portal root does not exist during server rendering, and this view is
-  // statically rendered like every other page. Skipping the portal is what the
-  // old code meant to do before its guard returned document.body on a document
-  // it had just established was undefined.
-  const root = getPortalRoot()
-  if (!root) return null
-
-  return ReactDOM.createPortal(
-    <div ref={popoverRef} className="fixed rounded-md border bg-background text-popover-foreground shadow-lg z-[9999] w-[320px] p-4 h-[420px] flex flex-col" style={{ top: pos.top, left: pos.left, pointerEvents: 'auto' }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
-      {/* Arrow */}
-      <div className={`absolute w-4 h-4 rotate-45 bg-background ${pos.openLeft ? '-right-2 border-r border-t border-border' : '-left-2 border-l border-b border-border'}`} style={{ top: pos.openUp ? 'auto' : 16, bottom: pos.openUp ? 16 : 'auto' }} />
-      <div className="relative bg-background rounded-md flex flex-col h-full">
-        <div className="relative flex-shrink-0 mb-3">
-          <IconSearch className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-8 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder={t.SearchDrivers} value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {filtered.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">{t.NoDriversFound}</div>
-          ) : filtered.map(u => (
-            <button key={u.id} className="w-full text-left p-3 rounded-lg border bg-background hover:bg-accent hover:text-white cursor-pointer transition-colors group mb-2 disabled:opacity-50" onClick={() => { onSelect(u.id); onOpenChange(false) }} disabled={loading}>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: u.driverColor || '#888' }} />
-                {/* The name and nothing else. A login name here is a mail
-                    address for anyone created from one, which is not what a
-                    dispatcher is looking for. */}
-                <div className="font-medium text-sm">{driverDisplayName(u)}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-        <div className="pt-3 border-t flex-shrink-0">
-          <div className="flex items-center gap-2 p-2 rounded-md bg-green-500/10 border border-green-500/20">
-            <button role="checkbox" aria-checked={sendSms} className={cx('h-4 w-4 shrink-0 rounded-sm border flex items-center justify-center', sendSms ? 'bg-green-500 border-green-500 text-white' : 'border-green-500/40')} onClick={() => setSendSms(!sendSms)}>
-              {sendSms && <IconCheck className="h-3 w-3" />}
-            </button>
-            <span className="text-xs text-green-600 select-none cursor-pointer" onClick={() => setSendSms(!sendSms)}>{t.SendSmsNotification}</span>
-          </div>
-        </div>
-      </div>
-    </div>,
-    root
-  )
-}
-
-// ============================================================
-// Vehicle Assignment Popover (portal, smart-positioned)
-// ============================================================
-
-function VehicleAssignmentPopover({ open, onOpenChange, onSelect, buttonRef, vehicles, loading }: {
-  open: boolean; onOpenChange: (o: boolean) => void; onSelect: (carId: string) => void
-  buttonRef: React.RefObject<HTMLDivElement | null>; vehicles: ResourceCar[]; loading: boolean
-}) {
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-
-  const popoverRef = useRef<HTMLDivElement>(null)
-  const [search, setSearch] = useState('')
-  const [pos, setPos] = useState({ top: 0, left: 0, openUp: false, openLeft: false })
-
-  useEffect(() => {
-    const update = () => {
-      if (buttonRef.current && open) {
-        const r = buttonRef.current.getBoundingClientRect()
-        const vh = window.innerHeight, vw = window.innerWidth
-        const openUp = (vh - r.top) < POPOVER_HEIGHT + 20 && r.bottom > (vh - r.top)
-        const openLeft = (vw - r.right) < POPOVER_WIDTH + 20
-        setPos({
-          top: openUp ? r.bottom - POPOVER_HEIGHT + 8 : r.top - 8,
-          left: openLeft ? r.left - POPOVER_WIDTH - 8 : r.right + 8,
-          openUp, openLeft,
-        })
-      }
-    }
-    const outside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node) && buttonRef.current && !buttonRef.current.contains(e.target as Node)) onOpenChange(false)
-    }
-    if (open) {
-      update()
-      const tid = setTimeout(() => document.addEventListener('mousedown', outside), 0)
-      window.addEventListener('scroll', update, true)
-      window.addEventListener('resize', update)
-      return () => { clearTimeout(tid); document.removeEventListener('mousedown', outside); window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update) }
-    }
-    return () => document.removeEventListener('mousedown', outside)
-  }, [open, onOpenChange, buttonRef])
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return vehicles
-    const q = search.toLowerCase()
-    return vehicles.filter(c => c.licensePlate.toLowerCase().includes(q) || (c.carName?.toLowerCase().includes(q)) || (c.driverName?.toLowerCase().includes(q)))
-  }, [vehicles, search])
-
-  if (!open) return null
-
-  // The portal root does not exist during server rendering, and this view is
-  // statically rendered like every other page. Skipping the portal is what the
-  // old code meant to do before its guard returned document.body on a document
-  // it had just established was undefined.
-  const root = getPortalRoot()
-  if (!root) return null
-
-  return ReactDOM.createPortal(
-    <div ref={popoverRef} className="fixed rounded-md border bg-background text-popover-foreground shadow-lg z-[9999] w-[320px] p-4 h-[420px] flex flex-col" style={{ top: pos.top, left: pos.left, pointerEvents: 'auto' }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
-      <div className={`absolute w-4 h-4 rotate-45 bg-background ${pos.openLeft ? '-right-2 border-r border-t border-border' : '-left-2 border-l border-b border-border'}`} style={{ top: pos.openUp ? 'auto' : 16, bottom: pos.openUp ? 16 : 'auto' }} />
-      <div className="relative bg-background rounded-md flex flex-col h-full">
-        <div className="relative flex-shrink-0 mb-3">
-          <IconSearch className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-8 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder={t.SearchVehicles} value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {filtered.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">{t.NoVehiclesFound}</div>
-          ) : filtered.map(c => (
-            <button key={c.id} className="w-full text-left px-3 py-2.5 rounded-md hover:bg-accent transition-colors flex items-center gap-3 disabled:opacity-50" onClick={() => { onSelect(c.id); onOpenChange(false) }} disabled={loading}>
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                <IconCar className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium truncate">{c.carName || c.licensePlate}</div>
-                <div className="text-xs text-muted-foreground truncate">{c.licensePlate}{c.carClass ? ` \u00B7 ${c.carClass}` : ''}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>,
-    root
-  )
-}
-
-// ============================================================
-// Not Assigned Badge (Driver) - opens inline popover
-// ============================================================
-
-function NotAssignedDriverBadge({ transfer, drivers, onAssign, loading }: {
-  transfer: ResourceTransfer; drivers: ResourceUser[]; onAssign: (transferId: string, driverId: string) => void; loading: boolean
-}) {
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-
-  const [open, setOpen] = useState(false)
-  const badgeRef = useRef<HTMLDivElement>(null)
-  return (
-    <div className="relative overflow-visible" ref={badgeRef}>
-      <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-warning/10 text-warning border-warning/20 gap-1 cursor-pointer hover:bg-warning/20 transition-colors whitespace-nowrap" onClick={e => { e.stopPropagation(); setOpen(!open) }}>
-        <IconTriangleAlert className="h-3 w-3" />
-        {t.NotAssigned}
-      </div>
-      <DriverAssignmentPopover open={open} onOpenChange={setOpen} onSelect={id => onAssign(transfer.id, id)} buttonRef={badgeRef} drivers={drivers} loading={loading} />
-    </div>
-  )
-}
-
-// ============================================================
-// Assign Driver First Badge (Vehicle column, non-clickable)
-// ============================================================
-
-function AssignDriverFirstBadge() {
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-
-  return (
-    <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-muted text-muted-foreground border-muted cursor-not-allowed gap-1 whitespace-nowrap">
-      <IconTriangleAlert className="h-3 w-3" />
-      {t.AssignDriverFirst}
-    </div>
-  )
-}
-
-// ============================================================
-// Not Assigned Vehicle Badge (blue, opens inline popover)
-// ============================================================
-
-function NotAssignedVehicleBadge({ transfer, vehicles, onAssign, loading }: {
-  transfer: ResourceTransfer; vehicles: ResourceCar[]; onAssign: (transferId: string, carId: string) => void; loading: boolean
-}) {
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-
-  const [open, setOpen] = useState(false)
-  const badgeRef = useRef<HTMLDivElement>(null)
-  return (
-    <div className="relative overflow-visible" ref={badgeRef}>
-      <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-500/10 text-blue-500 border-blue-500/20 gap-1 cursor-pointer hover:bg-blue-500/20 transition-colors whitespace-nowrap" onClick={e => { e.stopPropagation(); setOpen(!open) }}>
-        <IconCar className="h-3 w-3" />
-        {t.AssignVehicle}
-      </div>
-      <VehicleAssignmentPopover open={open} onOpenChange={setOpen} onSelect={id => onAssign(transfer.id, id)} buttonRef={badgeRef} vehicles={vehicles} loading={loading} />
-    </div>
-  )
-}
-
-// ============================================================
-// Price Assignment Popover (portal, smart-positioned)
-// ============================================================
-
-function PriceAssignmentPopover({ open, onOpenChange, onSubmit, buttonRef, loading }: {
-  open: boolean; onOpenChange: (o: boolean) => void; onSubmit: (price: number) => void
-  buttonRef: React.RefObject<HTMLDivElement | null>; loading: boolean
-}) {
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-  const { strings: tc } = getI18nCommon(i18nCode)
-
-  const popoverRef = useRef<HTMLDivElement>(null)
-  const [value, setValue] = useState('')
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-
-  useEffect(() => { if (open) setValue('') }, [open])
-
-  useEffect(() => {
-    const update = () => {
-      if (buttonRef.current && open) {
-        const r = buttonRef.current.getBoundingClientRect()
-        const vh = window.innerHeight
-        const openUp = (vh - r.bottom) < 180 && r.top > 180
-        setPos({ top: openUp ? r.top - 170 : r.bottom + 8, left: Math.max(8, r.left - 80) })
-      }
-    }
-    const outside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node) && buttonRef.current && !buttonRef.current.contains(e.target as Node)) onOpenChange(false)
-    }
-    if (open) {
-      update()
-      const tid = setTimeout(() => document.addEventListener('mousedown', outside), 0)
-      window.addEventListener('scroll', update, true)
-      window.addEventListener('resize', update)
-      return () => { clearTimeout(tid); document.removeEventListener('mousedown', outside); window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update) }
-    }
-    return () => document.removeEventListener('mousedown', outside)
-  }, [open, onOpenChange, buttonRef])
-
-  if (!open) return null
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const n = parseFloat(value)
-    if (!isNaN(n) && n >= 0) { onSubmit(n); onOpenChange(false) }
+/**
+ * The same content as a centred Dialog on a desktop and a bottom Drawer on a
+ * phone, which is what every popover of the dispatch prototype became below
+ * `md`. One component so the two never drift.
+ */
+export function Sheet({open, onClose, title, children, footer, size = 'md', busy = false}: SheetProps) {
+  const mobile = useIsMobile()
+  const onOpenChange = (e: {open: boolean}) => {
+    if (!e.open && !busy) onClose()
   }
 
-  // The portal root does not exist during server rendering, and this view is
-  // statically rendered like every other page. Skipping the portal is what the
-  // old code meant to do before its guard returned document.body on a document
-  // it had just established was undefined.
-  const root = getPortalRoot()
-  if (!root) return null
+  if (mobile) {
+    return (
+      <Drawer.Root open={open} onOpenChange={onOpenChange} placement="bottom" lazyMount unmountOnExit>
+        <Portal>
+          <Drawer.Backdrop />
+          <Drawer.Positioner>
+            <Drawer.Content roundedTop="l3" maxH="92dvh">
+              <Drawer.Header>
+                <Drawer.Title>{title}</Drawer.Title>
+              </Drawer.Header>
+              <Drawer.Body>{children}</Drawer.Body>
+              {footer && <Drawer.Footer pb="calc(1rem + env(safe-area-inset-bottom, 0px))">{footer}</Drawer.Footer>}
+              <Drawer.CloseTrigger asChild>
+                <CloseButton size="sm" disabled={busy} />
+              </Drawer.CloseTrigger>
+            </Drawer.Content>
+          </Drawer.Positioner>
+        </Portal>
+      </Drawer.Root>
+    )
+  }
 
-  return ReactDOM.createPortal(
-    <div ref={popoverRef} className="fixed rounded-md border bg-background text-popover-foreground shadow-lg z-[9999] w-[220px] p-3 flex flex-col gap-2" style={{ top: pos.top, left: pos.left, pointerEvents: 'auto' }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
-      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.SetPriceHeading}</div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">&euro;</span>
-          <input type="number" min="0" step="0.01" autoFocus className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pl-7 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="0.00" value={value} onChange={e => setValue(e.target.value)} />
-        </div>
-        <div className="flex gap-2">
-          <button type="submit" className="flex-1 inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-3 h-8 text-xs font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors" disabled={loading || !value || isNaN(parseFloat(value))}>{t.SetPriceSubmit}</button>
-          <button type="button" className="inline-flex items-center justify-center rounded-md border border-input px-3 h-8 text-xs hover:bg-muted transition-colors" onClick={() => onOpenChange(false)}>{tc.Cancel}</button>
-        </div>
-      </form>
-    </div>,
-    root
-  )
-}
-
-// ============================================================
-// Not Assigned Price Badge (green, opens inline popover)
-// ============================================================
-
-function NotAssignedPriceBadge({ transfer, onSetPrice, loading }: {
-  transfer: ResourceTransfer; onSetPrice: (transferId: string, price: number) => void; loading: boolean
-}) {
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-
-  const [open, setOpen] = useState(false)
-  const badgeRef = useRef<HTMLDivElement>(null)
   return (
-    <div className="relative overflow-visible" ref={badgeRef}>
-      <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1 cursor-pointer hover:bg-emerald-500/20 transition-colors whitespace-nowrap" onClick={e => { e.stopPropagation(); setOpen(!open) }}>
-        {t.SetPrice}
-      </div>
-      <PriceAssignmentPopover open={open} onOpenChange={setOpen} onSubmit={price => onSetPrice(transfer.id, price)} buttonRef={badgeRef} loading={loading} />
-    </div>
+    <Dialog.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      size={size}
+      placement="center"
+      scrollBehavior="inside"
+      lazyMount
+      unmountOnExit>
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>{title}</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>{children}</Dialog.Body>
+            {footer && <Dialog.Footer>{footer}</Dialog.Footer>}
+            <Dialog.CloseTrigger asChild>
+              <CloseButton size="sm" disabled={busy} />
+            </Dialog.CloseTrigger>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }
 
 // ============================================================
-// Main: TransfersView
+// The pickers
+// ============================================================
+
+interface PickerListProps<T> {
+  items: T[]
+  selectedId?: string
+  currentId?: string
+  onSelect: (id: string) => void
+  keyOf: (item: T) => string
+  renderItem: (item: T) => React.ReactNode
+  emptyLabel: string
+}
+
+/** A list of choices, one highlighted, one marked as the current one. */
+function PickerList<T>({items, selectedId, currentId, onSelect, keyOf, renderItem, emptyLabel}: PickerListProps<T>) {
+  const {t} = useTransferStrings()
+  if (items.length === 0) {
+    return (
+      <Text textStyle="sm" color="fg.muted" textAlign="center" py="4">
+        {emptyLabel}
+      </Text>
+    )
+  }
+  return (
+    <Stack gap="1" role="listbox">
+      {items.map(item => {
+        const id = keyOf(item)
+        const selected = id === selectedId
+        return (
+          <chakra.button
+            key={id}
+            type="button"
+            role="option"
+            aria-selected={selected}
+            textAlign="start"
+            w="full"
+            px="3"
+            py="2"
+            rounded="md"
+            borderWidth="1px"
+            borderColor={selected ? 'colorPalette.solid' : 'border.default'}
+            bg={selected ? 'colorPalette.subtle' : 'bg.surface'}
+            colorPalette="brand"
+            cursor="pointer"
+            _hover={{bg: selected ? 'colorPalette.subtle' : 'bg.subtle'}}
+            onClick={() => onSelect(id)}>
+            <HStack justify="space-between" gap="2">
+              <Box minW="0" flex="1">
+                {renderItem(item)}
+              </Box>
+              {currentId === id && (
+                <Badge size="sm" variant="outline" colorPalette="gray">
+                  {t.Current}
+                </Badge>
+              )}
+            </HStack>
+          </chakra.button>
+        )
+      })}
+    </Stack>
+  )
+}
+
+export interface AssignDialogProps {
+  open: boolean
+  onClose: () => void
+  transfer: TransferRow | null
+  drivers: ResourceUser[]
+  cars: ResourceCar[]
+  /** Called with the new row after both writes. */
+  onAssigned: (row: TransferRow) => void
+}
+
+/**
+ * Driver and car in one dialog. The driver is written first, because
+ * assignDriver gives a carless transfer the driver's latest car, then the
+ * car when one was chosen explicitly. "Push the driver" is on by default and
+ * passed through to the hook, see AssignDriverOptions there. The SMS switch
+ * is the checkbox of the old picker, kept visible and disabled: nothing sends
+ * an SMS on either side (okf/architecture/notifications.md).
+ */
+export function AssignDialog({open, onClose, transfer, drivers, cars, onAssigned}: AssignDialogProps) {
+  const {t, tc} = useTransferStrings()
+  const [driverId, setDriverId] = useState<string | undefined>(undefined)
+  const [carId, setCarId] = useState<string>('')
+  const [driverSearch, setDriverSearch] = useState('')
+  const [carSearch, setCarSearch] = useState('')
+  const [push, setPush] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setDriverId(transfer?.driverId)
+      setCarId(transfer?.carId ?? '')
+      setDriverSearch('')
+      setCarSearch('')
+      setPush(true)
+      setError(null)
+    }
+  }, [open, transfer?.id, transfer?.driverId, transfer?.carId])
+
+  const filteredDrivers = useMemo(() => {
+    const q = driverSearch.trim().toLowerCase()
+    if (!q) return drivers
+    return drivers.filter(
+      d => driverDisplayName(d).toLowerCase().includes(q) || d.primaryEmailAddress.toLowerCase().includes(q)
+    )
+  }, [drivers, driverSearch])
+
+  const filteredCars = useMemo(() => {
+    const q = carSearch.trim().toLowerCase()
+    const list = q
+      ? cars.filter(c => carDisplayName(c).toLowerCase().includes(q) || c.licensePlate.toLowerCase().includes(q))
+      : cars
+    // The chosen driver's own cars first, that is the usual answer.
+    return [...list].sort((a, b) => Number(b.driverId === driverId) - Number(a.driverId === driverId))
+  }, [cars, carSearch, driverId])
+
+  const submit = async () => {
+    if (!transfer || !driverId) return
+    setBusy(true)
+    setError(null)
+    try {
+      let row = transfer
+      if (driverId !== transfer.driverId) {
+        row = await assignDriver(transfer.id, driverId, {notifyDriver: push})
+      }
+      if (carId && carId !== row.carId) {
+        row = await assignCar(transfer.id, carId)
+      }
+      toaster.success({title: t.ToastDriverAssigned})
+      onAssigned(row)
+      onClose()
+    } catch (err) {
+      setError(errorMessage(err, t.ToastFailed))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={t.AssignTitle}
+      size="lg"
+      busy={busy}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            {tc.Cancel}
+          </Button>
+          <Button colorPalette="brand" onClick={() => void submit()} loading={busy} disabled={!driverId}>
+            {t.AssignSubmit}
+          </Button>
+        </>
+      }>
+      <Stack gap="5">
+        {error && <ErrorBanner message={error} />}
+        <Stack gap="2">
+          <Text fontWeight="medium" textStyle="sm">
+            {t.AssignDriverLabel}
+          </Text>
+          <InputGroup startElement={<FaSearch />}>
+            <Input
+              size="sm"
+              placeholder={t.SearchDrivers}
+              value={driverSearch}
+              onChange={e => setDriverSearch(e.target.value)}
+            />
+          </InputGroup>
+          <Box maxH="40vh" overflowY="auto" pe="1">
+            <PickerList
+              items={filteredDrivers}
+              selectedId={driverId}
+              currentId={transfer?.driverId}
+              onSelect={setDriverId}
+              keyOf={d => d.id}
+              emptyLabel={t.NoDriversFound}
+              renderItem={d => (
+                <HStack gap="2" minW="0">
+                  <DriverColorDot color={d.driverColor} />
+                  <Box minW="0">
+                    <Text textStyle="sm" fontWeight="medium" truncate>
+                      {driverDisplayName(d)}
+                    </Text>
+                    <Text textStyle="xs" color="fg.muted" truncate>
+                      {d.primaryEmailAddress}
+                    </Text>
+                  </Box>
+                </HStack>
+              )}
+            />
+          </Box>
+        </Stack>
+
+        <Stack gap="2">
+          <Text fontWeight="medium" textStyle="sm">
+            {t.AssignCarLabel}
+          </Text>
+          <InputGroup startElement={<FaSearch />}>
+            <Input
+              size="sm"
+              placeholder={t.SearchVehicles}
+              value={carSearch}
+              onChange={e => setCarSearch(e.target.value)}
+            />
+          </InputGroup>
+          <Box maxH="30vh" overflowY="auto" pe="1">
+            <Stack gap="1">
+              <chakra.button
+                type="button"
+                textAlign="start"
+                w="full"
+                px="3"
+                py="2"
+                rounded="md"
+                borderWidth="1px"
+                colorPalette="brand"
+                borderColor={carId === '' ? 'colorPalette.solid' : 'border.default'}
+                bg={carId === '' ? 'colorPalette.subtle' : 'bg.surface'}
+                cursor="pointer"
+                onClick={() => setCarId('')}>
+                <Text textStyle="sm" color="fg.muted">
+                  {t.AssignCarKeep}
+                </Text>
+              </chakra.button>
+              <PickerList
+                items={filteredCars}
+                selectedId={carId}
+                currentId={transfer?.carId}
+                onSelect={setCarId}
+                keyOf={c => c.id}
+                emptyLabel={t.NoVehiclesFound}
+                renderItem={c => (
+                  <HStack gap="2" minW="0">
+                    <DriverColorDot color={c.color} />
+                    <Box minW="0">
+                      <Text textStyle="sm" fontWeight="medium" truncate>
+                        {carDisplayName(c)}
+                      </Text>
+                      <Text textStyle="xs" color="fg.muted" truncate>
+                        {c.licensePlate}
+                        {c.carClass ? ` · ${enumLabel(t, 'Class_', c.carClass)}` : ''}
+                      </Text>
+                    </Box>
+                  </HStack>
+                )}
+              />
+            </Stack>
+          </Box>
+        </Stack>
+
+        <Separator />
+
+        <Stack gap="3">
+          <Switch.Root checked={push} onCheckedChange={e => setPush(e.checked)} colorPalette="brand">
+            <Switch.HiddenInput />
+            <Switch.Control />
+            <Switch.Label>
+              <Text textStyle="sm">{t.PushDriver}</Text>
+              <Text textStyle="xs" color="fg.muted">
+                {t.PushDriverHint}
+              </Text>
+            </Switch.Label>
+          </Switch.Root>
+          <Switch.Root checked={false} disabled colorPalette="gray">
+            <Switch.HiddenInput />
+            <Switch.Control />
+            <Switch.Label>
+              <HStack gap="2">
+                <Text textStyle="sm">{t.SmsDriver}</Text>
+                <Badge size="sm" variant="outline" colorPalette="gray">
+                  {t.SmsComing}
+                </Badge>
+              </HStack>
+            </Switch.Label>
+          </Switch.Root>
+        </Stack>
+      </Stack>
+    </Sheet>
+  )
+}
+
+export interface PriceDialogProps {
+  open: boolean
+  onClose: () => void
+  transfer: TransferRow | null
+  onSaved: (row: TransferRow) => void
+}
+
+export function PriceDialog({open, onClose, transfer, onSaved}: PriceDialogProps) {
+  const {t, tc} = useTransferStrings()
+  const [value, setValue] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setValue(transfer?.price != null ? String(transfer.price) : '')
+      setError(null)
+    }
+  }, [open, transfer?.id, transfer?.price])
+
+  const submit = async () => {
+    if (!transfer) return
+    const n = Number(value.replace(',', '.'))
+    if (!Number.isFinite(n) || n < 0) {
+      setError(t.PriceInvalid)
+      return
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      const row = await setPrice(transfer.id, n)
+      toaster.success({title: t.ToastPriceSet})
+      onSaved(row)
+      onClose()
+    } catch (err) {
+      setError(errorMessage(err, t.ToastFailed))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={t.PriceTitle}
+      size="sm"
+      busy={busy}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            {tc.Cancel}
+          </Button>
+          <Button colorPalette="brand" onClick={() => void submit()} loading={busy}>
+            {t.PriceSubmit}
+          </Button>
+        </>
+      }>
+      <Stack gap="3">
+        {error && <ErrorBanner message={error} />}
+        <Field.Root invalid={!!error}>
+          <Field.Label>{t.PriceLabel}</Field.Label>
+          <Input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            autoFocus
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') void submit()
+            }}
+          />
+        </Field.Root>
+      </Stack>
+    </Sheet>
+  )
+}
+
+export interface StateDialogProps {
+  open: boolean
+  onClose: () => void
+  transfer: TransferRow | null
+  onSaved: (row: TransferRow) => void
+}
+
+/** The dispatcher's state modal: the real twelve, any of them. */
+export function StateDialog({open, onClose, transfer, onSaved}: StateDialogProps) {
+  const {t, tc} = useTransferStrings()
+  const label = useStateLabel()
+  const current = asTransferState(transfer?.state)
+  const [value, setValue] = useState<TransferState | undefined>(current)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setValue(asTransferState(transfer?.state))
+      setError(null)
+    }
+  }, [open, transfer?.id, transfer?.state])
+
+  const submit = async () => {
+    if (!transfer || !value) return
+    setBusy(true)
+    setError(null)
+    try {
+      const row = await updateTransferState(transfer.id, value)
+      toaster.success({title: t.ToastStateUpdated})
+      onSaved(row)
+      onClose()
+    } catch (err) {
+      setError(errorMessage(err, t.ToastFailed))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={t.StateTitle}
+      size="sm"
+      busy={busy}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            {tc.Cancel}
+          </Button>
+          <Button colorPalette="brand" onClick={() => void submit()} loading={busy} disabled={!value || value === current}>
+            {t.StateSubmit}
+          </Button>
+        </>
+      }>
+      <Stack gap="3">
+        {error && <ErrorBanner message={error} />}
+        <Text textStyle="xs" color="fg.muted">
+          {t.StateHint}
+        </Text>
+        <Stack gap="1" role="radiogroup" aria-label={t.StateLabel}>
+          {TRANSFER_STATES.map(s => {
+            const selected = s === value
+            return (
+              <chakra.button
+                key={s}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                textAlign="start"
+                w="full"
+                px="3"
+                py="2"
+                rounded="md"
+                borderWidth="1px"
+                colorPalette="brand"
+                borderColor={selected ? 'colorPalette.solid' : 'border.default'}
+                bg={selected ? 'colorPalette.subtle' : 'bg.surface'}
+                cursor="pointer"
+                _hover={{bg: selected ? 'colorPalette.subtle' : 'bg.subtle'}}
+                onClick={() => setValue(s)}>
+                <HStack justify="space-between">
+                  <HStack gap="3">
+                    <StatusBadge state={s} />
+                    <Text textStyle="sm">{label(s)}</Text>
+                  </HStack>
+                  {s === current && (
+                    <Badge size="sm" variant="outline" colorPalette="gray">
+                      {t.StateCurrent}
+                    </Badge>
+                  )}
+                </HStack>
+              </chakra.button>
+            )
+          })}
+        </Stack>
+      </Stack>
+    </Sheet>
+  )
+}
+
+// ============================================================
+// Create transfer
+// ============================================================
+
+export interface CreateTransferDialogProps {
+  open: boolean
+  onClose: () => void
+  customers: ResourceUser[]
+  cars: ResourceCar[]
+  onCreated: (row: TransferRow) => void
+  /**
+   * What the form opens with. The detail page's "Rückfahrt anlegen" hands in
+   * the origin's addresses swapped, its customer, passengers and extras, and
+   * the origin's id as referenceId, see returnTripPrefill.
+   */
+  prefill?: Partial<CreateForm>
+}
+
+export interface CreateForm {
+  /**
+   * The origin's id when this ride is a return trip, otherwise empty. Not a
+   * field on the form: the pylon mints the code from it, `-2` under the
+   * origin's stem, and the dialog only says which ride it returns from.
+   */
+  referenceId: string
+  /** The origin's code, for the title. */
+  originCode: string
+  customerId: string
+  pickupLocation: string
+  dropoffLocation: string
+  pickupDate: string
+  pickupTime: string
+  subject: string
+  firstName: string
+  lastName: string
+  phone: string
+  email: string
+  language: string
+  flightNumber: string
+  luggage: string
+  childSeats: string
+  extraTime: string
+  preferredCarClass: CarClass | ''
+  preferredCarName: string
+  transferCategory: TransferCategory
+  price: string
+  paymentMethode: PaymentMethod | ''
+  payingParty: PayingParty | ''
+  carId: string
+  message: string
+  extras: Record<string, number>
+}
+
+const emptyForm = (): CreateForm => ({
+  referenceId: '',
+  originCode: '',
+  customerId: '',
+  pickupLocation: '',
+  dropoffLocation: '',
+  pickupDate: localDay(new Date()),
+  pickupTime: '',
+  subject: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
+  email: '',
+  language: '',
+  flightNumber: '',
+  luggage: '',
+  childSeats: '',
+  extraTime: '',
+  preferredCarClass: '',
+  preferredCarName: '',
+  transferCategory: 'DISTANCE',
+  price: '',
+  paymentMethode: '',
+  payingParty: 'CUSTOMER',
+  carId: '',
+  message: '',
+  extras: {}
+})
+
+const clean = (s: string): string | undefined => (s.trim() ? s.trim() : undefined)
+
+/**
+ * The return trip of a ride, as the brief has the dialog open it: addresses
+ * swapped, the customer, the first passenger, the extras, the wishes and the
+ * money settings copied, the origin as referenceId, and no date or time, so
+ * the office has to say when. Flight and luggage are not copied, the way
+ * back is a different flight and usually the same bags, which the office
+ * types when it knows.
+ */
+export const returnTripPrefill = (origin: TransferRow): Partial<CreateForm> => {
+  const p = origin.passengers[0]
+  const extras: Record<string, number> = {}
+  origin.extras.forEach(x => {
+    extras[x.type] = x.amount
+  })
+  const category = TRANSFER_CATEGORIES.find(c => c === origin.transferCategory)
+  const payment = PAYMENT_METHODS.find(m => m === origin.paymentMethode)
+  const party = PAYING_PARTIES.find(m => m === origin.payingParty)
+  return {
+    referenceId: origin.id,
+    originCode: origin.code,
+    customerId: origin.customerId,
+    pickupLocation: origin.dropoff,
+    dropoffLocation: origin.pickup,
+    pickupDate: '',
+    pickupTime: '',
+    subject: origin.subject ?? '',
+    firstName: p?.firstName ?? '',
+    lastName: p?.lastName ?? '',
+    phone: p?.phone ?? '',
+    email: p?.email ?? '',
+    language: p?.language ?? '',
+    childSeats: origin.details?.childSeats ?? '',
+    preferredCarClass: CAR_CLASSES.find(c => c === origin.details?.preferredCarClass) ?? '',
+    preferredCarName: origin.details?.preferredCarName ?? '',
+    transferCategory: category ?? 'DISTANCE',
+    paymentMethode: payment ?? '',
+    payingParty: party ?? 'CUSTOMER',
+    message: origin.details?.message ?? '',
+    extras
+  }
+}
+
+function FormSection({title, children}: {title: string; children: React.ReactNode}) {
+  return (
+    <Stack gap="3">
+      <Text textStyle="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">
+        {title}
+      </Text>
+      {children}
+    </Stack>
+  )
+}
+
+/**
+ * The full createTransfer input, every field the resolver takes: the route
+ * and time, one passenger, flight, luggage, child seats, extra time, the car
+ * class and a preferred car, the category, price, payment method and paying
+ * party as selects over the enum, extras from the catalogue with a quantity,
+ * and the wishes. The type is not asked: a ride is a return trip because it
+ * references its origin, and the pylon derives ONE_WAY or RETURN_TRIP from
+ * that (okf/architecture/transfer-codes.md). Enums are native selects so the
+ * dialog works inside a drawer on a phone without a portal fight.
+ */
+export function CreateTransferDialog({open, onClose, customers, cars, onCreated, prefill}: CreateTransferDialogProps) {
+  const {t, tc} = useTransferStrings()
+  const [form, setForm] = useState<CreateForm>(emptyForm)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [touched, setTouched] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setForm({...emptyForm(), ...prefill})
+      setError(null)
+      setTouched(false)
+    }
+    // The prefill is read when the dialog opens, a new one arrives with a new open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  const set = <K extends keyof CreateForm>(key: K, value: CreateForm[K]) =>
+    setForm(f => ({...f, [key]: value}))
+
+  const missing = {
+    customerId: !form.customerId,
+    pickupLocation: !form.pickupLocation.trim(),
+    dropoffLocation: !form.dropoffLocation.trim(),
+    pickupDateTime: !form.pickupDate || !form.pickupTime
+  }
+  const invalid = Object.values(missing).some(Boolean)
+
+  const submit = async () => {
+    setTouched(true)
+    if (invalid) return
+    const when = new Date(`${form.pickupDate}T${form.pickupTime}`)
+    if (Number.isNaN(when.getTime())) {
+      setError(t.DateInvalid)
+      return
+    }
+    const priceNumber = form.price.trim() ? Number(form.price.replace(',', '.')) : undefined
+    if (priceNumber !== undefined && (!Number.isFinite(priceNumber) || priceNumber < 0)) {
+      setError(t.PriceInvalid)
+      return
+    }
+
+    const passenger = {
+      firstName: clean(form.firstName),
+      lastName: clean(form.lastName),
+      phone: clean(form.phone),
+      email: clean(form.email),
+      language: clean(form.language)
+    }
+    const hasPassenger = Object.values(passenger).some(Boolean)
+
+    const extras = Object.entries(form.extras)
+      .filter(([, amount]) => amount > 0)
+      .map(([type, amount]) => ({type: type as ExtraType, amount}))
+
+    const input: CreateTransferInput = {
+      customerId: form.customerId,
+      pickupLocation: form.pickupLocation.trim(),
+      dropoffLocation: form.dropoffLocation.trim(),
+      pickupDateTime: when.toISOString(),
+      subject: clean(form.subject),
+      price: priceNumber,
+      paymentMethode: form.paymentMethode || undefined,
+      payingParty: form.payingParty || undefined,
+      carId: form.carId || undefined,
+      referenceId: form.referenceId || undefined,
+      passengers: hasPassenger ? [passenger] : undefined,
+      extras: extras.length ? extras : undefined,
+      details: {
+        flightNumber: clean(form.flightNumber),
+        message: clean(form.message),
+        luggage: clean(form.luggage),
+        childSeats: clean(form.childSeats),
+        extraTime: clean(form.extraTime),
+        preferredCarClass: form.preferredCarClass || undefined,
+        preferredCarName: clean(form.preferredCarName),
+        transferCategory: form.transferCategory,
+        // Derived, never chosen: the pylon writes the same and a build from
+        // before the derivation would otherwise store ONE_WAY for a return.
+        transferType: form.referenceId ? 'RETURN_TRIP' : 'ONE_WAY'
+      }
+    }
+
+    setBusy(true)
+    setError(null)
+    try {
+      const row = await createTransfer(input)
+      toaster.success({title: t.TransferCreated})
+      onCreated(row)
+      onClose()
+    } catch (err) {
+      setError(errorMessage(err, t.TransferCreateFailed))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const customerLabel = (u: ResourceUser) => {
+    const name = driverDisplayName(u)
+    return name === u.primaryEmailAddress ? name : `${name} (${u.primaryEmailAddress})`
+  }
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={form.referenceId ? fill(t.CreateReturnTitle, {code: form.originCode}) : t.CreateTitle}
+      size="xl"
+      busy={busy}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
+            {tc.Cancel}
+          </Button>
+          <Button colorPalette="brand" onClick={() => void submit()} loading={busy} loadingText={t.CreateSubmitting}>
+            {t.CreateSubmit}
+          </Button>
+        </>
+      }>
+      <Stack gap="6">
+        {error && <ErrorBanner message={error} />}
+
+        {form.referenceId && (
+          <Box rounded="md" borderWidth="1px" borderColor="border.default" bg="bg.subtle" px="3" py="2">
+            <Text textStyle="sm" fontWeight="medium">
+              {t.LabelReturnOf}{' '}
+              <chakra.span fontFamily="mono">{form.originCode}</chakra.span>
+            </Text>
+            <Text textStyle="xs" color="fg.muted">
+              {t.ReturnPrefillHint}
+            </Text>
+          </Box>
+        )}
+
+        <FormSection title={t.SecRoute}>
+          <Field.Root required invalid={touched && missing.customerId}>
+            <Field.Label>
+              {t.LabelCustomer} <Field.RequiredIndicator />
+            </Field.Label>
+            <NativeSelect.Root size="sm">
+              <NativeSelect.Field
+                value={form.customerId}
+                onChange={e => set('customerId', e.target.value)}
+                placeholder={t.PlaceholderCustomer}>
+                {customers.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {customerLabel(u)}
+                  </option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+            <Field.ErrorText>{t.RequiredHint}</Field.ErrorText>
+          </Field.Root>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root required invalid={touched && missing.pickupLocation}>
+              <Field.Label>
+                {t.LabelPickup} <Field.RequiredIndicator />
+              </Field.Label>
+              <Input
+                size="sm"
+                placeholder={t.PlaceholderPickup}
+                value={form.pickupLocation}
+                onChange={e => set('pickupLocation', e.target.value)}
+              />
+              <Field.ErrorText>{t.RequiredHint}</Field.ErrorText>
+            </Field.Root>
+            <Field.Root required invalid={touched && missing.dropoffLocation}>
+              <Field.Label>
+                {t.LabelDropoff} <Field.RequiredIndicator />
+              </Field.Label>
+              <Input
+                size="sm"
+                placeholder={t.PlaceholderDropoff}
+                value={form.dropoffLocation}
+                onChange={e => set('dropoffLocation', e.target.value)}
+              />
+              <Field.ErrorText>{t.RequiredHint}</Field.ErrorText>
+            </Field.Root>
+          </Stack>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root required invalid={touched && missing.pickupDateTime}>
+              <Field.Label>
+                {t.LabelDateTime} <Field.RequiredIndicator />
+              </Field.Label>
+              <HStack gap="2">
+                <Input size="sm" type="date" value={form.pickupDate} onChange={e => set('pickupDate', e.target.value)} />
+                <Input size="sm" type="time" value={form.pickupTime} onChange={e => set('pickupTime', e.target.value)} />
+              </HStack>
+              <Field.ErrorText>{t.DateInvalid}</Field.ErrorText>
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelSubject}</Field.Label>
+              <Input
+                size="sm"
+                placeholder={t.PlaceholderSubject}
+                value={form.subject}
+                onChange={e => set('subject', e.target.value)}
+              />
+            </Field.Root>
+          </Stack>
+        </FormSection>
+
+        <FormSection title={t.SecPassenger}>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root>
+              <Field.Label>{t.LabelFirstName}</Field.Label>
+              <Input size="sm" value={form.firstName} onChange={e => set('firstName', e.target.value)} />
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelLastName}</Field.Label>
+              <Input size="sm" value={form.lastName} onChange={e => set('lastName', e.target.value)} />
+            </Field.Root>
+          </Stack>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root>
+              <Field.Label>{t.LabelPhone}</Field.Label>
+              <Input size="sm" type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} />
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelEmail}</Field.Label>
+              <Input size="sm" type="email" value={form.email} onChange={e => set('email', e.target.value)} />
+            </Field.Root>
+            <Field.Root maxW={{md: '32'}}>
+              <Field.Label>{t.LabelLanguage}</Field.Label>
+              <Input size="sm" placeholder="de" value={form.language} onChange={e => set('language', e.target.value)} />
+            </Field.Root>
+          </Stack>
+        </FormSection>
+
+        <FormSection title={t.SecRide}>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root>
+              <Field.Label>{t.LabelFlight}</Field.Label>
+              <Input
+                size="sm"
+                placeholder={t.PlaceholderFlight}
+                value={form.flightNumber}
+                onChange={e => set('flightNumber', e.target.value)}
+              />
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelLuggage}</Field.Label>
+              <Input
+                size="sm"
+                placeholder={t.PlaceholderLuggage}
+                value={form.luggage}
+                onChange={e => set('luggage', e.target.value)}
+              />
+            </Field.Root>
+          </Stack>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root>
+              <Field.Label>{t.LabelChildSeats}</Field.Label>
+              <Input
+                size="sm"
+                placeholder={t.PlaceholderChildSeats}
+                value={form.childSeats}
+                onChange={e => set('childSeats', e.target.value)}
+              />
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelExtraTime}</Field.Label>
+              <Input
+                size="sm"
+                placeholder={t.PlaceholderExtraTime}
+                value={form.extraTime}
+                onChange={e => set('extraTime', e.target.value)}
+              />
+            </Field.Root>
+          </Stack>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root>
+              <Field.Label>{t.LabelCarClass}</Field.Label>
+              <NativeSelect.Root size="sm">
+                <NativeSelect.Field
+                  value={form.preferredCarClass}
+                  onChange={e => set('preferredCarClass', e.target.value as CarClass | '')}>
+                  <option value="">{t.NoneOption}</option>
+                  {CAR_CLASSES.map(c => (
+                    <option key={c} value={c}>
+                      {enumLabel(t, 'Class_', c)}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelCarName}</Field.Label>
+              <Input size="sm" value={form.preferredCarName} onChange={e => set('preferredCarName', e.target.value)} />
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelCar}</Field.Label>
+              <NativeSelect.Root size="sm">
+                <NativeSelect.Field value={form.carId} onChange={e => set('carId', e.target.value)}>
+                  <option value="">{t.NoneOption}</option>
+                  {cars.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {carDisplayName(c)} · {c.licensePlate}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </Field.Root>
+          </Stack>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root>
+              <Field.Label>{t.LabelCategory}</Field.Label>
+              <NativeSelect.Root size="sm">
+                <NativeSelect.Field
+                  value={form.transferCategory}
+                  onChange={e => set('transferCategory', e.target.value as TransferCategory)}>
+                  {TRANSFER_CATEGORIES.map(c => (
+                    <option key={c} value={c}>
+                      {enumLabel(t, 'Cat_', c)}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </Field.Root>
+          </Stack>
+        </FormSection>
+
+        <FormSection title={t.SecMoney}>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root>
+              <Field.Label>{t.LabelPrice}</Field.Label>
+              <Input
+                size="sm"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={form.price}
+                onChange={e => set('price', e.target.value)}
+              />
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelPaymentMethod}</Field.Label>
+              <NativeSelect.Root size="sm">
+                <NativeSelect.Field
+                  value={form.paymentMethode}
+                  onChange={e => set('paymentMethode', e.target.value as PaymentMethod | '')}>
+                  <option value="">{t.NoneOption}</option>
+                  {PAYMENT_METHODS.map(m => (
+                    <option key={m} value={m}>
+                      {enumLabel(t, 'Pay_', m)}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </Field.Root>
+            <Field.Root>
+              <Field.Label>{t.LabelPayingParty}</Field.Label>
+              <NativeSelect.Root size="sm">
+                <NativeSelect.Field
+                  value={form.payingParty}
+                  onChange={e => set('payingParty', e.target.value as PayingParty | '')}>
+                  {PAYING_PARTIES.map(p => (
+                    <option key={p} value={p}>
+                      {enumLabel(t, 'Party_', p)}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </Field.Root>
+          </Stack>
+        </FormSection>
+
+        <FormSection title={t.SecExtras}>
+          <Stack gap="2">
+            {EXTRA_TYPES.map(type => {
+              const amount = form.extras[type] ?? 0
+              return (
+                <HStack key={type} justify="space-between" gap="3">
+                  <Checkbox.Root
+                    checked={amount > 0}
+                    colorPalette="brand"
+                    onCheckedChange={e => set('extras', {...form.extras, [type]: e.checked ? 1 : 0})}>
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                    <Checkbox.Label>{enumLabel(t, 'Extra_', type)}</Checkbox.Label>
+                  </Checkbox.Root>
+                  <NumberInput.Root
+                    size="sm"
+                    w="24"
+                    min={0}
+                    max={20}
+                    value={String(amount)}
+                    aria-label={t.ExtrasQuantity}
+                    onValueChange={e => set('extras', {...form.extras, [type]: Math.max(0, e.valueAsNumber || 0)})}>
+                    <NumberInput.Control />
+                    <NumberInput.Input />
+                  </NumberInput.Root>
+                </HStack>
+              )
+            })}
+          </Stack>
+        </FormSection>
+
+        <FormSection title={t.SectionNotes}>
+          <Field.Root>
+            <Field.Label>{t.LabelMessage}</Field.Label>
+            <Textarea
+              size="sm"
+              rows={3}
+              placeholder={t.PlaceholderMessage}
+              value={form.message}
+              onChange={e => set('message', e.target.value)}
+            />
+          </Field.Root>
+        </FormSection>
+      </Stack>
+    </Sheet>
+  )
+}
+
+// ============================================================
+// Filters
+// ============================================================
+
+export type DateChip = 'today' | 'tomorrow' | 'all' | 'custom'
+export type SortOrder = 'earliest' | 'latest'
+
+interface DateFilterProps {
+  value: DateChip
+  onChange: (v: DateChip) => void
+  range: {start: string; end: string}
+  onRangeChange: (r: {start: string; end: string}) => void
+}
+
+export function DateFilter({value, onChange, range, onRangeChange}: DateFilterProps) {
+  const {t, tc} = useTransferStrings()
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState(range)
+
+  useEffect(() => {
+    if (open) setDraft(range)
+  }, [open, range])
+
+  const items: Array<{value: DateChip; label: string}> = [
+    {value: 'today', label: tc.DateToday},
+    {value: 'tomorrow', label: tc.DateTomorrow},
+    {value: 'all', label: tc.DateAll}
+  ]
+
+  return (
+    <HStack gap="2" flexWrap="wrap">
+      <SegmentGroup.Root
+        size="sm"
+        value={value === 'custom' ? null : value}
+        onValueChange={e => {
+          if (e.value) onChange(e.value as DateChip)
+        }}>
+        <SegmentGroup.Indicator />
+        {items.map(item => (
+          <SegmentGroup.Item key={item.value} value={item.value}>
+            <SegmentGroup.ItemText>{item.label}</SegmentGroup.ItemText>
+            <SegmentGroup.ItemHiddenInput />
+          </SegmentGroup.Item>
+        ))}
+      </SegmentGroup.Root>
+      <Popover.Root
+        open={open}
+        onOpenChange={e => setOpen(e.open)}
+        positioning={{placement: 'bottom-start'}}
+        lazyMount
+        unmountOnExit>
+        <Popover.Trigger asChild>
+          <Button size="sm" variant={value === 'custom' ? 'solid' : 'outline'} colorPalette={value === 'custom' ? 'brand' : 'gray'}>
+            <FaCalendarAlt />
+            {value === 'custom' && range.start && range.end ? `${range.start} – ${range.end}` : tc.DateCustom}
+          </Button>
+        </Popover.Trigger>
+        <Portal>
+          <Popover.Positioner>
+            <Popover.Content w="xs">
+              <Popover.Arrow />
+              <Popover.Body>
+                <Stack gap="3">
+                  <Field.Root>
+                    <Field.Label>{t.CustomRangeFrom}</Field.Label>
+                    <Input
+                      size="sm"
+                      type="date"
+                      value={draft.start}
+                      onChange={e => setDraft(d => ({...d, start: e.target.value}))}
+                    />
+                  </Field.Root>
+                  <Field.Root>
+                    <Field.Label>{t.CustomRangeTo}</Field.Label>
+                    <Input
+                      size="sm"
+                      type="date"
+                      value={draft.end}
+                      onChange={e => setDraft(d => ({...d, end: e.target.value}))}
+                    />
+                  </Field.Root>
+                  <Button
+                    size="sm"
+                    colorPalette="brand"
+                    disabled={!draft.start || !draft.end || draft.end < draft.start}
+                    onClick={() => {
+                      onRangeChange(draft)
+                      onChange('custom')
+                      setOpen(false)
+                    }}>
+                    {t.CustomRangeApply}
+                  </Button>
+                </Stack>
+              </Popover.Body>
+            </Popover.Content>
+          </Popover.Positioner>
+        </Portal>
+      </Popover.Root>
+    </HStack>
+  )
+}
+
+interface StatusFilterProps {
+  selected: Set<TransferState>
+  onChange: (next: Set<TransferState>) => void
+}
+
+export function StatusFilter({selected, onChange}: StatusFilterProps) {
+  const {t} = useTransferStrings()
+  const label = useStateLabel()
+  const all = selected.size === TRANSFER_STATES.length
+  const openOnly = () => onChange(new Set(TRANSFER_STATES.filter(s => !isClosed(s))))
+  return (
+    <Popover.Root positioning={{placement: 'bottom-start'}} lazyMount unmountOnExit>
+      <Popover.Trigger asChild>
+        <Button size="sm" variant="outline" colorPalette="gray">
+          <FaFilter />
+          {t.FilterStatus}
+          {!all && (
+            <Badge size="sm" colorPalette="brand" variant="solid">
+              {selected.size}
+            </Badge>
+          )}
+        </Button>
+      </Popover.Trigger>
+      <Portal>
+        <Popover.Positioner>
+          <Popover.Content w="2xs">
+            <Popover.Arrow />
+            <Popover.Header>
+              <HStack justify="space-between">
+                <Text textStyle="sm" fontWeight="medium">
+                  {fill(t.FilterStatusCount, {count: selected.size, total: TRANSFER_STATES.length})}
+                </Text>
+                <HStack gap="1">
+                  <Button size="2xs" variant="ghost" onClick={() => onChange(new Set(TRANSFER_STATES))}>
+                    {t.FilterStatusAll}
+                  </Button>
+                  <Button size="2xs" variant="ghost" onClick={openOnly}>
+                    {t.FilterOpenOnly}
+                  </Button>
+                  <Button size="2xs" variant="ghost" onClick={() => onChange(new Set())}>
+                    {t.FilterStatusNone}
+                  </Button>
+                </HStack>
+              </HStack>
+            </Popover.Header>
+            <Popover.Body maxH="60vh" overflowY="auto">
+              <Stack gap="1">
+                {TRANSFER_STATES.map(s => (
+                  <Checkbox.Root
+                    key={s}
+                    size="sm"
+                    colorPalette="brand"
+                    checked={selected.has(s)}
+                    onCheckedChange={e => {
+                      const next = new Set(selected)
+                      if (e.checked) next.add(s)
+                      else next.delete(s)
+                      onChange(next)
+                    }}>
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                    <Checkbox.Label>
+                      <HStack gap="2">
+                        <StatusBadge state={s} size="sm" />
+                        <Text textStyle="sm">{label(s)}</Text>
+                      </HStack>
+                    </Checkbox.Label>
+                  </Checkbox.Root>
+                ))}
+              </Stack>
+            </Popover.Body>
+          </Popover.Content>
+        </Popover.Positioner>
+      </Portal>
+    </Popover.Root>
+  )
+}
+
+export function SortMenu({value, onChange}: {value: SortOrder; onChange: (v: SortOrder) => void}) {
+  const {tc} = useTransferStrings()
+  return (
+    <Menu.Root lazyMount unmountOnExit>
+      <Menu.Trigger asChild>
+        <Button size="sm" variant="outline" colorPalette="gray">
+          {value === 'earliest' ? <FaSortAmountUp /> : <FaSortAmountDown />}
+          <chakra.span display={{base: 'none', sm: 'inline'}}>
+            {value === 'earliest' ? tc.SortEarliest : tc.SortLatest}
+          </chakra.span>
+        </Button>
+      </Menu.Trigger>
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.RadioItemGroup value={value} onValueChange={e => onChange(e.value as SortOrder)}>
+              <Menu.RadioItem value="earliest">
+                <Menu.ItemIndicator />
+                <Menu.ItemText>{tc.SortEarliest}</Menu.ItemText>
+              </Menu.RadioItem>
+              <Menu.RadioItem value="latest">
+                <Menu.ItemIndicator />
+                <Menu.ItemText>{tc.SortLatest}</Menu.ItemText>
+              </Menu.RadioItem>
+            </Menu.RadioItemGroup>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
+    </Menu.Root>
+  )
+}
+
+// ============================================================
+// Columns
+// ============================================================
+
+export type ColumnId =
+  | 'code'
+  | 'status'
+  | 'route'
+  | 'pickup'
+  | 'passenger'
+  | 'capacity'
+  | 'flight'
+  | 'driver'
+  | 'vehicle'
+  | 'price'
+  | 'customer'
+  | 'category'
+  | 'payment'
+  | 'extras'
+  | 'notes'
+
+export interface ColumnConfig {
+  id: ColumnId
+  visible: boolean
+}
+
+const COLUMN_WIDTHS: Record<ColumnId, number> = {
+  code: 96,
+  status: 120,
+  route: 240,
+  pickup: 130,
+  passenger: 160,
+  capacity: 110,
+  flight: 90,
+  driver: 160,
+  vehicle: 150,
+  price: 110,
+  customer: 160,
+  category: 110,
+  payment: 110,
+  extras: 160,
+  notes: 180
+}
+
+const ACTIONS_WIDTH = 72
+
+const DEFAULT_COLUMNS: ColumnConfig[] = [
+  {id: 'code', visible: true},
+  {id: 'status', visible: true},
+  {id: 'route', visible: true},
+  {id: 'pickup', visible: true},
+  {id: 'passenger', visible: true},
+  {id: 'capacity', visible: true},
+  {id: 'flight', visible: false},
+  {id: 'driver', visible: true},
+  {id: 'vehicle', visible: true},
+  {id: 'price', visible: true},
+  {id: 'customer', visible: false},
+  {id: 'category', visible: false},
+  {id: 'payment', visible: false},
+  {id: 'extras', visible: false},
+  {id: 'notes', visible: false}
+]
+
+const COLUMNS_KEY = 'taxi-app.transfers.columns'
+
+/** The column layout, remembered per browser. Storage may be missing or throw, then the default. */
+const loadColumns = (): ColumnConfig[] => {
+  try {
+    const raw = window.localStorage.getItem(COLUMNS_KEY)
+    if (!raw) return DEFAULT_COLUMNS
+    const parsed = JSON.parse(raw) as ColumnConfig[]
+    const known = new Set(DEFAULT_COLUMNS.map(c => c.id))
+    const kept = parsed.filter(c => known.has(c.id))
+    // A column added since the layout was saved is appended with its default.
+    DEFAULT_COLUMNS.forEach(c => {
+      if (!kept.some(k => k.id === c.id)) kept.push(c)
+    })
+    return kept
+  } catch {
+    return DEFAULT_COLUMNS
+  }
+}
+
+const saveColumns = (columns: ColumnConfig[]) => {
+  try {
+    window.localStorage.setItem(COLUMNS_KEY, JSON.stringify(columns))
+  } catch {
+    /* a browser that blocks storage keeps the layout for the tab only */
+  }
+}
+
+const columnLabel = (t: TransfersStrings, id: ColumnId): string => {
+  const map: Record<ColumnId, string> = {
+    code: t.ColCode,
+    status: t.ColStatus,
+    route: t.ColRoute,
+    pickup: t.ColPickup,
+    passenger: t.ColPassenger,
+    capacity: t.ColCapacity,
+    flight: t.ColFlight,
+    driver: t.ColDriver,
+    vehicle: t.ColVehicle,
+    price: t.ColPrice,
+    customer: t.ColCustomer,
+    category: t.ColCategory,
+    payment: t.ColPayment,
+    extras: t.ColExtras,
+    notes: t.ColNotes
+  }
+  return map[id]
+}
+
+function ColumnsPopover({
+  columns,
+  onChange
+}: {
+  columns: ColumnConfig[]
+  onChange: (next: ColumnConfig[]) => void
+}) {
+  const {t, tc} = useTransferStrings()
+  const [dragged, setDragged] = useState<ColumnId | null>(null)
+
+  const move = (from: ColumnId, to: ColumnId) => {
+    if (from === to) return
+    const next = [...columns]
+    const fromIndex = next.findIndex(c => c.id === from)
+    const toIndex = next.findIndex(c => c.id === to)
+    if (fromIndex < 0 || toIndex < 0) return
+    const [removed] = next.splice(fromIndex, 1)
+    if (removed) next.splice(toIndex, 0, removed)
+    onChange(next)
+  }
+
+  return (
+    <Popover.Root positioning={{placement: 'bottom-end'}} lazyMount unmountOnExit>
+      <Popover.Trigger asChild>
+        <Button size="sm" variant="outline" colorPalette="gray">
+          <FaColumns />
+          <chakra.span display={{base: 'none', sm: 'inline'}}>{tc.ColumnsLabel}</chakra.span>
+        </Button>
+      </Popover.Trigger>
+      <Portal>
+        <Popover.Positioner>
+          <Popover.Content w="2xs">
+            <Popover.Arrow />
+            <Popover.Header>
+              <HStack justify="space-between">
+                <Box>
+                  <Text textStyle="sm" fontWeight="medium">
+                    {tc.ColumnsCustomize}
+                  </Text>
+                  <Text textStyle="xs" color="fg.muted">
+                    {tc.ColumnsDragHint}
+                  </Text>
+                </Box>
+                <Button size="2xs" variant="ghost" onClick={() => onChange(DEFAULT_COLUMNS)}>
+                  <FaUndo />
+                  {tc.ColumnsReset}
+                </Button>
+              </HStack>
+            </Popover.Header>
+            <Popover.Body maxH="60vh" overflowY="auto">
+              <Stack gap="0.5">
+                {columns.map(col => (
+                  <HStack
+                    key={col.id}
+                    gap="2"
+                    px="2"
+                    py="1.5"
+                    rounded="md"
+                    cursor="grab"
+                    draggable
+                    opacity={dragged === col.id ? 0.5 : 1}
+                    _hover={{bg: 'bg.subtle'}}
+                    onDragStart={() => setDragged(col.id)}
+                    onDragOver={e => {
+                      e.preventDefault()
+                      if (dragged) move(dragged, col.id)
+                    }}
+                    onDragEnd={() => setDragged(null)}>
+                    <Box color="fg.muted" flexShrink={0}>
+                      <FaGripVertical />
+                    </Box>
+                    <Checkbox.Root
+                      size="sm"
+                      colorPalette="brand"
+                      checked={col.visible}
+                      onCheckedChange={e =>
+                        onChange(columns.map(c => (c.id === col.id ? {...c, visible: e.checked === true} : c)))
+                      }>
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control />
+                      <Checkbox.Label>{columnLabel(t, col.id)}</Checkbox.Label>
+                    </Checkbox.Root>
+                  </HStack>
+                ))}
+              </Stack>
+            </Popover.Body>
+          </Popover.Content>
+        </Popover.Positioner>
+      </Portal>
+    </Popover.Root>
+  )
+}
+
+// ============================================================
+// Rows, enriched with the driver's name and colour
+// ============================================================
+
+export interface BoardRow extends TransferRow {
+  driverName?: string
+  driverColor?: string
+  driverPhone?: string
+  customerName?: string
+  carName?: string
+  carPlate?: string
+}
+
+const enrich = (
+  rows: TransferRow[],
+  drivers: ResourceUser[],
+  users: ResourceUser[],
+  cars: ResourceCar[]
+): BoardRow[] => {
+  const driverMap = new Map(drivers.map(d => [d.id, d]))
+  const userMap = new Map(users.map(u => [u.id, u]))
+  const carMap = new Map(cars.map(c => [c.id, c]))
+  return rows.map(r => {
+    const driver = r.driverId ? driverMap.get(r.driverId) ?? userMap.get(r.driverId) : undefined
+    const customer = userMap.get(r.customerId)
+    const car = r.carId ? carMap.get(r.carId) : undefined
+    return {
+      ...r,
+      driverName: driver ? driverDisplayName(driver) : r.driverId ? r.driverId : undefined,
+      driverColor: driver?.driverColor,
+      customerName: customer ? driverDisplayName(customer) : undefined,
+      carName: r.car?.carName ?? car?.carName ?? (r.car?.licensePlate || car?.licensePlate),
+      carPlate: r.car?.licensePlate ?? car?.licensePlate
+    }
+  })
+}
+
+export const groupByDay = (rows: BoardRow[]): Array<[string, BoardRow[]]> => {
+  const m = new Map<string, BoardRow[]>()
+  rows.forEach(r => {
+    const k = r.rideDateISO || ''
+    const list = m.get(k)
+    if (list) list.push(r)
+    else m.set(k, [r])
+  })
+  return [...m.entries()]
+}
+
+/** The date header's stripe: green for today, yellow for tomorrow, nothing otherwise. */
+/**
+ * The two stripes on a transfer, and why there are two.
+ *
+ * Every row and card carries two independent 4px edges. The LEFT edge is WHO:
+ * the driver's colour, the same colour as on the map and in the picker, and
+ * nothing when nobody is assigned. The RIGHT edge is WHEN: green when the
+ * ride is today, yellow when it is tomorrow, nothing otherwise. They answer
+ * two different questions and a dispatcher reads both at a glance without
+ * opening the row, so neither may be dropped in favour of the other.
+ *
+ * This is the rule of the original resource pages (gatsby-jaen-resource,
+ * February 2026: borderLeftColor = driver, borderRightColor = green.400 today
+ * and yellow.400 tomorrow). The Tailwind prototype of 2026-02-26 moved the
+ * date colour onto the day header's left edge and dropped the right stripe,
+ * and the Chakra port copied that. Restored 2026-09-05 at the owner's request.
+ */
+type DayTone = 'green' | 'yellow' | undefined
+
+const dayPalette = (day: string, today: string, tomorrow: string): DayTone =>
+  day === today ? 'green' : day === tomorrow ? 'yellow' : undefined
+
+export interface RowActions {
+  onOpen: (row: BoardRow) => void
+  onAssign?: (row: BoardRow) => void
+  onPrice?: (row: BoardRow) => void
+  onState?: (row: BoardRow) => void
+}
+
+function CapacityText({row}: {row: BoardRow}) {
+  const {t} = useTransferStrings()
+  const pax = row.passengers.length
+  return (
+    <Stack gap="0.5" textStyle="sm" whiteSpace="nowrap">
+      <HStack gap="1">
+        <Box color="fg.muted">
+          <FaUsers size={12} />
+        </Box>
+        <span>
+          {pax || '–'} {t.Pax}
+        </span>
+      </HStack>
+      {row.details?.luggage && (
+        <HStack gap="1" color="fg.muted">
+          <FaSuitcase size={12} />
+          <Text truncate maxW="24">
+            {row.details.luggage}
+          </Text>
+        </HStack>
+      )}
+    </Stack>
+  )
+}
+
+function DriverCell({row, actions}: {row: BoardRow; actions: RowActions}) {
+  const {t} = useTransferStrings()
+  const stop = (e: React.MouseEvent) => e.stopPropagation()
+  if (row.driverId) {
+    return (
+      <HStack gap="2" minW="0">
+        <DriverColorDot color={row.driverColor} />
+        <Text textStyle="sm" fontWeight="medium" truncate>
+          {row.driverName}
+        </Text>
+      </HStack>
+    )
+  }
+  if (isClosed(row.state) || !actions.onAssign) {
+    return (
+      <Text textStyle="sm" color="fg.muted">
+        –
+      </Text>
+    )
+  }
+  return (
+    <Badge
+      as="button"
+      colorPalette="red"
+      variant="subtle"
+      cursor="pointer"
+      onClick={e => {
+        stop(e)
+        actions.onAssign?.(row)
+      }}>
+      {t.NotAssigned}
+    </Badge>
+  )
+}
+
+function VehicleCell({row, actions}: {row: BoardRow; actions: RowActions}) {
+  const {t} = useTransferStrings()
+  if (row.carId) {
+    return (
+      <Box textStyle="sm" minW="0">
+        <Text fontWeight="medium" truncate>
+          {row.carName}
+        </Text>
+        {row.carPlate && (
+          <Text textStyle="xs" color="fg.muted" truncate>
+            {row.carPlate}
+          </Text>
+        )}
+      </Box>
+    )
+  }
+  if (isClosed(row.state) || !actions.onAssign) {
+    return (
+      <Text textStyle="sm" color="fg.muted">
+        –
+      </Text>
+    )
+  }
+  if (!row.driverId) {
+    return (
+      <Badge colorPalette="gray" variant="outline">
+        {t.AssignDriverFirst}
+      </Badge>
+    )
+  }
+  return (
+    <Badge
+      as="button"
+      colorPalette="orange"
+      variant="subtle"
+      cursor="pointer"
+      onClick={e => {
+        e.stopPropagation()
+        actions.onAssign?.(row)
+      }}>
+      {t.AssignVehicle}
+    </Badge>
+  )
+}
+
+function PriceCell({row, actions}: {row: BoardRow; actions: RowActions}) {
+  const {t} = useTransferStrings()
+  if (row.price != null) {
+    return (
+      <MoneyText
+        value={row.price}
+        fontWeight="semibold"
+        cursor={actions.onPrice ? 'pointer' : undefined}
+        onClick={e => {
+          if (!actions.onPrice) return
+          e.stopPropagation()
+          actions.onPrice(row)
+        }}
+      />
+    )
+  }
+  if (isClosed(row.state) || !actions.onPrice) {
+    return (
+      <Text textStyle="sm" color="fg.muted">
+        –
+      </Text>
+    )
+  }
+  return (
+    <Badge
+      as="button"
+      colorPalette="orange"
+      variant="subtle"
+      cursor="pointer"
+      onClick={e => {
+        e.stopPropagation()
+        actions.onPrice?.(row)
+      }}>
+      {t.SetPrice}
+    </Badge>
+  )
+}
+
+function StatusCell({row, actions}: {row: BoardRow; actions: RowActions}) {
+  if (!actions.onState) return <StatusBadge state={row.state} />
+  return (
+    <StatusBadge
+      state={row.state}
+      as="button"
+      cursor="pointer"
+      onClick={e => {
+        e.stopPropagation()
+        actions.onState?.(row)
+      }}
+    />
+  )
+}
+
+function ExtrasText({row}: {row: BoardRow}) {
+  const {t} = useTransferStrings()
+  if (!row.extras.length) {
+    return (
+      <Text textStyle="sm" color="fg.muted">
+        –
+      </Text>
+    )
+  }
+  return (
+    <Stack gap="0.5">
+      {row.extras.map((x, i) => (
+        <HStack key={i} justify="space-between" textStyle="xs" color="fg.muted" gap="2">
+          <Text truncate>{enumLabel(t, 'Extra_', x.type)}</Text>
+          <span>× {x.amount}</span>
+        </HStack>
+      ))}
+    </Stack>
+  )
+}
+
+// ============================================================
+// The table
+// ============================================================
+
+interface BoardTableProps {
+  columns: ColumnConfig[]
+  groups: Array<[string, BoardRow[]]>
+  today: string
+  tomorrow: string
+  actions: RowActions
+}
+
+export function BoardTable({columns, groups, today, tomorrow, actions}: BoardTableProps) {
+  const {t, tc, code} = useTransferStrings()
+  const visible = columns.filter(c => c.visible)
+  const minWidth = visible.reduce((sum, c) => sum + COLUMN_WIDTHS[c.id], ACTIONS_WIDTH)
+
+  const cell = (row: BoardRow, id: ColumnId): React.ReactNode => {
+    switch (id) {
+      case 'code':
+        return (
+          <Text fontWeight="medium" whiteSpace="nowrap" fontFamily="mono" textStyle="sm">
+            {row.code}
+          </Text>
+        )
+      case 'status':
+        return <StatusCell row={row} actions={actions} />
+      case 'route':
+        return (
+          <Box minW="0">
+            <Text textStyle="sm" fontWeight="medium" truncate>
+              {row.pickup}
+            </Text>
+            <Text textStyle="sm" color="fg.muted" truncate>
+              {row.dropoff}
+            </Text>
+          </Box>
+        )
+      case 'pickup':
+        return (
+          <Box whiteSpace="nowrap">
+            <Text textStyle="sm" fontWeight="medium">
+              {formatDay(row.rideDateISO, code)}
+            </Text>
+            <Text textStyle="sm" color="fg.muted">
+              {row.rideTime}
+            </Text>
+          </Box>
+        )
+      case 'passenger': {
+        const name = passengerName(row)
+        const phone = row.passengers[0]?.phone
+        return (
+          <Box minW="0">
+            <Text textStyle="sm" fontWeight="medium" truncate>
+              {name || '–'}
+            </Text>
+            {phone && (
+              <Text textStyle="xs" color="fg.muted" truncate>
+                {phone}
+              </Text>
+            )}
+          </Box>
+        )
+      }
+      case 'capacity':
+        return <CapacityText row={row} />
+      case 'flight':
+        return (
+          <Text textStyle="sm" color={row.details?.flightNumber ? undefined : 'fg.muted'}>
+            {row.details?.flightNumber || '–'}
+          </Text>
+        )
+      case 'driver':
+        return <DriverCell row={row} actions={actions} />
+      case 'vehicle':
+        return <VehicleCell row={row} actions={actions} />
+      case 'price':
+        return <PriceCell row={row} actions={actions} />
+      case 'customer':
+        return (
+          <Box minW="0">
+            <Text textStyle="sm" fontWeight="medium" truncate>
+              {row.customerName || '–'}
+            </Text>
+            <Text textStyle="xs" color="fg.muted" truncate>
+              {row.customerId}
+            </Text>
+          </Box>
+        )
+      case 'category':
+        return (
+          <Text textStyle="sm">
+            {enumLabel(t, 'Cat_', row.transferCategory)}
+            {row.transferType ? ` · ${enumLabel(t, 'Type_', row.transferType)}` : ''}
+          </Text>
+        )
+      case 'payment':
+        return (
+          <Text textStyle="sm" color={row.paymentMethode ? undefined : 'fg.muted'}>
+            {row.paymentMethode ? enumLabel(t, 'Pay_', row.paymentMethode) : '–'}
+            {row.payingParty ? ` · ${enumLabel(t, 'Party_', row.payingParty)}` : ''}
+          </Text>
+        )
+      case 'extras':
+        return <ExtrasText row={row} />
+      case 'notes':
+        return (
+          <Text textStyle="sm" color="fg.muted" truncate title={row.details?.message}>
+            {row.details?.message || '–'}
+          </Text>
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <Table.ScrollArea borderWidth="1px" rounded="lg" bg="bg.surface">
+      <Table.Root size="sm" variant="line" tableLayout="fixed" style={{minWidth}}>
+        <Table.Header>
+          <Table.Row bg="bg.subtle">
+            {visible.map(c => (
+              <Table.ColumnHeader key={c.id} style={{width: COLUMN_WIDTHS[c.id]}} color="fg.muted" whiteSpace="nowrap">
+                {columnLabel(t, c.id)}
+              </Table.ColumnHeader>
+            ))}
+            <Table.ColumnHeader style={{width: ACTIONS_WIDTH}} />
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {groups.map(([day, rows]) => {
+            const palette = dayPalette(day, today, tomorrow)
+            return (
+              <React.Fragment key={day || 'none'}>
+                <Table.Row
+                  colorPalette={palette}
+                  bg={palette ? 'colorPalette.subtle' : 'bg.subtle'}
+                  borderInlineStartWidth="4px"
+                  borderInlineStartColor="transparent"
+                  borderInlineEndWidth="4px"
+                  borderInlineEndColor={palette ? 'colorPalette.solid' : 'transparent'}>
+                  <Table.Cell colSpan={visible.length + 1} py="1.5">
+                    <Text textStyle="sm" fontWeight="semibold" color={palette ? 'colorPalette.fg' : 'fg.muted'}>
+                      {formatDay(day, code)}
+                    </Text>
+                  </Table.Cell>
+                </Table.Row>
+                {rows.map(row => {
+                  const done = asTransferState(row.state) === 'COMPLETED'
+                  return (
+                    <Table.Row
+                      key={row.id}
+                      cursor="pointer"
+                      opacity={done ? 0.7 : 1}
+                      colorPalette={palette}
+                      borderInlineStartWidth="4px"
+                      borderInlineStartColor={row.driverColor ?? 'transparent'}
+                      borderInlineEndWidth="4px"
+                      borderInlineEndColor={palette ? 'colorPalette.solid' : 'transparent'}
+                      _hover={{bg: 'bg.subtle'}}
+                      onClick={() => actions.onOpen(row)}>
+                      {visible.map(c => (
+                        <Table.Cell key={c.id} verticalAlign="middle" style={{width: COLUMN_WIDTHS[c.id]}}>
+                          {cell(row, c.id)}
+                        </Table.Cell>
+                      ))}
+                      <Table.Cell verticalAlign="middle" style={{width: ACTIONS_WIDTH}}>
+                        <Button
+                          size="xs"
+                          variant="plain"
+                          colorPalette="brand"
+                          onClick={e => {
+                            e.stopPropagation()
+                            actions.onOpen(row)
+                          }}>
+                          {tc.Details}
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
+                  )
+                })}
+              </React.Fragment>
+            )
+          })}
+        </Table.Body>
+      </Table.Root>
+    </Table.ScrollArea>
+  )
+}
+
+// ============================================================
+// The cards
+// ============================================================
+
+interface TransferCardProps {
+  row: BoardRow
+  expanded: boolean
+  onToggle: () => void
+  actions: RowActions
+  /** The driver's own list hides the dispatcher's cells. */
+  compact?: boolean
+  /** WHEN, on the right edge: green today, yellow tomorrow. See dayPalette. */
+  dayTone?: DayTone
+}
+
+export function TransferCard({row, expanded, onToggle, actions, compact = false, dayTone}: TransferCardProps) {
+  const {t, tc, code} = useTransferStrings()
+  const name = passengerName(row)
+  return (
+    <Box
+      rounded="lg"
+      borderWidth="1px"
+      borderColor="border.default"
+      bg="bg.surface"
+      p="3"
+      w="full"
+      minW="0"
+      colorPalette={dayTone}
+      borderInlineStartWidth="4px"
+      borderInlineStartColor={row.driverColor ?? 'border.emphasized'}
+      borderInlineEndWidth={dayTone ? '4px' : '1px'}
+      borderInlineEndColor={dayTone ? 'colorPalette.solid' : 'border.default'}
+      onClick={() => actions.onOpen(row)}
+      cursor="pointer">
+      <HStack justify="space-between" gap="2" minW="0">
+        <HStack gap="2" minW="0">
+          <Text fontWeight="semibold" textStyle="sm" fontFamily="mono" truncate>
+            {row.code}
+          </Text>
+          <StatusCell row={row} actions={actions} />
+        </HStack>
+        <HStack gap="1" flexShrink={0}>
+          <Text textStyle="sm" color="fg.muted" whiteSpace="nowrap">
+            {row.rideTime}
+          </Text>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            aria-label={expanded ? t.ShowLess : t.ShowMore}
+            onClick={e => {
+              e.stopPropagation()
+              onToggle()
+            }}>
+            {expanded ? <FaChevronUp /> : <FaChevronDown />}
+          </IconButton>
+        </HStack>
+      </HStack>
+
+      <HStack align="flex-start" gap="2" mt="2" textStyle="sm" minW="0">
+        <Box color="fg.muted" mt="0.5">
+          <FaMapMarkerAlt />
+        </Box>
+        <Box flex="1" minW="0">
+          <Text fontWeight="medium">{row.pickup}</Text>
+          <Text color="fg.muted">→ {row.dropoff}</Text>
+        </Box>
+      </HStack>
+
+      {/* The dispatcher's eye needs the driver on the closed card, that is the whole board on a phone. */}
+      {!compact && !expanded && (
+        <HStack justify="space-between" mt="2" gap="2" onClick={e => e.stopPropagation()}>
+          <DriverCell row={row} actions={actions} />
+          <PriceCell row={row} actions={actions} />
+        </HStack>
+      )}
+
+      {expanded && (
+        <Stack gap="2" mt="3" onClick={e => e.stopPropagation()}>
+          <HStack gap="2" textStyle="sm" color="fg.muted">
+            <FaCalendarAlt />
+            <span>
+              {formatDay(row.rideDateISO, code)} · {row.rideTime}
+            </span>
+          </HStack>
+          <HStack gap="4" textStyle="sm" flexWrap="wrap">
+            <HStack gap="1.5">
+              <Box color="fg.muted">
+                <FaUsers />
+              </Box>
+              <span>{row.passengers.length || '–'}</span>
+            </HStack>
+            {row.details?.luggage && (
+              <HStack gap="1.5">
+                <Box color="fg.muted">
+                  <FaSuitcase />
+                </Box>
+                <span>{row.details.luggage}</span>
+              </HStack>
+            )}
+            {row.details?.flightNumber && (
+              <HStack gap="1.5">
+                <Box color="fg.muted">
+                  <FaPlane />
+                </Box>
+                <span>{row.details.flightNumber}</span>
+              </HStack>
+            )}
+          </HStack>
+          <Separator />
+          <Stack gap="1.5" textStyle="sm">
+            <HStack gap="2">
+              <Text color="fg.muted" w="24" flexShrink={0}>
+                {t.Passenger}
+              </Text>
+              <Text truncate>{name || '–'}</Text>
+            </HStack>
+            {!compact && (
+              <HStack gap="2">
+                <Text color="fg.muted" w="24" flexShrink={0}>
+                  {t.ColDriver}
+                </Text>
+                <DriverCell row={row} actions={actions} />
+              </HStack>
+            )}
+            <HStack gap="2">
+              <Text color="fg.muted" w="24" flexShrink={0}>
+                {t.ColVehicle}
+              </Text>
+              <VehicleCell row={row} actions={compact ? {onOpen: actions.onOpen} : actions} />
+            </HStack>
+            {(!compact || row.price != null) && (
+              <HStack gap="2">
+                <Text color="fg.muted" w="24" flexShrink={0}>
+                  {t.ColPrice}
+                </Text>
+                <PriceCell row={row} actions={compact ? {onOpen: actions.onOpen} : actions} />
+              </HStack>
+            )}
+            {row.details?.message && (
+              <HStack gap="2" align="flex-start">
+                <Text color="fg.muted" w="24" flexShrink={0}>
+                  {t.Wishes}
+                </Text>
+                <Text>{row.details.message}</Text>
+              </HStack>
+            )}
+          </Stack>
+          {row.extras.length > 0 && (
+            <>
+              <Separator />
+              <ExtrasText row={row} />
+            </>
+          )}
+          <Button size="sm" variant="outline" colorPalette="brand" onClick={() => actions.onOpen(row)}>
+            {tc.Details}
+          </Button>
+        </Stack>
+      )}
+    </Box>
+  )
+}
+
+interface CardListProps {
+  groups: Array<[string, BoardRow[]]>
+  today: string
+  tomorrow: string
+  actions: RowActions
+  compact?: boolean
+}
+
+export function CardList({groups, today, tomorrow, actions, compact}: CardListProps) {
+  const {code} = useTransferStrings()
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const toggle = (id: string) =>
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  return (
+    <Stack gap="3">
+      {groups.map(([day, rows]) => {
+        const palette = dayPalette(day, today, tomorrow)
+        return (
+          <React.Fragment key={day || 'none'}>
+            <Box
+              colorPalette={palette}
+              px="3"
+              py="1.5"
+              rounded="md"
+              bg={palette ? 'colorPalette.subtle' : 'bg.subtle'}
+              borderInlineEndWidth="4px"
+              borderInlineEndColor={palette ? 'colorPalette.solid' : 'transparent'}>
+              <Text textStyle="sm" fontWeight="semibold" color={palette ? 'colorPalette.fg' : 'fg.muted'}>
+                {formatDay(day, code)}
+              </Text>
+            </Box>
+            {rows.map(row => (
+              <TransferCard
+                key={row.id}
+                row={row}
+                expanded={expanded.has(row.id)}
+                onToggle={() => toggle(row.id)}
+                actions={actions}
+                compact={compact}
+                dayTone={palette}
+              />
+            ))}
+          </React.Fragment>
+        )
+      })}
+    </Stack>
+  )
+}
+
+// ============================================================
+// Pagination
+// ============================================================
+
+interface PagerProps {
+  page: number
+  pages: number
+  hasNext: boolean
+  onFirst: () => void
+  onPrev: () => void
+  onNext: () => void
+}
+
+export function Pager({page, pages, hasNext, onFirst, onPrev, onNext}: PagerProps) {
+  const {t, tc} = useTransferStrings()
+  return (
+    <HStack justify="space-between" flexWrap="wrap" gap="2">
+      <Text textStyle="sm" color="fg.muted">
+        {fill(t.PageLabel, {page, pages})}
+      </Text>
+      <HStack gap="1">
+        <IconButton size="sm" variant="outline" aria-label={tc.Previous} disabled={page <= 1} onClick={onFirst} minH="44px">
+          <FaAngleDoubleLeft />
+        </IconButton>
+        <Button size="sm" variant="outline" disabled={page <= 1} onClick={onPrev} minH="44px">
+          <FaChevronLeft />
+          <chakra.span display={{base: 'none', sm: 'inline'}}>{tc.Previous}</chakra.span>
+        </Button>
+        <Button size="sm" variant="outline" disabled={!hasNext} onClick={onNext} minH="44px">
+          <chakra.span display={{base: 'none', sm: 'inline'}}>{tc.Next}</chakra.span>
+          <FaChevronRight />
+        </Button>
+      </HStack>
+    </HStack>
+  )
+}
+
+// ============================================================
+// The list, shared by the board and "my rides"
+// ============================================================
+
+export interface ListState {
+  dateChip: DateChip
+  setDateChip: (v: DateChip) => void
+  range: {start: string; end: string}
+  setRange: (r: {start: string; end: string}) => void
+  statuses: Set<TransferState>
+  setStatuses: (s: Set<TransferState>) => void
+  search: string
+  setSearch: (s: string) => void
+  sort: SortOrder
+  setSort: (s: SortOrder) => void
+  unassignedOnly: boolean
+  setUnassignedOnly: (v: boolean) => void
+}
+
+const OPEN_STATES = new Set<TransferState>(TRANSFER_STATES.filter(s => !isClosed(s)))
+
+export function useListState(initialChip: DateChip, initialStatuses: ReadonlySet<TransferState>): ListState {
+  const [dateChip, setDateChip] = useState<DateChip>(initialChip)
+  const [range, setRange] = useState({start: '', end: ''})
+  const [statuses, setStatuses] = useState<Set<TransferState>>(() => new Set(initialStatuses))
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<SortOrder>('earliest')
+  const [unassignedOnly, setUnassignedOnly] = useState(false)
+  return {
+    dateChip,
+    setDateChip,
+    range,
+    setRange,
+    statuses,
+    setStatuses,
+    search,
+    setSearch,
+    sort,
+    setSort,
+    unassignedOnly,
+    setUnassignedOnly
+  }
+}
+
+/**
+ * The server window from the chips: a day is sent as a bare date, which the
+ * resolver reads as the whole day. One selected state is pushed down as well.
+ * Everything else, search, several states, "without driver", is filtered
+ * over the page that came back.
+ */
+export const useServerArgs = (state: ListState, today: string, tomorrow: string, pageSize: number) => {
+  const oneState = state.statuses.size === 1 ? [...state.statuses][0] : undefined
+  return useMemo(() => {
+    const base = {pageSize, state: oneState}
+    if (state.dateChip === 'today') return {...base, fromISO: today, toISO: today}
+    if (state.dateChip === 'tomorrow') return {...base, fromISO: tomorrow, toISO: tomorrow}
+    if (state.dateChip === 'custom' && state.range.start && state.range.end) {
+      return {...base, fromISO: state.range.start, toISO: state.range.end}
+    }
+    return base
+  }, [state.dateChip, state.range.start, state.range.end, oneState, today, tomorrow, pageSize])
+}
+
+export const applyClientFilters = (rows: BoardRow[], state: ListState): BoardRow[] => {
+  let result = rows.filter(r => {
+    const s = asTransferState(r.state)
+    return s ? state.statuses.has(s) : true
+  })
+  if (state.unassignedOnly) result = result.filter(r => !isClosed(r.state) && (!r.driverId || !r.carId))
+  const q = state.search.trim().toLowerCase()
+  if (q) {
+    result = result.filter(r =>
+      [
+        r.code,
+        r.id,
+        r.pickup,
+        r.dropoff,
+        r.driverName,
+        r.customerName,
+        r.carPlate,
+        r.carName,
+        passengerName(r),
+        r.passengers[0]?.phone,
+        r.details?.flightNumber,
+        r.subject
+      ].some(v => v?.toLowerCase().includes(q))
+    )
+  }
+  return [...result].sort((a, b) => {
+    const ka = `${a.rideDateISO} ${a.rideTime}`
+    const kb = `${b.rideDateISO} ${b.rideTime}`
+    return state.sort === 'earliest' ? ka.localeCompare(kb) : kb.localeCompare(ka)
+  })
+}
+
+// ============================================================
+// The dispatcher's board
+// ============================================================
+
+const BOARD_PAGE_SIZE = 25
+
+function DispatchBoard() {
+  const {t, tc} = useTransferStrings()
+  const navigate = useAppNavigate()
+  const mobile = useIsMobile()
+  const {drivers} = useDrivers()
+  const {cars, refetch: refetchCars} = useCars()
+  const {users} = useUsers(100)
+
+  const today = useMemo(() => localDay(new Date()), [])
+  const tomorrow = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return localDay(d)
+  }, [])
+
+  const list = useListState('today', new Set(TRANSFER_STATES))
+  const args = useServerArgs(list, today, tomorrow, BOARD_PAGE_SIZE)
+  const {rows, isLoading, error, pagination, nextPage, prevPage, firstPage, refetch, replaceRow} =
+    useTransferList(args)
+
+  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
+  useEffect(() => {
+    setColumns(loadColumns())
+  }, [])
+  const changeColumns = (next: ColumnConfig[]) => {
+    setColumns(next)
+    saveColumns(next)
+  }
+
+  const [assignFor, setAssignFor] = useState<TransferRow | null>(null)
+  const [priceFor, setPriceFor] = useState<TransferRow | null>(null)
+  const [stateFor, setStateFor] = useState<TransferRow | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+
+  const enriched = useMemo(() => enrich(rows, drivers, users, cars), [rows, drivers, users, cars])
+  const filtered = useMemo(() => applyClientFilters(enriched, list), [enriched, list])
+  const groups = useMemo(() => groupByDay(filtered), [filtered])
+
+  const actions: RowActions = {
+    onOpen: row => navigate(transferPath(row)),
+    onAssign: setAssignFor,
+    onPrice: setPriceFor,
+    onState: setStateFor
+  }
+
+  const onSaved = useCallback(
+    (row: TransferRow) => {
+      replaceRow(row)
+    },
+    [replaceRow]
+  )
+
+  return (
+    <Box p={{base: '4', md: '6'}} maxW="full">
+      <Stack gap="5">
+        <PageHeader
+          title={t.Heading}
+          subtitle={t.Subtitle}
+          actions={
+            <>
+              <Button size="sm" colorPalette="brand" onClick={() => setCreateOpen(true)}>
+                <FaPlus />
+                {t.AddTransfer}
+              </Button>
+              <IconButton size="sm" variant="outline" aria-label={tc.Refresh} onClick={refetch}>
+                <FaSyncAlt />
+              </IconButton>
+            </>
+          }
+        />
+
+        <Flex gap="2" flexWrap="wrap" align="center">
+          <DateFilter value={list.dateChip} onChange={list.setDateChip} range={list.range} onRangeChange={list.setRange} />
+          <Box w={{base: 'full', md: '52'}}>
+            <InputGroup startElement={<FaSearch />}>
+              <Input size="sm" placeholder={tc.Search} value={list.search} onChange={e => list.setSearch(e.target.value)} />
+            </InputGroup>
+          </Box>
+          <StatusFilter selected={list.statuses} onChange={list.setStatuses} />
+          <SortMenu value={list.sort} onChange={list.setSort} />
+          <Switch.Root
+            size="sm"
+            colorPalette="brand"
+            checked={list.unassignedOnly}
+            onCheckedChange={e => list.setUnassignedOnly(e.checked)}>
+            <Switch.HiddenInput />
+            <Switch.Control />
+            <Switch.Label textStyle="sm">{t.UnassignedOnly}</Switch.Label>
+          </Switch.Root>
+        </Flex>
+
+        {list.unassignedOnly && (
+          <HStack>
+            <Badge colorPalette="red" variant="subtle" gap="1">
+              {t.UnassignedOnly}
+              <chakra.button type="button" display="inline-flex" onClick={() => list.setUnassignedOnly(false)}>
+                <FaTimes size={10} />
+              </chakra.button>
+            </Badge>
+          </HStack>
+        )}
+
+        <HStack justify="space-between" flexWrap="wrap" gap="2">
+          <Text textStyle="sm" color="fg.muted">
+            {fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
+          </Text>
+          {!mobile && <ColumnsPopover columns={columns} onChange={changeColumns} />}
+        </HStack>
+
+        {error && <ErrorBanner message={error} onRetry={refetch} />}
+
+        <Box position="relative" minH="40">
+          {isLoading && <LoadingOverlay overlay />}
+          {!isLoading && filtered.length === 0 ? (
+            <EmptyState title={t.EmptyMessage} description={t.EmptyHint} />
+          ) : mobile ? (
+            <CardList groups={groups} today={today} tomorrow={tomorrow} actions={actions} />
+          ) : (
+            <BoardTable columns={columns} groups={groups} today={today} tomorrow={tomorrow} actions={actions} />
+          )}
+        </Box>
+
+        <Pager
+          page={pagination.currentPage}
+          pages={pagination.totalPages}
+          hasNext={pagination.hasNextPage}
+          onFirst={firstPage}
+          onPrev={prevPage}
+          onNext={nextPage}
+        />
+      </Stack>
+
+      <AssignDialog
+        open={!!assignFor}
+        onClose={() => setAssignFor(null)}
+        transfer={assignFor}
+        drivers={drivers}
+        cars={cars}
+        onAssigned={row => {
+          onSaved(row)
+          // A driver's latest car may have been created on the way, keep the plates fresh.
+          refetchCars()
+        }}
+      />
+      <PriceDialog open={!!priceFor} onClose={() => setPriceFor(null)} transfer={priceFor} onSaved={onSaved} />
+      <StateDialog open={!!stateFor} onClose={() => setStateFor(null)} transfer={stateFor} onSaved={onSaved} />
+      <CreateTransferDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        customers={users}
+        cars={cars}
+        onCreated={() => {
+          list.setDateChip('all')
+          firstPage()
+        }}
+      />
+    </Box>
+  )
+}
+
+// ============================================================
+// My rides: the driver's list, and a customer's bookings
+// ============================================================
+
+function MyRides({heading, subtitle}: {heading: string; subtitle?: string}) {
+  const {t, tc} = useTransferStrings()
+  const navigate = useAppNavigate()
+
+  const today = useMemo(() => localDay(new Date()), [])
+  const tomorrow = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return localDay(d)
+  }, [])
+
+  // A driver wants what is still to do. The chips and the status filter can widen it.
+  const list = useListState('today', OPEN_STATES)
+
+  const args = useServerArgs(list, today, tomorrow, 50)
+  // No driverId is sent: the backend confines the list to the caller.
+  const {rows, isLoading, error, pagination, nextPage, prevPage, firstPage, refetch} = useTransferList(args)
+  // Offline the list is the stored answer, see shared/offline.ts. When the
+  // connection returns it is read again and the banner above it goes.
+  useRefetchOnReconnect(refetch)
+
+  const enriched = useMemo(() => enrich(rows, [], [], []), [rows])
+  const filtered = useMemo(() => applyClientFilters(enriched, list), [enriched, list])
+  const groups = useMemo(() => groupByDay(filtered), [filtered])
+
+  const actions: RowActions = {onOpen: row => navigate(transferPath(row))}
+
+  return (
+    <Box p={{base: '4', md: '6'}} maxW="full">
+      <Stack gap="5">
+        <PageHeader
+          title={heading}
+          subtitle={subtitle}
+          actions={
+            <IconButton size="sm" variant="outline" aria-label={tc.Refresh} onClick={refetch}>
+              <FaSyncAlt />
+            </IconButton>
+          }
+        />
+
+        <Flex gap="2" flexWrap="wrap" align="center">
+          <DateFilter value={list.dateChip} onChange={list.setDateChip} range={list.range} onRangeChange={list.setRange} />
+          <StatusFilter selected={list.statuses} onChange={list.setStatuses} />
+          <SortMenu value={list.sort} onChange={list.setSort} />
+        </Flex>
+
+        <OfflineBanner />
+        {error && <ErrorBanner message={error} onRetry={refetch} />}
+
+        <Box position="relative" minH="40">
+          {isLoading && <LoadingOverlay overlay />}
+          {!isLoading && filtered.length === 0 ? (
+            <EmptyState title={t.EmptyMessage} description={t.EmptyHint} icon={<FaCar />} />
+          ) : (
+            <CardList groups={groups} today={today} tomorrow={tomorrow} actions={actions} compact />
+          )}
+        </Box>
+
+        {(pagination.hasNextPage || pagination.currentPage > 1) && (
+          <Pager
+            page={pagination.currentPage}
+            pages={pagination.totalPages}
+            hasNext={pagination.hasNextPage}
+            onFirst={firstPage}
+            onPrev={prevPage}
+            onNext={nextPage}
+          />
+        )}
+      </Stack>
+    </Box>
+  )
+}
+
+// ============================================================
+// The screen
 // ============================================================
 
 export function TransfersView() {
-  const { users } = useUsers()
-  // The picker offers drivers, not every account. See useDrivers: it asks for
-  // the brand's driver role and drops deactivated people.
-  const { drivers } = useDrivers()
-  const { cars } = useCars()
+  const caller = useCaller()
+  const {t} = useTransferStrings()
 
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-  const { strings: tc } = getI18nCommon(i18nCode)
-
-  const i18nColumns = useMemo<ColumnConfig[]>(() => [
-    { id: 'code', label: t.ColId, visible: true },
-    { id: 'status', label: t.ColStatus, visible: true },
-    { id: 'route', label: t.ColRoute, visible: true },
-    { id: 'pickup', label: t.ColPickup, visible: true },
-    { id: 'capacity', label: t.ColCapacity, visible: true },
-    { id: 'driver', label: t.ColDriver, visible: true },
-    { id: 'vehicle', label: t.ColVehicle, visible: true },
-    { id: 'price', label: t.ColPrice, visible: true },
-    { id: 'customer', label: t.ColCustomer, visible: false },
-    { id: 'category', label: t.ColCategory, visible: false },
-    { id: 'payment', label: t.ColPayment, visible: false },
-  ], [t])
-
-  const [columns, setColumns] = useState<ColumnConfig[]>(i18nColumns)
-  const [colPopoverOpen, setColPopoverOpen] = useState(false)
-  const [sortOrder, setSortOrder] = useState<SortOrder>('earliest')
-  const [dateFilter, setDateFilter] = useState<DateFilterValue>('all')
-  const [customRange, setCustomRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null })
-  const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set(['Completed', 'Planned', 'In Progress', 'Cancelled']))
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTransfer, setSelectedTransfer] = useState<ResourceTransfer | null>(null)
-  const [createModalOpen, setCreateModalOpen] = useState(false)
-  const [mutating, setMutating] = useState(false)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-
-  const today = useMemo(() => new Date().toISOString().split('T')[0] ?? '', [])
-  const tomorrow = useMemo(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0] ?? '' }, [])
-
-  const serverDateFilter = useMemo<TransferDateFilter | undefined>(() => {
-    if (dateFilter === 'today') return { fromISO: today, toISO: today }
-    if (dateFilter === 'tomorrow') return { fromISO: tomorrow, toISO: tomorrow }
-    if (dateFilter === 'custom' && customRange.start && customRange.end) {
-      const s = customRange.start.toISOString().split('T')[0] ?? ''
-      const e = customRange.end.toISOString().split('T')[0] ?? ''
-      return { fromISO: s, toISO: e }
-    }
-    return undefined
-  }, [dateFilter, today, tomorrow, customRange])
-
-  const { transfers, isLoading, error, pagination, nextPage, prevPage, goToPage, refetch } = useTransfers(ITEMS_PER_PAGE, serverDateFilter)
-
-  const mapStatus = (state: string): string => {
-    const s = state?.toLowerCase?.() ?? ''
-    if (s === 'completed') return 'Completed'
-    if (s === 'planned' || s === 'pending') return 'Planned'
-    if (s === 'cancelled' || s === 'canceled' || s === 'terminated') return 'Cancelled'
-    if (s === 'in_progress' || s === 'active') return 'In Progress'
-    return 'Planned'
-  }
-
-  // ---------- Mutation handlers (optimistic) ----------
-  const handleAssignDriver = useCallback(async (transferId: string, driverId: string) => {
-    const driver = drivers.find(u => u.id === driverId)
-    setMutating(true)
-    setToast({ message: t.ToastAssigning.replace('{name}', driver?.username || 'driver'), type: 'success' })
-    try {
-      await assignDriverMutation(transferId, driverId)
-      setToast({ message: t.ToastAssignedSuccess.replace('{name}', driver?.username || 'Driver'), type: 'success' })
-      refetch()
-    } catch (err) {
-      setToast({ message: err instanceof Error ? err.message : t.ToastAssignDriverFailed, type: 'error' })
-    } finally { setMutating(false) }
-  }, [users, refetch, t])
-
-  const handleAssignCar = useCallback(async (transferId: string, carId: string) => {
-    const car = cars.find(c => c.id === carId)
-    setMutating(true)
-    setToast({ message: t.ToastAssigning.replace('{name}', car?.carName || car?.licensePlate || 'vehicle'), type: 'success' })
-    try {
-      await assignCarMutation(transferId, carId)
-      setToast({ message: t.ToastAssignedSuccess.replace('{name}', car?.carName || car?.licensePlate || 'Vehicle'), type: 'success' })
-      refetch()
-    } catch (err) {
-      setToast({ message: err instanceof Error ? err.message : t.ToastAssignVehicleFailed, type: 'error' })
-    } finally { setMutating(false) }
-  }, [cars, refetch, t])
-
-  const handleSetPrice = useCallback(async (transferId: string, price: number) => {
-    setMutating(true)
-    try {
-      await setPriceMutation(transferId, price)
-      setToast({ message: t.ToastPriceUpdated, type: 'success' })
-      refetch()
-    } catch (err) {
-      setToast({ message: err instanceof Error ? err.message : t.ToastPriceFailed, type: 'error' })
-    } finally { setMutating(false) }
-  }, [refetch, t])
-
-  const handleCreateTransfer = useCallback(async (args: CreateTransferArgs) => {
-    setMutating(true)
-    try {
-      await createTransferMutation(args)
-      setToast({ message: t.TransferCreated, type: 'success' })
-      setCreateModalOpen(false)
-      refetch()
-    } catch (err) {
-      setToast({ message: err instanceof Error ? err.message : t.TransferCreateFailed, type: 'error' })
-    } finally { setMutating(false) }
-  }, [refetch, t])
-
-  // ---------- Client-side filtering / sorting (within current server page) ----------
-  const filteredRows = useMemo(() => {
-    let result = transfers.filter(tr => selectedStatuses.has(mapStatus(tr.state)))
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      result = result.filter(tr => (tr.referenceId?.toLowerCase().includes(q)) || (tr.pickup?.toLowerCase().includes(q)) || (tr.dropoff?.toLowerCase().includes(q)) || (tr.driverName?.toLowerCase().includes(q)) || (tr.customerName?.toLowerCase().includes(q)) || (tr.id?.toLowerCase().includes(q)))
-    }
-    return [...result].sort((a, b) => {
-      const dtA = `${a.rideDateISO} ${a.rideTime}`, dtB = `${b.rideDateISO} ${b.rideTime}`
-      return sortOrder === 'earliest' ? dtA.localeCompare(dtB) : dtB.localeCompare(dtA)
-    })
-  }, [transfers, selectedStatuses, sortOrder, searchQuery])
-
-  const paginatedRows = filteredRows
-  const visibleColumns = columns.filter(c => c.visible)
-  const totalMinWidth = visibleColumns.reduce((s, c) => s + (COLUMN_WIDTHS[c.id] || 100), 60)
-
-  const enrichedTransfers = useMemo(() => {
-    // Drivers first, then the current page of accounts. `drivers` comes from
-    // usersByRole and is the whole list, so a driver is found whatever page of
-    // `users` happens to be loaded, and it is the only one of the two that
-    // carries a colour.
-    const userMap = new Map<string, (typeof users)[number]>()
-    users.forEach(u => userMap.set(u.id, u))
-    drivers.forEach(d => userMap.set(d.id, d))
-    const carMap = new Map(cars.map(c => [c.id, c]))
-    return paginatedRows.map(tr => {
-      const enriched = { ...tr }
-      const driver = tr.driverId ? userMap.get(tr.driverId) : undefined
-
-      // The colour is set even when the transfer already carries a driver
-      // name. It used to hang off the same `!tr.driverName` branch as the name
-      // lookup, so any transfer that arrived named came out uncoloured.
-      if (driver?.driverColor) {
-        enriched.driverColor = driver.driverColor
-      }
-
-      if (tr.driverId && !tr.driverName) {
-        if (driver) {
-          enriched.driverName = driver.details?.firstName && driver.details?.lastName
-            ? `${driver.details.firstName} ${driver.details.lastName}`
-            : driver.username
-          enriched.driverPhone = undefined
-        } else {
-          enriched.driverName = tr.driverId
-        }
-      }
-      const carId = tr.vehicle
-      if (carId && !tr.carLicensePlate) {
-        const car = carMap.get(carId)
-        if (car) {
-          enriched.vehicle = car.carName || car.licensePlate
-          enriched.carLicensePlate = car.licensePlate
-          enriched.carColor = car.color
-          enriched.carClass = car.carClass
-        }
-      }
-      return enriched
-    })
-  }, [paginatedRows, users, drivers, cars])
-
-  const enrichedRowsByDate = useMemo(() => {
-    const m: Record<string, ResourceTransfer[]> = {}
-    enrichedTransfers.forEach(r => { const k = r.rideDateISO || 'unknown'; if (!m[k]) m[k] = []; m[k].push(r) })
-    return m
-  }, [enrichedTransfers])
-  const enrichedSortedDates = useMemo(() => Object.keys(enrichedRowsByDate).sort(), [enrichedRowsByDate])
-
-  useEffect(() => {
-    if (selectedTransfer) {
-      const updated = enrichedTransfers.find(tr => tr.id === selectedTransfer.id)
-      if (updated) setSelectedTransfer(updated)
-    }
-  }, [enrichedTransfers])
-
-  const onSelectTransfer = useCallback((tr: ResourceTransfer) => setSelectedTransfer(prev => prev?.id === tr.id ? null : tr), [])
-
-  // ---------- Cell renderer ----------
-  const renderCell = (tr: ResourceTransfer, colId: string) => {
-    const w = COLUMN_WIDTHS[colId] || 100
-    const td = 'p-4 align-middle'
-    switch (colId) {
-      case 'code': {
-        const code = tr.referenceId || tr.id.replace(/^transfer:/, '').replace(/^legacy:/, '#')
-        return <td key={colId} className={td} style={{ width: w }}><span className="font-medium whitespace-nowrap">{code}</span></td>
-      }
-      case 'status': return <td key={colId} className={td} style={{ width: w }}><StatusPill status={tr.state} /></td>
-      case 'route': return <td key={colId} className={td} style={{ width: w }}><div className="space-y-1"><div className="text-sm font-medium">{tr.pickup}</div><div className="text-sm text-muted-foreground/60">{tr.dropoff}</div></div></td>
-      case 'pickup': return <td key={colId} className={td} style={{ width: w }}><div className="space-y-1 whitespace-nowrap"><div className="text-sm font-medium">{formatDateDisplay(tr.rideDateISO)}</div><div className="text-sm text-muted-foreground/60">{tr.rideTime}</div></div></td>
-      case 'capacity': return <td key={colId} className={td} style={{ width: w }}><div className="flex items-center gap-1 text-sm whitespace-nowrap"><IconUsers className="h-3 w-3 text-muted-foreground/60" /><span>{tr.passengerCount ?? '-'} {t.Pax}</span></div></td>
-      case 'driver': {
-        const isCancelled = mapStatus(tr.state) === 'Cancelled'
-        const hasDriver = !!tr.driverName
-        return (
-          <td key={colId} className={td} style={{ width: w }}>
-            {hasDriver ? (
-              <div className="text-sm"><div className="font-medium flex items-center gap-1.5">{tr.driverColor && <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 inline-block" style={{ backgroundColor: tr.driverColor }} />}{tr.driverName}</div>{tr.driverPhone && <div className="text-xs text-muted-foreground/60">{tr.driverPhone}</div>}</div>
-            ) : isCancelled ? (
-              <span className="text-sm text-muted-foreground">-</span>
-            ) : (
-              <NotAssignedDriverBadge transfer={tr} drivers={drivers} onAssign={handleAssignDriver} loading={mutating} />
-            )}
-          </td>
-        )
-      }
-      case 'vehicle': {
-        const isCancelled = mapStatus(tr.state) === 'Cancelled'
-        const hasVehicle = !!(tr.carLicensePlate || tr.vehicle)
-        const hasDriver = !!(tr.driverName || tr.driverId)
-        return (
-          <td key={colId} className={td} style={{ width: w }}>
-            {hasVehicle ? (
-              <div className="text-sm"><div className="font-medium">{tr.vehicle || '-'}</div><div className="text-xs text-muted-foreground/60">{tr.carLicensePlate}</div></div>
-            ) : isCancelled ? (
-              <span className="text-sm text-muted-foreground">-</span>
-            ) : !hasDriver ? (
-              <AssignDriverFirstBadge />
-            ) : (
-              <NotAssignedVehicleBadge transfer={tr} vehicles={cars} onAssign={handleAssignCar} loading={mutating} />
-            )}
-          </td>
-        )
-      }
-      case 'price': {
-        const isCancelled2 = mapStatus(tr.state) === 'Cancelled'
-        const hasPrice = tr.price != null && tr.price > 0
-        return (
-          <td key={colId} className={td} style={{ width: w }}>
-            {hasPrice ? (
-              <div className="font-semibold whitespace-nowrap">{formatPrice(tr.price)}</div>
-            ) : isCancelled2 ? (
-              <span className="text-sm text-muted-foreground">-</span>
-            ) : (
-              <NotAssignedPriceBadge transfer={tr} onSetPrice={handleSetPrice} loading={mutating} />
-            )}
-          </td>
-        )
-      }
-      case 'customer': return <td key={colId} className={td} style={{ width: w }}><div className="text-sm"><div className="font-medium">{tr.customerName || '-'}</div>{tr.customerPhone && <div className="text-xs text-muted-foreground/60">{tr.customerPhone}</div>}</div></td>
-      case 'category': return <td key={colId} className={td} style={{ width: w }}><div className="text-sm">{tr.transferCategory || '-'}</div></td>
-      case 'payment': return <td key={colId} className={td} style={{ width: w }}><div className="text-sm">{tr.paymentMethode || '-'}</div></td>
-      default: return null
-    }
-  }
-
-  const getDateBorderColor = (d: string) => d === today ? '#22c55e' : d === tomorrow ? '#eab308' : 'transparent'
-  const getDateHeaderBg = (d: string) => d === today ? 'bg-success/10 text-success' : d === tomorrow ? 'bg-warning/10 text-warning' : 'bg-muted/30 text-muted-foreground'
-
-  // ---------- Render ----------
-  return (
-    <div className="flex h-full">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      <CreateTransferModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} onCreate={handleCreateTransfer} loading={mutating} users={users} />
-
-      <div className={cx('flex-1 p-4 md:p-6 max-w-full space-y-6 transition-all', selectedTransfer ? 'md:mr-[420px]' : '')}>
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div><h1 className="text-2xl md:text-3xl font-bold">{t.Heading}</h1><p className="text-muted-foreground mt-1">{t.Subtitle}</p></div>
-          <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-3 h-9 text-sm font-medium hover:bg-primary/90 transition-colors" onClick={() => setCreateModalOpen(true)}><IconPlus className="h-4 w-4" /> {t.AddTransfer}</button>
-            <button className="inline-flex items-center gap-2 border border-input rounded-md px-3 h-9 text-sm hover:bg-muted transition-colors" onClick={refetch}><IconRefresh className="h-4 w-4" /> {tc.Refresh}</button>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="rounded-lg border bg-card p-4"><div className="text-sm text-muted-foreground">{t.StatTotal}</div><div className="text-2xl font-bold mt-1">{pagination.totalCount}</div></div>
-          <div className="rounded-lg border bg-card p-4"><div className="text-sm text-muted-foreground">{t.StatPage}</div><div className="text-2xl font-bold mt-1">{pagination.currentPage} / {pagination.totalPages}</div></div>
-          <div className="rounded-lg border bg-card p-4"><div className="text-sm text-muted-foreground">{t.StatPlannedPage}</div><div className="text-2xl font-bold mt-1">{transfers.filter(tr => mapStatus(tr.state) === 'Planned').length}</div></div>
-          <div className="rounded-lg border bg-card p-4"><div className="text-sm text-muted-foreground">{t.StatInProgressPage}</div><div className="text-2xl font-bold mt-1">{transfers.filter(tr => mapStatus(tr.state) === 'In Progress').length}</div></div>
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-2 flex-wrap items-center">
-          <DateFilter value={dateFilter} onChange={setDateFilter} customRange={customRange} onCustomRangeChange={setCustomRange} />
-          <div className="w-full md:w-[180px]"><div className="relative"><IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><input className="flex w-full rounded-md border border-input px-3 py-2 text-sm pl-9 h-9 bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder={tc.Search} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div></div>
-          <StatusFilter selected={selectedStatuses} onChange={setSelectedStatuses} />
-          <SortDropdown value={sortOrder} onChange={setSortOrder} />
-        </div>
-
-        {/* Table */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t.CountLabel.replace('{total}', String(pagination.totalCount)).replace('{count}', String(filteredRows.length))}</span>
-            <ColumnPopover columns={columns} onColumnsChange={setColumns} onReset={() => setColumns(i18nColumns)} open={colPopoverOpen} onOpenChange={setColPopoverOpen} />
-          </div>
-          {error && <ErrorBanner message={error} />}
-          <div className="rounded-lg border bg-card shadow-sm relative overflow-visible">
-            {isLoading && <LoadingOverlay />}
-            {!isLoading && filteredRows.length === 0 ? (<EmptyState message={t.EmptyMessage} />) : (
-              <>
-                {/* Desktop table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full caption-bottom text-sm table-fixed" style={{ minWidth: totalMinWidth }}>
-                    <thead className="[&_tr]:border-b"><tr className="border-b hover:bg-muted/50">{visibleColumns.map(c => <th key={c.id} className="h-12 px-4 text-left align-middle font-medium text-muted-foreground" style={{ width: COLUMN_WIDTHS[c.id] || 100 }}>{c.label}</th>)}<th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground" style={{ width: 60 }} /></tr></thead>
-                    <tbody className="[&_tr:last-child]:border-0">
-                      {enrichedSortedDates.map(dateStr => (
-                        <React.Fragment key={dateStr}>
-                          <tr style={{ borderLeft: `4px solid ${getDateBorderColor(dateStr)}` }}><td colSpan={visibleColumns.length + 1} className="p-0"><div className={cx('px-4 py-2 font-semibold text-sm', getDateHeaderBg(dateStr))}>{new Date(dateStr + 'T00:00:00').toLocaleDateString('de-AT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</div></td></tr>
-                          {(enrichedRowsByDate[dateStr] ?? []).map(tr => {
-                            const muted = mapStatus(tr.state) === 'Completed' ? 'bg-muted/30 text-muted-foreground/60' : ''
-                            const active = selectedTransfer?.id === tr.id
-                            return (
-                              <tr key={tr.id} className={cx('border-b transition-colors hover:bg-muted/50 cursor-pointer', muted, active && 'bg-primary/5 ring-1 ring-inset ring-primary/20')} style={{ borderLeft: tr.driverColor ? `4px solid ${tr.driverColor}` : undefined }} onClick={() => onSelectTransfer(tr)}>
-                                {visibleColumns.map(c => renderCell(tr, c.id))}
-                                <td className="p-4 align-middle" style={{ width: 60 }}><button className="text-sm text-primary hover:underline whitespace-nowrap" onClick={e => { e.stopPropagation(); onSelectTransfer(tr) }}>{tc.Details}</button></td>
-                              </tr>
-                            )
-                          })}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {/* Mobile cards */}
-                <div className="md:hidden space-y-3 p-4">
-                  {enrichedSortedDates.map(dateStr => (
-                    <React.Fragment key={dateStr}>
-                      <DateGroupHeader dateStr={dateStr} today={today} tomorrow={tomorrow} />
-                      {(enrichedRowsByDate[dateStr] ?? []).map(tr => (
-                        <div key={tr.id} className={cx('rounded-lg border bg-card p-4 space-y-3 cursor-pointer hover:bg-muted/50 transition-colors', selectedTransfer?.id === tr.id && 'ring-2 ring-primary/30')} style={{ borderLeft: tr.driverColor ? `4px solid ${tr.driverColor}` : undefined }} onClick={() => onSelectTransfer(tr)}>
-                          <div className="flex items-center justify-between"><span className="font-medium text-sm">{tr.referenceId || tr.id.replace(/^transfer:/, '').replace(/^legacy:/, '#')}</span><StatusPill status={tr.state} /></div>
-                          <div className="text-sm"><div className="font-medium">{tr.pickup}</div><div className="text-muted-foreground">{tr.dropoff}</div></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">{formatDateDisplay(tr.rideDateISO)} {tr.rideTime}</span>{tr.price != null && tr.price > 0 ? <span className="font-semibold">{formatPrice(tr.price)}</span> : mapStatus(tr.state) !== 'Cancelled' && <NotAssignedPriceBadge transfer={tr} onSetPrice={handleSetPrice} loading={mutating} />}</div>
-                          {tr.driverName ? <div className="text-xs text-muted-foreground">Driver: {tr.driverName}</div> : mapStatus(tr.state) !== 'Cancelled' && <NotAssignedDriverBadge transfer={tr} drivers={drivers} onAssign={handleAssignDriver} loading={mutating} />}
-                        </div>
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          <CursorPagination
-            currentPage={pagination.currentPage}
-            totalPages={pagination.totalPages}
-            totalCount={pagination.totalCount}
-            hasNextPage={pagination.hasNextPage}
-            hasPreviousPage={pagination.hasPreviousPage}
-            onNext={nextPage}
-            onPrev={prevPage}
-            onFirst={() => goToPage(1)}
-          />
-        </div>
-      </div>
-
-      {/* Slide-in detail panel */}
-      {selectedTransfer && <DetailPanel transfer={selectedTransfer} onClose={() => setSelectedTransfer(null)} onSetPrice={handleSetPrice} mutating={mutating} />}
-    </div>
-  )
-}
-
-// ============================================================
-// Detail Panel (read-only for driver/vehicle, editable price)
-// ============================================================
-
-function DetailPanel({ transfer: tr, onClose, onSetPrice, mutating }: {
-  transfer: ResourceTransfer; onClose: () => void; onSetPrice: (transferId: string, price: number) => void; mutating: boolean
-}) {
-  const i18nCode = useI18nCode()
-  const { strings: tt } = getI18nTransfers(i18nCode)
-  const { strings: tc } = getI18nCommon(i18nCode)
-
-  const [priceEditing, setPriceEditing] = useState(false)
-  const [priceValue, setPriceValue] = useState(String(tr.price ?? ''))
-  useEffect(() => { setPriceValue(String(tr.price ?? '')) }, [tr.price])
-
-  const isUnassignedDriver = !tr.driverName && !tr.driverId
-  const isUnassignedVehicle = !tr.carLicensePlate && !tr.vehicle
-
-  // The portal root does not exist during server rendering, and this view is
-  // statically rendered like every other page. Skipping the portal is what the
-  // old code meant to do before its guard returned document.body on a document
-  // it had just established was undefined.
-  const root = getPortalRoot()
-  if (!root) return null
-
-  return ReactDOM.createPortal(
-    <>
-      {/* Backdrop (mobile only) */}
-      <div className="fixed inset-0 bg-black/50 z-[9998] md:hidden" onClick={onClose} />
-      {/* Panel */}
-      <div className="fixed inset-y-0 right-0 z-[9999] w-full sm:w-[480px] bg-background border-l border-border shadow-2xl flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 flex-shrink-0"><IconMapPin className="h-4 w-4 text-primary" /></div>
-            <div className="min-w-0"><h2 className="text-base font-semibold truncate">Transfer {tr.referenceId || tr.id.replace(/^transfer:/, '').replace(/^legacy:/, '#')}</h2><StatusPill status={tr.state} /></div>
-          </div>
-          <button className="text-muted-foreground hover:text-foreground p-1" onClick={onClose}><IconX className="h-5 w-5" /></button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          <PanelSection title={tt.PanelSectionRoute}>
-            <div className="flex items-start gap-3">
-              <div className="flex flex-col items-center mt-1"><div className="w-2.5 h-2.5 rounded-full bg-green-500" /><div className="w-0.5 h-8 bg-border" /><div className="w-2.5 h-2.5 rounded-full bg-red-500" /></div>
-              <div className="space-y-3"><div><div className="text-xs text-muted-foreground">{tt.PanelLabelPickup}</div><div className="text-sm font-medium">{tr.pickup}</div></div><div><div className="text-xs text-muted-foreground">{tt.PanelLabelDropoff}</div><div className="text-sm font-medium">{tr.dropoff}</div></div></div>
-            </div>
-          </PanelSection>
-          <PanelSection title={tt.PanelSectionSchedule}>
-            <div className="grid grid-cols-2 gap-4">
-              <div><div className="text-xs text-muted-foreground">{tt.PanelLabelDate}</div><div className="text-sm font-medium flex items-center gap-1.5"><IconCalendar className="h-3.5 w-3.5 text-muted-foreground" />{formatDateDisplay(tr.rideDateISO)}</div></div>
-              <div><div className="text-xs text-muted-foreground">{tt.PanelLabelTime}</div><div className="text-sm font-medium flex items-center gap-1.5"><IconClock className="h-3.5 w-3.5 text-muted-foreground" />{tr.rideTime}</div></div>
-            </div>
-          </PanelSection>
-          <PanelSection title={tt.PanelSectionCapacity}><div className="flex items-center gap-1 text-sm"><IconUsers className="h-3.5 w-3.5 text-muted-foreground" /><span>{tr.passengerCount ?? '-'} {tt.Passengers}</span></div></PanelSection>
-          <PanelSection title={tt.PanelSectionCustomer}>{tr.customerName ? (<div className="space-y-1"><div className="text-sm font-medium">{tr.customerName}</div>{tr.customerPhone && <div className="text-sm text-muted-foreground">{tr.customerPhone}</div>}</div>) : (<div className="text-sm text-muted-foreground">{tt.PanelCustomerId.replace('{id}', tr.customerId || '-')}</div>)}</PanelSection>
-          <PanelSection title={tt.PanelSectionDriver}>
-            {isUnassignedDriver ? (
-              <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-warning/10 text-warning border-warning/20 gap-1"><IconTriangleAlert className="h-3 w-3" /> {tt.NotAssigned}</div>
-            ) : (
-              <div className="space-y-1"><div className="text-sm font-medium flex items-center gap-1.5">{tr.driverColor && <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: tr.driverColor }} />}{tr.driverName || tr.driverId}</div>{tr.driverPhone && <div className="text-sm text-muted-foreground">{tr.driverPhone}</div>}</div>
-            )}
-          </PanelSection>
-          <PanelSection title={tt.PanelSectionVehicle}>
-            {isUnassignedVehicle ? (
-              <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-muted text-muted-foreground border-muted gap-1"><IconTriangleAlert className="h-3 w-3" /> {isUnassignedDriver ? tt.AssignDriverFirst : tt.NotAssigned}</div>
-            ) : (
-              <div className="space-y-1"><div className="text-sm font-medium">{tr.vehicle || '-'}</div>{tr.carLicensePlate && <div className="text-sm text-muted-foreground">{tr.carLicensePlate}</div>}</div>
-            )}
-          </PanelSection>
-          {(tr.transferCategory || tr.transferType) && (<PanelSection title={tt.PanelSectionDetails}><div className="grid grid-cols-2 gap-4">{tr.transferCategory && <div><div className="text-xs text-muted-foreground">{tt.PanelLabelCategory}</div><div className="text-sm font-medium">{tr.transferCategory}</div></div>}{tr.transferType && <div><div className="text-xs text-muted-foreground">{tt.PanelLabelType}</div><div className="text-sm font-medium">{tr.transferType}</div></div>}</div></PanelSection>)}
-          {tr.extras && tr.extras.length > 0 && (<PanelSection title={tt.PanelSectionExtras}><div className="space-y-1.5">{tr.extras.map((ex, i) => <div key={i} className="flex justify-between gap-6 text-sm"><span className="text-muted-foreground">{ex.type.replace(/_/g, ' ')}</span><span className="font-medium">x {ex.amount}</span></div>)}</div></PanelSection>)}
-          {tr.roomOrName && <PanelSection title={tt.PanelSectionNotes}><div className="text-sm text-muted-foreground">{tr.roomOrName}</div></PanelSection>}
-        </div>
-
-        {/* Footer: price */}
-        <div className="border-t px-5 py-4 flex-shrink-0">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-semibold">{tt.PanelTotalPrice}</span>
-            {priceEditing ? (
-              <form className="flex items-center gap-2" onSubmit={e => { e.preventDefault(); const n = parseFloat(priceValue); if (!isNaN(n) && n >= 0) { onSetPrice(tr.id, n); setPriceEditing(false) } }}>
-                <input type="number" min="0" step="0.01" className="w-24 rounded-md border border-input px-2 py-1 text-sm h-7 bg-background" value={priceValue} onChange={e => setPriceValue(e.target.value)} autoFocus />
-                <button type="submit" className="text-xs text-primary hover:underline" disabled={mutating}>{tc.Save}</button>
-                <button type="button" className="text-xs text-muted-foreground hover:underline" onClick={() => setPriceEditing(false)}>{tc.Cancel}</button>
-              </form>
-            ) : (
-              <div className="flex items-center gap-3"><span className="text-lg font-bold">{formatPrice(tr.price)}</span><button className="text-xs text-primary hover:underline" onClick={() => setPriceEditing(true)}>{tc.Edit}</button></div>
-            )}
-          </div>
-          {tr.paymentMethode && <div className="text-sm text-muted-foreground mt-1">{tt.PanelPayment.replace('{method}', tr.paymentMethode)}</div>}
-        </div>
-      </div>
-    </>,
-    root
-  )
-}
-
-function PanelSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (<div className="space-y-2"><h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>{children}</div>)
-}
-
-// ============================================================
-// Create Transfer Modal
-// ============================================================
-
-function CreateTransferModal({ open, onClose, onCreate, loading, users }: { open: boolean; onClose: () => void; onCreate: (args: CreateTransferArgs) => void; loading: boolean; users: ResourceUser[] }) {
-  const i18nCode = useI18nCode()
-  const { strings: t } = getI18nTransfers(i18nCode)
-  const { strings: tc } = getI18nCommon(i18nCode)
-
-  const [form, setForm] = useState({ customerId: '', pickupLocation: '', dropoffLocation: '', pickupDateTime: '', payingParty: '', paymentMethode: '' })
-  const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
-  useEffect(() => { if (open) setForm({ customerId: '', pickupLocation: '', dropoffLocation: '', pickupDateTime: '', payingParty: '', paymentMethode: '' }) }, [open])
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (!form.customerId || !form.pickupLocation || !form.dropoffLocation || !form.pickupDateTime) return; onCreate({ customerId: form.customerId, pickupLocation: form.pickupLocation, dropoffLocation: form.dropoffLocation, pickupDateTime: form.pickupDateTime, payingParty: form.payingParty || undefined, paymentMethode: form.paymentMethode || undefined }) }
-  const ic = "flex w-full rounded-md border border-input px-3 py-2 text-sm h-9 bg-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-  return (
-    <ModalShell open={open} onClose={onClose} title={t.CreateModalTitle}>
-      <form onSubmit={handleSubmit} className="p-4 space-y-4">
-        <div><label className="block text-sm font-medium mb-1.5">{t.CreateLabelCustomer}</label><select className={ic} value={form.customerId} onChange={e => update('customerId', e.target.value)} required><option value="">{t.CreatePlaceholderCustomer}</option>{users.map(u => <option key={u.id} value={u.id}>{u.details?.firstName && u.details?.lastName ? `${u.details.firstName} ${u.details.lastName}` : u.username} ({u.primaryEmailAddress})</option>)}</select></div>
-        <div><label className="block text-sm font-medium mb-1.5">{t.CreateLabelPickup}</label><input className={ic} placeholder={t.CreatePlaceholderPickup} value={form.pickupLocation} onChange={e => update('pickupLocation', e.target.value)} required /></div>
-        <div><label className="block text-sm font-medium mb-1.5">{t.CreateLabelDropoff}</label><input className={ic} placeholder={t.CreatePlaceholderDropoff} value={form.dropoffLocation} onChange={e => update('dropoffLocation', e.target.value)} required /></div>
-        <div><label className="block text-sm font-medium mb-1.5">{t.CreateLabelDateTime}</label><input type="datetime-local" className={ic} value={form.pickupDateTime} onChange={e => update('pickupDateTime', e.target.value)} required /></div>
-        <div className="grid grid-cols-2 gap-3"><div><label className="block text-sm font-medium mb-1.5">{t.CreateLabelPayingParty}</label><input className={ic} placeholder={t.CreatePlaceholderOptional} value={form.payingParty} onChange={e => update('payingParty', e.target.value)} /></div><div><label className="block text-sm font-medium mb-1.5">{t.CreateLabelPaymentMethod}</label><input className={ic} placeholder={t.CreatePlaceholderOptional} value={form.paymentMethode} onChange={e => update('paymentMethode', e.target.value)} /></div></div>
-        <div className="flex justify-end gap-2 pt-2"><button type="button" className="inline-flex items-center rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted" onClick={onClose}>{tc.Cancel}</button><button type="submit" className="inline-flex items-center rounded-md bg-primary text-primary-foreground px-4 py-1.5 text-sm font-medium hover:bg-primary/90 disabled:opacity-50" disabled={loading || !form.customerId || !form.pickupLocation || !form.dropoffLocation || !form.pickupDateTime}>{loading ? t.CreateSubmitting : t.CreateSubmit}</button></div>
-      </form>
-    </ModalShell>
-  )
+  if (caller.loading) return <LoadingOverlay />
+  if (caller.isAdmin) return <DispatchBoard />
+  if (caller.isDriver) return <MyRides heading={t.MyRidesHeading} subtitle={t.MyRidesSubtitle} />
+  return <MyRides heading={t.BookingsHeading} />
 }
