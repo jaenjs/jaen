@@ -1054,9 +1054,31 @@ export const CookieConsentProvider: React.FC<CookieConsentProviderProps> = ({
     // render (see the comment in use-color-mode); using its value here would
     // strip the class off a dark page for the frame between the two passes.
     // next-themes has written the real answer there before React re-renders.
-    const isDark = document.documentElement.classList.contains('dark')
+    //
+    // And the class is watched, not read once: next-themes rewrites it on a
+    // client-side route change between a page with a colour mode and the
+    // forced-light public site (color-mode-scope in gatsby-plugin-jaen)
+    // without `colorMode` changing, so an effect keyed on the hook alone ran
+    // once with 'dark' and never again. Measured 2026-09-05: after the dark
+    // /loading page handed over to the light home page the banner stayed in
+    // its dark theme on a light page. The observer follows every writer of
+    // the class, and toggling to the state it already has records nothing,
+    // so it does not feed itself.
+    const root = document.documentElement
 
-    document.documentElement.classList.toggle('c_darkmode', isDark)
+    const sync = (): void => {
+      root.classList.toggle('c_darkmode', root.classList.contains('dark'))
+    }
+
+    sync()
+
+    const observer = new MutationObserver(sync)
+
+    observer.observe(root, {attributes: true, attributeFilter: ['class']})
+
+    return () => {
+      observer.disconnect()
+    }
   }, [colorMode])
 
   return (
