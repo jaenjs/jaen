@@ -1,6 +1,7 @@
 /**
- * Composes jaen's system: v3's defaults, jaen's own config, and the brand
- * palette the consuming site hands over through the shadow at ./theme.
+ * Composes jaen's system: v3's defaults, jaen's own config, the brand palette
+ * the consuming site hands over through the shadow at ./theme, and whatever
+ * the site says about the surfaces, the text and the borders.
  *
  * v2 did this by mutating a shared object (`jaenTheme.colors.brand =
  * userTheme.colors.brand`). Reading a public field off a validated system is
@@ -46,6 +47,27 @@ if (!brand) {
   )
 }
 
+/**
+ * The site owns its palette, dark half included.
+ *
+ * Every screen mounted inside jaen's frame, the CMS and a consuming app plugin
+ * alike, reads the semantic names `bg.*`, `fg.*` and `border.*` from THIS
+ * system, not from the site's own, because the site's system is mounted only
+ * on the routes outside the frame (see ../gatsby/Layout.tsx). jaen's
+ * foundations give every one of those names a light and a dark half, which is
+ * what a site gets by saying nothing. A site that wants its own dark surfaces,
+ * say charcoal under a gold brand rather than jaen's grey, defines the same
+ * names in its theme shadow and they are merged in here, over jaen's, so the
+ * brand decides what dark looks like without a line in jaen or in the app.
+ *
+ * Only the three groups and `brand` are taken. A site's other semantic tokens
+ * (limosen.*, and whatever else it names) stay in the site's system, as before.
+ * A name v3 defines itself (bg.subtle, bg.muted, fg.muted, fg.subtle,
+ * fg.inverted, border.emphasized) has to be spelled `_light`, not `base`, or
+ * v3's own light value outranks it; foundations/semantic-tokens.ts says why.
+ */
+const userSemanticColors = userTheme.semanticTokens?.colors ?? {}
+
 export const system = createSystem(
   defaultConfig,
   jaenConfig,
@@ -53,7 +75,12 @@ export const system = createSystem(
     theme: {
       tokens: {colors: {brand}},
       semanticTokens: {
-        colors: {brand: userTheme.semanticTokens?.colors?.brand ?? {}}
+        colors: {
+          brand: userSemanticColors.brand ?? {},
+          bg: userSemanticColors.bg ?? {},
+          fg: userSemanticColors.fg ?? {},
+          border: userSemanticColors.border ?? {}
+        }
       }
     }
   })
