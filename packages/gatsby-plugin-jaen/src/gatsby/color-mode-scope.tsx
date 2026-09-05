@@ -33,6 +33,12 @@ export const COLOR_MODE_ROUTE_PREFIXES = [
   '/logout',
   '/settings',
   '/signup',
+  /*
+    The OIDC callback is not a jaen page but every site ships one at this
+    path, and it sits between the login and the app. Forcing it light would
+    flash a white screen into a dark app on the way to the dashboard.
+  */
+  '/loading',
   '/app'
 ] as const
 

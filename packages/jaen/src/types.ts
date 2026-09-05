@@ -98,8 +98,10 @@ export interface PageConfig {
 
   layout?: {
     name: 'jaen'
-    // default: 'content'
-    type?: 'content' | 'form' | 'full'
+    // default: 'content'. 'bare' is the page alone: no top padding, no
+    // container and no footer, for the screens a phone shows for a moment
+    // between two others (the OIDC callback), where imprint links are noise.
+    type?: 'content' | 'form' | 'full' | 'bare'
   }
 
   showInNodeGraphVisualizer?: boolean

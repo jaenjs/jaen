@@ -3,7 +3,7 @@ import {Box, Container} from '@chakra-ui/react'
 import {Footer} from './components/Footer/Footer'
 
 export interface JaenPageLayoutProps {
-  layout?: 'full' | 'form' | 'content'
+  layout?: 'full' | 'form' | 'content' | 'bare'
   children: React.ReactNode
 }
 
@@ -11,6 +11,21 @@ export const JaenPageLayout: React.FC<JaenPageLayoutProps> = ({
   layout = 'content',
   ...props
 }) => {
+  /*
+    A bare page is the children and nothing else: no offset for the frame
+    (the pages that ask for it set withoutJaenFrame), no container and no
+    footer. The OIDC callback page uses it: on a phone that screen is visible
+    for a second between the login and the app, and a footer with imprint
+    and privacy links on it reads as if the app had failed to load.
+  */
+  if (layout === 'bare') {
+    return (
+      <Box id="momo" minH="100dvh">
+        {props.children}
+      </Box>
+    )
+  }
+
   return (
     <Box
       id="momo"
