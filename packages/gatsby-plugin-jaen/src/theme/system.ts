@@ -60,13 +60,27 @@ if (!brand) {
  * names in its theme shadow and they are merged in here, over jaen's, so the
  * brand decides what dark looks like without a line in jaen or in the app.
  *
- * Only the three groups and `brand` are taken. A site's other semantic tokens
- * (limosen.*, and whatever else it names) stay in the site's system, as before.
- * A name v3 defines itself (bg.subtle, bg.muted, fg.muted, fg.subtle,
- * fg.inverted, border.emphasized) has to be spelled `_light`, not `base`, or
- * v3's own light value outranks it; foundations/semantic-tokens.ts says why.
+ * `gray` is taken too, as the eight palette slots and nothing else. The frame
+ * says `html {colorPalette: gray}`, so every component that is not a button,
+ * the avatar in the bar, a close button, a segment control, a spinner, resolves
+ * `gray.fg`, `gray.muted` and their siblings, and v3 fills those off the grey
+ * ramp, which never passes through `bg.*` or `fg.*`. A site with its own dark
+ * surfaces defines the slots beside them or its avatar keeps sitting on v3's
+ * grey. The ramp itself stays jaen's: the numbered steps a site defines are
+ * NOT merged, they would recolour every literal `gray.700` in the CMS.
+ *
+ * `shadows` is the same story for the focus halo. The frame's buttons read
+ * `boxShadow: 'focus'`, jaen's dark half is a ring of gray.700, and a site
+ * whose dark is not jaen's grey has no other way to move it.
+ *
+ * Only these groups are taken. A site's other semantic tokens (limosen.*, and
+ * whatever else it names) stay in the site's system, as before. A name v3
+ * defines itself (bg.subtle, bg.muted, fg.muted, fg.subtle, fg.inverted,
+ * border.emphasized, every gray slot) has to be spelled `_light`, not `base`,
+ * or v3's own light value outranks it; foundations/semantic-tokens.ts says why.
  */
 const userSemanticColors = userTheme.semanticTokens?.colors ?? {}
+const userSemanticShadows = userTheme.semanticTokens?.shadows ?? {}
 
 export const system = createSystem(
   defaultConfig,
@@ -77,10 +91,12 @@ export const system = createSystem(
       semanticTokens: {
         colors: {
           brand: userSemanticColors.brand ?? {},
+          gray: userSemanticColors.gray ?? {},
           bg: userSemanticColors.bg ?? {},
           fg: userSemanticColors.fg ?? {},
           border: userSemanticColors.border ?? {}
-        }
+        },
+        shadows: userSemanticShadows
       }
     }
   })
