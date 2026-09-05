@@ -11,14 +11,13 @@ import {
 import {GatsbyBrowser} from 'gatsby'
 import {
   lazy,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type FC,
   type ReactNode
 } from 'react'
-import {IntlContext, IntlProvider} from 'react-intl'
+import {IntlProvider} from 'react-intl'
 
 import {useUiLocale} from '../locales/ui-locale'
 
@@ -184,36 +183,6 @@ const CookieConsentScope: FC<{
   )
 }
 
-/**
- * The provider for an element that carries no name: Head, and the frame,
- * which is a Gatsby Slice and reaches wrapRootElement as an anonymous
- * component.
- *
- * On the server a slice is its own tree, so it needs a provider of its own
- * and gets the en-US default, which is what the generated HTML always
- * carried. In the browser Gatsby renders the slice inline in the page's tree,
- * inside the JaenIntlProvider above, and a second provider here sat between
- * the frame and the language the page had resolved: measured 2026-09-05 on
- * limosen.at, the settings page said Sprache and Speichern while the drawer
- * around it said Settings and Logout, the frame's IntlProvider en-US with
- * 509 messages under the page's de-AT with 811. So a provider is added only
- * where none is inherited.
- */
-const BareIntl: FC<{children: ReactNode}> = ({children}) => {
-  const inherited = useContext(IntlContext)
-
-  if (inherited) return <>{children}</>
-
-  return (
-    <IntlProvider
-      messages={messagesByLocale[DEFAULT_LOCALE]}
-      locale={DEFAULT_LOCALE}
-      defaultLocale={DEFAULT_LOCALE}>
-      {children}
-    </IntlProvider>
-  )
-}
-
 export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
   args,
   pluginOptions
@@ -232,9 +201,12 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
 
   if (elementName === '' || elementName === 'Head') {
     return (
-      <BareIntl>
+      <IntlProvider
+        messages={messagesByLocale[DEFAULT_LOCALE]}
+        locale={DEFAULT_LOCALE}
+        defaultLocale={DEFAULT_LOCALE}>
         <SiteMetadataProvider>{element}</SiteMetadataProvider>
-      </BareIntl>
+      </IntlProvider>
     )
   }
 
