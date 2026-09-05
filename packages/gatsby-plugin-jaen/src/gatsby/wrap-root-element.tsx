@@ -1,5 +1,4 @@
 import {ChakraProvider} from '@chakra-ui/react'
-import {ThemeProvider as NextThemeProvider} from 'next-themes'
 import {
   AuthenticationProvider,
   MediaModalProvider,
@@ -24,6 +23,7 @@ import {useUiLocale} from '../locales/ui-locale'
 
 import {JaenWidgetProvider} from '../contexts/jaen-widget'
 import {JaenPluginOptions} from './types'
+import {ColorModeScope} from './color-mode-scope'
 import {SiteMetadataProvider} from '../connectors/site-metadata'
 import {system} from '../theme/system'
 import {JaenFrameMenuProvider} from '../contexts/jaen-frame-menu'
@@ -183,18 +183,20 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
     /**
      * next-themes sits OUTSIDE Chakra because it writes the class onto <html>
      * that v3's dark condition selects on, so the provider reading tokens has
-     * to be inside the one setting the class.
+     * to be inside the one setting the class. ColorModeScope mounts it.
      *
-     * defaultTheme is the site's choice now, through the `colorMode.default`
-     * plugin option, and `light` when the site says nothing. Light is what v2
-     * actually shipped: jaen's theme carried no `config`, so extendTheme filled
-     * in @chakra-ui/theme's own `initialColorMode: "light"`, and that literal
-     * is what ColorModeScript wrote and what ColorModeProvider defaulted to.
-     * No visitor was ever given an OS-following default here, so a site that
+     * The public website has no colour mode: outside jaen's own pages and the
+     * app the theme is forced light, see color-mode-scope.tsx. Inside them the
+     * default is the site's choice through the `colorMode.default` plugin
+     * option, `light` when the site says nothing. Light is what v2 actually
+     * shipped: jaen's theme carried no `config`, so extendTheme filled in
+     * @chakra-ui/theme's own `initialColorMode: "light"`, and that literal is
+     * what ColorModeScript wrote and what ColorModeProvider defaulted to. No
+     * visitor was ever given an OS-following default here, so a site that
      * wants `system` opts into a dark first paint for its dark-OS visitors
-     * knowingly, and a site that wants `dark` gets it on every first visit.
-     * The visitor's own toggle is stored by next-themes under `theme` and wins
-     * over the default on the next visit, whichever the site chose.
+     * knowingly, and a site that wants `dark` gets it on every first visit of
+     * the CMS and the app. The visitor's own toggle is stored by next-themes
+     * under `theme` and wins over the default on the next visit.
      *
      * The dark palette itself is not decided here. jaen's own tokens carry a
      * `_dark` half each, and the site's theme shadow may override them, see
@@ -213,11 +215,9 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
      * variable prefix instead, which no selector can defeat. #momo stays on the
      * elements, as the portal container id it also always was.
      */
-    <NextThemeProvider
-      attribute="class"
-      defaultTheme={options.colorMode?.default ?? 'light'}
-      enableSystem
-      disableTransitionOnChange>
+    <ColorModeScope
+      ssrPathname={pathname}
+      defaultMode={options.colorMode?.default ?? 'light'}>
       <ChakraProvider value={system}>
         <NotificationsProvider>
           {/* The path decides whether the OIDC runtime is loaded at all, so it
@@ -254,6 +254,6 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
           </AuthenticationProvider>
         </NotificationsProvider>
       </ChakraProvider>
-    </NextThemeProvider>
+    </ColorModeScope>
   )
 }

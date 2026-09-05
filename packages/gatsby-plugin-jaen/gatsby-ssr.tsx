@@ -5,6 +5,8 @@ import './dist/jaen.css'
 export {wrapPageElement} from './src/gatsby/wrap-page-element'
 export {wrapRootElement} from './src/gatsby/wrap-root-element'
 
+import {COLOR_MODE_ROUTE_PREFIXES} from './src/gatsby/color-mode-scope'
+
 /**
  * The no-flash script, hand-written because next-themes only ships a Next.js
  * one. It has to agree with next-themes' storage contract exactly, or the two
@@ -13,14 +15,17 @@ export {wrapRootElement} from './src/gatsby/wrap-root-element'
  * (`.dark, .dark .chakra-theme:not(.light)`), and `color-scheme` is what stops
  * the browser painting white scrollbars over a dark page.
  *
- * The fallback is the site's `colorMode.default` plugin option, 'light' when
- * the site says nothing, and has to stay in lockstep with NextThemeProvider's
- * defaultTheme in wrap-root-element.tsx, which reads the same option: v2's
+ * The public website has no colour mode. Outside the routes listed in
+ * color-mode-scope.tsx the script writes light and reads nothing, exactly as
+ * ColorModeScope's forcedTheme will once React is up. Inside them the fallback
+ * is the site's `colorMode.default` plugin option, 'light' when the site says
+ * nothing, in lockstep with the provider that reads the same option: v2's
  * effective default was the literal "light" that extendTheme put in
  * theme.config, so an unconfigured visitor gets light here whatever the OS
- * says. A site that sets 'dark' gets the dark class on <html> before the first
- * paint, which is the whole point of this script. See the comment over the
- * provider for why the site's initialColorMode:'system' never counted.
+ * says. A site that sets 'dark' gets the dark class on <html> before the
+ * first paint of its CMS and app, which is the whole point of this script.
+ * See the comment over the provider for why the site's
+ * initialColorMode:'system' never counted.
  *
  * Before falling back it adopts v2's key once. v2's ColorModeScript did not
  * merely read `chakra-ui-color-mode`, it WROTE the resolved mode into it on
@@ -37,8 +42,10 @@ export {wrapRootElement} from './src/gatsby/wrap-root-element'
  * never diffs the class this writes.
  */
 const noFlash = (defaultMode: 'light' | 'dark' | 'system') => `(function(){try{
-var d=document.documentElement,s=localStorage.getItem('theme');
-if(!s){var o=localStorage.getItem('chakra-ui-color-mode');
+var d=document.documentElement,p=location.pathname.replace(/\\/+$/,'')||'/',
+scoped=${JSON.stringify([...COLOR_MODE_ROUTE_PREFIXES])}.some(function(x){return p===x||p.indexOf(x+'/')===0}),
+s=scoped?localStorage.getItem('theme'):'light';
+if(scoped&&!s){var o=localStorage.getItem('chakra-ui-color-mode');
 if(o==='light'||o==='dark'){localStorage.setItem('theme',o);s=o}}
 s=s||${JSON.stringify(defaultMode)};
 var m=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light',

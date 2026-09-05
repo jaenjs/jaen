@@ -51,12 +51,13 @@ export interface JaenPluginOptions extends PluginOptions {
     trailingSlash?: 'always' | 'never' | 'ignore'
   }
   /**
-   * The colour mode a visitor lands on. jaen mounts one next-themes provider
-   * for the whole site and this is its `defaultTheme`: `light` and `dark`
-   * write that class onto <html> on the first paint, `system` follows the OS.
-   * A visitor's own toggle is stored by next-themes and wins on the next
-   * visit. Default `light`, which is what every site shipped before the
-   * option existed.
+   * The colour mode a visitor lands on in the CMS and the app areas. The
+   * public pages have no colour mode, they are always light. jaen mounts one
+   * next-themes provider for the whole site and this is its `defaultTheme`
+   * inside jaen's own routes and /app: `light` and `dark` write that class
+   * onto <html> on the first paint, `system` follows the OS. A visitor's own
+   * toggle is stored by next-themes and wins on the next visit. Default
+   * `light`, which is what every site shipped before the option existed.
    */
   colorMode?: {
     default?: 'light' | 'dark' | 'system'
@@ -120,8 +121,15 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
       return i18n
     }),
     colorMode: Joi.object({
-      default: Joi.string().valid('light', 'dark', 'system')
-    })
+      default: Joi.string()
+        .valid('light', 'dark', 'system')
+        .description(
+          'The colour mode a visitor lands on. Applies to the CMS and the ' +
+            'app areas, the public pages have no colour mode. Default light.'
+        )
+    }).description(
+      'Colour mode of the CMS and the app areas; the public pages are always light.'
+    )
   })
 }
 
