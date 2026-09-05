@@ -319,8 +319,18 @@ const Slice: React.FC<SliceProps> = props => {
       return aOrder - bOrder
     })
 
+    // Every pass of this effect resolves the labels asynchronously, the icon
+    // table is a lazy chunk, and a pass that started under en-US could land
+    // after the pass the language change started: measured 2026-09-05 on
+    // limosen.at, /de/ read Einstellungen while /cms/ and /app/transfers/
+    // kept Settings and Logout from the earlier, slower pass. A pass that
+    // has been superseded registers nothing.
+    let superseded = false
+
     sortedNodes.forEach(async node => {
       const config = await parsePageConfig(node.pageContext.pageConfig)
+
+      if (superseded) return
 
       if (!config?.menu) return
 
@@ -345,6 +355,8 @@ const Slice: React.FC<SliceProps> = props => {
           ).resolveJaenIcon(config.icon)
         : undefined
 
+      if (superseded) return
+
       extendMenu(groupType, {
         group,
         label: config.menu.groupLabel,
@@ -358,6 +370,10 @@ const Slice: React.FC<SliceProps> = props => {
         }
       })
     })
+
+    return () => {
+      superseded = true
+    }
   }, [auth.user, props.data.allSitePage.nodes, manager.isEditing, intl.locale])
 
   return (
