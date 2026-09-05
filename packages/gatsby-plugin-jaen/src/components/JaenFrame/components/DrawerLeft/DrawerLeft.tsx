@@ -66,7 +66,13 @@ export const DrawerLeft: React.FC<DrawerLeftProps> = ({
             <Drawer.Content borderRightRadius="xl">
               <Drawer.Header p="4">
                 <HStack justifyContent="space-between">
-                  <Box h="full" maxW="12rem">
+                  {/* Bounded the same way as the bar's slot, see JaenFrame. */}
+                  <Box
+                    h="12"
+                    maxW="12rem"
+                    display="flex"
+                    alignItems="center"
+                    css={{'& > svg, & > img': {height: '100%', width: 'auto', maxWidth: '12rem'}}}>
                     {logo || <JaenFullLogo />}
                   </Box>
                   {/* v3's CloseTrigger renders whatever it is handed and

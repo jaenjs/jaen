@@ -58,6 +58,30 @@ export interface JaenFrameProps {
  * blurred. The value only grew a unit because v3's typing insists on one.
  * Making the blur real would be a visual change rather than a migration.
  */
+/**
+ * The logo slot is bounded by the bar, whatever the site hands in.
+ *
+ * A site's Logo is an <svg> with a viewBox and width="full" height="full",
+ * and the slot used to give it a width (12rem) but no height: "full" of an
+ * inline link is nothing, so the height followed the aspect ratio, and a
+ * crest that is taller than it is wide came out 118px tall in a 64px bar,
+ * hanging over the page below. The slot is a flex box of the bar's height
+ * with a little breathing room now, and the logo inside it, svg or img, is
+ * sized by height with the width following, capped at the slot's width.
+ * The frame never asks the site to size its own logo for the bar.
+ */
+const logoSlotCss = {
+  display: 'flex',
+  alignItems: 'center',
+  height: '100%',
+  paddingBlock: '0.625rem',
+  '& > svg, & > img': {
+    height: '100%',
+    width: 'auto',
+    maxWidth: '12rem'
+  }
+} as const
+
 export const JaenFrame: React.FC<JaenFrameProps> = React.memo(props => {
   return (
     <HStack
@@ -96,7 +120,7 @@ export const JaenFrame: React.FC<JaenFrameProps> = React.memo(props => {
             h="full"
             display={{
               base: 'none',
-              md: 'block'
+              md: 'flex'
             }}>
             {/* css, not sx: the prop is gone in v3, and Link's props are
                 typed `any`, so leaving it would have silently restored the
@@ -105,6 +129,7 @@ export const JaenFrame: React.FC<JaenFrameProps> = React.memo(props => {
               to="/"
               textDecoration="none"
               css={{
+                ...logoSlotCss,
                 _before: {
                   content: 'none'
                 }
@@ -129,13 +154,14 @@ export const JaenFrame: React.FC<JaenFrameProps> = React.memo(props => {
             h="full"
             maxW="12rem"
             display={{
-              base: 'block',
+              base: 'flex',
               md: 'none'
             }}>
             <Link
               to="/"
               textDecoration="none"
               css={{
+                ...logoSlotCss,
                 _before: {
                   content: 'none'
                 }
