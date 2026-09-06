@@ -42,7 +42,8 @@ export interface LocationMapViewProps {
 
 const SOURCE = 'locations'
 
-// 44 px below md, where a finger taps, Chakra's sm (token 8, 32 px) from md up.
+// 44 px below md, where a finger taps. From md up the minimum is token 8,
+// 32 px, under Chakra's sm of 36 px, so the size alone decides the height.
 const TOUCH_HEIGHT = {base: '44px', md: '8'}
 
 function fitMapToLocations(map: any, locs: {latitude: number; longitude: number}[]) {
@@ -378,7 +379,7 @@ export function LocationMapView({
         hard-rules.md, "Two controls are never closer than a thumb": the chips
         and the refresh sit in one row at gap 2, and below md each of them is
         at least 44 px tall (the refresh 44 px square), measured 2026-09-06 at
-        6 px and 32 px before. From md up they are Chakra's sm.
+        6 px and 32 px before. From md up they are Chakra's sm, 36 px.
       */}
       <Box position="absolute" top="0" insetX="0" zIndex="2" p="3" pointerEvents="none">
         <HStack
