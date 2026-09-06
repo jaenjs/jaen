@@ -97,7 +97,7 @@ function LocationDetailDrawer({location, onClose}: {location: LocationRow | null
       <Portal>
         <Drawer.Backdrop />
         <Drawer.Positioner>
-          <Drawer.Content roundedTop="l3" maxH="70vh">
+          <Drawer.Content roundedTop="surface" maxH="70vh">
             <Drawer.Header>
               <HStack gap="3">
                 <DriverColorDot color={location ? rowColor(location) : undefined} size="4" />

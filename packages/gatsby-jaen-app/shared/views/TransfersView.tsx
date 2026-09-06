@@ -222,7 +222,7 @@ export function Sheet({open, onClose, title, children, footer, size = 'md', busy
         <Portal>
           <Drawer.Backdrop />
           <Drawer.Positioner>
-            <Drawer.Content roundedTop="l3" maxH="92dvh">
+            <Drawer.Content roundedTop="surface" maxH="92dvh">
               <Drawer.Header>
                 <Drawer.Title>{title}</Drawer.Title>
               </Drawer.Header>
@@ -305,7 +305,7 @@ function PickerList<T>({items, selectedId, currentId, onSelect, keyOf, renderIte
             w="full"
             px="3"
             py="2"
-            rounded="md"
+            rounded="control"
             borderWidth="1px"
             borderColor={selected ? 'colorPalette.solid' : 'border.default'}
             bg={selected ? 'colorPalette.subtle' : 'bg.surface'}
@@ -483,7 +483,7 @@ export function AssignDialog({open, onClose, transfer, drivers, cars, onAssigned
                 w="full"
                 px="3"
                 py="2"
-                rounded="md"
+                rounded="control"
                 borderWidth="1px"
                 colorPalette="brand"
                 borderColor={carId === '' ? 'colorPalette.solid' : 'border.default'}
@@ -698,7 +698,7 @@ export function StateDialog({open, onClose, transfer, onSaved}: StateDialogProps
                 w="full"
                 px="3"
                 py="2"
-                rounded="md"
+                rounded="control"
                 borderWidth="1px"
                 colorPalette="brand"
                 borderColor={selected ? 'colorPalette.solid' : 'border.default'}
@@ -997,7 +997,7 @@ export function CreateTransferDialog({open, onClose, customers, cars, onCreated,
         {error && <ErrorBanner message={error} />}
 
         {form.referenceId && (
-          <Box rounded="md" borderWidth="1px" borderColor="border.default" bg="bg.subtle" px="3" py="2">
+          <Box rounded="control" borderWidth="1px" borderColor="border.default" bg="bg.subtle" px="3" py="2">
             <Text textStyle="sm" fontWeight="medium">
               {t.LabelReturnOf}{' '}
               <chakra.span fontFamily="mono">{form.originCode}</chakra.span>
@@ -2004,7 +2004,7 @@ export function TransferCard({row, expanded, onToggle, actions, compact = false,
   const name = passengerName(row)
   return (
     <Box
-      rounded="lg"
+      rounded="surface"
       borderWidth="1px"
       borderColor="border.default"
       bg="bg.surface"

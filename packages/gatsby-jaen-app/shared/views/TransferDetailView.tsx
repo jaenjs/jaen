@@ -122,7 +122,7 @@ const errorMessage = (err: unknown, fallback: string): string =>
 
 function Section({title, children, action}: {title: string; children: React.ReactNode; action?: React.ReactNode}) {
   return (
-    <Box rounded="lg" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
+    <Box rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
       <HStack justify="space-between" mb="3">
         <Text textStyle="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">
           {title}
@@ -438,7 +438,7 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
         </HStack>
 
         {/* The pickup: the time large, the address, one tap to the map. */}
-        <Box rounded="lg" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
+        <Box rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
           <HStack justify="space-between" align="flex-start" gap="3">
             <Box minW="0">
               <Text textStyle="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wider">
@@ -468,7 +468,7 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
         </Box>
 
         {/* The passenger, one tap to call. */}
-        <Box rounded="lg" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
+        <Box rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
           <HStack justify="space-between" gap="3">
             <Box minW="0">
               <Text textStyle="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wider">
@@ -520,7 +520,7 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
 
         {/* After COMPLETED: the fare, the one price a driver sees. */}
         {done && (
-          <Box rounded="lg" borderWidth="1px" colorPalette="green" borderColor="colorPalette.solid" bg="colorPalette.subtle" p="4">
+          <Box rounded="surface" borderWidth="1px" colorPalette="green" borderColor="colorPalette.solid" bg="colorPalette.subtle" p="4">
             <HStack gap="2" color="colorPalette.fg">
               <FaEuroSign />
               <Text fontWeight="semibold">{t.FareTitle}</Text>
@@ -549,7 +549,7 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
 
         {/* The slider, while the ride is the driver's to move. */}
         {stage >= 0 && !done && (
-          <Box rounded="lg" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
+          <Box rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
             <RideSlider transfer={transfer} onMoved={onChanged} />
             {exitError && (
               <Box mt="3">

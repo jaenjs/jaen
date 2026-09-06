@@ -78,7 +78,7 @@ function Kpi({
     <Stat.Root
       borderWidth="1px"
       borderColor="border.default"
-      rounded="lg"
+      rounded="surface"
       bg="bg.surface"
       p="4"
       gap="1"
@@ -114,7 +114,7 @@ function DayRow({
   onOpen: () => void
 }) {
   return (
-    <DriverColorBorder color={driver?.color} rounded="lg" overflow="hidden">
+    <DriverColorBorder color={driver?.color} rounded="surface" overflow="hidden">
       <Card.Root
         size="sm"
         variant="outline"
@@ -225,7 +225,7 @@ function DayList({
           <Skeleton h="16" rounded="lg" />
         </Stack>
       ) : !error && sorted.length === 0 ? (
-        <EmptyState title={emptyLabel} size="sm" borderWidth="1px" borderColor="border.default" rounded="lg" bg="bg.surface" />
+        <EmptyState title={emptyLabel} size="sm" borderWidth="1px" borderColor="border.default" rounded="surface" bg="bg.surface" />
       ) : (
         <Stack gap="3">
           {sorted.map(transfer => (
@@ -433,9 +433,9 @@ export function DashboardView() {
         {loading ? (
           <Skeleton h="24" rounded="lg" />
         ) : !d || d.drivers.length === 0 ? (
-          <EmptyState title={t.NoDrivers} size="sm" borderWidth="1px" borderColor="border.default" rounded="lg" bg="bg.surface" />
+          <EmptyState title={t.NoDrivers} size="sm" borderWidth="1px" borderColor="border.default" rounded="surface" bg="bg.surface" />
         ) : (
-          <Table.ScrollArea borderWidth="1px" borderColor="border.default" rounded="lg" bg="bg.surface">
+          <Table.ScrollArea borderWidth="1px" borderColor="border.default" rounded="surface" bg="bg.surface">
             <Table.Root size="sm" variant="line">
               <Table.Header>
                 <Table.Row>

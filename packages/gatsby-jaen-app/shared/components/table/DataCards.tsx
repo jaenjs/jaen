@@ -50,7 +50,7 @@ export function DataCards<Row>({sections, rowId, label, card}: DataCardsProps<Ro
               colorPalette={section.tone}
               px="3"
               py="1.5"
-              rounded="md"
+              rounded="control"
               bg={section.tone ? 'colorPalette.subtle' : 'bg.subtle'}
               borderInlineEndWidth="4px"
               borderInlineEndColor={section.tone ? 'colorPalette.solid' : 'transparent'}>
@@ -87,7 +87,7 @@ export function DefaultCard<Row>({row, columns, tone, stripe, onOpen}: DefaultCa
   const [first, ...rest] = columns
   return (
     <Box
-      rounded="lg"
+      rounded="surface"
       borderWidth="1px"
       borderColor="border.default"
       bg="bg.surface"

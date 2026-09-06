@@ -72,7 +72,7 @@ export function ColumnsPopover<Row>({columns, layout, onChange}: ColumnsPopoverP
                     gap="2"
                     px="2"
                     py="1.5"
-                    rounded="md"
+                    rounded="control"
                     cursor="grab"
                     draggable
                     opacity={dragged === col.id ? 0.5 : 1}

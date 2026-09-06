@@ -170,7 +170,7 @@ export function BookingDetailView() {
           }
         />
 
-        <Box bg="bg.surface" borderWidth="1px" borderColor="border.default" rounded="lg" p={{base: '4', md: '6'}}>
+        <Box bg="bg.surface" borderWidth="1px" borderColor="border.default" rounded="surface" p={{base: '4', md: '6'}}>
           <Stack gap="6">
             <Section title={t.DetailSectionRoute}>
               <Flex gap="3" align="stretch">

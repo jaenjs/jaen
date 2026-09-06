@@ -80,7 +80,7 @@ function CarSwatch({color, size = '5'}: {color: string; size?: string}) {
       display="inline-block"
       flexShrink={0}
       boxSize={size}
-      rounded="md"
+      rounded="control"
       bg={color}
       borderWidth="1px"
       borderColor="blackAlpha.300"
@@ -109,7 +109,7 @@ interface FleetCardProps {
 function FleetCard({car, driver, stripe, t, onOpen}: FleetCardProps) {
   return (
     <Box
-      rounded="lg"
+      rounded="surface"
       borderWidth="1px"
       borderColor="border.default"
       bg="bg.surface"
