@@ -126,7 +126,9 @@ export const inputRecipe = defineRecipe({
   variants: {
     variant: {
       outline: {
-        borderRadius: 'lg',
+        // radii.control, design-consistency.md rule 1: the same corner as the
+        // button beside it.
+        borderRadius: 'control',
         borderColor: 'border.emphasized',
         // bg.subtle is jaen's gray.800 in dark, the literal that stood here,
         // and a site's own dark surface where the site defines one.
@@ -150,7 +152,7 @@ export const inputRecipe = defineRecipe({
 
 export const inputAddonRecipe = defineRecipe({
   base: {
-    borderRadius: 'lg',
+    borderRadius: 'control',
     borderColor: 'border.emphasized',
     bg: 'bg.subtle'
   }
@@ -174,7 +176,7 @@ export const textareaRecipe = defineRecipe({
   variants: {
     variant: {
       outline: {
-        borderRadius: 'lg',
+        borderRadius: 'control',
         borderColor: 'border.emphasized',
         bg: 'bg.surface',
         _hover: {borderColor: 'border.active'},

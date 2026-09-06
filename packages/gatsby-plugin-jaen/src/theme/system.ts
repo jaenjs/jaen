@@ -79,6 +79,14 @@ if (!brand) {
  * border.emphasized, every gray slot) has to be spelled `_light`, not `base`,
  * or v3's own light value outranks it; foundations/semantic-tokens.ts says why.
  */
+/**
+ * `radii.control` and `radii.surface` are NOT read from the site. They are
+ * jaen's, declared in foundations/tokens.ts and carried in through jaenConfig
+ * above, so both brands' frames and the app inside them round every control
+ * and every surface the same way without a line in either site (see
+ * design-consistency.md, rule 1). A site that mounts its own system beside
+ * the frame, as the search does, declares the two names itself.
+ */
 const userSemanticColors = userTheme.semanticTokens?.colors ?? {}
 const userSemanticShadows = userTheme.semanticTokens?.shadows ?? {}
 

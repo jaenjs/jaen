@@ -31,20 +31,22 @@ export const cardSlotRecipe = defineSlotRecipe({
   },
   variants: {
     size: {
+      // radii.surface on every size, design-consistency.md rule 1: a card is a
+      // surface whatever its padding. v2's base/md/xl per size are gone.
       sm: {
-        root: {borderRadius: 'base'},
+        root: {borderRadius: 'surface'},
         body: {padding: '3'},
         header: {padding: '3'},
         footer: {padding: '3'}
       },
       md: {
-        root: {borderRadius: 'md'},
+        root: {borderRadius: 'surface'},
         body: {padding: '5'},
         header: {padding: '5'},
         footer: {padding: '5'}
       },
       lg: {
-        root: {borderRadius: 'xl'},
+        root: {borderRadius: 'surface'},
         body: {padding: '7'},
         header: {padding: '7'},
         footer: {padding: '7'}
@@ -148,10 +150,28 @@ export const drawerSlotRecipe = defineSlotRecipe({
   }
 })
 
+/**
+ * The two floating panels v3 rounds at `l3` (6 px). Both are surfaces in the
+ * sense of design-consistency.md rule 1, so they read radii.surface like the
+ * cards and the table frame, and a dialog beside a card shows one corner.
+ * Only the radius is declared, the rest of v3's recipes stays underneath.
+ */
+export const dialogSlotRecipe = defineSlotRecipe({
+  slots: ['content'],
+  base: {content: {borderRadius: 'surface'}}
+})
+
+export const popoverSlotRecipe = defineSlotRecipe({
+  slots: ['content'],
+  base: {content: {borderRadius: 'surface'}}
+})
+
 export const menuSlotRecipe = defineSlotRecipe({
   slots: ['content', 'item', 'itemGroupLabel', 'separator', 'trigger'],
   base: {
-    content: {bg: 'bg.surface', boxShadow: 'lg'},
+    // radii.surface: a menu is a floating surface, v3's l2 (4 px) was the
+    // third corner on one screen.
+    content: {bg: 'bg.surface', boxShadow: 'lg', borderRadius: 'surface'},
     item: {
       // fg.emphasized: gray.700 in light and gray.200 in dark in jaen's own
       // foundations, the pair that stood here as literals.
@@ -253,7 +273,8 @@ export const tableSlotRecipe = defineSlotRecipe({
       bg: 'bg.surface',
       border: '1px solid',
       borderColor: 'border.emphasized',
-      borderRadius: 'lg',
+      // The table frame is a surface, design-consistency.md rule 1.
+      borderRadius: 'surface',
       borderSpacing: '0',
       borderCollapse: 'separate',
       overflow: 'hidden'

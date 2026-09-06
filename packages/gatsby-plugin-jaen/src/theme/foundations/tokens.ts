@@ -70,7 +70,22 @@ export const tokens = defineTokens({
    * radius into v3's `shape` variant to win over it.
    */
   radii: {
-    base: {value: '0.25rem'}
+    base: {value: '0.25rem'},
+    /**
+     * The two radii of design-consistency.md, rule 1.
+     *
+     * `control` is the corner of everything a hand operates: buttons, icon
+     * buttons, chips, inputs, the frame's menu button and search. `surface`
+     * is the corner of everything that holds content: cards, dialogs, sheets,
+     * drawers, menus, popovers and the table frame. The values are written
+     * out rather than referenced, because the brief names them by the pixel
+     * (8 px and 12 px) and v3's scale spells those `lg` and `xl`, a name
+     * nobody should have to remember: the measured majority of the app was
+     * 8 px, so that is `control`, and the cards were 12 px, so that is
+     * `surface`. The avatar stays `full`.
+     */
+    control: {value: '0.5rem'},
+    surface: {value: '0.75rem'}
   },
   /**
    * v2's `shadows.base`, pinned, for the same reason: `card` variant=elevated

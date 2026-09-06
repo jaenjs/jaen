@@ -48,12 +48,18 @@ export const buttonRecipe = defineRecipe({
    * label, counted rather than estimated. The one exception carried no icon
    * span in v2 either, and is a single button in the media gallery.
    */
-  base: {colorPalette: 'brand', gap: 2},
+  /**
+   * `borderRadius: 'control'` is rule 1 of design-consistency.md: one radius
+   * for every size and every variant, so the solid, outline and ghost buttons
+   * of one row match. It sits in `base`, over v3's own `l2` (4 px), which is
+   * what the frame's solid add button used to show beside 8 px everywhere
+   * else. No variant below sets a radius of its own any more.
+   */
+  base: {colorPalette: 'brand', gap: 2, borderRadius: 'control'},
 
   variants: {
     variant: {
       primary: {
-        borderRadius: 'lg',
         flexShrink: 0,
         bg: 'colorPalette.solid',
         color: 'colorPalette.contrast',
@@ -76,7 +82,6 @@ export const buttonRecipe = defineRecipe({
       'secondary.subtle': secondaryVariant('gray.100'),
 
       text: {
-        borderRadius: '0',
         padding: 0,
         height: 'auto',
         verticalAlign: 'baseline',
@@ -130,11 +135,9 @@ export const buttonRecipe = defineRecipe({
       // as before and a site that redefines the names in its theme shadow
       // recolours these labels with the rest of its dark mode.
       ghost: {
-        borderRadius: 'lg',
         color: 'fg.emphasized'
       },
       outline: {
-        borderRadius: 'lg',
         borderColor: 'border.emphasized',
         color: {base: 'fg.muted', _dark: 'fg.emphasized'},
         '& > svg': {color: 'fg.muted'}
@@ -153,7 +156,6 @@ export const buttonRecipe = defineRecipe({
         backdropBlur: '8px',
         color: 'fg.emphasized',
         _hover: {bg: 'brand.200/70'},
-        borderRadius: '0.5em',
         fontWeight: 'normal',
         fontSize: 'xs',
         height: '6',
@@ -164,7 +166,6 @@ export const buttonRecipe = defineRecipe({
         bg: 'brand.500/70',
         backdropBlur: '8px',
         color: 'fg.emphasized',
-        borderRadius: 'full',
         fontWeight: 'normal',
         cursor: 'default',
         fontSize: 'xs',
@@ -241,7 +242,6 @@ function secondaryVariant(hoverBg: string) {
   return {
     borderWidth: '1px',
     borderColor: 'border.emphasized',
-    borderRadius: 'lg',
     flexShrink: 0,
     color: 'fg.emphasized',
     '& > svg': {color: 'fg.muted'},
