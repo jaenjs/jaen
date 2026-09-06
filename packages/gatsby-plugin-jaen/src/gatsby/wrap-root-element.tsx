@@ -19,7 +19,7 @@ import {
 } from 'react'
 import {IntlProvider} from 'react-intl'
 
-import {useUiLocale} from '../locales/ui-locale'
+import {seedUiLocale, useUiLocale} from '../locales/ui-locale'
 
 import {JaenWidgetProvider} from '../contexts/jaen-widget'
 import {JaenPluginOptions} from './types'
@@ -61,15 +61,17 @@ const matchLocale = (candidate?: string | null): LocaleKey | undefined => {
 }
 
 /**
- * The CMS follows the language set on the account: the Zitadel profile's
- * preferredLanguage wins, then the OIDC locale claim (available right after
+ * The CMS follows the language of the screen, the ui-locale store: what the
+ * person chose last on this device, seeded once from the account. Until the
+ * store has a value the account decides, the Zitadel profile's
+ * preferredLanguage first, then the OIDC locale claim (available right after
  * sign-in, before the profile query resolves), then the browser languages,
  * then en-US.
  */
 export const JaenIntlProvider: FC<{children: ReactNode}> = ({children}) => {
   const authUser = useAuthUser()
   const auth = useAuth()
-  const {previewLocale} = useUiLocale()
+  const {uiLocale} = useUiLocale()
 
   const preferredLanguage = authUser?.user?.human?.profile?.preferredLanguage
   const claimLocale = auth.user?.profile?.locale
@@ -86,17 +88,26 @@ export const JaenIntlProvider: FC<{children: ReactNode}> = ({children}) => {
     }
   }, [])
 
+  // The profile seeds a device that has no value yet. The claim does not: it
+  // is minted at login and can be older than the profile, which is the field
+  // the settings page writes. While the store is empty the claim still draws
+  // the page, see the order below, so nothing waits on the profile.
+  useEffect(() => {
+    if (uiLocale === null && preferredLanguage) seedUiLocale(preferredLanguage)
+  }, [uiLocale, preferredLanguage])
+
   const locale = useMemo<LocaleKey>(() => {
     return (
-      // An unsaved pick on the settings page wins for as long as the page
-      // lives; the account's language takes over again on the next visit.
-      matchLocale(previewLocale) ??
+      // The language of the screen wins, whatever the account says: the
+      // settings page sets it the moment a language is chosen, before the
+      // identity server has answered, and takes it back if the write fails.
+      matchLocale(uiLocale) ??
       matchLocale(preferredLanguage) ??
       matchLocale(claimLocale) ??
       matchLocale(browserLocale) ??
       DEFAULT_LOCALE
     )
-  }, [previewLocale, preferredLanguage, claimLocale, browserLocale])
+  }, [uiLocale, preferredLanguage, claimLocale, browserLocale])
 
   // No key={locale}: react-intl propagates locale/messages changes through
   // context, so strings update in place instead of remounting (and thereby
