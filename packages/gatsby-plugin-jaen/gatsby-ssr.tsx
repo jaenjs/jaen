@@ -5,13 +5,17 @@ import './dist/jaen.css'
 export {wrapPageElement} from './src/gatsby/wrap-page-element'
 export {wrapRootElement} from './src/gatsby/wrap-root-element'
 
-import {COLOR_MODE_ROUTE_PREFIXES} from './src/gatsby/color-mode-scope'
+import {
+  COLOR_MODE_ROUTE_PREFIXES,
+  COLOR_MODE_STORAGE_KEY
+} from './src/gatsby/color-mode-scope'
 
 /**
  * The no-flash script, hand-written because next-themes only ships a Next.js
  * one. It has to agree with next-themes' storage contract exactly, or the two
- * disagree for one paint: key `theme`, values light|dark|system, class on the
- * <html> element. The class is what v3's conditions select on
+ * disagree for one paint: the key is COLOR_MODE_STORAGE_KEY (`jaen:colorMode`,
+ * the provider's `storageKey`), values light|dark|system, class on the <html>
+ * element. The class is what v3's conditions select on
  * (`.dark, .dark .chakra-theme:not(.light)`), and `color-scheme` is what stops
  * the browser painting white scrollbars over a dark page.
  *
@@ -27,12 +31,16 @@ import {COLOR_MODE_ROUTE_PREFIXES} from './src/gatsby/color-mode-scope'
  * See the comment over the provider for why the site's
  * initialColorMode:'system' never counted.
  *
- * Before falling back it adopts v2's key once. v2's ColorModeScript did not
- * merely read `chakra-ui-color-mode`, it WROTE the resolved mode into it on
- * every first paint, so every returning visitor carries one — 'light' for the
- * many, 'dark' for whoever toggled. Without the adoption those few would be
- * silently reset to light. Only the two resolved values are adopted; v2 never
- * stored 'system' under that key.
+ * Nothing else is read. Two older keys sit in most returning browsers:
+ * next-themes' default `theme`, which this script used to read, and Chakra
+ * v2's `chakra-ui-color-mode`, which v2's ColorModeScript WROTE as the
+ * resolved mode on every first paint, so it holds 'light' for nearly every
+ * desktop browser that ever opened the old site. Until 2026-09-06 the script
+ * copied the second into the first when the first was empty, and the result
+ * was that limosen's dark default never reached a desktop browser while the
+ * phone's PWA, installed after the change, was dark. Both legacy keys are
+ * left alone now, neither read nor deleted, and only the toggle writes the
+ * new one. A visitor who chose light on purpose chooses it once more.
  *
  * It moves from setPreBodyComponents to setHeadComponents so it runs before the
  * first paint rather than after the opening body tag.
@@ -44,10 +52,8 @@ import {COLOR_MODE_ROUTE_PREFIXES} from './src/gatsby/color-mode-scope'
 const noFlash = (defaultMode: 'light' | 'dark' | 'system') => `(function(){try{
 var d=document.documentElement,p=location.pathname.replace(/\\/+$/,'')||'/',
 scoped=${JSON.stringify([...COLOR_MODE_ROUTE_PREFIXES])}.some(function(x){return p===x||p.indexOf(x+'/')===0}),
-s=scoped?localStorage.getItem('theme'):'light';
-if(scoped&&!s){var o=localStorage.getItem('chakra-ui-color-mode');
-if(o==='light'||o==='dark'){localStorage.setItem('theme',o);s=o}}
-s=s||${JSON.stringify(defaultMode)};
+s=scoped?localStorage.getItem(${JSON.stringify(COLOR_MODE_STORAGE_KEY)}):'light';
+if(s!=='light'&&s!=='dark'&&s!=='system')s=${JSON.stringify(defaultMode)};
 var m=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light',
 r=s==='system'?m:s;
 d.classList.remove('light','dark','c_darkmode');d.classList.add(r);

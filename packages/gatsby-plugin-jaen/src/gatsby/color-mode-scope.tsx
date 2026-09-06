@@ -26,6 +26,21 @@ import {useSyncExternalStore, type FC, type ReactNode} from 'react'
 
 export type ColorModeDefault = 'light' | 'dark' | 'system'
 
+/**
+ * The localStorage key the visitor's own choice lives under, written by the
+ * toggle through next-themes and read by the no-flash script in
+ * gatsby-ssr.tsx before the first paint. The two must agree, which is why it
+ * is exported from here and repeated nowhere.
+ *
+ * It is jaen's own key on purpose. next-themes' default `theme` and Chakra
+ * v2's `chakra-ui-color-mode` are never read: v2 wrote `light` for every
+ * visitor it ever painted, and adopting either would hand every returning
+ * desktop browser a light panel on a site whose default is dark. A visitor
+ * who chose light on purpose chooses it once more, and from then on the
+ * choice is kept here.
+ */
+export const COLOR_MODE_STORAGE_KEY = 'jaen:colorMode'
+
 /** Route prefixes that have a colour mode. Everything else is forced light. */
 export const COLOR_MODE_ROUTE_PREFIXES = [
   '/cms',
@@ -92,6 +107,7 @@ export const ColorModeScope: FC<ColorModeScopeProps> = ({
       attribute="class"
       defaultTheme={defaultMode}
       forcedTheme={hasColorMode(pathname) ? undefined : 'light'}
+      storageKey={COLOR_MODE_STORAGE_KEY}
       enableSystem
       disableTransitionOnChange>
       {children}

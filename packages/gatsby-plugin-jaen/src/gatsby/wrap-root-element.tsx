@@ -23,7 +23,11 @@ import {seedUiLocale, useUiLocale} from '../locales/ui-locale'
 
 import {JaenWidgetProvider} from '../contexts/jaen-widget'
 import {JaenPluginOptions} from './types'
-import {ColorModeScope, hasColorMode, useScopedPathname} from './color-mode-scope'
+import {
+  ColorModeScope,
+  hasColorMode,
+  useScopedPathname
+} from './color-mode-scope'
 import {SiteMetadataProvider} from '../connectors/site-metadata'
 import {system} from '../theme/system'
 import {JaenFrameMenuProvider} from '../contexts/jaen-frame-menu'
@@ -238,7 +242,10 @@ export const wrapRootElement: GatsbyBrowser['wrapRootElement'] = (
      * wants `system` opts into a dark first paint for its dark-OS visitors
      * knowingly, and a site that wants `dark` gets it on every first visit of
      * the CMS and the app. The visitor's own toggle is stored by next-themes
-     * under `theme` and wins over the default on the next visit.
+     * under jaen's own key, COLOR_MODE_STORAGE_KEY in color-mode-scope.tsx,
+     * and wins over the default on the next visit. The default `theme` key
+     * and v2's `chakra-ui-color-mode` are never read, see the no-flash
+     * script in gatsby-ssr.tsx for why.
      *
      * The dark palette itself is not decided here. jaen's own tokens carry a
      * `_dark` half each, and the site's theme shadow may override them, see
