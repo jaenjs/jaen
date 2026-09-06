@@ -1,0 +1,22 @@
+{
+  "company": "KRC Limousinenservice KG",
+  "line": "KRC Limousinenservice KG - Margaretengürtel 42/3/16 - 1050 Wien",
+  "address": [
+    "KRC Limousinenservice KG",
+    "Margaretengürtel 42/3/16",
+    "1050 Wien",
+    "Österreich"
+  ],
+  "contact": [
+    "Tel.: +43 699 109 983 52",
+    "E-Mail: office@krclimo.at",
+    "Web: booklimo.at"
+  ],
+  "legal": [],
+  "bank": [],
+  "missing": [
+    "address: not in booklimo.at/src/vars/brand.ts, taken from the footer of the brand's own mail templates (mail-templates/krc-de-confirmation.html, the first of its three addresses, the Schwechat and Fischamend ones left out)",
+    "legal: no court, FN or UID in booklimo.at/src/vars",
+    "bank: no bank in booklimo.at/src/vars"
+  ]
+}

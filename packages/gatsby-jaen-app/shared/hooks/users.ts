@@ -108,7 +108,8 @@ const readMutationShapes = async (): Promise<Record<string, string>> => {
   )
   const fields = result?.data?.__schema?.mutationType?.fields
   if (Array.isArray(fields)) {
-    for (const f of fields) shapes[String(f?.name)] = String(unwrap(f?.type)?.kind ?? '')
+    for (const f of fields)
+      shapes[String(f?.name)] = String(unwrap(f?.type)?.kind ?? '')
   }
   return shapes
 }
@@ -120,7 +121,11 @@ const readMutationShapes = async (): Promise<Record<string, string>> => {
  */
 const mutationShapes = async (): Promise<Map<string, string>> => {
   try {
-    return new Map(Object.entries(await cachedRead(keys.schema('mutations'), readMutationShapes)))
+    return new Map(
+      Object.entries(
+        await cachedRead(keys.schema('mutations'), readMutationShapes)
+      )
+    )
   } catch {
     return new Map()
   }
@@ -245,7 +250,11 @@ interface DirectoryPage {
 
 const EMPTY_USERS: DirectoryUser[] = []
 
-const readDirectoryPage = async (args: {first: number; after?: string; organizationId?: string}): Promise<DirectoryPage> => {
+const readDirectoryPage = async (args: {
+  first: number
+  after?: string
+  organizationId?: string
+}): Promise<DirectoryPage> => {
   const base = 'id userName state preferredLoginName creationDate changeDate'
   const connection = `{ totalCount pageInfo { endCursor hasNextPage } edges { node { __typename ${base} ${PROFILE_FRAGMENT} ${ROLES_FRAGMENT} } } }`
 
@@ -260,7 +269,9 @@ const readDirectoryPage = async (args: {first: number; after?: string; organizat
     )
   )
 
-  const rows: DirectoryUser[] = (Array.isArray(result?.edges) ? result.edges : [])
+  const rows: DirectoryUser[] = (
+    Array.isArray(result?.edges) ? result.edges : []
+  )
     .map((e: any) => e?.node)
     .filter(Boolean)
     .map(mapNode)
@@ -276,18 +287,29 @@ const readDirectoryPage = async (args: {first: number; after?: string; organizat
     rows,
     endCursor: result?.pageInfo?.endCursor ?? null,
     hasNextPage: !!result?.pageInfo?.hasNextPage,
-    totalCount: typeof result?.totalCount === 'number' ? result.totalCount : rows.length
+    totalCount:
+      typeof result?.totalCount === 'number' ? result.totalCount : rows.length
   }
 }
 
 export function useUserDirectory(pageSize = DEFAULT_PAGE_SIZE) {
   const pager = usePager(JSON.stringify({kind: 'directory', first: pageSize}))
   const args = useMemo(
-    () => ({first: pageSize, after: pager.after, organizationId: organizationId()}),
+    () => ({
+      first: pageSize,
+      after: pager.after,
+      organizationId: organizationId()
+    }),
     [pageSize, pager.after]
   )
 
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.users({kind: 'directory', ...args}),
     queryFn: () => readDirectoryPage(args),
     placeholderData: keepPreviousData
@@ -313,29 +335,40 @@ export function useUserDirectory(pageSize = DEFAULT_PAGE_SIZE) {
   }, [page, pager])
   const prevPage = pager.prev
 
-  return {users, isLoading, error, pagination, nextPage, prevPage, refetch}
+  return {
+    users,
+    isLoading,
+    error,
+    isFetching,
+    pagination,
+    nextPage,
+    prevPage,
+    refetch
+  }
 }
 
 // --------------- One account ---------------
 
 const readUser = async (userId: string): Promise<UserDetail | null> => {
   const args = {id: userId, organizationId: organizationId()}
-  const base = '__typename id userName state preferredLoginName creationDate changeDate'
+  const base =
+    '__typename id userName state preferredLoginName creationDate changeDate'
 
   // Three reads rather than one, kept apart so a brand that lacks the
   // profile or the roles still answers the account. The colour and the
   // payout share are the fleet database's and fail soft on their own.
-  const [node, profileEdges, roleEdges, color, payoutPercent] = await Promise.all([
-    gql('user', {args}, `{ ${base} }`),
-    gql('user', {args}, `{ ${PROFILE_FRAGMENT} }`)
-      .then((u: any) => u?.profiles?.edges)
-      .catch(() => null),
-    gql('user', {args}, `{ ${ROLES_FRAGMENT} }`)
-      .then((u: any) => u?.roles?.edges)
-      .catch(() => null),
-    readColor(userId),
-    readPayoutPercent(userId)
-  ])
+  const [node, profileEdges, roleEdges, color, payoutPercent] =
+    await Promise.all([
+      gql('user', {args}, `{ ${base} }`),
+      gql('user', {args}, `{ ${PROFILE_FRAGMENT} }`)
+        .then((u: any) => u?.profiles?.edges)
+        .catch(() => null),
+      gql('user', {args}, `{ ${ROLES_FRAGMENT} }`)
+        .then((u: any) => u?.roles?.edges)
+        .catch(() => null),
+      readColor(userId),
+      readPayoutPercent(userId)
+    ])
 
   if (!node) return null
 
@@ -356,12 +389,18 @@ const readUser = async (userId: string): Promise<UserDetail | null> => {
 }
 
 export function useUserDetail(userId: string) {
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.user(userId),
     queryFn: () => readUser(userId),
     enabled: !!userId
   })
-  return {user: q.data ?? undefined, isLoading, error, refetch}
+  return {user: q.data ?? undefined, isLoading, error, isFetching, refetch}
 }
 
 /**
@@ -412,15 +451,27 @@ export const monthKey = (d = new Date()) =>
  */
 export function useDriverMonthStats(userId: string, month: string) {
   const select = useCallback(
-    (dashboard: Awaited<ReturnType<typeof fetchDashboard>>): DriverMonthStats | null => {
+    (
+      dashboard: Awaited<ReturnType<typeof fetchDashboard>>
+    ): DriverMonthStats | null => {
       const row = dashboard.drivers.find(d => d.id === userId)
       return row
-        ? {completed: row.completed, revenue: row.revenue, cash: row.cash, payoutDue: row.payoutDue}
+        ? {
+            completed: row.completed,
+            revenue: row.revenue,
+            cash: row.cash,
+            payoutDue: row.payoutDue
+          }
         : null
     },
     [userId]
   )
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    refetch
+  } = useAppQuery({
     queryKey: keys.dashboard(month),
     queryFn: () => fetchDashboard(month),
     enabled: !!userId,
@@ -469,13 +520,25 @@ const isUnknownField = (err: unknown, field: string) =>
  */
 const EMPTY_EXPENSES: DriverExpense[] = []
 
-const readExpenses = async (userId: string, month: string | undefined): Promise<DriverExpense[]> => {
-  const rows = await gql('driverExpenses', {args: {userId, month}}, '{ id date amount note }')
+const readExpenses = async (
+  userId: string,
+  month: string | undefined
+): Promise<DriverExpense[]> => {
+  const rows = await gql(
+    'driverExpenses',
+    {args: {userId, month}},
+    '{ id date amount note }'
+  )
   return (Array.isArray(rows) ? rows : []).map(mapExpense)
 }
 
 export function useDriverExpenses(userId: string, month?: string) {
-  const {query: q, isLoading, error: message, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error: message,
+    refetch
+  } = useAppQuery({
     queryKey: keys.expenses(userId, month),
     queryFn: () => readExpenses(userId, month),
     enabled: !!userId
@@ -494,12 +557,17 @@ export function useDriverExpenses(userId: string, month?: string) {
   const added = useCallback(
     async (expense: DriverExpense) => {
       if (!unsupported) {
-        await queryClient.invalidateQueries({queryKey: keys.expenses(userId, month)})
+        await queryClient.invalidateQueries({
+          queryKey: keys.expenses(userId, month)
+        })
         return
       }
       setLocalOnly(true)
       if (!month || expense.date.startsWith(month)) {
-        queryClient.setQueryData<DriverExpense[]>(keys.expenses(userId, month), prev => [...(prev ?? []), expense])
+        queryClient.setQueryData<DriverExpense[]>(
+          keys.expenses(userId, month),
+          prev => [...(prev ?? []), expense]
+        )
       }
     },
     [unsupported, userId, month]
@@ -513,8 +581,8 @@ export function useDriverExpenses(userId: string, month?: string) {
 /** The directory, the pickers and, when one is named, the account: read again after a write. */
 const invalidatePeople = async (userId?: string) => {
   await Promise.all(
-    [['users'], ['drivers'], ...(userId ? [keys.user(userId)] : [])].map(queryKey =>
-      queryClient.invalidateQueries({queryKey})
+    [['users'], ['drivers'], ...(userId ? [keys.user(userId)] : [])].map(
+      queryKey => queryClient.invalidateQueries({queryKey})
     )
   )
 }

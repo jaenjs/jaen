@@ -23,14 +23,28 @@ import {
   Heading,
   Separator,
   Stack,
-  Text,
+  Text
 } from '@chakra-ui/react'
 import {FaArrowLeft} from '@react-icons/all-files/fa/FaArrowLeft'
 import {FaTimesCircle} from '@react-icons/all-files/fa/FaTimesCircle'
+import {FaFilePdf} from '@react-icons/all-files/fa/FaFilePdf'
 import {useAppNavigate, useAppParams} from '../navigation'
 import {useI18nCode} from '../i18n'
 import {getI18nBookings} from '../locales/i18nBookings'
-import {cancelBooking, isCancelable, useBooking, type Booking} from '../hooks/bookings'
+import {
+  cancelBooking,
+  isCancelable,
+  useBooking,
+  type Booking
+} from '../hooks/bookings'
+import {asCustomerStatus} from '../hooks/offers'
+import {
+  openDocument,
+  useTransferDocuments,
+  type TransferDocument
+} from '../hooks/documents'
+import {getI18nOffers} from '../locales/i18nOffers'
+import {CustomerStatusBadge} from '../components/CustomerStatusBadge'
 import {
   ConfirmDialog,
   ErrorBanner,
@@ -39,6 +53,7 @@ import {
   toaster,
   PageHeader
 } from '../components'
+import {useViewRefresh} from '../hooks/view-refresh'
 import {DetailSkeleton} from '../components/skeletons'
 import {DriverTrackingCard} from '../components/locations'
 
@@ -50,7 +65,10 @@ const fill = (template: string, values: Record<string, string | number>) =>
     template
   )
 
-const paymentLabel = (t: Strings, method: string | null | undefined): string => {
+const paymentLabel = (
+  t: Strings,
+  method: string | null | undefined
+): string => {
   if (!method) return ''
   const key = `Payment${method.toUpperCase()}` as keyof Strings
   return (t[key] as string | undefined) ?? method
@@ -67,14 +85,76 @@ function Item({label, value}: {label: string; value: React.ReactNode}) {
   )
 }
 
-function Section({title, children}: {title: string; children: React.ReactNode}) {
+function Section({
+  title,
+  children
+}: {
+  title: string
+  children: React.ReactNode
+}) {
   return (
     <Box>
-      <Heading as="h3" size="sm" textTransform="uppercase" letterSpacing="wider" color="fg.muted" mb="3">
+      <Heading
+        as="h3"
+        size="sm"
+        textTransform="uppercase"
+        letterSpacing="wider"
+        color="fg.muted"
+        mb="3">
         {title}
       </Heading>
       {children}
     </Box>
+  )
+}
+
+/**
+ * The offer or the invoice of the booking, a button that fetches the signed
+ * link through documentUrl and opens it. The customer reads their own
+ * ride's documents, the pylon refuses anybody else's.
+ */
+function DocumentLink({
+  doc,
+  code
+}: {
+  doc: TransferDocument
+  code: ReturnType<typeof useI18nCode>
+}) {
+  const {strings: so} = getI18nOffers(code)
+  const [opening, setOpening] = useState(false)
+  const open = async () => {
+    setOpening(true)
+    try {
+      await openDocument(doc.id)
+    } catch (err) {
+      toaster.error({
+        title: so.OpenFailed,
+        description: err instanceof Error ? err.message : String(err)
+      })
+    } finally {
+      setOpening(false)
+    }
+  }
+  return (
+    <Flex
+      justify="space-between"
+      align="center"
+      gap="3"
+      flexWrap="wrap"
+      data-testid={`document-${doc.kind.toLowerCase()}`}>
+      <Text fontWeight="medium">
+        {so[`Doc_${doc.kind}`]}
+        {doc.number ? ` ${doc.number}` : ''}
+      </Text>
+      <Button
+        size="sm"
+        variant="outline"
+        minH={{base: '44px', md: '8'}}
+        loading={opening}
+        onClick={() => void open()}>
+        <FaFilePdf /> {so.OpenPdf}
+      </Button>
+    </Flex>
   )
 }
 
@@ -84,13 +164,27 @@ export function BookingDetailView() {
   const code = useI18nCode()
   const {strings: t} = getI18nBookings(code)
 
-  const {booking, isLoading, error, refetch, setBooking} = useBooking(bookingId)
+  const {booking, isLoading, error, isFetching, refetch, setBooking} =
+    useBooking(bookingId)
+  const {documents} = useTransferDocuments(booking?.id)
+  useViewRefresh(refetch, isFetching)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [cancelling, setCancelling] = useState(false)
 
   const dates = useMemo(() => {
-    const long = new Intl.DateTimeFormat(code, {weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'})
-    const stamp = new Intl.DateTimeFormat(code, {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'})
+    const long = new Intl.DateTimeFormat(code, {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
+    const stamp = new Intl.DateTimeFormat(code, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
     return {
       day: (iso: string) => {
         if (!iso) return ''
@@ -113,11 +207,18 @@ export function BookingDetailView() {
     try {
       const updated: Booking = await cancelBooking(booking.id)
       // The mutation answers with the row as it is now, no second read needed.
-      setBooking({...booking, ...updated, driverName: updated.driverName ?? booking.driverName})
+      setBooking({
+        ...booking,
+        ...updated,
+        driverName: updated.driverName ?? booking.driverName
+      })
       toaster.success({title: t.CancelSuccess})
       setConfirmOpen(false)
     } catch (err) {
-      toaster.error({title: t.CancelError, description: err instanceof Error ? err.message : String(err)})
+      toaster.error({
+        title: t.CancelError,
+        description: err instanceof Error ? err.message : String(err)
+      })
     } finally {
       setCancelling(false)
     }
@@ -160,17 +261,34 @@ export function BookingDetailView() {
         <PageHeader
           title={fill(t.DetailHeading, {code: b.code})}
           mono
-          meta={<StatusBadge state={b.state} size="lg" />}
+          meta={
+            <>
+              <StatusBadge state={b.state} size="lg" />
+              <CustomerStatusBadge
+                status={b.customerStatus}
+                audience="customer"
+                size="lg"
+              />
+            </>
+          }
           actions={
             cancelable ? (
-              <Button colorPalette="red" variant="outline" onClick={() => setConfirmOpen(true)}>
+              <Button
+                colorPalette="red"
+                variant="outline"
+                onClick={() => setConfirmOpen(true)}>
                 <FaTimesCircle /> {t.CancelButton}
               </Button>
             ) : undefined
           }
         />
 
-        <Box bg="bg.surface" borderWidth="1px" borderColor="border.default" rounded="surface" p={{base: '4', md: '6'}}>
+        <Box
+          bg="bg.surface"
+          borderWidth="1px"
+          borderColor="border.default"
+          rounded="surface"
+          p={{base: '4', md: '6'}}>
           <Stack gap="6">
             <Section title={t.DetailSectionRoute}>
               <Flex gap="3" align="stretch">
@@ -200,9 +318,15 @@ export function BookingDetailView() {
 
             <Section title={t.DetailSectionSchedule}>
               <DataList.Root orientation="horizontal" size="md">
-                <Item label={t.DetailLabelDate} value={dates.day(b.rideDateISO)} />
+                <Item
+                  label={t.DetailLabelDate}
+                  value={dates.day(b.rideDateISO)}
+                />
                 <Item label={t.DetailLabelTime} value={b.rideTime} />
-                <Item label={t.DetailLabelBookedAt} value={dates.stamp(b.requestedAtISO)} />
+                <Item
+                  label={t.DetailLabelBookedAt}
+                  value={dates.stamp(b.requestedAtISO)}
+                />
               </DataList.Root>
             </Section>
 
@@ -211,12 +335,44 @@ export function BookingDetailView() {
             <Section title={t.DetailSectionRide}>
               <DataList.Root orientation="horizontal" size="md">
                 <Item label={t.DetailLabelRoomOrName} value={b.subject} />
-                <Item label={t.DetailLabelPassengers} value={b.passengerCount} />
+                <Item
+                  label={t.DetailLabelPassengers}
+                  value={b.passengerCount}
+                />
                 <Item label={t.DetailLabelLuggage} value={b.details?.luggage} />
-                <Item label={t.DetailLabelChildSeats} value={b.details?.childSeats} />
-                <Item label={t.DetailLabelFlight} value={b.details?.flightNumber} />
+                <Item
+                  label={t.DetailLabelChildSeats}
+                  value={b.details?.childSeats}
+                />
+                <Item
+                  label={t.DetailLabelFlight}
+                  value={b.details?.flightNumber}
+                />
               </DataList.Root>
             </Section>
+
+            {/* The money side in the customer's words, and the documents (offers-and-documents.md). */}
+            {(asCustomerStatus(b.customerStatus) || documents.length > 0) && (
+              <>
+                <Separator />
+                <Section title={t.DetailSectionStatus}>
+                  <Stack gap="3">
+                    {asCustomerStatus(b.customerStatus) && (
+                      <Text data-testid="customer-status-words">
+                        {
+                          t[
+                            `StatusExplain${asCustomerStatus(b.customerStatus)}` as keyof Strings
+                          ] as string
+                        }
+                      </Text>
+                    )}
+                    {documents.map(doc => (
+                      <DocumentLink key={doc.id} doc={doc} code={code} />
+                    ))}
+                  </Stack>
+                </Section>
+              </>
+            )}
 
             {b.details?.message && (
               <>
@@ -233,8 +389,13 @@ export function BookingDetailView() {
                 <Section title={t.DetailSectionExtras}>
                   <Stack gap="1.5">
                     {b.extras.map((extra, i) => (
-                      <Flex key={`${extra.type}-${i}`} justify="space-between" gap="6">
-                        <Text color="fg.muted">{extra.type.replace(/_/g, ' ')}</Text>
+                      <Flex
+                        key={`${extra.type}-${i}`}
+                        justify="space-between"
+                        gap="6">
+                        <Text color="fg.muted">
+                          {extra.type.replace(/_/g, ' ')}
+                        </Text>
                         <Text fontWeight="medium">× {extra.amount}</Text>
                       </Flex>
                     ))}
@@ -255,7 +416,9 @@ export function BookingDetailView() {
             </Flex>
             {b.paymentMethode && (
               <Text textStyle="sm" color="fg.muted" mt="-4">
-                {fill(t.DetailPayment, {method: paymentLabel(t, b.paymentMethode)})}
+                {fill(t.DetailPayment, {
+                  method: paymentLabel(t, b.paymentMethode)
+                })}
               </Text>
             )}
           </Stack>
@@ -269,9 +432,14 @@ export function BookingDetailView() {
           audience="customer"
           fallback={{
             driverId: b.driverId,
-            driverName: b.driverName ?? (b.driverId ? t.DriverAssigned : undefined),
+            driverName:
+              b.driverName ?? (b.driverId ? t.DriverAssigned : undefined),
             car: b.car
-              ? {carName: b.car.name ?? null, licensePlate: b.car.licensePlate ?? null, carClass: b.car.carClass ?? null}
+              ? {
+                  carName: b.car.name ?? null,
+                  licensePlate: b.car.licensePlate ?? null,
+                  carClass: b.car.carClass ?? null
+                }
               : null
           }}
         />
@@ -288,7 +456,10 @@ export function BookingDetailView() {
         onClose={() => setConfirmOpen(false)}
         onConfirm={confirmCancel}
         title={t.CancelConfirmTitle}
-        body={fill(t.CancelConfirmBody, {date: dates.day(b.rideDateISO), time: b.rideTime})}
+        body={fill(t.CancelConfirmBody, {
+          date: dates.day(b.rideDateISO),
+          time: b.rideTime
+        })}
         confirmLabel={t.CancelConfirm}
         cancelLabel={t.CancelKeep}
         destructive

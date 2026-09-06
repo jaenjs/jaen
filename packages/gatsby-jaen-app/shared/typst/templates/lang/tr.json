@@ -1,0 +1,54 @@
+{
+  "invoice": {
+    "number": "Fatura No.",
+    "date": "Fatura tarihi",
+    "title": "Fatura No. {id}"
+  },
+  "offer": {
+    "number": "Teklif No.",
+    "date": "Teklif tarihi",
+    "title": "Teklif No. {id}",
+    "validUntil": "Geçerlilik tarihi"
+  },
+  "meta": {
+    "deliveryDate": "Teslim tarihi",
+    "reference": "Referans",
+    "servicePeriod": "Hizmet dönemi",
+    "customerId": "Müşteri numaranız",
+    "vatId": "KDV numaranız",
+    "contactPerson": "Muhatabınız",
+    "code": "Rezervasyon kodu",
+    "validUntil": "Geçerlilik tarihi"
+  },
+  "table": {
+    "pos": "Sıra",
+    "description": "Açıklama",
+    "qty": "Miktar",
+    "unitPrice": "Birim fiyat",
+    "total": "Toplam fiyat",
+    "net": "Toplam tutar (net)",
+    "tax": "artı %{rate} KDV",
+    "gross": "Toplam tutar (brüt)",
+    "discount": "İndirim %{percent}"
+  },
+  "closing": "Saygılarımızla",
+  "page": "Sayfa {page} / {total}",
+  "links": {
+    "confirm": "Teklifi onayla",
+    "decline": "Teklifi reddet"
+  },
+  "defaults": {
+    "offer": {
+      "greeting": "Sayın Yetkili,",
+      "text": "talebiniz için teşekkür ederiz. Yolculuğunuz için size aşağıdaki teklifi sunmaktan memnuniyet duyarız:",
+      "terms": "Yolculuk ancak onayınızla rezerve edilmiş sayılır. Fiyatlara KDV dahildir, bekleme süreleri ve ek güzergâhlar ayrıca ücretlendirilir.",
+      "status": "Bu teklif {validUntil} tarihine kadar geçerlidir."
+    },
+    "invoice": {
+      "greeting": "Sayın Yetkili,",
+      "text": "siparişiniz ve bize duyduğunuz güven için teşekkür ederiz!\nAşağıdaki hizmetleri fatura ediyoruz:",
+      "terms": "Ödeme koşulları: fatura tesliminde, kesintisiz ödeme.\n\nÖdeme ve yargı yeri Viyana.",
+      "status": ""
+    }
+  }
+}

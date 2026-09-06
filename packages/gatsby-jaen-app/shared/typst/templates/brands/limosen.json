@@ -1,0 +1,17 @@
+{
+  "company": "LIMOSEN KG",
+  "line": "LIMOSEN KG",
+  "address": ["LIMOSEN KG"],
+  "contact": [
+    "Tel.: +43 660 876 06 06",
+    "E-Mail: office@limosen.at",
+    "Web: limosen.at"
+  ],
+  "legal": [],
+  "bank": [],
+  "missing": [
+    "address: no postal address in limosen.at/src/vars (the mail template footer carries KRC's three addresses, copied with the template)",
+    "legal: no court, FN or UID in limosen.at/src/vars",
+    "bank: no bank in limosen.at/src/vars"
+  ]
+}

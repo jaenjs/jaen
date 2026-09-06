@@ -25,6 +25,7 @@ import {FaRoute} from '@react-icons/all-files/fa/FaRoute'
 import {FaUserCircle} from '@react-icons/all-files/fa/FaUserCircle'
 import {FaCalendarCheck} from '@react-icons/all-files/fa/FaCalendarCheck'
 import {FaFileInvoice} from '@react-icons/all-files/fa/FaFileInvoice'
+import {FaFileContract} from '@react-icons/all-files/fa/FaFileContract'
 import {FaBell} from '@react-icons/all-files/fa/FaBell'
 import type {Caller} from '../../shared/auth'
 import type {getI18nCommon} from '../../shared/locales/i18nCommon'
@@ -52,25 +53,115 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   // The app, top left.
-  {id: 'dashboard', menu: 'app', path: '/app/dashboard/', label: 'NavDashboard', icon: FaTachometerAlt, roles: ['admin'], order: 10},
-  {id: 'transfers', menu: 'app', path: '/app/transfers/', label: 'NavTransfers', icon: FaExchangeAlt, roles: ['admin'], order: 20},
+  {
+    id: 'dashboard',
+    menu: 'app',
+    path: '/app/dashboard/',
+    label: 'NavDashboard',
+    icon: FaTachometerAlt,
+    roles: ['admin'],
+    order: 10
+  },
+  {
+    id: 'transfers',
+    menu: 'app',
+    path: '/app/transfers/',
+    label: 'NavTransfers',
+    icon: FaExchangeAlt,
+    roles: ['admin'],
+    order: 20
+  },
   // The driver's list is the transfers screen scoped to them by the backend,
   // so it is the same route under a different name. Deduped by path, first
   // entry wins, so an admin who also drives reads "Transfers".
-  {id: 'transfers', menu: 'app', path: '/app/transfers/', label: 'NavMyRides', icon: FaRoute, roles: ['driver'], order: 20},
-  {id: 'booking', menu: 'app', path: '/app/booking/', label: 'NavBookings', icon: FaCalendarCheck, roles: ['admin', 'customer'], order: 30},
-  {id: 'locations', menu: 'app', path: '/app/locations/', label: 'NavLocations', icon: FaMapMarkerAlt, roles: ['admin', 'driver'], order: 40},
-  {id: 'fleet', menu: 'app', path: '/app/fleet/', label: 'NavFleet', icon: FaCar, roles: ['admin'], order: 50},
-  {id: 'users', menu: 'app', path: '/app/users/', label: 'NavUsers', icon: FaUsers, roles: ['admin'], order: 60},
-  {id: 'statements', menu: 'app', path: '/app/statements/', label: 'NavStatements', icon: FaFileInvoice, roles: ['admin', 'driver', 'customer'], order: 70},
+  {
+    id: 'transfers',
+    menu: 'app',
+    path: '/app/transfers/',
+    label: 'NavMyRides',
+    icon: FaRoute,
+    roles: ['driver'],
+    order: 20
+  },
+  {
+    id: 'booking',
+    menu: 'app',
+    path: '/app/booking/',
+    label: 'NavBookings',
+    icon: FaCalendarCheck,
+    roles: ['admin', 'customer'],
+    order: 30
+  },
+  // The offers screen, one row per offer document, admins only (offers-and-documents.md).
+  {
+    id: 'offers',
+    menu: 'app',
+    path: '/app/offers/',
+    label: 'NavOffers',
+    icon: FaFileContract,
+    roles: ['admin'],
+    order: 35
+  },
+  {
+    id: 'locations',
+    menu: 'app',
+    path: '/app/locations/',
+    label: 'NavLocations',
+    icon: FaMapMarkerAlt,
+    roles: ['admin', 'driver'],
+    order: 40
+  },
+  {
+    id: 'fleet',
+    menu: 'app',
+    path: '/app/fleet/',
+    label: 'NavFleet',
+    icon: FaCar,
+    roles: ['admin'],
+    order: 50
+  },
+  {
+    id: 'users',
+    menu: 'app',
+    path: '/app/users/',
+    label: 'NavUsers',
+    icon: FaUsers,
+    roles: ['admin'],
+    order: 60
+  },
+  {
+    id: 'statements',
+    menu: 'app',
+    path: '/app/statements/',
+    label: 'NavStatements',
+    icon: FaFileInvoice,
+    roles: ['admin', 'driver', 'customer'],
+    order: 70
+  },
 
   // The person, top right. Einstellungen and Abmelden are the frame's own
   // entries (gatsby-plugin-jaen/src/pages/settings.tsx and logout.tsx
   // register themselves through their pageConfig), so they are not repeated
   // here.
-  {id: 'me', menu: 'user', path: '/app/me/', label: 'NavMe', icon: FaUserCircle, roles: ['admin', 'driver', 'customer'], order: 10},
+  {
+    id: 'me',
+    menu: 'user',
+    path: '/app/me/',
+    label: 'NavMe',
+    icon: FaUserCircle,
+    roles: ['admin', 'driver', 'customer'],
+    order: 10
+  },
   // The push switch is a card on the Me page, not a page of its own.
-  {id: 'notifications', menu: 'user', path: '/app/me/#notifications', label: 'NavNotifications', icon: FaBell, roles: ['driver'], order: 20}
+  {
+    id: 'notifications',
+    menu: 'user',
+    path: '/app/me/#notifications',
+    label: 'NavNotifications',
+    icon: FaBell,
+    roles: ['driver'],
+    order: 20
+  }
 ]
 
 export const rolesOf = (caller: Caller): NavRole[] => {
@@ -99,12 +190,19 @@ const pathOf = (item: NavItem): string => item.path.split('#')[0] ?? item.path
 /** /app/transfers/abc/ is inside /app/transfers/, /app/transfersx/ is not. */
 export const isActivePath = (currentPath: string, item: NavItem): boolean => {
   const base = pathOf(item).replace(/\/$/, '')
-  return currentPath === base || currentPath === `${base}/` || currentPath.startsWith(`${base}/`)
+  return (
+    currentPath === base ||
+    currentPath === `${base}/` ||
+    currentPath.startsWith(`${base}/`)
+  )
 }
 
 /**
  * The entry the current path belongs to, for the page title. Both menus are
  * searched, so /app/me/ is titled "Ich" although it lives in the user menu.
  */
-export const activeItem = (currentPath: string, caller: Caller): NavItem | undefined =>
+export const activeItem = (
+  currentPath: string,
+  caller: Caller
+): NavItem | undefined =>
   navFor(caller).find(item => isActivePath(currentPath, item))

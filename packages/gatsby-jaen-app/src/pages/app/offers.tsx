@@ -1,0 +1,46 @@
+import {PageConfig} from 'jaen'
+import {PageProps, navigate as gatsbyNavigate} from 'gatsby'
+import React from 'react'
+import {AppWrapper} from '../../AppWrapper'
+import {OffersView} from '../../../shared/views/OffersView'
+
+/**
+ * /app/offers/, the offers screen: one row per offer document, admins only.
+ * The view itself turns anybody else away, the backend refuses them anyway.
+ */
+const OffersPage: React.FC<PageProps> = () => {
+  const nav = React.useMemo(
+    () => ({
+      navigate: (path: string) => gatsbyNavigate(`/app${path}`),
+      params: {}
+    }),
+    []
+  )
+
+  return (
+    <AppWrapper nav={nav}>
+      <OffersView />
+    </AppWrapper>
+  )
+}
+
+export default OffersPage
+
+export const pageConfig: PageConfig = {
+  label: 'Offers',
+  icon: 'FaFileContract',
+  // No `menu` here: the app registers its entries itself, per role and per
+  // language, see src/components/useFrameMenu.ts.
+  // Every /app route is for a signed-in person. jaen sends anybody else to
+  // /login and brings them back here afterwards. Which role they need is the
+  // backend's decision, made per field, and the shell's, made per nav item.
+  auth: {
+    isRequired: true
+  },
+  layout: {
+    name: 'jaen',
+    type: 'full'
+  }
+}
+
+export {Head} from 'jaen'

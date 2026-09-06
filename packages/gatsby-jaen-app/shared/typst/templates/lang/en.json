@@ -1,0 +1,54 @@
+{
+  "invoice": {
+    "number": "Invoice no.",
+    "date": "Invoice date",
+    "title": "Invoice no. {id}"
+  },
+  "offer": {
+    "number": "Offer no.",
+    "date": "Offer date",
+    "title": "Offer no. {id}",
+    "validUntil": "Valid until"
+  },
+  "meta": {
+    "deliveryDate": "Delivery date",
+    "reference": "Reference",
+    "servicePeriod": "Service period",
+    "customerId": "Your customer number",
+    "vatId": "Your VAT ID",
+    "contactPerson": "Your contact",
+    "code": "Booking code",
+    "validUntil": "Valid until"
+  },
+  "table": {
+    "pos": "Item",
+    "description": "Description",
+    "qty": "Quantity",
+    "unitPrice": "Unit price",
+    "total": "Total",
+    "net": "Total net",
+    "tax": "plus {rate}% VAT",
+    "gross": "Total gross",
+    "discount": "Discount {percent}%"
+  },
+  "closing": "Kind regards",
+  "page": "Page {page} of {total}",
+  "links": {
+    "confirm": "Confirm offer",
+    "decline": "Decline offer"
+  },
+  "defaults": {
+    "offer": {
+      "greeting": "Dear Sir or Madam,",
+      "text": "thank you for your enquiry. We are pleased to make you the following offer for your ride:",
+      "terms": "The ride is booked once you have confirmed. Prices include VAT, waiting times and detours are charged as incurred.",
+      "status": "This offer is valid until {validUntil}."
+    },
+    "invoice": {
+      "greeting": "Dear Sir or Madam,",
+      "text": "thank you for your order and the trust that comes with it!\nWe hereby invoice the following services:",
+      "terms": "Terms of payment: payment on receipt of the invoice, without deductions.\n\nPayable and actionable in Vienna.",
+      "status": ""
+    }
+  }
+}

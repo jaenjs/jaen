@@ -59,7 +59,9 @@ const accessToken = (): string | undefined => {
     const z =
       typeof __JAEN_ZITADEL_GQL__ !== 'undefined' ? __JAEN_ZITADEL_GQL__ : null
     if (!z?.authority || !z?.clientId) return undefined
-    const raw = window.sessionStorage?.getItem(`oidc.user:${z.authority}:${z.clientId}`)
+    const raw = window.sessionStorage?.getItem(
+      `oidc.user:${z.authority}:${z.clientId}`
+    )
     if (!raw) return undefined
     return User.fromStorageString(raw)?.access_token || undefined
   } catch {
@@ -89,30 +91,48 @@ export const statementUrl = (
   return url.toString()
 }
 
-export async function fetchStatementMonths(userId: string): Promise<StatementMonth[]> {
+export async function fetchStatementMonths(
+  userId: string
+): Promise<StatementMonth[]> {
   const rows = await gql('statementMonths', {args: {userId}}, '{ month kind }')
-  return (Array.isArray(rows) ? rows : [])
-    .map((r: any) => ({
-      month: String(r?.month ?? ''),
-      kind: (String(r?.kind ?? '').toUpperCase() === 'DRIVER' ? 'DRIVER' : 'CUSTOMER') as StatementKind
-    }))
-    .filter((r: StatementMonth) => MONTH.test(r.month))
-    // Newest first, the month somebody is looking for is almost always the last one.
-    .sort((a: StatementMonth, b: StatementMonth) => b.month.localeCompare(a.month))
+  return (
+    (Array.isArray(rows) ? rows : [])
+      .map((r: any) => ({
+        month: String(r?.month ?? ''),
+        kind: (String(r?.kind ?? '').toUpperCase() === 'DRIVER'
+          ? 'DRIVER'
+          : 'CUSTOMER') as StatementKind
+      }))
+      .filter((r: StatementMonth) => MONTH.test(r.month))
+      // Newest first, the month somebody is looking for is almost always the last one.
+      .sort((a: StatementMonth, b: StatementMonth) =>
+        b.month.localeCompare(a.month)
+      )
+  )
 }
 
 const EMPTY_MONTHS: StatementMonth[] = []
 
 export function useStatementMonths(userId: string | undefined) {
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.statements(userId ?? ''),
     queryFn: () => fetchStatementMonths(userId ?? ''),
     enabled: !!userId
   })
-  return {months: q.data ?? EMPTY_MONTHS, isLoading, error, refetch}
+  return {months: q.data ?? EMPTY_MONTHS, isLoading, error, isFetching, refetch}
 }
 
-export async function fetchStatementLines(userId: string, month: string, kind: StatementKind): Promise<StatementLine[]> {
+export async function fetchStatementLines(
+  userId: string,
+  month: string,
+  kind: StatementKind
+): Promise<StatementLine[]> {
   const rows = await gql(
     'statementLines',
     {args: {userId, month, kind}},
@@ -139,8 +159,18 @@ const EMPTY_LINES: StatementLine[] = []
  * The rides of one statement, loaded when asked for (`enabled`), because a
  * month is opened far less often than the list is looked at.
  */
-export function useStatementLines(userId: string | undefined, month: string, kind: StatementKind, enabled: boolean) {
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+export function useStatementLines(
+  userId: string | undefined,
+  month: string,
+  kind: StatementKind,
+  enabled: boolean
+) {
+  const {
+    query: q,
+    isLoading,
+    error,
+    refetch
+  } = useAppQuery({
     queryKey: keys.statementLines(userId ?? '', month, kind),
     queryFn: () => fetchStatementLines(userId ?? '', month, kind),
     enabled: !!userId && enabled
@@ -192,15 +222,22 @@ export async function downloadStatement(
     try {
       const body = await response.json()
       const first = Array.isArray(body?.errors) ? body.errors[0] : undefined
-      detail = String(first?.message ?? first?.extensions?.code ?? body?.message ?? '')
+      detail = String(
+        first?.message ?? first?.extensions?.code ?? body?.message ?? ''
+      )
     } catch {
       /* the body was not JSON, the status is enough */
     }
-    throw new Error(detail ? `${response.status} ${detail}` : `HTTP ${response.status}`)
+    throw new Error(
+      detail ? `${response.status} ${detail}` : `HTTP ${response.status}`
+    )
   }
 
   const blob = await response.blob()
-  const name = fileNameFrom(response, `${kind ? kind.toLowerCase() : 'statement'}_${month}.${format}`)
+  const name = fileNameFrom(
+    response,
+    `${kind ? kind.toLowerCase() : 'statement'}_${month}.${format}`
+  )
   const url = URL.createObjectURL(blob)
   try {
     const a = document.createElement('a')

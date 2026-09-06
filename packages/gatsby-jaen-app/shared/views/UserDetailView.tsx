@@ -59,7 +59,12 @@ import {
   toaster,
   PageHeader
 } from '../components'
-import {DetailSkeleton, NumberSkeleton, TableSkeleton} from '../components/skeletons'
+import {useViewRefresh} from '../hooks/view-refresh'
+import {
+  DetailSkeleton,
+  NumberSkeleton,
+  TableSkeleton
+} from '../components/skeletons'
 import {
   addDriverExpenseMutation,
   deactivateUserMutation,
@@ -73,7 +78,13 @@ import {
   useUserDetail,
   type UserDetail
 } from '../hooks/users'
-import {ActiveBadge, RoleChips, UserAvatar, loginName, profileName} from './UsersView'
+import {
+  ActiveBadge,
+  RoleChips,
+  UserAvatar,
+  loginName,
+  profileName
+} from './UsersView'
 import {StatementsView} from './StatementsView'
 
 const isDriverRole = (key: string) =>
@@ -132,7 +143,8 @@ export function UserDetailView() {
   const code = useI18nCode()
   const {strings: t} = getI18nUsers(code)
   const {strings: tc} = getI18nCommon(code)
-  const {user, isLoading, error, refetch} = useUserDetail(userId)
+  const {user, isLoading, error, isFetching, refetch} = useUserDetail(userId)
+  useViewRefresh(refetch, isFetching)
   const [month, setMonth] = useState(() => monthKey())
 
   if (!caller.loading && !caller.isAdmin) {
@@ -618,14 +630,16 @@ function StatsCard({
       ) : isLoading ? (
         // The four numbers wait as numbers, never as 0 (design-consistency.md, rule 3).
         <SimpleGrid columns={{base: 2, md: 4}} gap="4">
-          {[t.StatCompleted, t.StatRevenue, t.StatCash, t.StatPayoutDue].map(label => (
-            <Stat.Root key={label}>
-              <Stat.Label>{label}</Stat.Label>
-              <Stat.ValueText>
-                <NumberSkeleton chars={5} />
-              </Stat.ValueText>
-            </Stat.Root>
-          ))}
+          {[t.StatCompleted, t.StatRevenue, t.StatCash, t.StatPayoutDue].map(
+            label => (
+              <Stat.Root key={label}>
+                <Stat.Label>{label}</Stat.Label>
+                <Stat.ValueText>
+                  <NumberSkeleton chars={5} />
+                </Stat.ValueText>
+              </Stat.Root>
+            )
+          )}
         </SimpleGrid>
       ) : !stats ? (
         <Text textStyle="sm" color="fg.muted">

@@ -21,7 +21,14 @@
 import {useCallback, useMemo} from 'react'
 import {keepPreviousData, useQueries} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
-import {invalidateTransfers, keys, queryClient, useAppQuery, usePager, useRestored} from './query'
+import {
+  invalidateTransfers,
+  keys,
+  queryClient,
+  useAppQuery,
+  usePager,
+  useRestored
+} from './query'
 import {hasTransferField, transferCode, transferSlug} from './transfers'
 
 /**
@@ -37,7 +44,8 @@ const literal = (value: unknown): string => {
   if (value === null || value === undefined) return 'null'
   if (typeof value === 'boolean') return value ? 'true' : 'false'
   // NaN is what an empty number input reads as, and it is not a value.
-  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'null'
+  if (typeof value === 'number')
+    return Number.isFinite(value) ? String(value) : 'null'
   if (typeof value === 'string') return JSON.stringify(value)
   if (Array.isArray(value)) return `[${value.map(literal).join(', ')}]`
   if (typeof value === 'object') {
@@ -114,6 +122,10 @@ export interface Booking {
   driverId?: string
   driverName?: string
   state: string
+  /** The money side, NEW to PAID or DECLINED, shown to the customer in words. Undefined on a schema without it. */
+  customerStatus?: string
+  /** The booking's language, de | en | tr | ar. */
+  language?: string
   pickup: string
   dropoff: string
   /** Zimmer/Name, what the hotel wrote on the booking. */
@@ -160,7 +172,10 @@ const text = (v: unknown): string | undefined =>
  */
 const nameOf = (user: any): string | undefined => {
   const profile = user?.profiles?.edges?.[0]?.node
-  const full = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim()
+  const full = [profile?.firstName, profile?.lastName]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
   return full || text(profile?.displayName) || undefined
 }
 
@@ -188,13 +203,17 @@ export const mapBooking = (t: any): Booking => {
     driverId: text(t?.driverId),
     driverName: nameOf(t?.driver),
     state: String(t?.state ?? 'PENDING'),
+    customerStatus: text(t?.customerStatus),
+    language: text(t?.language),
     pickup: String(t?.pickupLocation ?? ''),
     dropoff: String(t?.dropoffLocation ?? ''),
     subject: text(t?.subject),
     pickupAtISO,
     rideDateISO,
     rideTime,
-    requestedAtISO: t?.requestedAt ? new Date(t.requestedAt).toISOString() : undefined,
+    requestedAtISO: t?.requestedAt
+      ? new Date(t.requestedAt).toISOString()
+      : undefined,
     price: typeof t?.price === 'number' ? t.price : null,
     paymentMethode: text(t?.paymentMethode) ?? null,
     payingParty: text(t?.payingParty) ?? null,
@@ -216,14 +235,18 @@ export const mapBooking = (t: any): Booking => {
         }
       : undefined,
     passengerCount:
-      typeof t?.passengers?.totalCount === 'number' && t.passengers.totalCount > 0
+      typeof t?.passengers?.totalCount === 'number' &&
+      t.passengers.totalCount > 0
         ? t.passengers.totalCount
         : undefined,
     extras: Array.isArray(t?.extras?.edges)
       ? t.extras.edges
           .map((e: any) => e?.node)
           .filter(Boolean)
-          .map((n: any) => ({type: String(n.type ?? ''), amount: Number(n.amount ?? 1)}))
+          .map((n: any) => ({
+            type: String(n.type ?? ''),
+            amount: Number(n.amount ?? 1)
+          }))
       : []
   }
 }
@@ -234,7 +257,7 @@ export const mapBooking = (t: any): Booking => {
  * carries it, so a site built ahead of its pylon still lists the bookings.
  */
 const bookingSelection = async (): Promise<string> =>
-  `{ id ${(await hasTransferField('code')) ? 'code ' : ''}customerId driverId pickupDateTime pickupLocation dropoffLocation subject state requestedAt ` +
+  `{ id ${(await hasTransferField('code')) ? 'code ' : ''}${(await hasTransferField('customerStatus')) ? 'customerStatus language ' : ''}customerId driverId pickupDateTime pickupLocation dropoffLocation subject state requestedAt ` +
   `referenceId price paymentMethode payingParty transferCategory transferType ` +
   `car { carName licensePlate carClass } ` +
   `details { flightNumber message luggage childSeats } ` +
@@ -243,7 +266,8 @@ const bookingSelection = async (): Promise<string> =>
   `driver { ... on HumanUser { profiles { edges { node { firstName lastName displayName } } } } } }`
 
 /** The path segment of a booking's link: the code, the pylon resolves it. */
-export const bookingPath = (b: {id: string; code: string}): string => `/booking/${transferSlug(b)}`
+export const bookingPath = (b: {id: string; code: string}): string =>
+  `/booking/${transferSlug(b)}`
 
 // --------------- The list ---------------
 
@@ -263,7 +287,10 @@ interface BookingsPage {
 
 const EMPTY_BOOKINGS: Booking[] = []
 
-const readBookingsPage = async (args: {first: number; after?: string}): Promise<BookingsPage> => {
+const readBookingsPage = async (args: {
+  first: number
+  after?: string
+}): Promise<BookingsPage> => {
   const listArgs: Record<string, unknown> = {first: args.first}
   if (args.after) listArgs.after = args.after
 
@@ -275,7 +302,10 @@ const readBookingsPage = async (args: {first: number; after?: string}): Promise<
 
   const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
   return {
-    rows: edges.map(e => e?.node).filter(Boolean).map(mapBooking),
+    rows: edges
+      .map(e => e?.node)
+      .filter(Boolean)
+      .map(mapBooking),
     endCursor: result?.pageInfo?.endCursor ?? null,
     hasNextPage: !!result?.pageInfo?.hasNextPage,
     totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
@@ -284,9 +314,17 @@ const readBookingsPage = async (args: {first: number; after?: string}): Promise<
 
 export function useBookings(pageSize = DEFAULT_PAGE_SIZE) {
   const pager = usePager(JSON.stringify({first: pageSize}))
-  const args = useMemo(() => ({first: pageSize, after: pager.after}), [pageSize, pager.after])
+  const args = useMemo(
+    () => ({first: pageSize, after: pager.after}),
+    [pageSize, pager.after]
+  )
 
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    refetch
+  } = useAppQuery({
     queryKey: keys.bookings(args),
     queryFn: () => readBookingsPage(args),
     placeholderData: keepPreviousData
@@ -324,7 +362,9 @@ export function useBookings(pageSize = DEFAULT_PAGE_SIZE) {
  * since 1.0.0, answers with a validation error and the list is walked
  * instead, page by page within the caller's scope, matching id or code.
  */
-export async function fetchBooking(transferId: string): Promise<Booking | null> {
+export async function fetchBooking(
+  transferId: string
+): Promise<Booking | null> {
   const selection = await bookingSelection()
   try {
     const node = await gql('transfer', {transferId}, selection)
@@ -345,7 +385,9 @@ export async function fetchBooking(transferId: string): Promise<Booking | null> 
       `{ pageInfo { endCursor hasNextPage } edges { node ${selection} } }`
     )
     const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
-    const hit = edges.map(e => e?.node).find(n => n?.id === transferId || n?.code === transferId)
+    const hit = edges
+      .map(e => e?.node)
+      .find(n => n?.id === transferId || n?.code === transferId)
     if (hit) return mapBooking(hit)
     if (!result?.pageInfo?.hasNextPage || !result?.pageInfo?.endCursor) break
     after = result.pageInfo.endCursor
@@ -361,7 +403,13 @@ const rememberBooking = (booking: Booking) => {
 }
 
 export function useBooking(transferId: string) {
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.booking(transferId),
     queryFn: () => fetchBooking(transferId),
     enabled: !!transferId
@@ -370,12 +418,22 @@ export function useBooking(transferId: string) {
   const setBooking = useCallback(
     (booking: Booking | null) => {
       if (booking) rememberBooking(booking)
-      queryClient.setQueryData<Booking | null>(keys.booking(transferId), booking)
+      queryClient.setQueryData<Booking | null>(
+        keys.booking(transferId),
+        booking
+      )
     },
     [transferId]
   )
 
-  return {booking: q.data ?? null, isLoading, error, refetch, setBooking}
+  return {
+    booking: q.data ?? null,
+    isLoading,
+    error,
+    isFetching,
+    refetch,
+    setBooking
+  }
 }
 
 // --------------- Booking a ride ---------------
@@ -415,7 +473,9 @@ export const toPickupInstant = (date: string, time: string): string | null => {
 }
 
 const count = (n: number | undefined): string | undefined =>
-  typeof n === 'number' && Number.isFinite(n) && n > 0 ? String(Math.floor(n)) : undefined
+  typeof n === 'number' && Number.isFinite(n) && n > 0
+    ? String(Math.floor(n))
+    : undefined
 
 /**
  * bookTransfer, so the booking belongs to the caller: the resolver takes the
@@ -435,7 +495,9 @@ export async function bookRide(input: BookRideInput): Promise<Booking> {
   const people = Math.min(Math.max(Math.floor(input.passengers ?? 0), 0), 50)
   const passengers =
     people > 0
-      ? Array.from({length: people}, () => ({language: input.language || undefined}))
+      ? Array.from({length: people}, () => ({
+          language: input.language || undefined
+        }))
       : undefined
 
   const details = {
@@ -452,10 +514,17 @@ export async function bookRide(input: BookRideInput): Promise<Booking> {
     subject: text(input.subject),
     paymentMethode: input.paymentMethode || undefined,
     passengers,
-    details: Object.values(details).some(v => v !== undefined) ? details : undefined
+    details: Object.values(details).some(v => v !== undefined)
+      ? details
+      : undefined
   }
 
-  const result = await gql('bookTransfer', {args}, await bookingSelection(), 'mutation')
+  const result = await gql(
+    'bookTransfer',
+    {args},
+    await bookingSelection(),
+    'mutation'
+  )
   void invalidateTransfers()
   return mapBooking(result)
 }
@@ -479,7 +548,9 @@ export async function cancelBooking(transferId: string): Promise<Booking> {
 }
 
 export const isCancelable = (state: string | undefined): boolean =>
-  (CANCELABLE_STATES as readonly string[]).includes(String(state ?? '').toUpperCase())
+  (CANCELABLE_STATES as readonly string[]).includes(
+    String(state ?? '').toUpperCase()
+  )
 
 // --------------- The drivers on the list ---------------
 
@@ -499,9 +570,15 @@ const SILVER = '#C0C0C0'
  * for the colour of the person picking them up. A refusal or a schema without
  * the field answers an empty driver, and the row keeps the name it already has.
  */
-const readBookingDriver = async (transferId: string): Promise<BookingDriver> => {
+const readBookingDriver = async (
+  transferId: string
+): Promise<BookingDriver> => {
   try {
-    const node = await gql('transferTracking', {args: {transferId}}, '{ driver { id name color } }')
+    const node = await gql(
+      'transferTracking',
+      {args: {transferId}},
+      '{ driver { id name color } }'
+    )
     const driver = node?.driver
     const color = text(driver?.color)
     return {
@@ -521,14 +598,17 @@ const NO_DRIVERS: Record<string, BookingDriver> = {}
  * that names them, and a driver already known from an earlier page costs
  * nothing. The record is only rebuilt when an answer changes.
  */
-export function useBookingDrivers(rows: Array<{id: string; driverId?: string}>): Record<string, BookingDriver> {
+export function useBookingDrivers(
+  rows: Array<{id: string; driverId?: string}>
+): Record<string, BookingDriver> {
   const restored = useRestored()
 
   // One row per driver, the first one on the page. The key is the driver ids,
   // so a page with the same drivers in a different order asks nothing.
   const firstRows = new Map<string, string>()
   rows.forEach(r => {
-    if (r.driverId && !firstRows.has(r.driverId)) firstRows.set(r.driverId, r.id)
+    if (r.driverId && !firstRows.has(r.driverId))
+      firstRows.set(r.driverId, r.id)
   })
   const pairs = useMemo(
     () => [...firstRows.entries()].sort(([a], [b]) => a.localeCompare(b)),

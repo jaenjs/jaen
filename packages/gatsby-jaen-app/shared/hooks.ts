@@ -23,11 +23,17 @@
  * keep their names and shapes, the pager keeps its cursor trail, and the
  * views do not know the difference. See okf/architecture/data-layer.md.
  */
-import { useCallback, useMemo } from 'react'
-import { keepPreviousData } from '@tanstack/react-query'
-import { fetchGraphQL } from '../client/limosen'
-import { cachedRead, keys, queryClient, useAppQuery, usePager } from './hooks/query'
-import { readDriverColors } from './hooks/colors'
+import {useCallback, useMemo} from 'react'
+import {keepPreviousData} from '@tanstack/react-query'
+import {fetchGraphQL} from '../client/limosen'
+import {
+  cachedRead,
+  keys,
+  queryClient,
+  useAppQuery,
+  usePager
+} from './hooks/query'
+import {readDriverColors} from './hooks/colors'
 
 /**
  * One GraphQL document, with its arguments written into the document itself.
@@ -177,7 +183,9 @@ const readTransferFieldNames = async (): Promise<string[]> => {
     {}
   )
   const fields = result?.data?.__type?.fields
-  return Array.isArray(fields) ? fields.map((f: any) => String(f?.name)).filter(Boolean) : []
+  return Array.isArray(fields)
+    ? fields.map((f: any) => String(f?.name)).filter(Boolean)
+    : []
 }
 
 /**
@@ -189,7 +197,9 @@ const readTransferFieldNames = async (): Promise<string[]> => {
  */
 const transferFields = async (): Promise<Set<string>> => {
   try {
-    return new Set<string>(await cachedRead(keys.schema('transferFields'), readTransferFieldNames))
+    return new Set<string>(
+      await cachedRead(keys.schema('transferFields'), readTransferFieldNames)
+    )
   } catch {
     return new Set<string>()
   }
@@ -244,7 +254,7 @@ export interface ResourceTransfer {
   carClass?: string
   carColor?: string
   referenceId?: string
-  extras?: Array<{ type: string; amount: number }>
+  extras?: Array<{type: string; amount: number}>
   transferCategory?: string
   transferType?: string
   driverColor?: string
@@ -262,7 +272,7 @@ export interface ResourceUser {
   }
   isActive: boolean
   isAdmin: boolean
-  roles: Array<{ id: string; description: string }>
+  roles: Array<{id: string; description: string}>
   driverColor?: string
   revenue?: number
   transferCount?: number
@@ -310,14 +320,22 @@ const mapTransferRow = (transfer: any): ResourceTransfer => {
         rideDateISO = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
         rideTime = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   const requestedAt = transfer?.requestedAt
   const requestedAtISO = requestedAt ? new Date(requestedAt).toISOString() : ''
-  const subject = typeof transfer?.subject === 'string' ? transfer.subject : undefined
-  const referenceId = typeof transfer?.referenceId === 'string' ? transfer.referenceId : undefined
-  const transferCategory = transfer?.transferCategory != null ? String(transfer.transferCategory) : undefined
-  const transferType = transfer?.transferType != null ? String(transfer.transferType) : undefined
+  const subject =
+    typeof transfer?.subject === 'string' ? transfer.subject : undefined
+  const referenceId =
+    typeof transfer?.referenceId === 'string' ? transfer.referenceId : undefined
+  const transferCategory =
+    transfer?.transferCategory != null
+      ? String(transfer.transferCategory)
+      : undefined
+  const transferType =
+    transfer?.transferType != null ? String(transfer.transferType) : undefined
 
   return {
     id: transfer?.id ?? '',
@@ -336,7 +354,7 @@ const mapTransferRow = (transfer: any): ResourceTransfer => {
     vehicle: transfer?.carId ?? undefined,
     referenceId,
     transferCategory,
-    transferType,
+    transferType
   }
 }
 
@@ -350,12 +368,14 @@ const mapUserRow = (user: any): ResourceUser => {
     details: {
       avatarURL: undefined,
       firstName: undefined,
-      lastName: undefined,
+      lastName: undefined
     },
-    isActive: user?.state === 'USER_STATE_ACTIVE' || user?.state?.toLowerCase?.() === 'active',
+    isActive:
+      user?.state === 'USER_STATE_ACTIVE' ||
+      user?.state?.toLowerCase?.() === 'active',
     isAdmin: false,
     roles: [],
-    driverColor: undefined,
+    driverColor: undefined
   }
 }
 
@@ -391,7 +411,7 @@ const readTransferPage = async (args: {
 
   const result = await query(
     'transfers',
-    { args },
+    {args},
     `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id customerId driverId pickupDateTime ` +
       `pickupLocation dropoffLocation subject state requestedAt carId ` +
       `transferCategory transferType ${optional} } } }`
@@ -399,7 +419,10 @@ const readTransferPage = async (args: {
 
   const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
   return {
-    rows: edges.map((e: any) => e?.node).filter(Boolean).map(mapTransferRow),
+    rows: edges
+      .map((e: any) => e?.node)
+      .filter(Boolean)
+      .map(mapTransferRow),
     endCursor: result?.pageInfo?.endCursor ?? null,
     hasNextPage: !!result?.pageInfo?.hasNextPage,
     totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
@@ -407,7 +430,9 @@ const readTransferPage = async (args: {
 }
 
 const pageOf = (
-  page: {hasNextPage: boolean; endCursor?: string | null; totalCount: number} | undefined,
+  page:
+    | {hasNextPage: boolean; endCursor?: string | null; totalCount: number}
+    | undefined,
   current: number,
   pageSize: number
 ): PaginationState => {
@@ -423,7 +448,10 @@ const pageOf = (
   }
 }
 
-export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?: TransferDateFilter) {
+export function useTransfers(
+  pageSize = DEFAULT_TRANSFER_PAGE_SIZE,
+  dateFilter?: TransferDateFilter
+) {
   const fromISO = dateFilter?.fromISO
   const toISO = dateFilter?.toISO
   const pager = usePager(JSON.stringify({first: pageSize, fromISO, toISO}))
@@ -432,7 +460,12 @@ export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?:
     [pageSize, pager.after, fromISO, toISO]
   )
 
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    refetch
+  } = useAppQuery({
     queryKey: keys.transfers({kind: 'legacy', ...args}),
     queryFn: () => readTransferPage(args),
     placeholderData: keepPreviousData
@@ -440,17 +473,32 @@ export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?:
 
   const page = q.data
   const transfers = page?.rows ?? EMPTY_TRANSFERS
-  const pagination = useMemo(() => pageOf(page, pager.page, pageSize), [page, pager.page, pageSize])
+  const pagination = useMemo(
+    () => pageOf(page, pager.page, pageSize),
+    [page, pager.page, pageSize]
+  )
 
   const nextPage = useCallback(() => {
     if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
   }, [page, pager])
   const prevPage = pager.prev
-  const goToPage = useCallback((n: number) => {
-    if (n === 1) pager.first()
-  }, [pager])
+  const goToPage = useCallback(
+    (n: number) => {
+      if (n === 1) pager.first()
+    },
+    [pager]
+  )
 
-  return { transfers, isLoading, error, pagination, nextPage, prevPage, goToPage, refetch }
+  return {
+    transfers,
+    isLoading,
+    error,
+    pagination,
+    nextPage,
+    prevPage,
+    goToPage,
+    refetch
+  }
 }
 
 // --------------- useUsers (paginated) ---------------
@@ -466,10 +514,14 @@ interface UserPageResult {
 
 const EMPTY_USERS: ResourceUser[] = []
 
-const readUserPage = async (args: {first: number; after?: string; organizationId?: string}): Promise<UserPageResult> => {
+const readUserPage = async (args: {
+  first: number
+  after?: string
+  organizationId?: string
+}): Promise<UserPageResult> => {
   const result = await query(
     'users',
-    { args },
+    {args},
     `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { __typename id userName state ` +
       `preferredLoginName creationDate changeDate } } }`
   )
@@ -481,7 +533,10 @@ const readUserPage = async (args: {first: number; after?: string; organizationId
   // of a deactivated driver keeps its name and draws no stripe. Reading the
   // colours here was a second batch on every board load, and before that
   // the greater half of the burst that tripped the Worker.
-  const rows: ResourceUser[] = edges.map((e: any) => e?.node).filter(Boolean).map(mapUserRow)
+  const rows: ResourceUser[] = edges
+    .map((e: any) => e?.node)
+    .filter(Boolean)
+    .map(mapUserRow)
 
   return {
     rows,
@@ -494,11 +549,20 @@ const readUserPage = async (args: {first: number; after?: string; organizationId
 export function useUsers(pageSize = DEFAULT_USER_PAGE_SIZE) {
   const pager = usePager(JSON.stringify({kind: 'basic', first: pageSize}))
   const args = useMemo(
-    () => ({first: pageSize, after: pager.after, organizationId: organizationId()}),
+    () => ({
+      first: pageSize,
+      after: pager.after,
+      organizationId: organizationId()
+    }),
     [pageSize, pager.after]
   )
 
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    refetch
+  } = useAppQuery({
     queryKey: keys.users({kind: 'basic', ...args}),
     queryFn: () => readUserPage(args),
     placeholderData: keepPreviousData
@@ -506,14 +570,17 @@ export function useUsers(pageSize = DEFAULT_USER_PAGE_SIZE) {
 
   const page = q.data
   const users = page?.rows ?? EMPTY_USERS
-  const pagination = useMemo(() => pageOf(page, pager.page, pageSize), [page, pager.page, pageSize])
+  const pagination = useMemo(
+    () => pageOf(page, pager.page, pageSize),
+    [page, pager.page, pageSize]
+  )
 
   const nextPage = useCallback(() => {
     if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
   }, [page, pager])
   const prevPage = pager.prev
 
-  return { users, isLoading, error, pagination, nextPage, prevPage, refetch }
+  return {users, isLoading, error, pagination, nextPage, prevPage, refetch}
 }
 
 /**
@@ -540,7 +607,7 @@ const readDrivers = async (): Promise<ResourceUser[]> => {
 
   const result = await query(
     'usersByRole',
-    { args: { roleKey, first: 200, organizationId: organizationId() } },
+    {args: {roleKey, first: 200, organizationId: organizationId()}},
     `{ edges { node { __typename id userName preferredLoginName state creationDate ` +
       `... on HumanUser { profiles { edges { node { firstName lastName avatarUrl } } } } } } }`
   )
@@ -570,7 +637,9 @@ const readDrivers = async (): Promise<ResourceUser[]> => {
   // fifteen transfers, so this is the cheap end of the join, and it is what
   // feeds both the picker swatch and the coloured border on the transfer
   // list. The batch stays in the cache for the detail page and the map.
-  const colours = await readDriverColors(rows.map((row: ResourceUser) => row.id))
+  const colours = await readDriverColors(
+    rows.map((row: ResourceUser) => row.id)
+  )
   for (const row of rows) {
     const colour = colours[row.id]
     if (colour) row.driverColor = colour
@@ -578,20 +647,27 @@ const readDrivers = async (): Promise<ResourceUser[]> => {
 
   // By name, so the picker reads the way a person would look through it.
   rows.sort((a: ResourceUser, b: ResourceUser) =>
-    `${a.details?.firstName ?? ''} ${a.details?.lastName ?? ''}`.trim().localeCompare(
-      `${b.details?.firstName ?? ''} ${b.details?.lastName ?? ''}`.trim()
-    )
+    `${a.details?.firstName ?? ''} ${a.details?.lastName ?? ''}`
+      .trim()
+      .localeCompare(
+        `${b.details?.firstName ?? ''} ${b.details?.lastName ?? ''}`.trim()
+      )
   )
 
   return rows
 }
 
 export function useDrivers() {
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    refetch
+  } = useAppQuery({
     queryKey: keys.drivers(),
     queryFn: readDrivers
   })
-  return { drivers: q.data ?? EMPTY_DRIVERS, isLoading, error, refetch }
+  return {drivers: q.data ?? EMPTY_DRIVERS, isLoading, error, refetch}
 }
 
 // --------------- useLocations (paginated) ---------------
@@ -607,22 +683,27 @@ interface LocationPageResult {
 
 const EMPTY_LOCATIONS: ResourceLocationRow[] = []
 
-const readLocationPage = async (args: {first: number; after?: string}): Promise<LocationPageResult> => {
+const readLocationPage = async (args: {
+  first: number
+  after?: string
+}): Promise<LocationPageResult> => {
   const driverConn = await query(
     'driverLocations',
-    { args },
+    {args},
     `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id latitude longitude accuracy recordedAt updatedAt driverId } } }`
   )
 
   const customerConn = await query(
     'customerLocations',
-    { args },
+    {args},
     `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id latitude longitude accuracy recordedAt updatedAt customerId } } }`
   ).catch(() => null)
 
   const out: ResourceLocationRow[] = []
 
-  const driverEdges: any[] = Array.isArray(driverConn?.edges) ? driverConn.edges : []
+  const driverEdges: any[] = Array.isArray(driverConn?.edges)
+    ? driverConn.edges
+    : []
   for (const e of driverEdges) {
     const n = e?.node
     if (!n) continue
@@ -634,11 +715,13 @@ const readLocationPage = async (args: {first: number; after?: string}): Promise<
       longitude: Number(n?.longitude ?? 0),
       accuracy: typeof n?.accuracy === 'number' ? n.accuracy : undefined,
       recordedAtISO: n?.recordedAt ? String(n.recordedAt) : undefined,
-      updatedAtISO: n?.updatedAt ? String(n.updatedAt) : undefined,
+      updatedAtISO: n?.updatedAt ? String(n.updatedAt) : undefined
     })
   }
 
-  const customerEdges: any[] = Array.isArray(customerConn?.edges) ? customerConn.edges : []
+  const customerEdges: any[] = Array.isArray(customerConn?.edges)
+    ? customerConn.edges
+    : []
   for (const e of customerEdges) {
     const n = e?.node
     if (!n) continue
@@ -650,28 +733,50 @@ const readLocationPage = async (args: {first: number; after?: string}): Promise<
       longitude: Number(n?.longitude ?? 0),
       accuracy: typeof n?.accuracy === 'number' ? n.accuracy : undefined,
       recordedAtISO: n?.recordedAt ? String(n.recordedAt) : undefined,
-      updatedAtISO: n?.updatedAt ? String(n.updatedAt) : undefined,
+      updatedAtISO: n?.updatedAt ? String(n.updatedAt) : undefined
     })
   }
 
-  out.sort((a, b) => String(b.updatedAtISO ?? '').localeCompare(String(a.updatedAtISO ?? '')))
+  out.sort((a, b) =>
+    String(b.updatedAtISO ?? '').localeCompare(String(a.updatedAtISO ?? ''))
+  )
 
-  const driverTotal = typeof driverConn?.totalCount === 'number' ? driverConn.totalCount : driverEdges.length
-  const customerTotal = typeof customerConn?.totalCount === 'number' ? customerConn.totalCount : customerEdges.length
+  const driverTotal =
+    typeof driverConn?.totalCount === 'number'
+      ? driverConn.totalCount
+      : driverEdges.length
+  const customerTotal =
+    typeof customerConn?.totalCount === 'number'
+      ? customerConn.totalCount
+      : customerEdges.length
 
   return {
     rows: out,
-    endCursor: driverConn?.pageInfo?.endCursor ?? customerConn?.pageInfo?.endCursor ?? null,
-    hasNextPage: !!driverConn?.pageInfo?.hasNextPage || !!customerConn?.pageInfo?.hasNextPage,
+    endCursor:
+      driverConn?.pageInfo?.endCursor ??
+      customerConn?.pageInfo?.endCursor ??
+      null,
+    hasNextPage:
+      !!driverConn?.pageInfo?.hasNextPage ||
+      !!customerConn?.pageInfo?.hasNextPage,
     totalCount: driverTotal + customerTotal
   }
 }
 
 export function useLocations(pageSize = DEFAULT_LOCATION_PAGE_SIZE) {
   const pager = usePager(JSON.stringify({first: pageSize}))
-  const args = useMemo(() => ({first: pageSize, after: pager.after}), [pageSize, pager.after])
+  const args = useMemo(
+    () => ({first: pageSize, after: pager.after}),
+    [pageSize, pager.after]
+  )
 
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.locations(args),
     queryFn: () => readLocationPage(args),
     placeholderData: keepPreviousData
@@ -679,14 +784,26 @@ export function useLocations(pageSize = DEFAULT_LOCATION_PAGE_SIZE) {
 
   const page = q.data
   const locations = page?.rows ?? EMPTY_LOCATIONS
-  const pagination = useMemo(() => pageOf(page, pager.page, pageSize), [page, pager.page, pageSize])
+  const pagination = useMemo(
+    () => pageOf(page, pager.page, pageSize),
+    [page, pager.page, pageSize]
+  )
 
   const nextPage = useCallback(() => {
     if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
   }, [page, pager])
   const prevPage = pager.prev
 
-  return { locations, isLoading, error, pagination, nextPage, prevPage, refetch }
+  return {
+    locations,
+    isLoading,
+    error,
+    isFetching,
+    pagination,
+    nextPage,
+    prevPage,
+    refetch
+  }
 }
 
 // --------------- Cars ---------------
@@ -710,7 +827,7 @@ const readCars = async (): Promise<ResourceCar[]> => {
   // is left.
   const conn = await query(
     'cars',
-    { args: { first: 200 } },
+    {args: {first: 200}},
     `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id carName licensePlate color ` +
       `carClass driverId driverName } } }`
   )
@@ -725,23 +842,30 @@ const readCars = async (): Promise<ResourceCar[]> => {
       color: String(n?.color ?? ''),
       carClass: n?.carClass ?? undefined,
       driverId: n?.driverId ?? undefined,
-      driverName: n?.driverName ?? undefined,
+      driverName: n?.driverName ?? undefined
     }
   })
 }
 
 /** The cars for the pickers, under the fleet's key so a fleet mutation refreshes them too. */
 export function useCars() {
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    refetch
+  } = useAppQuery({
     queryKey: keys.fleetPicker(),
     queryFn: readCars
   })
-  return { cars: q.data ?? EMPTY_CARS, isLoading, error, refetch }
+  return {cars: q.data ?? EMPTY_CARS, isLoading, error, refetch}
 }
 
 // --------------- Driver Color ---------------
 
-export async function fetchDriverColor(userId: string): Promise<string | undefined> {
+export async function fetchDriverColor(
+  userId: string
+): Promise<string | undefined> {
   return resolveDriverColor(userId)
 }
 
@@ -749,12 +873,21 @@ export async function fetchDriverColor(userId: string): Promise<string | undefin
  * The colour is read on the driver's row, in the pickers, on the dashboard
  * and on a customer's booking, so every one of those is invalidated.
  */
-export async function setDriverColorMutation(userId: string, color: string): Promise<boolean> {
-  const result = await query('setDriverColor', { userId, color }, '', 'mutation')
+export async function setDriverColorMutation(
+  userId: string,
+  color: string
+): Promise<boolean> {
+  const result = await query('setDriverColor', {userId, color}, '', 'mutation')
   await Promise.all(
-    [['users'], ['user', userId], ['drivers'], ['driverColor', userId], ['driverColors'], ['bookingDriver', userId], ['dashboard']].map(
-      queryKey => queryClient.invalidateQueries({ queryKey })
-    )
+    [
+      ['users'],
+      ['user', userId],
+      ['drivers'],
+      ['driverColor', userId],
+      ['driverColors'],
+      ['bookingDriver', userId],
+      ['dashboard']
+    ].map(queryKey => queryClient.invalidateQueries({queryKey}))
   )
   return !!result
 }

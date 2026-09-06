@@ -13,8 +13,8 @@
  * frame: no token, mapbox-gl not loadable, the token rejected.
  */
 import {useEffect, useRef, useState, useMemo} from 'react'
-import {Box, Button, Center, HStack, IconButton, Spinner, Text} from '@chakra-ui/react'
-import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
+import {Box, Button, Center, HStack, Spinner, Text} from '@chakra-ui/react'
+import {RefreshButton} from '../RefreshButton'
 import {useColorMode} from 'jaen'
 import {useI18nCode} from '../../i18n'
 import {getI18nTracking, fillTracking} from '../../locales/i18nTracking'
@@ -47,11 +47,18 @@ const SOURCE = 'locations'
 // 32 px, under Chakra's sm of 36 px, so the size alone decides the height.
 const TOUCH_HEIGHT = {base: '44px', md: '8'}
 
-function fitMapToLocations(map: any, locs: {latitude: number; longitude: number}[]) {
+function fitMapToLocations(
+  map: any,
+  locs: {latitude: number; longitude: number}[]
+) {
   const only = locs[0]
   if (!only) return
   if (locs.length === 1) {
-    map.flyTo({center: [only.longitude, only.latitude], zoom: 15, duration: 1000})
+    map.flyTo({
+      center: [only.longitude, only.latitude],
+      zoom: 15,
+      duration: 1000
+    })
     return
   }
   let minLng = Infinity,
@@ -237,24 +244,36 @@ export function LocationMapView({
           // else ever said so: the map used to spin forever on it.
           const status = e?.error?.status
           if (status === 401 || status === 403) setMapError(t.MapRejected)
-          else if (!m.isStyleLoaded()) setMapError(e?.error?.message || t.MapLoadFailed)
+          else if (!m.isStyleLoaded())
+            setMapError(e?.error?.message || t.MapLoadFailed)
         })
 
         // Click on a cluster: zoom into it.
         m.on('click', 'clusters', (e: any) => {
-          const features = m.queryRenderedFeatures(e.point, {layers: ['clusters']})
+          const features = m.queryRenderedFeatures(e.point, {
+            layers: ['clusters']
+          })
           if (!features.length) return
           const clusterId = features[0].properties?.cluster_id
-          ;(m.getSource(SOURCE) as any).getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
-            if (err) return
-            const geo = features[0].geometry
-            if (geo.type === 'Point') m.easeTo({center: geo.coordinates as [number, number], zoom: zoom ?? 13})
-          })
+          ;(m.getSource(SOURCE) as any).getClusterExpansionZoom(
+            clusterId,
+            (err: any, zoom: number) => {
+              if (err) return
+              const geo = features[0].geometry
+              if (geo.type === 'Point')
+                m.easeTo({
+                  center: geo.coordinates as [number, number],
+                  zoom: zoom ?? 13
+                })
+            }
+          )
         })
 
         // Click on a dot: the sheet.
         m.on('click', 'location-hit-area', (e: any) => {
-          const features = m.queryRenderedFeatures(e.point, {layers: ['location-hit-area']})
+          const features = m.queryRenderedFeatures(e.point, {
+            layers: ['location-hit-area']
+          })
           if (!features.length) return
           const loc = idMapRef.current.get(features[0].properties?.id)
           if (loc) onSelectRef.current(loc)
@@ -271,7 +290,10 @@ export function LocationMapView({
 
         mapRef.current = m
       } catch (err) {
-        if (!cancelled) setMapError(err instanceof Error && err.message ? err.message : t.MapLoadFailed)
+        if (!cancelled)
+          setMapError(
+            err instanceof Error && err.message ? err.message : t.MapLoadFailed
+          )
       }
     })()
 
@@ -313,7 +335,10 @@ export function LocationMapView({
       type: 'FeatureCollection',
       features: valid.map(l => ({
         type: 'Feature' as const,
-        geometry: {type: 'Point' as const, coordinates: [l.longitude, l.latitude]},
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [l.longitude, l.latitude]
+        },
         properties: {
           id: `${l.kind}:${l.id}`,
           kind: l.kind,
@@ -333,7 +358,11 @@ export function LocationMapView({
   // Fly to the selected row.
   useEffect(() => {
     if (!mapRef.current || !selectedLocation || !mapReady) return
-    mapRef.current.flyTo({center: [selectedLocation.longitude, selectedLocation.latitude], zoom: 15, duration: 600})
+    mapRef.current.flyTo({
+      center: [selectedLocation.longitude, selectedLocation.latitude],
+      zoom: 15,
+      duration: 600
+    })
   }, [selectedLocation, mapReady])
 
   // The container may have been laid out after the map measured it.
@@ -362,7 +391,12 @@ export function LocationMapView({
       <Box ref={mapContainer} position="absolute" inset="0" />
 
       {(isLoading || !mapReady) && (
-        <Center position="absolute" inset="0" zIndex="1" pointerEvents="none" bg="bg.canvas/60">
+        <Center
+          position="absolute"
+          inset="0"
+          zIndex="1"
+          pointerEvents="none"
+          bg="bg.canvas/60">
           <HStack color="fg.muted" textStyle="sm">
             <Spinner size="sm" />
             <Text>{t.MapLoading}</Text>
@@ -413,16 +447,11 @@ export function LocationMapView({
             </Button>
           ))}
           {onRefresh && (
-            <IconButton
-              size="sm"
+            <RefreshButton
               minH={TOUCH_HEIGHT}
               minW={TOUCH_HEIGHT}
-              variant="ghost"
-              aria-label={t.Refresh}
-              title={t.Refresh}
-              onClick={onRefresh}>
-              <FaSyncAlt />
-            </IconButton>
+              onClick={onRefresh}
+            />
           )}
           <HStack ms="auto" gap="3" textStyle="xs" color="fg.muted">
             <HStack gap="1">

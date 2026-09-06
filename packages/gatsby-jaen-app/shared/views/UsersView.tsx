@@ -36,10 +36,9 @@ import {
   Stack,
   Stat,
   Text,
-  Wrap,
+  Wrap
 } from '@chakra-ui/react'
 import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
-import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
 import {FaUserPlus} from '@react-icons/all-files/fa/FaUserPlus'
 import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTriangle'
 import {useAppNavigate} from '../navigation'
@@ -55,6 +54,8 @@ import {
   toaster,
   PageHeader
 } from '../components'
+import {RefreshButton} from '../components/RefreshButton'
+import {useViewRefresh} from '../hooks/view-refresh'
 import {DataTable, type DataColumn} from '../components/table'
 import {NumberSkeleton} from '../components/skeletons'
 import {
@@ -223,8 +224,17 @@ export function UsersView() {
   const code = useI18nCode()
   const {strings: t} = getI18nUsers(code)
   const {strings: tc} = getI18nCommon(code)
-  const {users, isLoading, error, pagination, nextPage, prevPage, refetch} =
-    useUserDirectory()
+  const {
+    users,
+    isLoading,
+    error,
+    isFetching,
+    pagination,
+    nextPage,
+    prevPage,
+    refetch
+  } = useUserDirectory()
+  useViewRefresh(refetch, isFetching)
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
 
@@ -265,8 +275,18 @@ export function UsersView() {
           </Text>
         )
       },
-      {id: 'roles', label: t.ColRoles, width: 200, cell: u => <RoleChips roles={u.roles} t={t} />},
-      {id: 'status', label: t.ColStatus, width: 110, cell: u => <ActiveBadge active={u.isActive} t={t} />},
+      {
+        id: 'roles',
+        label: t.ColRoles,
+        width: 200,
+        cell: u => <RoleChips roles={u.roles} t={t} />
+      },
+      {
+        id: 'status',
+        label: t.ColStatus,
+        width: 110,
+        cell: u => <ActiveBadge active={u.isActive} t={t} />
+      },
       {
         id: 'created',
         label: t.ColCreated,
@@ -303,7 +323,8 @@ export function UsersView() {
   // The three numbers wait as numbers while the first page is read, never
   // as 0 (design-consistency.md, rule 3). A page turned keeps its numbers.
   const pending = isLoading && users.length === 0
-  const count = (n: number, chars = 3) => (pending ? <NumberSkeleton chars={chars} /> : n)
+  const count = (n: number, chars = 3) =>
+    pending ? <NumberSkeleton chars={chars} /> : n
 
   return (
     <Stack gap="6" p={{base: '4', md: '6'}} maxW="full">
@@ -312,18 +333,22 @@ export function UsersView() {
         subtitle={t.Subtitle}
         actions={
           <>
-            <IconButton aria-label={tc.Refresh} variant="outline" onClick={refetch} loading={isLoading}>
-              <FaSyncAlt />
-            </IconButton>
-            <Button colorPalette="brand" onClick={() => setCreateOpen(true)}>
+            <Button
+              size="sm"
+              colorPalette="brand"
+              onClick={() => setCreateOpen(true)}>
               <FaUserPlus /> {t.CreateDriver}
             </Button>
+            <RefreshButton />
           </>
         }
       />
 
       <SimpleGrid columns={{base: 3}} gap="3">
-        <StatCard label={t.StatTotalUsers} value={count(pagination.totalCount)} />
+        <StatCard
+          label={t.StatTotalUsers}
+          value={count(pagination.totalCount)}
+        />
         <StatCard
           label={t.StatActivePage}
           value={count(activeOnPage, 2)}
@@ -350,7 +375,10 @@ export function UsersView() {
         rowId={u => u.id}
         onOpen={u => navigate(`/users/${u.id}`)}
         stripe={u => u.driverColor}
-        summary={fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
+        summary={fill(t.CountLabel, {
+          total: pagination.totalCount,
+          count: filtered.length
+        })}
         isLoading={isLoading}
         avatarSkeleton
         error={error}
@@ -554,7 +582,10 @@ function CreateDriverDialog({
                 </Stack>
               </Dialog.Body>
               <Dialog.Footer>
-                <DialogActions confirmLabel={t.OpenAccount} onConfirm={finish} />
+                <DialogActions
+                  confirmLabel={t.OpenAccount}
+                  onConfirm={finish}
+                />
               </Dialog.Footer>
               <Dialog.CloseTrigger asChild>
                 <CloseButton size="sm" />
@@ -635,7 +666,12 @@ function CreateDriverDialog({
                 </Stack>
               </Dialog.Body>
               <Dialog.Footer>
-                <DialogActions onCancel={finish} confirmLabel={t.CreateDriver} confirmType="submit" loading={saving} />
+                <DialogActions
+                  onCancel={finish}
+                  confirmLabel={t.CreateDriver}
+                  confirmType="submit"
+                  loading={saving}
+                />
               </Dialog.Footer>
               <Dialog.CloseTrigger asChild>
                 <CloseButton size="sm" disabled={saving} />

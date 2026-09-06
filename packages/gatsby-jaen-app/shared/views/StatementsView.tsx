@@ -39,6 +39,8 @@ import {
   type StatementMonth
 } from '../hooks/finance'
 import {EmptyState, MoneyText, toaster, PageHeader} from '../components'
+import {RefreshButton} from '../components/RefreshButton'
+import {useViewRefresh} from '../hooks/view-refresh'
 import {DataTable, type DataColumn, type DataGroup} from '../components/table'
 import {dayPalette, formatDay, useTodayTomorrow} from './TransfersView'
 
@@ -47,7 +49,10 @@ type Strings = ReturnType<typeof getI18nBookings>['strings']
 /** "September 2026" in the account's language, the month key otherwise. */
 const useMonthLabel = (code: I18nCode) =>
   useMemo(() => {
-    const format = new Intl.DateTimeFormat(code, {month: 'long', year: 'numeric'})
+    const format = new Intl.DateTimeFormat(code, {
+      month: 'long',
+      year: 'numeric'
+    })
     return (month: string) => {
       const [y, m] = month.split('-').map(Number)
       if (!y || !m) return month
@@ -64,7 +69,10 @@ const kindLabel = (kind: StatementKind, t: Strings) =>
  * rides and `statementLines` does not say who drove each of them, so the
  * left edge stays neutral there.
  */
-const useStatementStripe = (userId: string | undefined, kind: StatementKind): string | undefined => {
+const useStatementStripe = (
+  userId: string | undefined,
+  kind: StatementKind
+): string | undefined => {
   const {query: q} = useAppQuery({
     queryKey: keys.driverColor(userId ?? ''),
     queryFn: () => fetchDriverColor(userId ?? ''),
@@ -92,7 +100,12 @@ function StatementLines({
 }) {
   const code = useI18nCode()
   const navigate = useAppNavigate()
-  const {lines, isLoading, error, refetch} = useStatementLines(userId, month, kind, true)
+  const {lines, isLoading, error, refetch} = useStatementLines(
+    userId,
+    month,
+    kind,
+    true
+  )
   const stripe = useStatementStripe(userId, kind)
   const {today, tomorrow} = useTodayTomorrow()
 
@@ -103,7 +116,11 @@ function StatementLines({
         label: t.StatementsColCode,
         width: 120,
         cell: line => (
-          <Text as="span" fontFamily="mono" fontWeight="medium" whiteSpace="nowrap">
+          <Text
+            as="span"
+            fontFamily="mono"
+            fontWeight="medium"
+            whiteSpace="nowrap">
             {line.code}
           </Text>
         )
@@ -211,16 +228,24 @@ export interface StatementsViewProps {
   embedded?: boolean
 }
 
-export function StatementsView({userId, embedded = false}: StatementsViewProps) {
+export function StatementsView({
+  userId,
+  embedded = false
+}: StatementsViewProps) {
   const code = useI18nCode()
   const {strings: t} = getI18nBookings(code)
-  const {months, isLoading, error, refetch} = useStatementMonths(userId)
+  const {months, isLoading, error, isFetching, refetch} =
+    useStatementMonths(userId)
+  // The embedded table sits on the user's screen, whose own query is the
+  // one registered there, so only the screen of its own registers.
+  useViewRefresh(refetch, isFetching, embedded)
   const [busy, setBusy] = useState<string | null>(null)
   const [open, setOpen] = useState<string | null>(null)
   const monthLabel = useMonthLabel(code)
 
   const rowKey = (row: StatementMonth) => `${row.kind}-${row.month}`
-  const toggle = (row: StatementMonth) => setOpen(prev => (prev === rowKey(row) ? null : rowKey(row)))
+  const toggle = (row: StatementMonth) =>
+    setOpen(prev => (prev === rowKey(row) ? null : rowKey(row)))
   const opened = open ? months.find(row => rowKey(row) === open) : undefined
 
   const download = async (row: StatementMonth, format: StatementFormat) => {
@@ -242,7 +267,11 @@ export function StatementsView({userId, embedded = false}: StatementsViewProps) 
   // The two files of a month. On a desk they sit in the row, on a phone in
   // the card, where a button is a thumb's 44px (hard-rules.md).
   const files = (row: StatementMonth) => (
-    <ButtonGroup size="sm" variant="outline" gap="2" onClick={e => e.stopPropagation()}>
+    <ButtonGroup
+      size="sm"
+      variant="outline"
+      gap="2"
+      onClick={e => e.stopPropagation()}>
       <Button
         minH={{base: '44px', md: '8'}}
         onClick={() => void download(row, 'pdf')}
@@ -313,7 +342,13 @@ export function StatementsView({userId, embedded = false}: StatementsViewProps) 
         isLoading={isLoading}
         error={error}
         onRetry={refetch}
-        empty={<EmptyState title={t.StatementsEmpty} description={t.StatementsEmptyHint} icon={<FaFileInvoice />} />}
+        empty={
+          <EmptyState
+            title={t.StatementsEmpty}
+            description={t.StatementsEmptyHint}
+            icon={<FaFileInvoice />}
+          />
+        }
       />
       {opened && (
         <Stack gap="3" pt="2">
@@ -324,11 +359,20 @@ export function StatementsView({userId, embedded = false}: StatementsViewProps) 
                 {kindLabel(opened.kind, t)}
               </Text>
             </Box>
-            <Button size="sm" variant="ghost" minH="44px" onClick={() => setOpen(null)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              minH="44px"
+              onClick={() => setOpen(null)}>
               <FaChevronUp /> {t.StatementsLinesHide}
             </Button>
           </HStack>
-          <StatementLines userId={userId} month={opened.month} kind={opened.kind} t={t} />
+          <StatementLines
+            userId={userId}
+            month={opened.month}
+            kind={opened.kind}
+            t={t}
+          />
         </Stack>
       )}
     </>
@@ -341,7 +385,11 @@ export function StatementsView({userId, embedded = false}: StatementsViewProps) 
   return (
     <Box p={{base: '4', md: '6'}} maxW="full">
       <Stack gap="5">
-        <PageHeader title={t.StatementsHeading} subtitle={t.StatementsSubtitle} />
+        <PageHeader
+          title={t.StatementsHeading}
+          subtitle={t.StatementsSubtitle}
+          actions={<RefreshButton />}
+        />
         {body}
       </Stack>
     </Box>

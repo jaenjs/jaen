@@ -1,0 +1,54 @@
+{
+  "invoice": {
+    "number": "Rechnungs-Nr.",
+    "date": "Rechnungsdatum",
+    "title": "Rechnung Nr. {id}"
+  },
+  "offer": {
+    "number": "Angebots-Nr.",
+    "date": "Angebotsdatum",
+    "title": "Angebot Nr. {id}",
+    "validUntil": "Gültig bis"
+  },
+  "meta": {
+    "deliveryDate": "Lieferdatum",
+    "reference": "Referenz",
+    "servicePeriod": "Leistungszeitraum",
+    "customerId": "Ihre Kundennummer",
+    "vatId": "Ihre USt-Id.",
+    "contactPerson": "Ihr Ansprechpartner",
+    "code": "Buchungscode",
+    "validUntil": "Gültig bis"
+  },
+  "table": {
+    "pos": "Pos.",
+    "description": "Beschreibung",
+    "qty": "Menge",
+    "unitPrice": "Einzelpreis",
+    "total": "Gesamtpreis",
+    "net": "Gesamtbetrag netto",
+    "tax": "zzgl. Umsatzsteuer {rate}%",
+    "gross": "Gesamtbetrag brutto",
+    "discount": "Rabatt {percent}%"
+  },
+  "closing": "Mit freundlichen Grüßen",
+  "page": "Seite {page} von {total}",
+  "links": {
+    "confirm": "Angebot bestätigen",
+    "decline": "Angebot ablehnen"
+  },
+  "defaults": {
+    "offer": {
+      "greeting": "Sehr geehrte Damen und Herren,",
+      "text": "vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen das folgende Angebot für Ihre Fahrt:",
+      "terms": "Die Fahrt ist erst mit Ihrer Bestätigung gebucht. Die Preise verstehen sich inklusive Umsatzsteuer, Wartezeiten und Umwege werden nach Aufwand berechnet.",
+      "status": "Dieses Angebot ist gültig bis {validUntil}."
+    },
+    "invoice": {
+      "greeting": "Sehr geehrte Damen und Herren,",
+      "text": "vielen Dank für Ihren Auftrag und das damit verbundene Vertrauen!\nHiermit stellen wir Ihnen die folgenden Leistungen in Rechnung:",
+      "terms": "Zahlungsbedingungen: Zahlung sofort nach Rechnungseingang ohne Abzüge.\n\nZahlbar und klagbar in Wien.",
+      "status": ""
+    }
+  }
+}

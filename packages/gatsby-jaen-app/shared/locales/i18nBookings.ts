@@ -7,7 +7,7 @@
  * create modal, see okf/provenance/intent.md, "The customer". They are kept
  * word for word.
  */
-import type { I18nCode } from '../i18n'
+import type {I18nCode} from '../i18n'
 
 export function getI18nBookings(code: I18nCode) {
   if (code === 'en-US') {
@@ -21,7 +21,8 @@ export function getI18nBookings(code: I18nCode) {
         EmptyMessage: 'No bookings yet',
         EmptyHint: 'Your first ride is one tap away.',
         EmptyFiltered: 'No bookings in this range',
-        EmptyFilteredHint: 'Change the filter or the date range, or book a ride.',
+        EmptyFilteredHint:
+          'Change the filter or the date range, or book a ride.',
         NotACustomer: 'This page is for customers.',
         NotACustomerHint: 'Your rides are under My rides.',
 
@@ -92,11 +93,21 @@ export function getI18nBookings(code: I18nCode) {
         DetailSectionNotes: 'Wishes',
         DetailTotalPrice: 'Total Price',
         DetailPayment: 'Payment: {method}',
+        DetailSectionStatus: 'Offer and invoice',
+        DetailSectionDocuments: 'Documents',
+        StatusExplainNEW: 'We have your request and will send you an offer.',
+        StatusExplainOFFERED:
+          'Please confirm the offer through the link in your e-mail.',
+        StatusExplainCONFIRMED: 'Your ride is booked.',
+        StatusExplainINVOICED: 'The invoice was sent to your e-mail address.',
+        StatusExplainPAID: 'Thank you, the invoice is settled.',
+        StatusExplainDECLINED: 'The offer was declined or has expired.',
 
         CancelButton: 'Cancel booking',
         CancelHint: 'You can cancel until a driver is on the way.',
         CancelConfirmTitle: 'Cancel this booking?',
-        CancelConfirmBody: 'The ride on {date} at {time} will be called off. This cannot be undone.',
+        CancelConfirmBody:
+          'The ride on {date} at {time} will be called off. This cannot be undone.',
         CancelConfirm: 'Yes, cancel',
         CancelKeep: 'Keep booking',
         CancelSuccess: 'Booking cancelled',
@@ -105,7 +116,8 @@ export function getI18nBookings(code: I18nCode) {
         StatementsHeading: 'Statements',
         StatementsSubtitle: 'One row per month that has a statement',
         StatementsEmpty: 'No statements yet',
-        StatementsEmptyHint: 'A statement appears here once a month has completed rides.',
+        StatementsEmptyHint:
+          'A statement appears here once a month has completed rides.',
         StatementsColMonth: 'Month',
         StatementsColKind: 'Type',
         StatementsKindCUSTOMER: 'Invoice',
@@ -127,8 +139,8 @@ export function getI18nBookings(code: I18nCode) {
         StatementsColPayment: 'Payment',
         StatementsColFiles: 'Files',
         StatementsCount: '{count} statements',
-        StatementsLinesCount: '{count} rides',
-      },
+        StatementsLinesCount: '{count} rides'
+      }
     }
   }
 
@@ -143,7 +155,8 @@ export function getI18nBookings(code: I18nCode) {
         EmptyMessage: 'Henüz rezervasyon yok',
         EmptyHint: 'İlk yolculuğunuz bir dokunuş uzakta.',
         EmptyFiltered: 'Bu aralıkta rezervasyon yok',
-        EmptyFilteredHint: 'Filtreyi veya tarih aralığını değiştirin ya da bir yolculuk ayırtın.',
+        EmptyFilteredHint:
+          'Filtreyi veya tarih aralığını değiştirin ya da bir yolculuk ayırtın.',
         NotACustomer: 'Bu sayfa müşteriler içindir.',
         NotACustomerHint: 'Yolculuklarınız Yolculuklarım altındadır.',
 
@@ -214,11 +227,22 @@ export function getI18nBookings(code: I18nCode) {
         DetailSectionNotes: 'İstekler',
         DetailTotalPrice: 'Toplam Fiyat',
         DetailPayment: 'Ödeme: {method}',
+        DetailSectionStatus: 'Teklif ve fatura',
+        DetailSectionDocuments: 'Belgeler',
+        StatusExplainNEW:
+          'Talebiniz bize ulaştı, size bir teklif göndereceğiz.',
+        StatusExplainOFFERED:
+          'Lütfen teklifi e-postanızdaki bağlantı üzerinden onaylayın.',
+        StatusExplainCONFIRMED: 'Yolculuğunuz rezerve edildi.',
+        StatusExplainINVOICED: 'Fatura e-posta adresinize gönderildi.',
+        StatusExplainPAID: 'Teşekkürler, fatura ödendi.',
+        StatusExplainDECLINED: 'Teklif reddedildi veya süresi doldu.',
 
         CancelButton: 'Rezervasyonu iptal et',
         CancelHint: 'Sürücü yola çıkana kadar iptal edebilirsiniz.',
         CancelConfirmTitle: 'Bu rezervasyon iptal edilsin mi?',
-        CancelConfirmBody: '{date} {time} yolculuğu iptal edilecek. Bu geri alınamaz.',
+        CancelConfirmBody:
+          '{date} {time} yolculuğu iptal edilecek. Bu geri alınamaz.',
         CancelConfirm: 'Evet, iptal et',
         CancelKeep: 'Rezervasyonu koru',
         CancelSuccess: 'Rezervasyon iptal edildi',
@@ -227,7 +251,8 @@ export function getI18nBookings(code: I18nCode) {
         StatementsHeading: 'Hesap özetleri',
         StatementsSubtitle: 'Hesap özeti olan her ay için bir satır',
         StatementsEmpty: 'Henüz hesap özeti yok',
-        StatementsEmptyHint: 'Bir ayda tamamlanmış yolculuk olduğunda özet burada görünür.',
+        StatementsEmptyHint:
+          'Bir ayda tamamlanmış yolculuk olduğunda özet burada görünür.',
         StatementsColMonth: 'Ay',
         StatementsColKind: 'Tür',
         StatementsKindCUSTOMER: 'Fatura',
@@ -249,8 +274,8 @@ export function getI18nBookings(code: I18nCode) {
         StatementsColPayment: 'Ödeme',
         StatementsColFiles: 'Dosyalar',
         StatementsCount: '{count} hesap özeti',
-        StatementsLinesCount: '{count} yolculuk',
-      },
+        StatementsLinesCount: '{count} yolculuk'
+      }
     }
   }
 
@@ -336,11 +361,21 @@ export function getI18nBookings(code: I18nCode) {
         DetailSectionNotes: 'الرغبات',
         DetailTotalPrice: 'السعر الإجمالي',
         DetailPayment: 'الدفع: {method}',
+        DetailSectionStatus: 'العرض والفاتورة',
+        DetailSectionDocuments: 'المستندات',
+        StatusExplainNEW: 'وصلنا طلبك وسنرسل لك عرضاً.',
+        StatusExplainOFFERED:
+          'يرجى تأكيد العرض عبر الرابط في بريدك الإلكتروني.',
+        StatusExplainCONFIRMED: 'رحلتك محجوزة.',
+        StatusExplainINVOICED: 'أُرسلت الفاتورة إلى عنوان بريدك الإلكتروني.',
+        StatusExplainPAID: 'شكراً، تمت تسوية الفاتورة.',
+        StatusExplainDECLINED: 'رُفض العرض أو انتهت صلاحيته.',
 
         CancelButton: 'إلغاء الحجز',
         CancelHint: 'يمكنك الإلغاء ما دام السائق لم ينطلق بعد.',
         CancelConfirmTitle: 'إلغاء هذا الحجز؟',
-        CancelConfirmBody: 'ستُلغى رحلة يوم {date} الساعة {time}. لا يمكن التراجع عن ذلك.',
+        CancelConfirmBody:
+          'ستُلغى رحلة يوم {date} الساعة {time}. لا يمكن التراجع عن ذلك.',
         CancelConfirm: 'نعم، إلغاء',
         CancelKeep: 'الاحتفاظ بالحجز',
         CancelSuccess: 'تم إلغاء الحجز',
@@ -349,7 +384,8 @@ export function getI18nBookings(code: I18nCode) {
         StatementsHeading: 'كشوف الحساب',
         StatementsSubtitle: 'صف لكل شهر له كشف حساب',
         StatementsEmpty: 'لا توجد كشوف حساب بعد',
-        StatementsEmptyHint: 'يظهر الكشف هنا عندما يحتوي الشهر على رحلات مكتملة.',
+        StatementsEmptyHint:
+          'يظهر الكشف هنا عندما يحتوي الشهر على رحلات مكتملة.',
         StatementsColMonth: 'الشهر',
         StatementsColKind: 'النوع',
         StatementsKindCUSTOMER: 'فاتورة',
@@ -371,8 +407,8 @@ export function getI18nBookings(code: I18nCode) {
         StatementsColPayment: 'الدفع',
         StatementsColFiles: 'الملفات',
         StatementsCount: '{count} كشوف حساب',
-        StatementsLinesCount: '{count} رحلات',
-      },
+        StatementsLinesCount: '{count} رحلات'
+      }
     }
   }
 
@@ -426,7 +462,8 @@ export function getI18nBookings(code: I18nCode) {
       ModalPlaceholderFlight: 'z. B. OS 123',
       ModalLabelWishes: 'Wünsche',
       ModalPlaceholderWishes: 'Was der Fahrer wissen sollte',
-      ModalHintPrice: 'Die Zentrale legt den Preis fest und bestätigt die Fahrt.',
+      ModalHintPrice:
+        'Die Zentrale legt den Preis fest und bestätigt die Fahrt.',
       ModalErrorRequired: 'Pflichtfeld',
       ModalErrorPast: 'Die Abholung liegt in der Vergangenheit',
 
@@ -458,11 +495,22 @@ export function getI18nBookings(code: I18nCode) {
       DetailSectionNotes: 'Wünsche',
       DetailTotalPrice: 'Gesamtpreis',
       DetailPayment: 'Zahlung: {method}',
+      DetailSectionStatus: 'Angebot und Rechnung',
+      DetailSectionDocuments: 'Dokumente',
+      StatusExplainNEW: 'Deine Anfrage ist da, wir schicken dir ein Angebot.',
+      StatusExplainOFFERED:
+        'Bitte bestätige das Angebot über den Link in deiner E-Mail.',
+      StatusExplainCONFIRMED: 'Deine Fahrt ist gebucht.',
+      StatusExplainINVOICED:
+        'Die Rechnung wurde an deine E-Mail-Adresse gesendet.',
+      StatusExplainPAID: 'Danke, die Rechnung ist beglichen.',
+      StatusExplainDECLINED: 'Das Angebot wurde abgelehnt oder ist verfallen.',
 
       CancelButton: 'Buchung stornieren',
       CancelHint: 'Stornieren ist möglich, solange kein Fahrer unterwegs ist.',
       CancelConfirmTitle: 'Buchung stornieren?',
-      CancelConfirmBody: 'Die Fahrt am {date} um {time} wird abgesagt. Das lässt sich nicht rückgängig machen.',
+      CancelConfirmBody:
+        'Die Fahrt am {date} um {time} wird abgesagt. Das lässt sich nicht rückgängig machen.',
       CancelConfirm: 'Ja, stornieren',
       CancelKeep: 'Buchung behalten',
       CancelSuccess: 'Buchung storniert',
@@ -471,7 +519,8 @@ export function getI18nBookings(code: I18nCode) {
       StatementsHeading: 'Abrechnungen',
       StatementsSubtitle: 'Eine Zeile pro Monat mit Abrechnung',
       StatementsEmpty: 'Noch keine Abrechnungen',
-      StatementsEmptyHint: 'Eine Abrechnung erscheint hier, sobald ein Monat abgeschlossene Fahrten hat.',
+      StatementsEmptyHint:
+        'Eine Abrechnung erscheint hier, sobald ein Monat abgeschlossene Fahrten hat.',
       StatementsColMonth: 'Monat',
       StatementsColKind: 'Art',
       StatementsKindCUSTOMER: 'Rechnung',
@@ -493,7 +542,7 @@ export function getI18nBookings(code: I18nCode) {
       StatementsColPayment: 'Zahlung',
       StatementsColFiles: 'Dateien',
       StatementsCount: '{count} Abrechnungen',
-      StatementsLinesCount: '{count} Fahrten',
-    },
+      StatementsLinesCount: '{count} Fahrten'
+    }
   }
 }

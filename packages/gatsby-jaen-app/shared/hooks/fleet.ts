@@ -61,22 +61,32 @@ const readFleet = async (): Promise<FleetCar[]> => {
     .map((e: any) => e?.node)
     .filter(Boolean)
     .map(mapCar)
-  rows.sort((a: FleetCar, b: FleetCar) => a.licensePlate.localeCompare(b.licensePlate))
+  rows.sort((a: FleetCar, b: FleetCar) =>
+    a.licensePlate.localeCompare(b.licensePlate)
+  )
   return rows
 }
 
 export function useFleet() {
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.fleet(),
     queryFn: readFleet
   })
-  return {cars: q.data ?? EMPTY_CARS, isLoading, error, refetch}
+  return {cars: q.data ?? EMPTY_CARS, isLoading, error, isFetching, refetch}
 }
 
 /** The fleet and the pickers under its key, and the transfer lists that show a car. */
 const invalidateFleet = async () => {
   await Promise.all(
-    [['fleet'], ['transfers']].map(queryKey => queryClient.invalidateQueries({queryKey}))
+    [['fleet'], ['transfers']].map(queryKey =>
+      queryClient.invalidateQueries({queryKey})
+    )
   )
 }
 

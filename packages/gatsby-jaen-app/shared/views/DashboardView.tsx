@@ -11,7 +11,7 @@
  * Admin only. A driver or a customer who lands here is sent to their own
  * home. The backend would refuse them anyway, this just spares them the error.
  */
-import React, { useEffect, useMemo, useState } from 'react'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {
   Alert,
   Card,
@@ -24,22 +24,25 @@ import {
   Stat,
   Table,
   Text,
-  chakra,
+  chakra
 } from '@chakra-ui/react'
-import { FaChevronLeft } from '@react-icons/all-files/fa/FaChevronLeft'
-import { FaChevronRight } from '@react-icons/all-files/fa/FaChevronRight'
-import { FaSyncAlt } from '@react-icons/all-files/fa/FaSyncAlt'
-import { FaExclamationTriangle } from '@react-icons/all-files/fa/FaExclamationTriangle'
-import { useCaller } from '../auth'
-import { useAppNavigate } from '../navigation'
-import { transferPath, useTransferList, type TransferRow } from '../hooks/transfers'
+import {FaChevronLeft} from '@react-icons/all-files/fa/FaChevronLeft'
+import {FaChevronRight} from '@react-icons/all-files/fa/FaChevronRight'
+import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTriangle'
+import {useCaller} from '../auth'
+import {useAppNavigate} from '../navigation'
+import {
+  transferPath,
+  useTransferList,
+  type TransferRow
+} from '../hooks/transfers'
 import {
   useDashboard,
   localDateISO,
   monthOf,
   shiftMonth,
   tomorrowOf,
-  type DashboardDriver,
+  type DashboardDriver
 } from '../hooks/dashboard'
 import {
   DriverColorBorder,
@@ -51,10 +54,16 @@ import {
   useMoneyFormat,
   PageHeader
 } from '../components'
-import { useI18nCode } from '../i18n'
-import { getI18nDashboard } from '../locales/i18nDashboard'
-import { getI18nCommon } from '../locales/i18nCommon'
-import { fillWith, ListSkeleton, NumberSkeleton, TableSkeleton } from '../components/skeletons'
+import {RefreshButton} from '../components/RefreshButton'
+import {useViewRefresh} from '../hooks/view-refresh'
+import {useI18nCode} from '../i18n'
+import {getI18nDashboard} from '../locales/i18nDashboard'
+import {
+  fillWith,
+  ListSkeleton,
+  NumberSkeleton,
+  TableSkeleton
+} from '../components/skeletons'
 
 const fill = (template: string, values: Record<string, string | number>) =>
   Object.entries(values).reduce(
@@ -67,7 +76,7 @@ function Kpi({
   label,
   value,
   tone,
-  loading,
+  loading
 }: {
   label: string
   value: React.ReactNode
@@ -103,7 +112,7 @@ function DayRow({
   transfer,
   driver,
   unassignedLabel,
-  onOpen,
+  onOpen
 }: {
   transfer: TransferRow
   driver?: DashboardDriver
@@ -111,7 +120,10 @@ function DayRow({
   onOpen: () => void
 }) {
   return (
-    <DriverColorBorder color={driver?.color} rounded="surface" overflow="hidden">
+    <DriverColorBorder
+      color={driver?.color}
+      rounded="surface"
+      overflow="hidden">
       <Card.Root
         size="sm"
         variant="outline"
@@ -128,8 +140,12 @@ function DayRow({
             onOpen()
           }
         }}
-        _hover={{ bg: 'bg.subtle' }}
-        _focusVisible={{ outline: '2px solid', outlineColor: 'brand.focusRing', outlineOffset: '-2px' }}>
+        _hover={{bg: 'bg.subtle'}}
+        _focusVisible={{
+          outline: '2px solid',
+          outlineColor: 'brand.focusRing',
+          outlineOffset: '-2px'
+        }}>
         <Card.Body gap="2">
           <Flex justify="space-between" align="center" gap="3" wrap="wrap">
             <HStack gap="3" minW="0">
@@ -138,13 +154,26 @@ function DayRow({
               </Text>
               <StatusBadge state={transfer.state} />
               {/* The code, what a dispatcher reads aloud. The uuid stays in the data attribute of the card. */}
-              <Text textStyle="xs" color="fg.muted" whiteSpace="nowrap" fontFamily="mono">
+              <Text
+                textStyle="xs"
+                color="fg.muted"
+                whiteSpace="nowrap"
+                fontFamily="mono">
                 {transfer.code}
               </Text>
             </HStack>
-            <MoneyText value={transfer.price} fontWeight="semibold" textStyle="sm" />
+            <MoneyText
+              value={transfer.price}
+              fontWeight="semibold"
+              textStyle="sm"
+            />
           </Flex>
-          <Flex justify="space-between" align="center" gap="3" wrap="wrap" textStyle="sm">
+          <Flex
+            justify="space-between"
+            align="center"
+            gap="3"
+            wrap="wrap"
+            textStyle="sm">
             <Text color="fg.muted" minW="0" lineClamp={1}>
               {transfer.pickup} → {transfer.dropoff}
             </Text>
@@ -182,7 +211,7 @@ function DayList({
   driversById,
   onRefetch,
   onOpen,
-  onViewAll,
+  onViewAll
 }: {
   title: React.ReactNode
   transfers: TransferRow[]
@@ -211,7 +240,7 @@ function DayList({
           textStyle="sm"
           color="brand.fg"
           cursor="pointer"
-          _hover={{ textDecoration: 'underline' }}>
+          _hover={{textDecoration: 'underline'}}>
           {viewAllLabel}
         </chakra.button>
       </Flex>
@@ -219,14 +248,25 @@ function DayList({
       {isLoading && !error ? (
         <ListSkeleton rows={2} />
       ) : !error && sorted.length === 0 ? (
-        <EmptyState title={emptyLabel} size="sm" borderWidth="1px" borderColor="border.default" rounded="surface" bg="bg.surface" />
+        <EmptyState
+          title={emptyLabel}
+          size="sm"
+          borderWidth="1px"
+          borderColor="border.default"
+          rounded="surface"
+          bg="bg.surface"
+        />
       ) : (
         <Stack gap="3">
           {sorted.map(transfer => (
             <DayRow
               key={transfer.id}
               transfer={transfer}
-              driver={transfer.driverId ? driversById.get(transfer.driverId) : undefined}
+              driver={
+                transfer.driverId
+                  ? driversById.get(transfer.driverId)
+                  : undefined
+              }
               unassignedLabel={unassignedLabel}
               onOpen={() => onOpen(transferPath(transfer))}
             />
@@ -241,8 +281,7 @@ export function DashboardView() {
   const caller = useCaller()
   const navigate = useAppNavigate()
   const code = useI18nCode()
-  const { strings: t } = getI18nDashboard(code)
-  const { strings: tc } = getI18nCommon(code)
+  const {strings: t} = getI18nDashboard(code)
   const money = useMoneyFormat()
 
   // Not their screen. The nav never offered it, but a bookmark or a push
@@ -251,7 +290,13 @@ export function DashboardView() {
     if (caller.loading || caller.isAdmin) return
     if (caller.isDriver) navigate('/transfers')
     else if (caller.isCustomer) navigate('/booking')
-  }, [caller.loading, caller.isAdmin, caller.isDriver, caller.isCustomer, navigate])
+  }, [
+    caller.loading,
+    caller.isAdmin,
+    caller.isDriver,
+    caller.isCustomer,
+    navigate
+  ])
 
   const [now] = useState(() => new Date())
   const todayISO = useMemo(() => localDateISO(now), [now])
@@ -262,8 +307,16 @@ export function DashboardView() {
   const dashboard = useDashboard(month)
   // A page of a hundred is every ride a day of this company has ever had,
   // and "view all" reaches the board for the day it is not.
-  const today = useTransferList({ pageSize: 100, fromISO: todayISO, toISO: todayISO })
-  const tomorrow = useTransferList({ pageSize: 100, fromISO: tomorrowISO, toISO: tomorrowISO })
+  const today = useTransferList({
+    pageSize: 100,
+    fromISO: todayISO,
+    toISO: todayISO
+  })
+  const tomorrow = useTransferList({
+    pageSize: 100,
+    fromISO: tomorrowISO,
+    toISO: tomorrowISO
+  })
 
   const driversById = useMemo(
     () => new Map((dashboard.data?.drivers ?? []).map(d => [d.id, d])),
@@ -273,9 +326,10 @@ export function DashboardView() {
   const monthLabel = useMemo(() => {
     const [y, m] = month.split('-').map(Number)
     try {
-      return new Intl.DateTimeFormat(code, { month: 'long', year: 'numeric' }).format(
-        new Date(y ?? 1970, (m ?? 1) - 1, 1)
-      )
+      return new Intl.DateTimeFormat(code, {
+        month: 'long',
+        year: 'numeric'
+      }).format(new Date(y ?? 1970, (m ?? 1) - 1, 1))
     } catch {
       return month
     }
@@ -283,43 +337,60 @@ export function DashboardView() {
 
   const percent = (fraction: number) => {
     try {
-      return new Intl.NumberFormat(code, { style: 'percent', maximumFractionDigits: 1 }).format(fraction)
+      return new Intl.NumberFormat(code, {
+        style: 'percent',
+        maximumFractionDigits: 1
+      }).format(fraction)
     } catch {
       return `${(fraction * 100).toFixed(1)} %`
     }
   }
 
-  const refetchAll = () => {
+  const refetchAll = useCallback(() => {
     dashboard.refetch()
     today.refetch()
     tomorrow.refetch()
-  }
+  }, [dashboard.refetch, today.refetch, tomorrow.refetch])
+  // The three reads are one refresh: the button turns and the pull holds
+  // until the last of them has answered.
+  useViewRefresh(
+    refetchAll,
+    dashboard.isFetching || today.isFetching || tomorrow.isFetching
+  )
 
   const d = dashboard.data
   // Until the roles are known the page is its skeleton, the numbers grey.
   const loading = dashboard.isLoading || caller.loading
-  const busy = dashboard.isLoading || today.isLoading || tomorrow.isLoading
 
   if (!caller.loading && !caller.isAdmin) return null
 
   // The count in a list's heading waits like every other number.
-  const listTitle = (template: string, list: {isLoading: boolean; pagination: {totalCount: number}}) =>
-    fillWith(template, {count: list.isLoading ? <NumberSkeleton chars={2} /> : list.pagination.totalCount})
+  const listTitle = (
+    template: string,
+    list: {isLoading: boolean; pagination: {totalCount: number}}
+  ) =>
+    fillWith(template, {
+      count: list.isLoading ? (
+        <NumberSkeleton chars={2} />
+      ) : (
+        list.pagination.totalCount
+      )
+    })
 
   return (
-    <Stack gap="8" p={{ base: '4', md: '6' }} maxW="full">
+    <Stack gap="8" p={{base: '4', md: '6'}} maxW="full">
       <PageHeader
         title={t.Heading}
         subtitle={t.Subtitle}
-        actions={
-          <IconButton aria-label={tc.Refresh} variant="outline" size="sm" onClick={refetchAll} loading={busy}>
-            <FaSyncAlt />
-          </IconButton>
-        }
+        actions={<RefreshButton />}
       />
 
       {dashboard.error && (
-        <ErrorBanner title={t.NumbersUnavailable} message={dashboard.error} onRetry={dashboard.refetch} />
+        <ErrorBanner
+          title={t.NumbersUnavailable}
+          message={dashboard.error}
+          onRetry={dashboard.refetch}
+        />
       )}
 
       {d && d.today.unassigned > 0 && (
@@ -328,12 +399,14 @@ export function DashboardView() {
           variant="subtle"
           cursor="pointer"
           onClick={() => navigate('/transfers')}
-          _hover={{ opacity: 0.9 }}>
+          _hover={{opacity: 0.9}}>
           <Alert.Indicator>
             <FaExclamationTriangle />
           </Alert.Indicator>
           <Alert.Content>
-            <Alert.Title>{fill(t.AlertNotAssigned, { count: d.today.unassigned })}</Alert.Title>
+            <Alert.Title>
+              {fill(t.AlertNotAssigned, {count: d.today.unassigned})}
+            </Alert.Title>
             <Alert.Description>{t.AlertNotAssignedBody}</Alert.Description>
           </Alert.Content>
         </Alert.Root>
@@ -344,10 +417,12 @@ export function DashboardView() {
           variant="subtle"
           cursor="pointer"
           onClick={() => navigate('/transfers')}
-          _hover={{ opacity: 0.9 }}>
+          _hover={{opacity: 0.9}}>
           <Alert.Indicator />
           <Alert.Content>
-            <Alert.Title>{fill(t.AlertRejected, { count: d.today.rejected })}</Alert.Title>
+            <Alert.Title>
+              {fill(t.AlertRejected, {count: d.today.rejected})}
+            </Alert.Title>
             <Alert.Description>{t.AlertRejectedBody}</Alert.Description>
           </Alert.Content>
         </Alert.Root>
@@ -355,16 +430,30 @@ export function DashboardView() {
 
       <Stack gap="3">
         <Heading size="md">{t.SectionToday}</Heading>
-        <SimpleGrid columns={{ base: 2, md: 3, lg: 5 }} gap="3">
-          <Kpi label={t.KpiRidesToday} value={d?.today.rides ?? 0} loading={loading} />
+        <SimpleGrid columns={{base: 2, md: 3, lg: 5}} gap="3">
+          <Kpi
+            label={t.KpiRidesToday}
+            value={d?.today.rides ?? 0}
+            loading={loading}
+          />
           <Kpi
             label={t.KpiUnassigned}
             value={d?.today.unassigned ?? 0}
             tone={d && d.today.unassigned > 0 ? 'orange' : undefined}
             loading={loading}
           />
-          <Kpi label={t.KpiOnTheRoad} value={d?.today.onTheRoad ?? 0} tone="teal" loading={loading} />
-          <Kpi label={t.KpiWaiting} value={d?.today.waiting ?? 0} tone="blue" loading={loading} />
+          <Kpi
+            label={t.KpiOnTheRoad}
+            value={d?.today.onTheRoad ?? 0}
+            tone="teal"
+            loading={loading}
+          />
+          <Kpi
+            label={t.KpiWaiting}
+            value={d?.today.waiting ?? 0}
+            tone="blue"
+            loading={loading}
+          />
           <Kpi
             label={t.KpiRejected}
             value={d?.today.rejected ?? 0}
@@ -376,8 +465,12 @@ export function DashboardView() {
 
       <Stack gap="3">
         <Heading size="md">{t.SectionTomorrow}</Heading>
-        <SimpleGrid columns={{ base: 2, lg: 5 }} gap="3">
-          <Kpi label={t.KpiRidesTomorrow} value={d?.tomorrow.rides ?? 0} loading={loading} />
+        <SimpleGrid columns={{base: 2, lg: 5}} gap="3">
+          <Kpi
+            label={t.KpiRidesTomorrow}
+            value={d?.tomorrow.rides ?? 0}
+            loading={loading}
+          />
           <Kpi
             label={t.KpiTomorrowUnassigned}
             value={d?.tomorrow.unassigned ?? 0}
@@ -389,7 +482,9 @@ export function DashboardView() {
 
       <Stack gap="3">
         <Flex justify="space-between" align="center" gap="3" wrap="wrap">
-          <Heading size="md">{isCurrentMonth ? t.SectionMonth : monthLabel}</Heading>
+          <Heading size="md">
+            {isCurrentMonth ? t.SectionMonth : monthLabel}
+          </Heading>
           <HStack gap="2">
             <IconButton
               aria-label={t.PrevMonth}
@@ -398,7 +493,11 @@ export function DashboardView() {
               onClick={() => setMonth(m => shiftMonth(m, -1))}>
               <FaChevronLeft />
             </IconButton>
-            <Text textStyle="sm" fontWeight="medium" minW="32" textAlign="center">
+            <Text
+              textStyle="sm"
+              fontWeight="medium"
+              minW="32"
+              textAlign="center">
               {monthLabel}
             </Text>
             <IconButton
@@ -411,19 +510,44 @@ export function DashboardView() {
             </IconButton>
           </HStack>
         </Flex>
-        <SimpleGrid columns={{ base: 2, md: 4 }} gap="3">
-          <Kpi label={t.KpiRevenue} value={money(d?.month.revenue ?? 0)} tone="green" loading={loading} />
-          <Kpi label={t.KpiCompleted} value={d?.month.completed ?? 0} loading={loading} />
-          <Kpi label={t.KpiAverageFare} value={money(d?.month.averageFare ?? 0)} loading={loading} />
-          <Kpi label={t.KpiCash} value={money(d?.month.cash ?? 0)} loading={loading} />
-          <Kpi label={t.KpiPayoutDue} value={money(d?.month.payoutDue ?? 0)} loading={loading} />
+        <SimpleGrid columns={{base: 2, md: 4}} gap="3">
+          <Kpi
+            label={t.KpiRevenue}
+            value={money(d?.month.revenue ?? 0)}
+            tone="green"
+            loading={loading}
+          />
+          <Kpi
+            label={t.KpiCompleted}
+            value={d?.month.completed ?? 0}
+            loading={loading}
+          />
+          <Kpi
+            label={t.KpiAverageFare}
+            value={money(d?.month.averageFare ?? 0)}
+            loading={loading}
+          />
+          <Kpi
+            label={t.KpiCash}
+            value={money(d?.month.cash ?? 0)}
+            loading={loading}
+          />
+          <Kpi
+            label={t.KpiPayoutDue}
+            value={money(d?.month.payoutDue ?? 0)}
+            loading={loading}
+          />
           <Kpi
             label={t.KpiCancellationRate}
             value={percent(d?.month.cancellationRate ?? 0)}
             tone={d && d.month.cancellationRate > 0.1 ? 'red' : undefined}
             loading={loading}
           />
-          <Kpi label={t.KpiSiteBookings} value={d?.month.siteBookings ?? 0} loading={loading} />
+          <Kpi
+            label={t.KpiSiteBookings}
+            value={d?.month.siteBookings ?? 0}
+            loading={loading}
+          />
         </SimpleGrid>
       </Stack>
 
@@ -432,11 +556,16 @@ export function DashboardView() {
         {loading ? (
           <TableSkeleton
             columns={[
-              { id: 'driver', label: t.ColDriver, width: 240 },
-              { id: 'completed', label: t.ColCompleted, width: 120, align: 'end' },
-              { id: 'revenue', label: t.ColRevenue, width: 140, align: 'end' },
-              { id: 'cash', label: t.ColCash, width: 140, align: 'end' },
-              { id: 'payout', label: t.ColPayout, width: 140, align: 'end' }
+              {id: 'driver', label: t.ColDriver, width: 240},
+              {
+                id: 'completed',
+                label: t.ColCompleted,
+                width: 120,
+                align: 'end'
+              },
+              {id: 'revenue', label: t.ColRevenue, width: 140, align: 'end'},
+              {id: 'cash', label: t.ColCash, width: 140, align: 'end'},
+              {id: 'payout', label: t.ColPayout, width: 140, align: 'end'}
             ]}
             rows={4}
             avatar
@@ -444,17 +573,36 @@ export function DashboardView() {
             actionsWidth={0}
           />
         ) : !d || d.drivers.length === 0 ? (
-          <EmptyState title={t.NoDrivers} size="sm" borderWidth="1px" borderColor="border.default" rounded="surface" bg="bg.surface" />
+          <EmptyState
+            title={t.NoDrivers}
+            size="sm"
+            borderWidth="1px"
+            borderColor="border.default"
+            rounded="surface"
+            bg="bg.surface"
+          />
         ) : (
-          <Table.ScrollArea borderWidth="1px" borderColor="border.default" rounded="surface" bg="bg.surface">
+          <Table.ScrollArea
+            borderWidth="1px"
+            borderColor="border.default"
+            rounded="surface"
+            bg="bg.surface">
             <Table.Root size="sm" variant="line">
               <Table.Header>
                 <Table.Row>
                   <Table.ColumnHeader>{t.ColDriver}</Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="end">{t.ColCompleted}</Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="end">{t.ColRevenue}</Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="end">{t.ColCash}</Table.ColumnHeader>
-                  <Table.ColumnHeader textAlign="end">{t.ColPayout}</Table.ColumnHeader>
+                  <Table.ColumnHeader textAlign="end">
+                    {t.ColCompleted}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader textAlign="end">
+                    {t.ColRevenue}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader textAlign="end">
+                    {t.ColCash}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader textAlign="end">
+                    {t.ColPayout}
+                  </Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
@@ -462,7 +610,7 @@ export function DashboardView() {
                   <Table.Row
                     key={driver.id}
                     cursor="pointer"
-                    _hover={{ bg: 'bg.subtle' }}
+                    _hover={{bg: 'bg.subtle'}}
                     onClick={() => navigate(`/users/${driver.id}`)}>
                     <Table.Cell>
                       <HStack gap="2">
@@ -470,7 +618,9 @@ export function DashboardView() {
                         <Text fontWeight="medium">{driver.name}</Text>
                       </HStack>
                     </Table.Cell>
-                    <Table.Cell textAlign="end" fontVariantNumeric="tabular-nums">
+                    <Table.Cell
+                      textAlign="end"
+                      fontVariantNumeric="tabular-nums">
                       {driver.completed}
                     </Table.Cell>
                     <Table.Cell textAlign="end">
@@ -480,7 +630,10 @@ export function DashboardView() {
                       <MoneyText value={driver.cash} />
                     </Table.Cell>
                     <Table.Cell textAlign="end">
-                      <MoneyText value={driver.payoutDue} fontWeight="semibold" />
+                      <MoneyText
+                        value={driver.payoutDue}
+                        fontWeight="semibold"
+                      />
                     </Table.Cell>
                   </Table.Row>
                 ))}
@@ -490,7 +643,7 @@ export function DashboardView() {
         )}
       </Stack>
 
-      <SimpleGrid columns={{ base: 1, lg: 2 }} gap="8" alignItems="start">
+      <SimpleGrid columns={{base: 1, lg: 2}} gap="8" alignItems="start">
         <DayList
           title={listTitle(t.TodayList, today)}
           transfers={today.rows}

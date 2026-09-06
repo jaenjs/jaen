@@ -27,8 +27,19 @@
 import {useCallback, useMemo} from 'react'
 import {keepPreviousData} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
-import {asTransferState, TRANSFER_STATES, type TransferState} from '../locales/i18nStates'
-import {cachedRead, invalidateTransfers, keys, queryClient, useAppQuery, usePager} from './query'
+import {
+  asTransferState,
+  TRANSFER_STATES,
+  type TransferState
+} from '../locales/i18nStates'
+import {
+  cachedRead,
+  invalidateTransfers,
+  keys,
+  queryClient,
+  useAppQuery,
+  usePager
+} from './query'
 
 // --------------- The document builder ---------------
 
@@ -58,7 +69,10 @@ const literal = (value: unknown): string => {
  * the extension code so a screen can tell FORBIDDEN from AUTH_REQUIRED.
  */
 export class GraphQLRequestError extends Error {
-  constructor(message: string, public readonly code?: string) {
+  constructor(
+    message: string,
+    public readonly code?: string
+  ) {
     super(message)
     this.name = 'GraphQLRequestError'
   }
@@ -90,7 +104,9 @@ const gql = async (
     const first = result.errors[0]
     throw new GraphQLRequestError(
       String(first?.message || 'GraphQL error'),
-      typeof first?.extensions?.code === 'string' ? first.extensions.code : undefined
+      typeof first?.extensions?.code === 'string'
+        ? first.extensions.code
+        : undefined
     )
   }
 
@@ -105,7 +121,12 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
 export const PAYING_PARTIES = ['CUSTOMER', 'PASSENGER'] as const
 export type PayingParty = (typeof PAYING_PARTIES)[number]
 
-export const CAR_CLASSES = ['BUSINESS_CLASS', 'ELECTRIC_CLASS', 'FIRST_CLASS', 'BUSINESS_VAN'] as const
+export const CAR_CLASSES = [
+  'BUSINESS_CLASS',
+  'ELECTRIC_CLASS',
+  'FIRST_CLASS',
+  'BUSINESS_VAN'
+] as const
 export type CarClass = (typeof CAR_CLASSES)[number]
 
 export const TRANSFER_CATEGORIES = ['DISTANCE', 'HOURLY', 'FLATRATE'] as const
@@ -141,9 +162,49 @@ export const DRIVER_STOPS: readonly TransferState[] = [
   'COMPLETED'
 ]
 
+/**
+ * The one exit that is a state. The driver's way out of ASSIGNED is not a
+ * state any more: it is declineAssignment, and REJECTED is never written
+ * (dispatch.md section 9), so the ride screen offers the decline itself.
+ */
 export const DRIVER_EXITS: Partial<Record<TransferState, TransferState>> = {
-  ASSIGNED: 'REJECTED',
   AT_PICKUP: 'NO_SHOW'
+}
+
+// --------------- The driver's answer ---------------
+
+/**
+ * The driver's answer beside the ride state, Transfer.driverStatus. NONE
+ * until somebody is asked, REQUESTED while the request is open, ACCEPTED
+ * from the yes on (the ride is ASSIGNED then), DECLINED after a no (the
+ * driver is taken off the row), WITHDRAWN after the dispatcher took the
+ * ride back. Undefined on a row from a schema without the column.
+ */
+export const DRIVER_STATUSES = [
+  'NONE',
+  'REQUESTED',
+  'ACCEPTED',
+  'DECLINED',
+  'WITHDRAWN'
+] as const
+export type DriverStatus = (typeof DRIVER_STATUSES)[number]
+
+export const asDriverStatus = (value: unknown): DriverStatus | undefined =>
+  DRIVER_STATUSES.includes(value as DriverStatus)
+    ? (value as DriverStatus)
+    : undefined
+
+/** One request to one driver for one ride, as the dispatcher reads it. */
+export interface AssignmentAttempt {
+  id: string
+  driverId: string
+  requestedAt: string
+  answeredAt?: string
+  /** Undefined while the request is open. */
+  answer?: DriverStatus
+  reason?: string
+  /** The dispatcher who asked, undefined on a migrated row. */
+  by?: string
 }
 
 /** The index of a state on the slider, or -1 when the driver cannot move it. */
@@ -151,7 +212,8 @@ export const driverStopIndex = (state: string | undefined): number =>
   DRIVER_STOPS.indexOf(asTransferState(state) as TransferState)
 
 /** A ride the driver is still moving, or has just finished. */
-export const isDriverStage = (state: string | undefined): boolean => driverStopIndex(state) >= 0
+export const isDriverStage = (state: string | undefined): boolean =>
+  driverStopIndex(state) >= 0
 
 /** States a transfer is over in, one way or another. */
 export const CLOSED_STATES: readonly TransferState[] = [
@@ -250,6 +312,35 @@ export interface TransferRow {
   passengers: TransferPassenger[]
   extras: TransferExtra[]
   car?: TransferCar
+  /**
+   * The money side beside the ride state: NEW, OFFERED, CONFIRMED,
+   * INVOICED, PAID, DECLINED, written only by the pylon. Undefined on a
+   * schema from before the column, see hooks/offers.ts.
+   */
+  customerStatus?: string
+  /** The booking's language, de | en | tr | ar, the one every document and mail uses. */
+  language?: string
+  /** The instants of the customer status, one per state reached, when the schema carries them. */
+  offeredAt?: string
+  /** The "gültig bis" of the offer mail, ISO, what expireOffers declines past. */
+  offerValidUntil?: string
+  confirmedAt?: string
+  declinedAt?: string
+  invoicedAt?: string
+  paidAt?: string
+  /** The driver's answer, undefined on a schema without it. */
+  driverStatus?: DriverStatus
+  /**
+   * The newest request while REQUESTED or DECLINED, for the board's driver
+   * cell (the declined driver and the reason). Admin reads only.
+   */
+  lastAttempt?: AssignmentAttempt
+  /**
+   * Every request for this ride, newest first, when the detail read asked
+   * for it. Undefined on a list row, an empty array on a ride nobody was
+   * asked for. Admin reads only.
+   */
+  attempts?: AssignmentAttempt[]
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
@@ -277,7 +368,23 @@ export const MINTED_CODE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}-\d+$/
 export const transferSlug = (row: {id: string; code: string}): string =>
   MINTED_CODE.test(row.code) ? row.code : row.id
 
-export const transferPath = (row: {id: string; code: string}): string => `/transfers/${transferSlug(row)}`
+export const transferPath = (row: {id: string; code: string}): string =>
+  `/transfers/${transferSlug(row)}`
+
+const mapAttempt = (node: any): AssignmentAttempt | undefined => {
+  const id = str(node?.id)
+  const driverId = str(node?.driverId)
+  if (!id || !driverId) return undefined
+  return {
+    id,
+    driverId,
+    requestedAt: str(node?.requestedAt) ?? '',
+    answeredAt: str(node?.answeredAt),
+    answer: asDriverStatus(node?.answer),
+    reason: str(node?.reason),
+    by: str(node?.by)
+  }
+}
 
 const ref = (node: any): TransferRef | undefined => {
   const id = str(node?.id)
@@ -338,7 +445,10 @@ export const mapTransfer = (node: any): TransferRow => {
           preferredCarName: str(details.preferredCarName)
         }
       : undefined,
-    passengers: (Array.isArray(node?.passengers?.edges) ? node.passengers.edges : [])
+    passengers: (Array.isArray(node?.passengers?.edges)
+      ? node.passengers.edges
+      : []
+    )
       .map((e: any) => e?.node)
       .filter(Boolean)
       .map((p: any) => ({
@@ -364,6 +474,19 @@ export const mapTransfer = (node: any): TransferRow => {
           color: str(node.car.color),
           carClass: str(node.car.carClass)
         }
+      : undefined,
+    customerStatus: str(node?.customerStatus),
+    language: str(node?.language),
+    offeredAt: str(node?.offeredAt),
+    offerValidUntil: str(node?.offerValidUntil),
+    confirmedAt: str(node?.confirmedAt),
+    declinedAt: str(node?.declinedAt),
+    invoicedAt: str(node?.invoicedAt),
+    paidAt: str(node?.paidAt),
+    driverStatus: asDriverStatus(node?.driverStatus),
+    lastAttempt: mapAttempt(node?.lastAttempt),
+    attempts: Array.isArray(node?.attempts)
+      ? node.attempts.map(mapAttempt).filter(Boolean)
       : undefined
   }
 }
@@ -384,7 +507,9 @@ export const telHref = (phone: string | undefined): string | undefined => {
 
 /** A map link for an address, opened by whatever map app the phone has. */
 export const mapHref = (address: string | undefined): string | undefined =>
-  address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : undefined
+  address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+    : undefined
 
 // --------------- Feature detection ---------------
 
@@ -405,8 +530,13 @@ const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
     {}
   )
   const names = (v: any): string[] =>
-    Array.isArray(v?.fields) ? v.fields.map((f: any) => String(f?.name)).filter(Boolean) : []
-  return {transfer: names(result?.data?.transfer), query: names(result?.data?.root)}
+    Array.isArray(v?.fields)
+      ? v.fields.map((f: any) => String(f?.name)).filter(Boolean)
+      : []
+  return {
+    transfer: names(result?.data?.transfer),
+    query: names(result?.data?.root)
+  }
 }
 
 /**
@@ -417,9 +547,15 @@ const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
  * answer serves, and an endpoint that will not introspect is taken to be the
  * current schema.
  */
-const schemaFields = async (): Promise<{transfer: Set<string>; query: Set<string>}> => {
+const schemaFields = async (): Promise<{
+  transfer: Set<string>
+  query: Set<string>
+}> => {
   try {
-    const names = await cachedRead(keys.schema('transfer'), readSchemaFieldNames)
+    const names = await cachedRead(
+      keys.schema('transfer'),
+      readSchemaFieldNames
+    )
     return {transfer: new Set(names.transfer), query: new Set(names.query)}
   } catch {
     return {transfer: new Set<string>(), query: new Set<string>()}
@@ -437,7 +573,9 @@ export const hasTransferField = async (name: string): Promise<boolean> => {
  * are one query each on the backend, so they are asked for by the detail
  * read only, never by a page of the list.
  */
-const transferSelection = async (options: {relations?: boolean} = {}): Promise<string> => {
+const transferSelection = async (
+  options: {relations?: boolean} = {}
+): Promise<string> => {
   const {transfer} = await schemaFields()
   const has = (name: string) => transfer.size === 0 || transfer.has(name)
 
@@ -460,8 +598,21 @@ const transferSelection = async (options: {relations?: boolean} = {}): Promise<s
     'paymentMethode',
     'payingParty',
     'transferCategory',
-    'transferType'
+    'transferType',
+    // The money side and its instants, on a schema that carries them.
+    'customerStatus',
+    'language',
+    'offeredAt',
+    'offerValidUntil',
+    'confirmedAt',
+    'declinedAt',
+    'invoicedAt',
+    'paidAt',
+    'driverStatus'
   ].filter(has)
+
+  // What the board's driver cell and the picker read of the driver's answer.
+  const attempt = '{ id driverId requestedAt answeredAt answer reason by }'
 
   // What a link to the other leg needs, and the fallback's input when the code is not there yet.
   const link = ['id', 'code', 'referenceId'].filter(has).join(' ')
@@ -470,11 +621,17 @@ const transferSelection = async (options: {relations?: boolean} = {}): Promise<s
     has('details')
       ? 'details { flightNumber message luggage childSeats extraTime preferredCarClass preferredCarName }'
       : '',
-    has('passengers') ? 'passengers { edges { node { id firstName lastName email phone language } } }' : '',
+    has('passengers')
+      ? 'passengers { edges { node { id firstName lastName email phone language } } }'
+      : '',
     has('extras') ? 'extras { edges { node { type amount } } }' : '',
     has('car') ? 'car { id carName licensePlate color carClass }' : '',
+    has('lastAttempt') ? `lastAttempt ${attempt}` : '',
+    options.relations && has('attempts') ? `attempts ${attempt}` : '',
     options.relations && has('reference') ? `reference { ${link} }` : '',
-    options.relations && has('referencedBy') ? `referencedBy { edges { node { ${link} } } }` : ''
+    options.relations && has('referencedBy')
+      ? `referencedBy { edges { node { ${link} } } }`
+      : ''
   ].filter(Boolean)
 
   return `{ ${scalars.join(' ')} ${nested.join(' ')} }`
@@ -500,7 +657,9 @@ const heldPages = (): Array<[readonly unknown[], TransferPage | undefined]> =>
 
 /** The row an id or a code names, from the details and the pages the client holds. */
 export const seenBy = (key: string): TransferRow | undefined => {
-  for (const [, row] of queryClient.getQueriesData<TransferRow | null>({queryKey: ['transfer']})) {
+  for (const [, row] of queryClient.getQueriesData<TransferRow | null>({
+    queryKey: ['transfer']
+  })) {
     if (row && (row.id === key || row.code === key)) return row
   }
   for (const [, page] of heldPages()) {
@@ -520,15 +679,17 @@ export const rememberTransfer = (row: TransferRow) => {
   const merged = (before: TransferRow): TransferRow => ({
     ...row,
     reference: row.reference ?? before.reference,
-    returns: row.returns ?? before.returns
+    returns: row.returns ?? before.returns,
+    attempts: row.attempts ?? before.attempts
   })
   queryClient.setQueriesData<TransferPage>({queryKey: ['transfers']}, page =>
     page && page.rows.some(r => r.id === row.id)
       ? {...page, rows: page.rows.map(r => (r.id === row.id ? merged(r) : r))}
       : page
   )
-  queryClient.setQueriesData<TransferRow | null>({queryKey: ['transfer']}, held =>
-    held && held.id === row.id ? merged(held) : held
+  queryClient.setQueriesData<TransferRow | null>(
+    {queryKey: ['transfer']},
+    held => (held && held.id === row.id ? merged(held) : held)
   )
 }
 
@@ -539,7 +700,8 @@ export const rememberTransfers = (_rows: TransferRow[]) => undefined
 export const forgetTransfer = (id: string) => {
   const held = seenBy(id)
   const codes = held ? [held.id, held.code] : [id]
-  for (const key of codes) queryClient.removeQueries({queryKey: keys.transfer(key), exact: true})
+  for (const key of codes)
+    queryClient.removeQueries({queryKey: keys.transfer(key), exact: true})
 }
 
 // --------------- The list ---------------
@@ -601,13 +763,21 @@ export function useTransferList(args: TransferListArgs = {}) {
   const pageSize = args.pageSize ?? DEFAULT_PAGE_SIZE
   const {fromISO, toISO, state} = args
 
-  const pager = usePager(JSON.stringify({first: pageSize, fromISO, toISO, state}))
+  const pager = usePager(
+    JSON.stringify({first: pageSize, fromISO, toISO, state})
+  )
   const pageArgs = useMemo<ListPageArgs>(
     () => ({first: pageSize, after: pager.after, fromISO, toISO, state}),
     [pageSize, pager.after, fromISO, toISO, state]
   )
 
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.transfers({...pageArgs}),
     queryFn: () => readTransferPage(pageArgs),
     // The page shown stays while the next one is read, as it always did.
@@ -638,7 +808,18 @@ export function useTransferList(args: TransferListArgs = {}) {
     rememberTransfer(row)
   }, [])
 
-  return {rows, isLoading, error, pagination, nextPage, prevPage, firstPage, refetch, replaceRow}
+  return {
+    rows,
+    isLoading,
+    error,
+    isFetching,
+    pagination,
+    nextPage,
+    prevPage,
+    firstPage,
+    refetch,
+    replaceRow
+  }
 }
 
 // --------------- One transfer ---------------
@@ -702,7 +883,13 @@ export const fetchTransfer = (id: string): Promise<TransferRow | null> =>
  */
 export function useTransfer(id: string | undefined) {
   const key = id ?? ''
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.transfer(key),
     queryFn: () => readTransfer(key),
     enabled: !!id,
@@ -716,7 +903,7 @@ export function useTransfer(id: string | undefined) {
     rememberTransfer(next)
   }, [])
 
-  return {transfer, isLoading, error, notFound, refetch, replace}
+  return {transfer, isLoading, error, isFetching, notFound, refetch, replace}
 }
 
 // --------------- Mutations ---------------
@@ -727,7 +914,10 @@ export function useTransfer(id: string | undefined) {
  * behind it, because a state or a driver can move a row into or out of a
  * filter the client cannot judge.
  */
-const mutate = async (field: string, args: Record<string, unknown>): Promise<TransferRow> => {
+const mutate = async (
+  field: string,
+  args: Record<string, unknown>
+): Promise<TransferRow> => {
   const selection = await transferSelection()
   const node = await gql(field, args, selection, 'mutation')
   const row = mapTransfer(node)
@@ -735,10 +925,25 @@ const mutate = async (field: string, args: Record<string, unknown>): Promise<Tra
   if (before) {
     row.reference = row.reference ?? before.reference
     row.returns = row.returns ?? before.returns
+    row.attempts = row.attempts ?? before.attempts
   }
   rememberTransfer(row)
   void invalidateTransfers()
   return row
+}
+
+/**
+ * A write that changes the ride's request history: the answered row lands
+ * on the screens at once, then the ride is read again with its attempts,
+ * because the mutation's answer carries none and the list the detail page
+ * shows would be one answer behind.
+ */
+const mutateWithAttempts = async (
+  field: string,
+  args: Record<string, unknown>
+): Promise<TransferRow> => {
+  const row = await mutate(field, args)
+  return (await fetchTransfer(row.id)) ?? row
 }
 
 export interface AssignDriverOptions {
@@ -751,28 +956,63 @@ export interface AssignDriverOptions {
   notifyDriver?: boolean
 }
 
-export const assignDriver = (transferId: string, driverId: string, _options: AssignDriverOptions = {}) =>
-  mutate('assignDriver', {transferId, driverId})
+export const assignDriver = (
+  transferId: string,
+  driverId: string,
+  _options: AssignDriverOptions = {}
+) => mutateWithAttempts('assignDriver', {transferId, driverId})
 
-export const assignCar = (transferId: string, carId: string) => mutate('assignCar', {transferId, carId})
+export const assignCar = (transferId: string, carId: string) =>
+  mutate('assignCar', {transferId, carId})
 
-export const setPrice = (transferId: string, price: number) => mutate('setPrice', {transferId, price})
+/** The driver's yes: REQUESTED becomes ACCEPTED, the ride ASSIGNED. */
+export const acceptAssignment = (transferId: string) =>
+  mutateWithAttempts('acceptAssignment', {transferId})
 
-export const updateTransferState = (transferId: string, state: TransferState) => {
-  if (!TRANSFER_STATES.includes(state)) throw new Error(`unknown state ${state}`)
-  return mutate('updateTransferState', {transferId, state: new EnumValue(state)})
+/** The driver's no, with an optional reason: the driver comes off the ride, the ride is PENDING again. */
+export const declineAssignment = (transferId: string, reason?: string) =>
+  mutateWithAttempts('declineAssignment', {
+    transferId,
+    reason: reason?.trim() || undefined
+  })
+
+/** The dispatcher takes the ride back from the driver, asked or accepted, while the car has not left. */
+export const unassignDriver = (transferId: string) =>
+  mutateWithAttempts('unassignDriver', {transferId})
+
+export const setPrice = (transferId: string, price: number) =>
+  mutate('setPrice', {transferId, price})
+
+export const updateTransferState = (
+  transferId: string,
+  state: TransferState
+) => {
+  if (!TRANSFER_STATES.includes(state))
+    throw new Error(`unknown state ${state}`)
+  return mutate('updateTransferState', {
+    transferId,
+    state: new EnumValue(state)
+  })
 }
 
-export const cancelTransfer = (transferId: string) => mutate('cancelTransfer', {transferId})
+export const cancelTransfer = (transferId: string) =>
+  mutate('cancelTransfer', {transferId})
 
 /** addTransferExtra answers with the transfer before the write, so the row is re-read. */
-export const addTransferExtra = async (transferId: string, type: ExtraType, amount: number) => {
+export const addTransferExtra = async (
+  transferId: string,
+  type: ExtraType,
+  amount: number
+) => {
   // `type` is a String on the resolver, not the ExtraType enum, so it is quoted.
   await mutate('addTransferExtra', {transferId, type, amount})
   return (await fetchTransfer(transferId)) ?? seenBy(transferId) ?? null
 }
 
-export const removeTransferExtra = async (transferId: string, type: ExtraType) => {
+export const removeTransferExtra = async (
+  transferId: string,
+  type: ExtraType
+) => {
   await mutate('removeTransferExtra', {transferId, type})
   return (await fetchTransfer(transferId)) ?? seenBy(transferId) ?? null
 }
@@ -842,7 +1082,9 @@ export const createTransfer = (input: CreateTransferInput) => {
           transferCategory: input.details.transferCategory
             ? new EnumValue(input.details.transferCategory)
             : undefined,
-          transferType: input.details.transferType ? new EnumValue(input.details.transferType) : undefined
+          transferType: input.details.transferType
+            ? new EnumValue(input.details.transferType)
+            : undefined
         }
       : undefined
   }

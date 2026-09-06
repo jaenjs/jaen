@@ -15,8 +15,8 @@
  * ./query.ts, which the driver's month card on the user screen selects its
  * row from as well. See okf/architecture/data-layer.md.
  */
-import { fetchGraphQL } from '../../client/limosen'
-import { keys, useAppQuery } from './query'
+import {fetchGraphQL} from '../../client/limosen'
+import {keys, useAppQuery} from './query'
 
 export interface DashboardToday {
   rides: number
@@ -67,7 +67,8 @@ export const localDateISO = (d: Date): string =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 
 /** The local month as YYYY-MM, the argument the resolver takes. */
-export const monthOf = (d: Date): string => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`
+export const monthOf = (d: Date): string =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`
 
 export const shiftMonth = (month: string, by: number): string => {
   const [y, m] = month.split('-').map(Number)
@@ -81,7 +82,8 @@ export const tomorrowOf = (d: Date): Date => {
   return t
 }
 
-const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0)
+const num = (v: unknown): number =>
+  typeof v === 'number' && Number.isFinite(v) ? v : 0
 
 /**
  * The backend's silver default means "nobody chose a colour" and is mapped to
@@ -97,11 +99,11 @@ const mapDashboard = (raw: any): Dashboard => ({
     unassigned: num(raw?.today?.unassigned),
     onTheRoad: num(raw?.today?.onTheRoad),
     waiting: num(raw?.today?.waiting),
-    rejected: num(raw?.today?.rejected),
+    rejected: num(raw?.today?.rejected)
   },
   tomorrow: {
     rides: num(raw?.tomorrow?.rides),
-    unassigned: num(raw?.tomorrow?.unassigned),
+    unassigned: num(raw?.tomorrow?.unassigned)
   },
   month: {
     revenue: num(raw?.month?.revenue),
@@ -110,19 +112,21 @@ const mapDashboard = (raw: any): Dashboard => ({
     cash: num(raw?.month?.cash),
     payoutDue: num(raw?.month?.payoutDue),
     cancellationRate: num(raw?.month?.cancellationRate),
-    siteBookings: num(raw?.month?.siteBookings),
+    siteBookings: num(raw?.month?.siteBookings)
   },
   drivers: (Array.isArray(raw?.drivers) ? raw.drivers : [])
     .filter((d: any) => d && typeof d.id === 'string')
-    .map((d: any): DashboardDriver => ({
-      id: d.id,
-      name: typeof d.name === 'string' && d.name ? d.name : d.id,
-      color: colourOf(d.color),
-      completed: num(d.completed),
-      revenue: num(d.revenue),
-      cash: num(d.cash),
-      payoutDue: num(d.payoutDue),
-    })),
+    .map(
+      (d: any): DashboardDriver => ({
+        id: d.id,
+        name: typeof d.name === 'string' && d.name ? d.name : d.id,
+        color: colourOf(d.color),
+        completed: num(d.completed),
+        revenue: num(d.revenue),
+        cash: num(d.cash),
+        payoutDue: num(d.payoutDue)
+      })
+    )
 })
 
 const DASHBOARD_SELECTION =
@@ -136,7 +140,7 @@ export async function fetchDashboard(month: string): Promise<Dashboard> {
     {
       query: `query { dashboard(args: {month: ${JSON.stringify(month)}}) ${DASHBOARD_SELECTION} }`,
       variables: undefined,
-      operationName: undefined,
+      operationName: undefined
     },
     {}
   )
@@ -154,9 +158,15 @@ export async function fetchDashboard(month: string): Promise<Dashboard> {
  * matter which month is being looked at.
  */
 export function useDashboard(month: string) {
-  const {query: q, isLoading, error, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
     queryKey: keys.dashboard(month),
     queryFn: () => fetchDashboard(month)
   })
-  return { data: q.data ?? null, isLoading, error, refetch }
+  return {data: q.data ?? null, isLoading, error, isFetching, refetch}
 }

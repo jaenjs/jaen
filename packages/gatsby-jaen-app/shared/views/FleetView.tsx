@@ -24,7 +24,6 @@ import {
   Dialog,
   Field,
   HStack,
-  IconButton,
   Input,
   NativeSelect,
   Portal,
@@ -32,11 +31,10 @@ import {
   Stack,
   Stat,
   Text,
-  parseColor,
+  parseColor
 } from '@chakra-ui/react'
 import {FaCar} from '@react-icons/all-files/fa/FaCar'
 import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
-import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
 import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTriangle'
 import {useI18nCode} from '../i18n'
 import {getI18nFleet, type FleetStrings} from '../locales/i18nFleet'
@@ -51,6 +49,8 @@ import {
   toaster,
   PageHeader
 } from '../components'
+import {RefreshButton} from '../components/RefreshButton'
+import {useViewRefresh} from '../hooks/view-refresh'
 import {DataTable, type CardApi, type DataColumn} from '../components/table'
 import {NumberSkeleton} from '../components/skeletons'
 import {
@@ -154,7 +154,8 @@ export function FleetView() {
   const code = useI18nCode()
   const {strings: t} = getI18nFleet(code)
   const {strings: tc} = getI18nCommon(code)
-  const {cars, isLoading, error, refetch} = useFleet()
+  const {cars, isLoading, error, isFetching, refetch} = useFleet()
+  useViewRefresh(refetch, isFetching)
   const {drivers} = useDrivers()
   const [dialog, setDialog] = useState<{open: boolean; car?: FleetCar}>({
     open: false
@@ -218,19 +219,38 @@ export function FleetView() {
   // open the dialog under it.
   const columns = useMemo<DataColumn<FleetCar>[]>(
     () => [
-      {id: 'color', label: t.ColColor, width: 72, cell: car => <CarSwatch color={car.color} />},
+      {
+        id: 'color',
+        label: t.ColColor,
+        width: 72,
+        cell: car => <CarSwatch color={car.color} />
+      },
       {
         id: 'plate',
         label: t.ColPlate,
         width: 150,
         cell: car => (
-          <Text as="span" fontWeight="semibold" fontFamily="mono" whiteSpace="nowrap">
+          <Text
+            as="span"
+            fontWeight="semibold"
+            fontFamily="mono"
+            whiteSpace="nowrap">
             {car.licensePlate}
           </Text>
         )
       },
-      {id: 'name', label: t.ColName, width: 200, cell: car => <Text lineClamp={1}>{car.carName || '-'}</Text>},
-      {id: 'class', label: t.ColClass, width: 150, cell: car => <Text color="fg.muted">{classLabel(car.carClass, t)}</Text>},
+      {
+        id: 'name',
+        label: t.ColName,
+        width: 200,
+        cell: car => <Text lineClamp={1}>{car.carName || '-'}</Text>
+      },
+      {
+        id: 'class',
+        label: t.ColClass,
+        width: 150,
+        cell: car => <Text color="fg.muted">{classLabel(car.carClass, t)}</Text>
+      },
       {
         id: 'driver',
         label: t.ColDriver,
@@ -268,19 +288,24 @@ export function FleetView() {
         subtitle={t.Subtitle}
         actions={
           <>
-            <IconButton aria-label={tc.Refresh} variant="outline" onClick={refetch} loading={isLoading}>
-              <FaSyncAlt />
-            </IconButton>
-            <Button colorPalette="brand" onClick={() => setDialog({open: true})}>
+            <Button
+              size="sm"
+              colorPalette="brand"
+              onClick={() => setDialog({open: true})}>
               <FaPlus /> {t.CreateCar}
             </Button>
+            <RefreshButton />
           </>
         }
       />
 
       <SimpleGrid columns={3} gap="3">
         <StatCard label={t.StatTotal} value={count(cars.length)} />
-        <StatCard label={t.StatAssigned} value={count(assigned)} palette="green" />
+        <StatCard
+          label={t.StatAssigned}
+          value={count(assigned)}
+          palette="green"
+        />
         <StatCard
           label={t.StatUnassigned}
           value={count(cars.length - assigned)}
@@ -297,7 +322,13 @@ export function FleetView() {
         stripe={colourFor}
         actionLabel={tc.Edit}
         card={(car, _api: CardApi) => (
-          <FleetCard car={car} driver={nameFor(car)} stripe={colourFor(car)} t={t} onOpen={c => setDialog({open: true, car: c})} />
+          <FleetCard
+            car={car}
+            driver={nameFor(car)}
+            stripe={colourFor(car)}
+            t={t}
+            onOpen={c => setDialog({open: true, car: c})}
+          />
         )}
         summary={fill(t.CountLabel, {count: cars.length})}
         isLoading={isLoading}
@@ -558,7 +589,12 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
               </Stack>
             </Dialog.Body>
             <Dialog.Footer>
-              <DialogActions onCancel={onClose} confirmLabel={tc.Save} confirmType="submit" loading={saving} />
+              <DialogActions
+                onCancel={onClose}
+                confirmLabel={tc.Save}
+                confirmType="submit"
+                loading={saving}
+              />
             </Dialog.Footer>
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" disabled={saving} />

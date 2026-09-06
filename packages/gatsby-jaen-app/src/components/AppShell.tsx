@@ -44,14 +44,28 @@ import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTria
 import {useCaller, resetCaller} from '../../shared/auth'
 import {useI18nCode} from '../../shared/i18n'
 import {getI18nCommon} from '../../shared/locales/i18nCommon'
-import {EmptyState, ErrorBanner} from '../../shared/components'
+import {EmptyState, ErrorBanner, PullToRefresh} from '../../shared/components'
+import {ViewRefreshProvider} from '../../shared/hooks/view-refresh'
 import {DriverPositionSender} from '../../shared/hooks/tracking'
 import {gql} from '../../shared/hooks/bookings'
-import {fetchTransfer, transferPath, transferSlug, useTransferList} from '../../shared/hooks/transfers'
-import {isOnline, isOfflineMessage, setOfflineLanguage} from '../../shared/offline'
+import {
+  fetchTransfer,
+  transferPath,
+  transferSlug,
+  useTransferList
+} from '../../shared/hooks/transfers'
+import {
+  isOnline,
+  isOfflineMessage,
+  setOfflineLanguage
+} from '../../shared/offline'
 import {getI18nOffline} from '../../shared/locales/i18nOffline'
 import {navFor} from './nav'
-import {GlassTabBar, GLASS_TAB_BAR_CLEARANCE, useGlassTabBarActive} from './GlassTabBar'
+import {
+  GlassTabBar,
+  GLASS_TAB_BAR_CLEARANCE,
+  useGlassTabBarActive
+} from './GlassTabBar'
 
 export interface AppShellProps {
   children: React.ReactNode
@@ -93,7 +107,9 @@ const prefetched = new Set<string>()
  */
 const warmPage = (path: string) => {
   try {
-    const loader = (window as {___loader?: {loadPage?: (p: string) => Promise<unknown>}}).___loader
+    const loader = (
+      window as {___loader?: {loadPage?: (p: string) => Promise<unknown>}}
+    ).___loader
     void loader?.loadPage?.(path)?.catch?.(() => {
       // Swallowed on purpose: the page is a convenience of the store, see above.
     })
@@ -130,10 +146,18 @@ function DriverShiftPrefetch({userId}: {userId: string}) {
         // The scope confines the list to the caller, no driverId is sent.
         const result = await gql(
           'transfers',
-          {args: {first: 100, fromISO: now.toISOString(), toISO: end.toISOString()}},
+          {
+            args: {
+              first: 100,
+              fromISO: now.toISOString(),
+              toISO: end.toISOString()
+            }
+          },
           '{ edges { node { id code } } }'
         )
-        const rows: Array<{id: string; code: string}> = (Array.isArray(result?.edges) ? result.edges : [])
+        const rows: Array<{id: string; code: string}> = (
+          Array.isArray(result?.edges) ? result.edges : []
+        )
           .map((e: any) => e?.node)
           .filter((n: any) => n && typeof n.id === 'string')
           .map((n: any) => ({id: String(n.id), code: String(n.code ?? '')}))
@@ -181,6 +205,20 @@ export function AppShell({children}: AppShellProps) {
     window.location.reload()
   }
 
+  // iOS runs a pinch as a gesture event on the document, whatever the
+  // viewport meta says in a Safari tab, and the installed app honours the
+  // meta but not touch-action. Cancelling gesturestart outside a map is the
+  // one thing that stops both; the map keeps its own pinch (rule 7).
+  useEffect(() => {
+    const refuse = (e: Event) => {
+      const target = e.target as Element | null
+      if (target?.closest?.('.mapboxgl-map')) return
+      e.preventDefault()
+    }
+    document.addEventListener('gesturestart', refuse, {passive: false})
+    return () => document.removeEventListener('gesturestart', refuse)
+  }, [])
+
   return (
     <Box
       // The class is a marker for app.css, which hides the CMS footer beneath
@@ -198,7 +236,9 @@ export function AppShell({children}: AppShellProps) {
       {caller.isDriver ? <DriverPositionSender /> : null}
       {/* The driver's shift for the next 48 hours, into the offline store,
           once per session. A dispatcher who also drives gets it too. */}
-      {caller.isDriver && caller.userId ? <DriverShiftPrefetch userId={caller.userId} /> : null}
+      {caller.isDriver && caller.userId ? (
+        <DriverShiftPrefetch userId={caller.userId} />
+      ) : null}
 
       <Box
         as="main"
@@ -210,9 +250,17 @@ export function AppShell({children}: AppShellProps) {
             {/* Offline with nothing stored, the roles could not be read: the
                 decided wording, not "who are you", see offline.md. */}
             {isOfflineMessage(caller.error) ? (
-              <ErrorBanner title={offline.BannerNoData} message={caller.error} onRetry={retry} />
+              <ErrorBanner
+                title={offline.BannerNoData}
+                message={caller.error}
+                onRetry={retry}
+              />
             ) : (
-              <ErrorBanner title={strings.CallerErrorTitle} message={strings.CallerErrorBody} onRetry={retry} />
+              <ErrorBanner
+                title={strings.CallerErrorTitle}
+                message={strings.CallerErrorBody}
+                onRetry={retry}
+              />
             )}
           </Box>
         ) : nothingToOffer ? (
@@ -222,7 +270,11 @@ export function AppShell({children}: AppShellProps) {
             icon={<FaExclamationTriangle />}
           />
         ) : (
-          children
+          // The view registers its query with the provider, the pull below
+          // md and the header's RefreshButton both read it (rules 5a, 5b).
+          <ViewRefreshProvider>
+            <PullToRefresh>{children}</PullToRefresh>
+          </ViewRefreshProvider>
         )}
       </Box>
       {/* Renders nothing outside app mode or with the switch off. */}

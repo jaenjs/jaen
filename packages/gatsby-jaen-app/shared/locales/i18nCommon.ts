@@ -1,8 +1,14 @@
-import type { I18nCode } from '../i18n'
+import type {I18nCode} from '../i18n'
 
 /** `{name}` style placeholders, filled in. */
-export const fill = (template: string, values: Record<string, string | number>): string =>
-  Object.entries(values).reduce((s, [k, v]) => s.split(`{${k}}`).join(String(v)), template)
+export const fill = (
+  template: string,
+  values: Record<string, string | number>
+): string =>
+  Object.entries(values).reduce(
+    (s, [k, v]) => s.split(`{${k}}`).join(String(v)),
+    template
+  )
 
 export function getI18nCommon(code: I18nCode) {
   if (code === 'en-US') {
@@ -50,10 +56,13 @@ export function getI18nCommon(code: I18nCode) {
         NavMe: 'Me',
         NavBookings: 'Bookings',
         NavStatements: 'Statements',
+        NavOffers: 'Offers',
         NavNotifications: 'Notifications',
         NoAccessTitle: 'No access',
-        NoAccessBody: 'Your account has no role in this app. Please contact the office.',
-        AdminOnlyBody: 'This page is for dispatch. Your rides and your account are in the menu.',
+        NoAccessBody:
+          'Your account has no role in this app. Please contact the office.',
+        AdminOnlyBody:
+          'This page is for dispatch. Your rides and your account are in the menu.',
         CallerErrorTitle: 'Who are you?',
         CallerErrorBody: 'Your roles could not be read. Please try again.',
 
@@ -73,8 +82,8 @@ export function getI18nCommon(code: I18nCode) {
         WeekdayWe: 'We',
         WeekdayTh: 'Th',
         WeekdayFr: 'Fr',
-        WeekdaySa: 'Sa',
-      },
+        WeekdaySa: 'Sa'
+      }
     }
   }
 
@@ -123,10 +132,13 @@ export function getI18nCommon(code: I18nCode) {
         NavMe: 'Ben',
         NavBookings: 'Rezervasyonlar',
         NavStatements: 'Hesap özetleri',
+        NavOffers: 'Teklifler',
         NavNotifications: 'Bildirimler',
         NoAccessTitle: 'Erişim yok',
-        NoAccessBody: 'Hesabınızın bu uygulamada bir rolü yok. Lütfen ofisle iletişime geçin.',
-        AdminOnlyBody: 'Bu sayfa sevkiyat içindir. Yolculuklarınız ve hesabınız menüdedir.',
+        NoAccessBody:
+          'Hesabınızın bu uygulamada bir rolü yok. Lütfen ofisle iletişime geçin.',
+        AdminOnlyBody:
+          'Bu sayfa sevkiyat içindir. Yolculuklarınız ve hesabınız menüdedir.',
         CallerErrorTitle: 'Siz kimsiniz?',
         CallerErrorBody: 'Rolleriniz okunamadı. Lütfen tekrar deneyin.',
 
@@ -146,8 +158,8 @@ export function getI18nCommon(code: I18nCode) {
         WeekdayWe: 'Ça',
         WeekdayTh: 'Pe',
         WeekdayFr: 'Cu',
-        WeekdaySa: 'Ct',
-      },
+        WeekdaySa: 'Ct'
+      }
     }
   }
 
@@ -196,10 +208,13 @@ export function getI18nCommon(code: I18nCode) {
         NavMe: 'أنا',
         NavBookings: 'الحجوزات',
         NavStatements: 'كشوف الحساب',
+        NavOffers: 'العروض',
         NavNotifications: 'الإشعارات',
         NoAccessTitle: 'لا يوجد وصول',
-        NoAccessBody: 'حسابك ليس له دور في هذا التطبيق. يرجى التواصل مع المكتب.',
-        AdminOnlyBody: 'هذه الصفحة مخصصة لقسم الإرسال. رحلاتك وحسابك موجودان في القائمة.',
+        NoAccessBody:
+          'حسابك ليس له دور في هذا التطبيق. يرجى التواصل مع المكتب.',
+        AdminOnlyBody:
+          'هذه الصفحة مخصصة لقسم الإرسال. رحلاتك وحسابك موجودان في القائمة.',
         CallerErrorTitle: 'من أنت؟',
         CallerErrorBody: 'تعذّر قراءة أدوارك. يرجى المحاولة مرة أخرى.',
 
@@ -219,8 +234,8 @@ export function getI18nCommon(code: I18nCode) {
         WeekdayWe: 'أرب',
         WeekdayTh: 'خمي',
         WeekdayFr: 'جمع',
-        WeekdaySa: 'سبت',
-      },
+        WeekdaySa: 'سبت'
+      }
     }
   }
 
@@ -269,12 +284,16 @@ export function getI18nCommon(code: I18nCode) {
       NavMe: 'Ich',
       NavBookings: 'Buchungen',
       NavStatements: 'Abrechnungen',
+      NavOffers: 'Angebote',
       NavNotifications: 'Benachrichtigungen',
       NoAccessTitle: 'Kein Zugang',
-      NoAccessBody: 'Ihr Konto hat in dieser App keine Rolle. Bitte wenden Sie sich an das Büro.',
-      AdminOnlyBody: 'Diese Seite ist für die Disposition. Ihre Fahrten und Ihr Konto finden Sie im Menü.',
+      NoAccessBody:
+        'Ihr Konto hat in dieser App keine Rolle. Bitte wenden Sie sich an das Büro.',
+      AdminOnlyBody:
+        'Diese Seite ist für die Disposition. Ihre Fahrten und Ihr Konto finden Sie im Menü.',
       CallerErrorTitle: 'Wer sind Sie?',
-      CallerErrorBody: 'Ihre Rollen konnten nicht gelesen werden. Bitte versuchen Sie es erneut.',
+      CallerErrorBody:
+        'Ihre Rollen konnten nicht gelesen werden. Bitte versuchen Sie es erneut.',
 
       Confirm: 'Bestätigen',
       Yes: 'Ja',
@@ -292,7 +311,7 @@ export function getI18nCommon(code: I18nCode) {
       WeekdayWe: 'Mi',
       WeekdayTh: 'Do',
       WeekdayFr: 'Fr',
-      WeekdaySa: 'Sa',
-    },
+      WeekdaySa: 'Sa'
+    }
   }
 }

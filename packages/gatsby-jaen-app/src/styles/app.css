@@ -35,3 +35,83 @@ body:has(.jaen-app) {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* ── The app does not zoom ──────────────────────────────────────────────────
+   design-consistency.md, rule 7. The viewport meta of the /app routes
+   (gatsby-ssr.tsx) is what installed web apps honour; Chromium and Android
+   also read touch-action, and pan-x pan-y on the document leaves them no
+   pinch to run. The shell adds manipulation, which is the double-tap zoom
+   gone as well. The map keeps its own pinch: mapbox sets touch-action none on
+   its canvas and handles the touches itself. The public pages carry none of
+   this, the selector only matches while the app's shell is on the page. */
+html:has(.jaen-app),
+body:has(.jaen-app) {
+  touch-action: pan-x pan-y;
+  /* The browser's own pull to refresh never reloads the app, the shell's
+     PullToRefresh owns the gesture (rule 5b). */
+  overscroll-behavior-y: contain;
+}
+
+.jaen-app {
+  touch-action: manipulation;
+}
+
+/* ── The refresh icon turns ─────────────────────────────────────────────────
+   shared/components/RefreshButton.tsx and PullToRefresh.tsx put the class on
+   the icon while the view's query is on the wire (rule 5a). Reduced motion
+   fades instead of turning. */
+@keyframes app-refresh-turn {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes app-refresh-fade {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.app-refresh-spinning {
+  animation: app-refresh-turn 0.9s linear infinite;
+}
+
+/* ── Pull down to refresh ───────────────────────────────────────────────────
+   The content box snaps back with a short transition once the finger is
+   gone. While the finger is on the screen (.app-pull-live) it follows the
+   finger with no transition at all. */
+.app-pull-content {
+  transition: transform 220ms ease-out;
+  will-change: transform;
+}
+
+.app-pull-indicator {
+  transition:
+    height 220ms ease-out,
+    opacity 220ms ease-out;
+}
+
+.app-pull-live {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-refresh-spinning {
+    animation: app-refresh-fade 1s ease-in-out infinite;
+  }
+
+  .app-pull-content {
+    transition: none;
+  }
+
+  .app-pull-indicator {
+    transition: opacity 220ms ease-out;
+  }
+}

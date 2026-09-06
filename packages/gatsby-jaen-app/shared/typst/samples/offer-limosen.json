@@ -1,0 +1,41 @@
+{
+  "language": "de",
+  "meta": {
+    "id": "AN-260001",
+    "date": "06.09.2026",
+    "validUntil": "13.09.2026",
+    "code": "BQ7Q4W-1",
+    "reference": "BQ7Q4W-1",
+    "servicePeriod": "18.09.2026",
+    "customerId": "K-1001",
+    "contactPerson": "Limosen Office"
+  },
+  "recipient": [
+    "Erika Musterfrau",
+    "Musterstraße 12/3",
+    "1010 Wien",
+    "Österreich"
+  ],
+  "items": [
+    {
+      "title": "Transfer BQ7Q4W-1",
+      "description": "18.09.2026, 14:30\nFlughafen Wien (VIE) → Hotel Sacher, Philharmoniker Straße 4, 1010 Wien\nBusiness Class, 2 Personen, 2 Gepäckstücke",
+      "qty": 1,
+      "unitPrice": 78
+    },
+    {
+      "title": "Transfer BQ7Q4W-2",
+      "description": "21.09.2026, 09:00\nHotel Sacher, Philharmoniker Straße 4, 1010 Wien → Flughafen Wien (VIE)\nBusiness Class, 2 Personen, 2 Gepäckstücke",
+      "qty": 1,
+      "unitPrice": 78
+    }
+  ],
+  "totals": {
+    "taxRate": 20,
+    "taxInclusive": true
+  },
+  "links": {
+    "confirm": "https://limosen.at/angebot/eyJ0IjoiQlE3UTRXLTEiLCJhIjoiY29uZmlybSJ9.9f3a1c2b7e4d",
+    "decline": "https://limosen.at/angebot/eyJ0IjoiQlE3UTRXLTEiLCJhIjoiZGVjbGluZSJ9.4b8e0d6a1c9f/ablehnen"
+  }
+}

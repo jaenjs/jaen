@@ -31,6 +31,7 @@ import {
   Dialog,
   Field,
   Flex,
+  HStack,
   Input,
   InputGroup,
   NativeSelect,
@@ -39,11 +40,10 @@ import {
   Stack,
   Text,
   Textarea,
-  chakra,
+  chakra
 } from '@chakra-ui/react'
 import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
 import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
-import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
 import {FaCalendarCheck} from '@react-icons/all-files/fa/FaCalendarCheck'
 import {useAppNavigate} from '../navigation'
 import {useI18nCode} from '../i18n'
@@ -62,7 +62,17 @@ import {
 } from '../hooks/bookings'
 import {useTransferList} from '../hooks/transfers'
 import {TRANSFER_STATES} from '../locales/i18nStates'
-import {DialogActions, EmptyState, ErrorBanner, toaster, PageHeader} from '../components'
+import {
+  DialogActions,
+  EmptyState,
+  ErrorBanner,
+  StatusBadge,
+  toaster,
+  PageHeader
+} from '../components'
+import {CustomerStatusBadge} from '../components/CustomerStatusBadge'
+import {RefreshButton} from '../components/RefreshButton'
+import {useViewRefresh} from '../hooks/view-refresh'
 import {DataTable, type DataColumn} from '../components/table'
 import {
   applyClientFilters,
@@ -82,11 +92,13 @@ import {
 
 type Strings = ReturnType<typeof getI18nBookings>['strings']
 
-const usePaymentLabel = (t: Strings) => (method: string | null | undefined): string => {
-  if (!method) return ''
-  const key = `Payment${method.toUpperCase()}` as keyof Strings
-  return (t[key] as string | undefined) ?? method
-}
+const usePaymentLabel =
+  (t: Strings) =>
+  (method: string | null | undefined): string => {
+    if (!method) return ''
+    const key = `Payment${method.toUpperCase()}` as keyof Strings
+    return (t[key] as string | undefined) ?? method
+  }
 
 // --------------- The modal ---------------
 
@@ -223,172 +235,196 @@ function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
             {/* display: contents keeps the header, body and footer as the
                 content's own flex children, so the body still scrolls. */}
             <chakra.form display="contents" onSubmit={submit} noValidate>
-            <Dialog.Header>
-              <Dialog.Title>{t.BookTransferModalHeading}</Dialog.Title>
-            </Dialog.Header>
-            <Dialog.Body>
-              <Stack gap="4">
-                <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
-                  <Field.Root required invalid={touched && (missing.date || pickupInPast)}>
+              <Dialog.Header>
+                <Dialog.Title>{t.BookTransferModalHeading}</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Stack gap="4">
+                  <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
+                    <Field.Root
+                      required
+                      invalid={touched && (missing.date || pickupInPast)}>
+                      <Field.Label>
+                        {t.ModalLabelDate}
+                        <Field.RequiredIndicator />
+                      </Field.Label>
+                      <Input
+                        type="date"
+                        value={form.date}
+                        onChange={e => update('date', e.target.value)}
+                        autoComplete="off"
+                      />
+                      {touched && missing.date && (
+                        <Field.ErrorText>
+                          {t.ModalErrorRequired}
+                        </Field.ErrorText>
+                      )}
+                      {touched && !missing.date && pickupInPast && (
+                        <Field.ErrorText>{t.ModalErrorPast}</Field.ErrorText>
+                      )}
+                    </Field.Root>
+                    <Field.Root required invalid={touched && missing.time}>
+                      <Field.Label>
+                        {t.ModalLabelTime}
+                        <Field.RequiredIndicator />
+                      </Field.Label>
+                      <Input
+                        type="time"
+                        value={form.time}
+                        onChange={e => update('time', e.target.value)}
+                        autoComplete="off"
+                      />
+                      {touched && missing.time && (
+                        <Field.ErrorText>
+                          {t.ModalErrorRequired}
+                        </Field.ErrorText>
+                      )}
+                    </Field.Root>
+                  </SimpleGrid>
+
+                  <Field.Root required invalid={touched && missing.pickup}>
                     <Field.Label>
-                      {t.ModalLabelDate}
+                      {t.ModalLabelPickup}
                       <Field.RequiredIndicator />
                     </Field.Label>
                     <Input
-                      type="date"
-                      value={form.date}
-                      onChange={e => update('date', e.target.value)}
-                      autoComplete="off"
+                      placeholder={t.ModalPlaceholderPickup}
+                      value={form.pickup}
+                      onChange={e => update('pickup', e.target.value)}
+                      autoComplete="street-address"
                     />
-                    {touched && missing.date && <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>}
-                    {touched && !missing.date && pickupInPast && (
-                      <Field.ErrorText>{t.ModalErrorPast}</Field.ErrorText>
+                    {touched && missing.pickup && (
+                      <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>
                     )}
                   </Field.Root>
-                  <Field.Root required invalid={touched && missing.time}>
+
+                  <Field.Root required invalid={touched && missing.dropoff}>
                     <Field.Label>
-                      {t.ModalLabelTime}
+                      {t.ModalLabelDropoff}
                       <Field.RequiredIndicator />
                     </Field.Label>
                     <Input
-                      type="time"
-                      value={form.time}
-                      onChange={e => update('time', e.target.value)}
+                      placeholder={t.ModalPlaceholderDropoff}
+                      value={form.dropoff}
+                      onChange={e => update('dropoff', e.target.value)}
                       autoComplete="off"
                     />
-                    {touched && missing.time && <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>}
+                    {touched && missing.dropoff && (
+                      <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>
+                    )}
                   </Field.Root>
-                </SimpleGrid>
 
-                <Field.Root required invalid={touched && missing.pickup}>
-                  <Field.Label>
-                    {t.ModalLabelPickup}
-                    <Field.RequiredIndicator />
-                  </Field.Label>
-                  <Input
-                    placeholder={t.ModalPlaceholderPickup}
-                    value={form.pickup}
-                    onChange={e => update('pickup', e.target.value)}
-                    autoComplete="street-address"
-                  />
-                  {touched && missing.pickup && <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>}
-                </Field.Root>
+                  <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
+                    <Field.Root>
+                      <Field.Label>{t.ModalLabelRoomOrName}</Field.Label>
+                      <Input
+                        placeholder={t.ModalPlaceholderRoomOrName}
+                        value={form.subject}
+                        onChange={e => update('subject', e.target.value)}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t.ModalLabelPaymentMethod}</Field.Label>
+                      <NativeSelect.Root>
+                        <NativeSelect.Field
+                          placeholder={t.ModalPlaceholderSelectPayment}
+                          value={form.paymentMethode}
+                          onChange={e =>
+                            update(
+                              'paymentMethode',
+                              e.currentTarget.value as PaymentMethod | ''
+                            )
+                          }>
+                          {PAYMENT_METHODS.map(m => (
+                            <option key={m} value={m}>
+                              {paymentLabel(m)}
+                            </option>
+                          ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
+                    </Field.Root>
+                  </SimpleGrid>
 
-                <Field.Root required invalid={touched && missing.dropoff}>
-                  <Field.Label>
-                    {t.ModalLabelDropoff}
-                    <Field.RequiredIndicator />
-                  </Field.Label>
-                  <Input
-                    placeholder={t.ModalPlaceholderDropoff}
-                    value={form.dropoff}
-                    onChange={e => update('dropoff', e.target.value)}
-                    autoComplete="off"
-                  />
-                  {touched && missing.dropoff && <Field.ErrorText>{t.ModalErrorRequired}</Field.ErrorText>}
-                </Field.Root>
+                  <SimpleGrid columns={3} gap="4">
+                    <Field.Root>
+                      <Field.Label>{t.ModalLabelPassengers}</Field.Label>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={50}
+                        value={form.passengers}
+                        onChange={e => update('passengers', e.target.value)}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t.ModalLabelLuggage}</Field.Label>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={50}
+                        value={form.luggage}
+                        onChange={e => update('luggage', e.target.value)}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t.ModalLabelChildSeats}</Field.Label>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={10}
+                        value={form.childSeats}
+                        onChange={e => update('childSeats', e.target.value)}
+                      />
+                    </Field.Root>
+                  </SimpleGrid>
 
-                <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
                   <Field.Root>
-                    <Field.Label>{t.ModalLabelRoomOrName}</Field.Label>
+                    <Field.Label>{t.ModalLabelFlight}</Field.Label>
                     <Input
-                      placeholder={t.ModalPlaceholderRoomOrName}
-                      value={form.subject}
-                      onChange={e => update('subject', e.target.value)}
+                      placeholder={t.ModalPlaceholderFlight}
+                      value={form.flightNumber}
+                      onChange={e => update('flightNumber', e.target.value)}
+                      autoComplete="off"
                     />
                   </Field.Root>
-                  <Field.Root>
-                    <Field.Label>{t.ModalLabelPaymentMethod}</Field.Label>
-                    <NativeSelect.Root>
-                      <NativeSelect.Field
-                        placeholder={t.ModalPlaceholderSelectPayment}
-                        value={form.paymentMethode}
-                        onChange={e => update('paymentMethode', e.currentTarget.value as PaymentMethod | '')}>
-                        {PAYMENT_METHODS.map(m => (
-                          <option key={m} value={m}>
-                            {paymentLabel(m)}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
-                  </Field.Root>
-                </SimpleGrid>
 
-                <SimpleGrid columns={3} gap="4">
                   <Field.Root>
-                    <Field.Label>{t.ModalLabelPassengers}</Field.Label>
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min={1}
-                      max={50}
-                      value={form.passengers}
-                      onChange={e => update('passengers', e.target.value)}
+                    <Field.Label>{t.ModalLabelWishes}</Field.Label>
+                    <Textarea
+                      placeholder={t.ModalPlaceholderWishes}
+                      value={form.wishes}
+                      onChange={e => update('wishes', e.target.value)}
+                      rows={3}
+                      autoresize
                     />
                   </Field.Root>
-                  <Field.Root>
-                    <Field.Label>{t.ModalLabelLuggage}</Field.Label>
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={50}
-                      value={form.luggage}
-                      onChange={e => update('luggage', e.target.value)}
+
+                  <Text textStyle="sm" color="fg.muted">
+                    {t.ModalHintPrice}
+                  </Text>
+
+                  {failure && (
+                    <ErrorBanner
+                      title={t.BookingCreatedError}
+                      message={failure}
                     />
-                  </Field.Root>
-                  <Field.Root>
-                    <Field.Label>{t.ModalLabelChildSeats}</Field.Label>
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={10}
-                      value={form.childSeats}
-                      onChange={e => update('childSeats', e.target.value)}
-                    />
-                  </Field.Root>
-                </SimpleGrid>
-
-                <Field.Root>
-                  <Field.Label>{t.ModalLabelFlight}</Field.Label>
-                  <Input
-                    placeholder={t.ModalPlaceholderFlight}
-                    value={form.flightNumber}
-                    onChange={e => update('flightNumber', e.target.value)}
-                    autoComplete="off"
-                  />
-                </Field.Root>
-
-                <Field.Root>
-                  <Field.Label>{t.ModalLabelWishes}</Field.Label>
-                  <Textarea
-                    placeholder={t.ModalPlaceholderWishes}
-                    value={form.wishes}
-                    onChange={e => update('wishes', e.target.value)}
-                    rows={3}
-                    autoresize
-                  />
-                </Field.Root>
-
-                <Text textStyle="sm" color="fg.muted">
-                  {t.ModalHintPrice}
-                </Text>
-
-                {failure && <ErrorBanner title={t.BookingCreatedError} message={failure} />}
-              </Stack>
-            </Dialog.Body>
-            <Dialog.Footer>
-              <DialogActions
-                onCancel={close}
-                confirmLabel={t.BookingSubmit}
-                confirmType="submit"
-                loading={submitting}
-                loadingText={t.BookingSubmitting}
-                confirmDisabled={touched && !valid}
-              />
-            </Dialog.Footer>
+                  )}
+                </Stack>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <DialogActions
+                  onCancel={close}
+                  confirmLabel={t.BookingSubmit}
+                  confirmType="submit"
+                  loading={submitting}
+                  loadingText={t.BookingSubmitting}
+                  confirmDisabled={touched && !valid}
+                />
+              </Dialog.Footer>
             </chakra.form>
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" disabled={submitting} />
@@ -408,7 +444,15 @@ function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
  * not on it (the customer sees the name and the colour, never the number),
  * nor the columns that are the dispatcher's alone.
  */
-const CUSTOMER_COLUMNS: ColumnId[] = ['code', 'pickup', 'route', 'capacity', 'status', 'driver', 'price']
+const CUSTOMER_COLUMNS: ColumnId[] = [
+  'code',
+  'pickup',
+  'route',
+  'capacity',
+  'status',
+  'driver',
+  'price'
+]
 
 const PAGE_SIZE = 25
 
@@ -426,7 +470,18 @@ export function BookingView() {
   // gets their own rows and a dispatcher every booking, from one read.
   const list = useListState('today', new Set(TRANSFER_STATES))
   const args = useServerArgs(list, today, tomorrow, PAGE_SIZE)
-  const {rows, isLoading, error, pagination, nextPage, prevPage, firstPage, refetch} = useTransferList(args)
+  const {
+    rows,
+    isLoading,
+    error,
+    isFetching,
+    pagination,
+    nextPage,
+    prevPage,
+    firstPage,
+    refetch
+  } = useTransferList(args)
+  useViewRefresh(refetch, isFetching)
   const drivers = useBookingDrivers(rows)
 
   const enriched = useMemo<BoardRow[]>(
@@ -435,7 +490,8 @@ export function BookingView() {
         const driver = r.driverId ? drivers[r.driverId] : undefined
         return {
           ...r,
-          driverName: driver?.name ?? (r.driverId ? t.DriverAssigned : undefined),
+          driverName:
+            driver?.name ?? (r.driverId ? t.DriverAssigned : undefined),
           driverColor: driver?.color,
           carName: r.car?.carName ?? r.car?.licensePlate,
           carPlate: r.car?.licensePlate
@@ -443,19 +499,46 @@ export function BookingView() {
       }),
     [rows, drivers, t.DriverAssigned]
   )
-  const filtered = useMemo(() => applyClientFilters(enriched, list), [enriched, list])
+  const filtered = useMemo(
+    () => applyClientFilters(enriched, list),
+    [enriched, list]
+  )
 
   const [dialogOpen, setDialogOpen] = useState(false)
 
   // Links carry the code, the pylon resolves it, see transfer-codes.md.
-  const actions = useMemo<RowActions>(() => ({onOpen: row => navigate(bookingPath(row))}), [navigate])
+  const actions = useMemo<RowActions>(
+    () => ({onOpen: row => navigate(bookingPath(row))}),
+    [navigate]
+  )
   // The board's cells, the customer's subset in the customer's order, every one shown.
   const boardColumns = useTransferColumns(actions)
+  // The status cell carries the customer's own words beside the ride state
+  // ("Angebot erhalten", "Bestätigt", "Rechnung erhalten", "Bezahlt"), the
+  // board's cell carries the dispatcher's, see offers-and-documents.md.
   const columns = useMemo(
     () =>
       CUSTOMER_COLUMNS.map(id => boardColumns.find(c => c.id === id))
         .filter((c): c is DataColumn<BoardRow> => !!c)
-        .map(c => ({...c, defaultVisible: true})),
+        .map(c =>
+          c.id === 'status'
+            ? {
+                ...c,
+                defaultVisible: true,
+                width: 200,
+                cell: (row: BoardRow) => (
+                  <HStack gap="1" flexWrap="wrap">
+                    <StatusBadge state={row.state} />
+                    <CustomerStatusBadge
+                      status={row.customerStatus}
+                      audience="customer"
+                      size="sm"
+                    />
+                  </HStack>
+                )
+              }
+            : {...c, defaultVisible: true}
+        ),
     [boardColumns]
   )
   const group = useDayGroup(today, tomorrow)
@@ -468,10 +551,19 @@ export function BookingView() {
 
   // A driver has no booking form in the matrix: their rides are assigned to
   // them. Somebody holding both roles books as the customer they also are.
-  if (!caller.loading && caller.isDriver && !caller.isCustomer && !caller.isAdmin) {
+  if (
+    !caller.loading &&
+    caller.isDriver &&
+    !caller.isCustomer &&
+    !caller.isAdmin
+  ) {
     return (
       <Box p={{base: '4', md: '6'}} maxW="full">
-        <EmptyState title={t.NotACustomer} description={t.NotACustomerHint} icon={<FaCalendarCheck />} />
+        <EmptyState
+          title={t.NotACustomer}
+          description={t.NotACustomerHint}
+          icon={<FaCalendarCheck />}
+        />
       </Box>
     )
   }
@@ -484,24 +576,37 @@ export function BookingView() {
       <Stack gap="5">
         <PageHeader
           title={t.Heading}
-          subtitle={caller.isAdmin && !caller.isCustomer ? t.SubtitleAll : t.SubtitleOwn}
+          subtitle={
+            caller.isAdmin && !caller.isCustomer ? t.SubtitleAll : t.SubtitleOwn
+          }
           actions={
             <>
-              <Button variant="outline" onClick={refetch} disabled={isLoading}>
-                <FaSyncAlt /> {tc.Refresh}
-              </Button>
-              <Button colorPalette="brand" onClick={() => setDialogOpen(true)} flex={{base: '1', md: 'none'}}>
+              <Button
+                size="sm"
+                colorPalette="brand"
+                onClick={() => setDialogOpen(true)}>
                 <FaPlus /> {t.BookTransferButton}
               </Button>
+              <RefreshButton />
             </>
           }
         />
 
         <Flex gap="2" flexWrap="wrap" align="center">
-          <DateFilter value={list.dateChip} onChange={list.setDateChip} range={list.range} onRangeChange={list.setRange} />
+          <DateFilter
+            value={list.dateChip}
+            onChange={list.setDateChip}
+            range={list.range}
+            onRangeChange={list.setRange}
+          />
           <Box w={{base: 'full', md: '52'}}>
             <InputGroup startElement={<FaSearch />}>
-              <Input size="sm" placeholder={tc.Search} value={list.search} onChange={e => list.setSearch(e.target.value)} />
+              <Input
+                size="sm"
+                placeholder={tc.Search}
+                value={list.search}
+                onChange={e => list.setSearch(e.target.value)}
+              />
             </InputGroup>
           </Box>
           <StatusFilter selected={list.statuses} onChange={list.setStatuses} />
@@ -517,9 +622,19 @@ export function BookingView() {
           group={group}
           stripe={row => row.driverColor}
           card={(row, api) => (
-            <TransferCard row={row} expanded={api.expanded} onToggle={api.toggle} actions={actions} dayTone={api.tone} />
+            <TransferCard
+              row={row}
+              expanded={api.expanded}
+              onToggle={api.toggle}
+              actions={actions}
+              dayTone={api.tone}
+              customerAudience="customer"
+            />
           )}
-          summary={fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
+          summary={fill(t.CountLabel, {
+            total: pagination.totalCount,
+            count: filtered.length
+          })}
           isLoading={isLoading}
           error={error}
           onRetry={refetch}
@@ -530,7 +645,9 @@ export function BookingView() {
                 title={nothingBooked ? t.EmptyMessage : t.EmptyFiltered}
                 description={nothingBooked ? t.EmptyHint : t.EmptyFilteredHint}
                 icon={<FaCalendarCheck />}>
-                <Button colorPalette="brand" onClick={() => setDialogOpen(true)}>
+                <Button
+                  colorPalette="brand"
+                  onClick={() => setDialogOpen(true)}>
                   <FaPlus /> {t.BookTransferButton}
                 </Button>
               </EmptyState>
@@ -547,7 +664,11 @@ export function BookingView() {
         />
       </Stack>
 
-      <BookRideDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onBooked={onBooked} />
+      <BookRideDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onBooked={onBooked}
+      />
     </Box>
   )
 }

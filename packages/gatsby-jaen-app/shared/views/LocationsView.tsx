@@ -20,6 +20,7 @@ import {useDrivers, useLocations, type ResourceUser} from '../hooks'
 import {useDriverColors} from '../hooks/tracking'
 import {LocationsTab, type LocationRow} from '../components/locations'
 import {ErrorBanner, PageHeader} from '../components'
+import {useViewRefresh} from '../hooks/view-refresh'
 import {useI18nCode} from '../i18n'
 import {getI18nCommon} from '../locales/i18nCommon'
 
@@ -41,7 +42,13 @@ function LocationsSkeleton() {
   const code = useI18nCode()
   const tc = getI18nCommon(code).strings
   return (
-    <Flex direction="column" h="calc(100dvh - 4rem)" minH="24rem" maxW="full" data-skeleton="map" aria-busy="true">
+    <Flex
+      direction="column"
+      h="calc(100dvh - 4rem)"
+      minH="24rem"
+      maxW="full"
+      data-skeleton="map"
+      aria-busy="true">
       <Box px={{base: '4', md: '6'}} pt={{base: '4', md: '6'}} pb="4">
         <PageHeader title={tc.NavLocations} />
       </Box>
@@ -58,10 +65,15 @@ function AdminLocations() {
 function Locations({drivers}: {drivers: ResourceUser[]}) {
   const code = useI18nCode()
   const tc = getI18nCommon(code).strings
-  const {locations, isLoading, error, refetch} = useLocations()
+  const {locations, isLoading, error, isFetching, refetch} = useLocations()
+  // Registered for the map's refresh button; the pull is off on this screen.
+  useViewRefresh(refetch, isFetching)
 
   const driverIds = useMemo(
-    () => Array.from(new Set(locations.filter(l => l.kind === 'driver').map(l => l.userId))),
+    () =>
+      Array.from(
+        new Set(locations.filter(l => l.kind === 'driver').map(l => l.userId))
+      ),
     [locations]
   )
   const colors = useDriverColors(driverIds)
@@ -72,7 +84,8 @@ function Locations({drivers}: {drivers: ResourceUser[]}) {
         if (l.kind !== 'driver') return l
         const person = drivers.find(d => d.id === l.userId)
         const name = person
-          ? `${person.details?.firstName ?? ''} ${person.details?.lastName ?? ''}`.trim() || person.username
+          ? `${person.details?.firstName ?? ''} ${person.details?.lastName ?? ''}`.trim() ||
+            person.username
           : undefined
         return {...l, color: colors[l.userId] ?? person?.driverColor, name}
       }),
@@ -86,13 +99,23 @@ function Locations({drivers}: {drivers: ResourceUser[]}) {
       <Box px={{base: '4', md: '6'}} pt={{base: '4', md: '6'}} pb="4">
         <PageHeader title={tc.NavLocations} />
       </Box>
-      <Box position="relative" flex="1" minH="20rem" overflow="hidden" bg="bg.canvas">
+      <Box
+        position="relative"
+        flex="1"
+        minH="20rem"
+        overflow="hidden"
+        bg="bg.canvas">
         {error && (
           <Box position="absolute" top="3" insetX="3" zIndex="docked">
             <ErrorBanner message={error} onRetry={refetch} />
           </Box>
         )}
-        <LocationsTab locations={rows} isLoading={isLoading} error={error} onRefresh={refetch} />
+        <LocationsTab
+          locations={rows}
+          isLoading={isLoading}
+          error={error}
+          onRefresh={refetch}
+        />
       </Box>
     </Flex>
   )

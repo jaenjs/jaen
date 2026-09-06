@@ -67,7 +67,17 @@ export const queryClient = new QueryClient({
   }
 })
 
-for (const domain of ['users', 'user', 'drivers', 'fleet', 'driverColor', 'driverColors', 'bookingDriver', 'caller', 'schema']) {
+for (const domain of [
+  'users',
+  'user',
+  'drivers',
+  'fleet',
+  'driverColor',
+  'driverColors',
+  'bookingDriver',
+  'caller',
+  'schema'
+]) {
   queryClient.setQueryDefaults([domain], {staleTime: 5 * MINUTE})
 }
 queryClient.setQueryDefaults(['tracking'], {staleTime: 0})
@@ -90,14 +100,17 @@ export const keys = {
   drivers: () => ['drivers'] as const,
   driverColor: (userId: string) => ['driverColor', userId] as const,
   /** One batch per set of ids, sorted and distinct, see ./colors.ts. */
-  driverColors: (userIds: readonly string[]) => ['driverColors', userIds] as const,
+  driverColors: (userIds: readonly string[]) =>
+    ['driverColors', userIds] as const,
   fleet: () => ['fleet'] as const,
   fleetPicker: () => ['fleet', 'picker'] as const,
   locations: (args: Record<string, unknown>) => ['locations', args] as const,
   dashboard: (month: string) => ['dashboard', month] as const,
-  expenses: (userId: string, month: string | undefined) => ['expenses', userId, month ?? ''] as const,
+  expenses: (userId: string, month: string | undefined) =>
+    ['expenses', userId, month ?? ''] as const,
   statements: (userId: string) => ['statements', userId] as const,
-  statementLines: (userId: string, month: string, kind: string) => ['statements', userId, month, kind] as const,
+  statementLines: (userId: string, month: string, kind: string) =>
+    ['statements', userId, month, kind] as const,
   bookings: (args: Record<string, unknown>) => ['bookings', args] as const,
   booking: (idOrCode: string) => ['booking', idOrCode] as const,
   bookingDriver: (driverId: string) => ['bookingDriver', driverId] as const,
@@ -180,7 +193,11 @@ onOfflineStoreCleared(() => {
 
 /** True once the persisted cache has been read on this page, false on the server. */
 export function useRestored(): boolean {
-  const value = useSyncExternalStore(subscribeRestored, restoredNow, restoredOnServer)
+  const value = useSyncExternalStore(
+    subscribeRestored,
+    restoredNow,
+    restoredOnServer
+  )
   useEffect(() => {
     ensurePersisted()
   }, [])
@@ -189,7 +206,8 @@ export function useRestored(): boolean {
 
 // --------------- The wrapper ---------------
 
-export const errorMessage = (err: unknown): string => (err instanceof Error ? err.message : String(err))
+export const errorMessage = (err: unknown): string =>
+  err instanceof Error ? err.message : String(err)
 
 export interface AppQuery<TData> {
   query: UseQueryResult<TData, Error>
@@ -205,6 +223,12 @@ export interface AppQuery<TData> {
    * person: the answer is on the screen and the banner says how old it is.
    */
   error: string | null
+  /**
+   * True while the query is on the wire, first read or background refetch
+   * alike. The refresh button and the pull turn on this, never on isLoading,
+   * which is false while cached rows are shown (design-consistency.md, 5a).
+   */
+  isFetching: boolean
   refetch: () => void
 }
 
@@ -218,8 +242,12 @@ export function useAppQuery<TQueryFnData, TData = TQueryFnData>(
   options: UseQueryOptions<TQueryFnData, Error, TData, QueryKey>
 ): AppQuery<TData> {
   const restored = useRestored()
-  const enabled = options.enabled === undefined ? true : options.enabled === true
-  const query = useQuery({...options, enabled: enabled && restored}, queryClient)
+  const enabled =
+    options.enabled === undefined ? true : options.enabled === true
+  const query = useQuery(
+    {...options, enabled: enabled && restored},
+    queryClient
+  )
   const {online} = useOnline()
 
   const hasData = query.data !== undefined
@@ -229,14 +257,19 @@ export function useAppQuery<TQueryFnData, TData = TQueryFnData>(
     if (!online && hasData && at) markOffline(new Date(at).toISOString())
   }, [online, hasData, at])
 
-  const error = query.error ? (isOfflineError(query.error) && hasData ? null : errorMessage(query.error)) : null
+  const error = query.error
+    ? isOfflineError(query.error) && hasData
+      ? null
+      : errorMessage(query.error)
+    : null
   const isLoading =
-    (query.isPending && enabled && (query.isFetching || !restored)) || (query.isPlaceholderData && query.isFetching)
+    (query.isPending && enabled && (query.isFetching || !restored)) ||
+    (query.isPlaceholderData && query.isFetching)
   const refetch = useCallback(() => {
     void query.refetch()
   }, [query.refetch])
 
-  return {query, isLoading, error, refetch}
+  return {query, isLoading, error, isFetching: query.isFetching, refetch}
 }
 
 /**
@@ -245,7 +278,11 @@ export function useAppQuery<TQueryFnData, TData = TQueryFnData>(
  * is read again, and a read that fails while the cache holds an answer,
  * which is the offline case, answers that.
  */
-export async function cachedRead<T>(queryKey: QueryKey, queryFn: () => Promise<T>, staleTime?: number): Promise<T> {
+export async function cachedRead<T>(
+  queryKey: QueryKey,
+  queryFn: () => Promise<T>,
+  staleTime?: number
+): Promise<T> {
   try {
     return await queryClient.fetchQuery({queryKey, queryFn, staleTime})
   } catch (err) {
@@ -273,7 +310,12 @@ interface PagerState {
   trail: Array<string | undefined>
 }
 
-const firstPage = (key: string): PagerState => ({key, page: 1, after: undefined, trail: []})
+const firstPage = (key: string): PagerState => ({
+  key,
+  page: 1,
+  after: undefined,
+  trail: []
+})
 
 /**
  * Cursor pagination as the screens drive it: next, previous, first. The
@@ -289,7 +331,12 @@ export function usePager(argsKey: string): Pager {
     (endCursor: string) => {
       setState(current => {
         const from = current.key === argsKey ? current : firstPage(argsKey)
-        return {key: argsKey, page: from.page + 1, after: endCursor, trail: [...from.trail, from.after]}
+        return {
+          key: argsKey,
+          page: from.page + 1,
+          after: endCursor,
+          trail: [...from.trail, from.after]
+        }
       })
     },
     [argsKey]

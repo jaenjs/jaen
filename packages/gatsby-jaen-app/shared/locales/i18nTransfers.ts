@@ -88,7 +88,8 @@ const de = {
   StateLabel: 'Neuer Status',
   StateCurrent: 'Aktuell',
   StateSubmit: 'Status setzen',
-  StateHint: 'Als Disponent kannst du jeden Status setzen, auch rückwärts. Der Fahrer geht nur vorwärts.',
+  StateHint:
+    'Als Disponent kannst du jeden Status setzen, auch rückwärts. Der Fahrer geht nur vorwärts.',
 
   // Create dialog
   CreateTitle: 'Transfer anlegen',
@@ -168,7 +169,8 @@ const de = {
   DetailBackMine: 'Zurück zu meinen Fahrten',
   DetailHeading: 'Transfer {code}',
   DetailNotFound: 'Transfer nicht gefunden',
-  DetailNotFoundBody: 'Diesen Transfer gibt es nicht, oder er gehört nicht zu dir.',
+  DetailNotFoundBody:
+    'Diesen Transfer gibt es nicht, oder er gehört nicht zu dir.',
   SectionRoute: 'Route',
   SectionSchedule: 'Zeit',
   SectionPassenger: 'Fahrgast',
@@ -191,7 +193,8 @@ const de = {
   LabelReturnTrips: 'Rückfahrt',
   ActionReturnTrip: 'Rückfahrt anlegen',
   CreateReturnTitle: 'Rückfahrt zu {code} anlegen',
-  ReturnPrefillHint: 'Adressen getauscht, Fahrgäste und Extras übernommen. Datum und Uhrzeit der Rückfahrt wählen.',
+  ReturnPrefillHint:
+    'Adressen getauscht, Fahrgäste und Extras übernommen. Datum und Uhrzeit der Rückfahrt wählen.',
   NoDriver: 'Kein Fahrer zugewiesen',
   NoVehicle: 'Kein Fahrzeug zugewiesen',
   NoNotes: 'Keine Wünsche hinterlegt',
@@ -206,7 +209,8 @@ const de = {
   ActionState: 'Status ändern',
   ActionCancel: 'Stornieren',
   CancelConfirmTitle: 'Transfer stornieren?',
-  CancelConfirmBody: 'Der Transfer wird auf Storniert gesetzt. Der Fahrer sieht ihn dann nicht mehr als offen.',
+  CancelConfirmBody:
+    'Der Transfer wird auf Storniert gesetzt. Der Fahrer sieht ihn dann nicht mehr als offen.',
   AddExtra: 'Extra hinzufügen',
   RemoveExtra: 'Entfernen',
   ExtraAdded: 'Extra hinzugefügt',
@@ -223,10 +227,12 @@ const de = {
   Stop_COMPLETED: 'Abgeschlossen',
   Reject: 'Ablehnen',
   RejectConfirmTitle: 'Fahrt ablehnen?',
-  RejectConfirmBody: 'Die Fahrt geht zurück an die Disposition. Das lässt sich nur vom Büro rückgängig machen.',
+  RejectConfirmBody:
+    'Die Fahrt geht zurück an die Disposition. Das lässt sich nur vom Büro rückgängig machen.',
   NoShow: 'Nicht erschienen',
   NoShowConfirmTitle: 'Fahrgast nicht erschienen?',
-  NoShowConfirmBody: 'Die Fahrt wird als Nicht erschienen abgeschlossen. Bitte erst nach der vereinbarten Wartezeit.',
+  NoShowConfirmBody:
+    'Die Fahrt wird als Nicht erschienen abgeschlossen. Bitte erst nach der vereinbarten Wartezeit.',
   SlideFailed: 'Der Schritt wurde nicht übernommen',
   OpenMap: 'Karte',
   Call: 'Anrufen',
@@ -246,6 +252,38 @@ const de = {
   Luggage: 'Gepäck',
   ChildSeats: 'Kindersitze',
   Flight: 'Flug',
+
+  // The driver's answer, the same words on the board, the cards and the detail
+  DriverRequested: 'Angefragt',
+  DriverDeclined: 'Abgelehnt',
+  DriverAccepted: 'Zugewiesen',
+  DeclineReason: 'Grund: {reason}',
+  PickerRequestedNoAnswer: 'Angefragt, keine Antwort · {time}',
+  PickerDeclined: 'Abgelehnt · {time}',
+  PickerAskedBefore: 'Bereits angefragt · {time}',
+  NoCar: 'kein Fahrzeug',
+  RequestTitle: 'Neue Fahrt für dich',
+  RequestHint:
+    'Bitte annehmen oder ablehnen. Der Regler wird nach dem Annehmen frei.',
+  Accept: 'Annehmen',
+  DeclineReasonLabel: 'Grund (optional)',
+  DeclineReasonPlaceholder: 'z. B. bin schon auf einer anderen Fahrt',
+  DeclineConfirm: 'Ablehnen bestätigen',
+  ToastAccepted: 'Fahrt angenommen',
+  ToastDeclined: 'Fahrt abgelehnt',
+  AnswerFailed: 'Die Antwort wurde nicht übernommen',
+  AttemptsTitle: 'Anfragen an Fahrer',
+  NoAttempts: 'Noch kein Fahrer angefragt',
+  AttemptOpen: 'Offen, keine Antwort',
+  AttemptAccepted: 'Angenommen',
+  AttemptDeclined: 'Abgelehnt',
+  AttemptWithdrawn: 'Zurückgezogen',
+  AttemptBy: 'angefragt von {name}',
+  ActionUnassign: 'Fahrer entfernen',
+  UnassignConfirmTitle: 'Fahrer entfernen?',
+  UnassignConfirmBody:
+    'Die Anfrage wird zurückgezogen, der Fahrer wird benachrichtigt und die Fahrt ist wieder ohne Fahrer.',
+  ToastUnassigned: 'Fahrer entfernt',
 
   // Toasts
   ToastDriverAssigned: 'Fahrer zugewiesen',
@@ -332,7 +370,8 @@ const en: TransfersStrings = {
   StateLabel: 'New status',
   StateCurrent: 'Current',
   StateSubmit: 'Set status',
-  StateHint: 'As a dispatcher you may set any status, backwards too. The driver only moves forward.',
+  StateHint:
+    'As a dispatcher you may set any status, backwards too. The driver only moves forward.',
 
   CreateTitle: 'New transfer',
   SecRoute: 'Route and time',
@@ -432,7 +471,8 @@ const en: TransfersStrings = {
   LabelReturnTrips: 'Return trip',
   ActionReturnTrip: 'Create return trip',
   CreateReturnTitle: 'Create return trip of {code}',
-  ReturnPrefillHint: 'Addresses swapped, passengers and extras copied. Choose the date and time of the return.',
+  ReturnPrefillHint:
+    'Addresses swapped, passengers and extras copied. Choose the date and time of the return.',
   NoDriver: 'No driver assigned',
   NoVehicle: 'No vehicle assigned',
   NoNotes: 'No wishes recorded',
@@ -447,7 +487,8 @@ const en: TransfersStrings = {
   ActionState: 'Change status',
   ActionCancel: 'Cancel transfer',
   CancelConfirmTitle: 'Cancel this transfer?',
-  CancelConfirmBody: 'The transfer is set to Cancelled. The driver no longer sees it as open.',
+  CancelConfirmBody:
+    'The transfer is set to Cancelled. The driver no longer sees it as open.',
   AddExtra: 'Add extra',
   RemoveExtra: 'Remove',
   ExtraAdded: 'Extra added',
@@ -463,10 +504,12 @@ const en: TransfersStrings = {
   Stop_COMPLETED: 'Done',
   Reject: 'Decline',
   RejectConfirmTitle: 'Decline this ride?',
-  RejectConfirmBody: 'The ride goes back to dispatch. Only the office can undo this.',
+  RejectConfirmBody:
+    'The ride goes back to dispatch. Only the office can undo this.',
   NoShow: 'No show',
   NoShowConfirmTitle: 'Passenger did not show up?',
-  NoShowConfirmBody: 'The ride is closed as a no show. Please wait out the agreed waiting time first.',
+  NoShowConfirmBody:
+    'The ride is closed as a no show. Please wait out the agreed waiting time first.',
   SlideFailed: 'The step was not accepted',
   OpenMap: 'Map',
   Call: 'Call',
@@ -486,6 +529,36 @@ const en: TransfersStrings = {
   Luggage: 'Luggage',
   ChildSeats: 'Child seats',
   Flight: 'Flight',
+
+  DriverRequested: 'Requested',
+  DriverDeclined: 'Declined',
+  DriverAccepted: 'Assigned',
+  DeclineReason: 'Reason: {reason}',
+  PickerRequestedNoAnswer: 'Requested, no answer · {time}',
+  PickerDeclined: 'Declined · {time}',
+  PickerAskedBefore: 'Asked before · {time}',
+  NoCar: 'no vehicle',
+  RequestTitle: 'A new ride for you',
+  RequestHint: 'Please accept or decline. The slider unlocks once you accept.',
+  Accept: 'Accept',
+  DeclineReasonLabel: 'Reason (optional)',
+  DeclineReasonPlaceholder: 'e.g. already on another ride',
+  DeclineConfirm: 'Confirm decline',
+  ToastAccepted: 'Ride accepted',
+  ToastDeclined: 'Ride declined',
+  AnswerFailed: 'The answer was not accepted',
+  AttemptsTitle: 'Driver requests',
+  NoAttempts: 'No driver asked yet',
+  AttemptOpen: 'Open, no answer',
+  AttemptAccepted: 'Accepted',
+  AttemptDeclined: 'Declined',
+  AttemptWithdrawn: 'Withdrawn',
+  AttemptBy: 'asked by {name}',
+  ActionUnassign: 'Remove driver',
+  UnassignConfirmTitle: 'Remove the driver?',
+  UnassignConfirmBody:
+    'The request is withdrawn, the driver is told, and the ride is without a driver again.',
+  ToastUnassigned: 'Driver removed',
 
   ToastDriverAssigned: 'Driver assigned',
   ToastVehicleAssigned: 'Vehicle assigned',
@@ -569,7 +642,8 @@ const tr: TransfersStrings = {
   StateLabel: 'Yeni durum',
   StateCurrent: 'Mevcut',
   StateSubmit: 'Durumu ayarla',
-  StateHint: 'Sevkiyatçı olarak her durumu, geriye doğru da, ayarlayabilirsin. Şoför yalnızca ileri gider.',
+  StateHint:
+    'Sevkiyatçı olarak her durumu, geriye doğru da, ayarlayabilirsin. Şoför yalnızca ileri gider.',
 
   CreateTitle: 'Yeni transfer',
   SecRoute: 'Güzergah ve zaman',
@@ -669,7 +743,8 @@ const tr: TransfersStrings = {
   LabelReturnTrips: 'Dönüş',
   ActionReturnTrip: 'Dönüş yolculuğu oluştur',
   CreateReturnTitle: '{code} için dönüş yolculuğu oluştur',
-  ReturnPrefillHint: 'Adresler değiştirildi, yolcular ve ekstralar kopyalandı. Dönüşün tarihini ve saatini seçin.',
+  ReturnPrefillHint:
+    'Adresler değiştirildi, yolcular ve ekstralar kopyalandı. Dönüşün tarihini ve saatini seçin.',
   NoDriver: 'Şoför atanmamış',
   NoVehicle: 'Araç atanmamış',
   NoNotes: 'İstek kaydedilmemiş',
@@ -684,7 +759,8 @@ const tr: TransfersStrings = {
   ActionState: 'Durumu değiştir',
   ActionCancel: 'Transferi iptal et',
   CancelConfirmTitle: 'Bu transfer iptal edilsin mi?',
-  CancelConfirmBody: 'Transfer İptal edildi olarak ayarlanır. Şoför artık açık olarak görmez.',
+  CancelConfirmBody:
+    'Transfer İptal edildi olarak ayarlanır. Şoför artık açık olarak görmez.',
   AddExtra: 'Ekstra ekle',
   RemoveExtra: 'Kaldır',
   ExtraAdded: 'Ekstra eklendi',
@@ -700,10 +776,12 @@ const tr: TransfersStrings = {
   Stop_COMPLETED: 'Tamamlandı',
   Reject: 'Reddet',
   RejectConfirmTitle: 'Yolculuk reddedilsin mi?',
-  RejectConfirmBody: 'Yolculuk sevkiyata geri döner. Bunu yalnızca ofis geri alabilir.',
+  RejectConfirmBody:
+    'Yolculuk sevkiyata geri döner. Bunu yalnızca ofis geri alabilir.',
   NoShow: 'Gelmedi',
   NoShowConfirmTitle: 'Yolcu gelmedi mi?',
-  NoShowConfirmBody: 'Yolculuk gelmedi olarak kapatılır. Lütfen önce kararlaştırılan bekleme süresini tamamla.',
+  NoShowConfirmBody:
+    'Yolculuk gelmedi olarak kapatılır. Lütfen önce kararlaştırılan bekleme süresini tamamla.',
   SlideFailed: 'Adım kabul edilmedi',
   OpenMap: 'Harita',
   Call: 'Ara',
@@ -723,6 +801,37 @@ const tr: TransfersStrings = {
   Luggage: 'Bagaj',
   ChildSeats: 'Çocuk koltukları',
   Flight: 'Uçuş',
+
+  DriverRequested: 'Soruldu',
+  DriverDeclined: 'Reddetti',
+  DriverAccepted: 'Atandı',
+  DeclineReason: 'Neden: {reason}',
+  PickerRequestedNoAnswer: 'Soruldu, yanıt yok · {time}',
+  PickerDeclined: 'Reddetti · {time}',
+  PickerAskedBefore: 'Daha önce soruldu · {time}',
+  NoCar: 'araç yok',
+  RequestTitle: 'Senin için yeni bir yolculuk',
+  RequestHint:
+    'Lütfen kabul et ya da reddet. Kaydırıcı kabul ettikten sonra açılır.',
+  Accept: 'Kabul et',
+  DeclineReasonLabel: 'Neden (isteğe bağlı)',
+  DeclineReasonPlaceholder: 'ör. zaten başka bir yolculuktayım',
+  DeclineConfirm: 'Reddi onayla',
+  ToastAccepted: 'Yolculuk kabul edildi',
+  ToastDeclined: 'Yolculuk reddedildi',
+  AnswerFailed: 'Yanıt kabul edilmedi',
+  AttemptsTitle: 'Şoför talepleri',
+  NoAttempts: 'Henüz şoför sorulmadı',
+  AttemptOpen: 'Açık, yanıt yok',
+  AttemptAccepted: 'Kabul etti',
+  AttemptDeclined: 'Reddetti',
+  AttemptWithdrawn: 'Geri çekildi',
+  AttemptBy: '{name} sordu',
+  ActionUnassign: 'Şoförü kaldır',
+  UnassignConfirmTitle: 'Şoför kaldırılsın mı?',
+  UnassignConfirmBody:
+    'Talep geri çekilir, şoför bilgilendirilir ve yolculuk yeniden şoförsüz kalır.',
+  ToastUnassigned: 'Şoför kaldırıldı',
 
   ToastDriverAssigned: 'Şoför atandı',
   ToastVehicleAssigned: 'Araç atandı',
@@ -806,7 +915,8 @@ const ar: TransfersStrings = {
   StateLabel: 'الحالة الجديدة',
   StateCurrent: 'الحالي',
   StateSubmit: 'تعيين الحالة',
-  StateHint: 'بصفتك موزّعًا يمكنك تعيين أي حالة، وللخلف أيضًا. السائق يتقدم للأمام فقط.',
+  StateHint:
+    'بصفتك موزّعًا يمكنك تعيين أي حالة، وللخلف أيضًا. السائق يتقدم للأمام فقط.',
 
   CreateTitle: 'تحويل جديد',
   SecRoute: 'المسار والوقت',
@@ -906,7 +1016,8 @@ const ar: TransfersStrings = {
   LabelReturnTrips: 'رحلة العودة',
   ActionReturnTrip: 'إنشاء رحلة عودة',
   CreateReturnTitle: 'إنشاء رحلة عودة لـ {code}',
-  ReturnPrefillHint: 'تم تبديل العناوين ونسخ الركاب والإضافات. اختر تاريخ ووقت العودة.',
+  ReturnPrefillHint:
+    'تم تبديل العناوين ونسخ الركاب والإضافات. اختر تاريخ ووقت العودة.',
   NoDriver: 'لم يُعيّن سائق',
   NoVehicle: 'لم تُعيّن مركبة',
   NoNotes: 'لا توجد رغبات مسجلة',
@@ -937,10 +1048,12 @@ const ar: TransfersStrings = {
   Stop_COMPLETED: 'اكتملت',
   Reject: 'رفض',
   RejectConfirmTitle: 'رفض هذه الرحلة؟',
-  RejectConfirmBody: 'تعود الرحلة إلى الإرسال. لا يمكن التراجع عن ذلك إلا من المكتب.',
+  RejectConfirmBody:
+    'تعود الرحلة إلى الإرسال. لا يمكن التراجع عن ذلك إلا من المكتب.',
   NoShow: 'لم يحضر',
   NoShowConfirmTitle: 'لم يحضر الراكب؟',
-  NoShowConfirmBody: 'تُغلق الرحلة بحالة لم يحضر. يرجى انتظار مدة الانتظار المتفق عليها أولًا.',
+  NoShowConfirmBody:
+    'تُغلق الرحلة بحالة لم يحضر. يرجى انتظار مدة الانتظار المتفق عليها أولًا.',
   SlideFailed: 'لم تُقبل الخطوة',
   OpenMap: 'الخريطة',
   Call: 'اتصال',
@@ -961,6 +1074,35 @@ const ar: TransfersStrings = {
   ChildSeats: 'مقاعد الأطفال',
   Flight: 'الرحلة الجوية',
 
+  DriverRequested: 'مطلوب',
+  DriverDeclined: 'رفض',
+  DriverAccepted: 'معيّن',
+  DeclineReason: 'السبب: {reason}',
+  PickerRequestedNoAnswer: 'مطلوب، لا إجابة · {time}',
+  PickerDeclined: 'رفض · {time}',
+  PickerAskedBefore: 'سُئل من قبل · {time}',
+  NoCar: 'لا مركبة',
+  RequestTitle: 'رحلة جديدة لك',
+  RequestHint: 'يرجى القبول أو الرفض. يُفتح المنزلق بعد القبول.',
+  Accept: 'قبول',
+  DeclineReasonLabel: 'السبب (اختياري)',
+  DeclineReasonPlaceholder: 'مثلًا في رحلة أخرى بالفعل',
+  DeclineConfirm: 'تأكيد الرفض',
+  ToastAccepted: 'تم قبول الرحلة',
+  ToastDeclined: 'تم رفض الرحلة',
+  AnswerFailed: 'لم تُقبل الإجابة',
+  AttemptsTitle: 'طلبات السائقين',
+  NoAttempts: 'لم يُسأل أي سائق بعد',
+  AttemptOpen: 'مفتوح، لا إجابة',
+  AttemptAccepted: 'قبل',
+  AttemptDeclined: 'رفض',
+  AttemptWithdrawn: 'سُحب',
+  AttemptBy: 'سأل {name}',
+  ActionUnassign: 'إزالة السائق',
+  UnassignConfirmTitle: 'إزالة السائق؟',
+  UnassignConfirmBody: 'يُسحب الطلب، ويُبلَّغ السائق، وتعود الرحلة بلا سائق.',
+  ToastUnassigned: 'تمت إزالة السائق',
+
   ToastDriverAssigned: 'تم تعيين السائق',
   ToastVehicleAssigned: 'تم تعيين المركبة',
   ToastPriceSet: 'تم حفظ السعر',
@@ -969,7 +1111,10 @@ const ar: TransfersStrings = {
   ToastFailed: 'لم ينجح ذلك'
 }
 
-export function getI18nTransfers(code: I18nCode): {code: I18nCode; strings: TransfersStrings} {
+export function getI18nTransfers(code: I18nCode): {
+  code: I18nCode
+  strings: TransfersStrings
+} {
   if (code === 'en-US') return {code, strings: en}
   if (code === 'tr-TR') return {code, strings: tr}
   if (code === 'ar-EG') return {code, strings: ar}

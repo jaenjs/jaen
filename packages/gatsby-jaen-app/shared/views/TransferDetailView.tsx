@@ -42,7 +42,8 @@ import {
   Slider,
   Stack,
   Text,
-  chakra,
+  Textarea,
+  chakra
 } from '@chakra-ui/react'
 import {FaArrowLeft} from '@react-icons/all-files/fa/FaArrowLeft'
 import {FaMapMarkerAlt} from '@react-icons/all-files/fa/FaMapMarkerAlt'
@@ -55,15 +56,18 @@ import {FaPlane} from '@react-icons/all-files/fa/FaPlane'
 import {FaCommentDots} from '@react-icons/all-files/fa/FaCommentDots'
 import {FaClock} from '@react-icons/all-files/fa/FaClock'
 import {FaTimes} from '@react-icons/all-files/fa/FaTimes'
-import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
 import {FaEuroSign} from '@react-icons/all-files/fa/FaEuroSign'
 import {FaExchangeAlt} from '@react-icons/all-files/fa/FaExchangeAlt'
+import {FaCheck} from '@react-icons/all-files/fa/FaCheck'
 import {useCaller} from '../auth'
 import {useAppNavigate, useAppParams} from '../navigation'
 import {useCars, useDrivers, useUsers} from '../hooks'
 import {
+  acceptAssignment,
   addTransferExtra,
+  declineAssignment,
   removeTransferExtra,
+  unassignDriver,
   updateTransferState,
   driverStopIndex,
   isClosed,
@@ -76,6 +80,7 @@ import {
   DRIVER_EXITS,
   DRIVER_STOPS,
   EXTRA_TYPES,
+  type AssignmentAttempt,
   type ExtraType,
   type TransferRow
 } from '../hooks/transfers'
@@ -90,10 +95,17 @@ import {
   useStateLabel,
   PageHeader
 } from '../components'
+import {RefreshButton} from '../components/RefreshButton'
+import {useViewRefresh} from '../hooks/view-refresh'
 import {DetailSkeleton} from '../components/skeletons'
 import {DriverTrackingCard} from '../components/locations'
 import {useDriverPositionSender} from '../hooks/tracking'
 import {OfflineBanner} from '../components/OfflineBanner'
+import {CustomerStatusBadge} from '../components/CustomerStatusBadge'
+import {MoneySection} from '../components/documents/MoneySection'
+import {OfferDialog} from '../components/documents/OfferDialog'
+import {canSendOffer} from '../hooks/offers'
+import {getI18nOffers} from '../locales/i18nOffers'
 import {getI18nOffline} from '../locales/i18nOffline'
 import {useOnline, useRefetchOnReconnect} from '../offline'
 import {asTransferState, type TransferState} from '../locales/i18nStates'
@@ -101,6 +113,7 @@ import {fill, type TransfersStrings} from '../locales/i18nTransfers'
 import {
   AssignDialog,
   CreateTransferDialog,
+  DriverAnswerBadge,
   PriceDialog,
   StateDialog,
   carDisplayName,
@@ -120,11 +133,29 @@ const errorMessage = (err: unknown, fallback: string): string =>
 // Pieces
 // ============================================================
 
-function Section({title, children, action}: {title: string; children: React.ReactNode; action?: React.ReactNode}) {
+function Section({
+  title,
+  children,
+  action
+}: {
+  title: string
+  children: React.ReactNode
+  action?: React.ReactNode
+}) {
   return (
-    <Box rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
+    <Box
+      rounded="surface"
+      borderWidth="1px"
+      borderColor="border.default"
+      bg="bg.surface"
+      p="4">
       <HStack justify="space-between" mb="3">
-        <Text textStyle="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider">
+        <Text
+          textStyle="xs"
+          fontWeight="semibold"
+          color="fg.muted"
+          textTransform="uppercase"
+          letterSpacing="wider">
           {title}
         </Text>
         {action}
@@ -217,7 +248,9 @@ function ExtrasSection({
         {editable && (
           <HStack gap="2" flexWrap="wrap">
             <NativeSelect.Root size="sm" flex="1" minW="40">
-              <NativeSelect.Field value={type} onChange={e => setType(e.target.value as ExtraType)}>
+              <NativeSelect.Field
+                value={type}
+                onChange={e => setType(e.target.value as ExtraType)}>
                 {EXTRA_TYPES.map(x => (
                   <option key={x} value={x}>
                     {enumLabel(t, 'Extra_', x)}
@@ -237,7 +270,12 @@ function ExtrasSection({
               <NumberInput.Control />
               <NumberInput.Input />
             </NumberInput.Root>
-            <Button size="sm" variant="outline" colorPalette="brand" loading={busy === 'add'} onClick={() => void add()}>
+            <Button
+              size="sm"
+              variant="outline"
+              colorPalette="brand"
+              loading={busy === 'add'}
+              onClick={() => void add()}>
               {t.AddExtra}
             </Button>
           </HStack>
@@ -254,6 +292,8 @@ function ExtrasSection({
 interface RideSliderProps {
   transfer: TransferRow
   onMoved: (row: TransferRow) => void
+  /** The request is still open: the slider is drawn at its first stop and does nothing until the yes. */
+  locked?: boolean
 }
 
 /**
@@ -267,14 +307,16 @@ interface RideSliderProps {
  * Anything at or before the current stop snaps back without a call, going
  * backwards is a dispatcher's job.
  */
-function RideSlider({transfer, onMoved}: RideSliderProps) {
+function RideSlider({transfer, onMoved, locked = false}: RideSliderProps) {
   const {t, code} = useTransferStrings()
   const stateLabel = useStateLabel()
   // A stop is a mutation and has to reach the pylon: without a connection the
   // slider is disabled and says so, see okf/architecture/offline.md.
   const {online} = useOnline()
   const offline = getI18nOffline(code).strings
-  const current = driverStopIndex(transfer.state)
+  // A ride whose request is open is still PENDING, which is no stop: the
+  // thumb rests on the first one, disabled, until the driver says yes.
+  const current = locked ? 0 : driverStopIndex(transfer.state)
   const [thumb, setThumb] = useState(current)
   // Where the thumb was last dragged to. The release handler reads this and
   // not the event: in controlled mode zag reports the value in a microtask,
@@ -290,7 +332,8 @@ function RideSlider({transfer, onMoved}: RideSliderProps) {
   }, [current])
 
   const stopLabel = (s: TransferState): string =>
-    (t[`Stop_${s}` as keyof TransfersStrings] as string | undefined) ?? stateLabel(s)
+    (t[`Stop_${s}` as keyof TransfersStrings] as string | undefined) ??
+    stateLabel(s)
 
   const marks = DRIVER_STOPS.map((s, i) => ({
     value: i,
@@ -301,7 +344,13 @@ function RideSlider({transfer, onMoved}: RideSliderProps) {
         color={i <= current ? 'fg.default' : 'fg.muted'}
         whiteSpace="nowrap"
         // The first and last labels would run off the track otherwise.
-        transform={i === 0 ? 'translateX(40%)' : i === DRIVER_STOPS.length - 1 ? 'translateX(-40%)' : undefined}>
+        transform={
+          i === 0
+            ? 'translateX(40%)'
+            : i === DRIVER_STOPS.length - 1
+              ? 'translateX(-40%)'
+              : undefined
+        }>
         {stopLabel(s)}
       </Text>
     )
@@ -351,7 +400,7 @@ function RideSlider({transfer, onMoved}: RideSliderProps) {
           step={1}
           thumbAlignment="center"
           value={[thumb]}
-          disabled={pending || !online}
+          disabled={pending || !online || locked}
           onValueChange={e => {
             const v = e.value[0] ?? current
             dragged.current = v
@@ -373,8 +422,18 @@ function RideSlider({transfer, onMoved}: RideSliderProps) {
       {failure ? (
         <ErrorBanner message={failure} />
       ) : (
-        <Text textStyle="xs" color="fg.muted" textAlign="center" data-testid="ride-slider-hint">
-          {!online ? offline.NotPossibleOffline : pending ? '…' : t.DriverSlideHint}
+        <Text
+          textStyle="xs"
+          color="fg.muted"
+          textAlign="center"
+          data-testid="ride-slider-hint">
+          {locked
+            ? t.RequestHint
+            : !online
+              ? offline.NotPossibleOffline
+              : pending
+                ? '…'
+                : t.DriverSlideHint}
         </Text>
       )}
     </Stack>
@@ -385,7 +444,13 @@ function RideSlider({transfer, onMoved}: RideSliderProps) {
 // The driver's phone screen
 // ============================================================
 
-function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChanged: (row: TransferRow) => void}) {
+function DriverRideScreen({
+  transfer,
+  onChanged
+}: {
+  transfer: TransferRow
+  onChanged: (row: TransferRow) => void
+}) {
   const {t, code} = useTransferStrings()
   const navigate = useAppNavigate()
   const state = asTransferState(transfer.state)
@@ -400,6 +465,52 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
   const tel = telHref(phone)
   const map = mapHref(transfer.pickup)
   const done = state === 'COMPLETED'
+
+  // The driver's answer (dispatch.md section 9). While the request is open
+  // the screen shows Annehmen and Ablehnen with the reason field above a
+  // locked slider; a driver who said yes may still decline while the car
+  // has not left, that is at ASSIGNED, behind the same reason field.
+  const requested = transfer.driverStatus === 'REQUESTED'
+  const canDecline = requested || state === 'ASSIGNED'
+  const [reason, setReason] = useState('')
+  const [declineOpen, setDeclineOpen] = useState(requested)
+  const [answering, setAnswering] = useState<'accept' | 'decline' | null>(null)
+  const [answerError, setAnswerError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setDeclineOpen(requested)
+    setReason('')
+    setAnswerError(null)
+  }, [requested, transfer.id])
+
+  const accept = async () => {
+    setAnswering('accept')
+    setAnswerError(null)
+    try {
+      const row = await acceptAssignment(transfer.id)
+      onChanged(row)
+      toaster.success({title: t.ToastAccepted})
+    } catch (err) {
+      setAnswerError(errorMessage(err, t.AnswerFailed))
+    } finally {
+      setAnswering(null)
+    }
+  }
+
+  const decline = async () => {
+    setAnswering('decline')
+    setAnswerError(null)
+    try {
+      const row = await declineAssignment(transfer.id, reason)
+      onChanged(row)
+      toaster.success({title: t.ToastDeclined})
+      navigate('/transfers')
+    } catch (err) {
+      setAnswerError(errorMessage(err, t.AnswerFailed))
+    } finally {
+      setAnswering(null)
+    }
+  }
 
   const takeExit = async () => {
     if (!confirmExit) return
@@ -418,9 +529,19 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
   }
 
   const facts: Array<{icon: React.ReactNode; label: string; value?: string}> = [
-    {icon: <FaUsers />, label: t.LabelPassengers, value: transfer.passengers.length ? String(transfer.passengers.length) : undefined},
+    {
+      icon: <FaUsers />,
+      label: t.LabelPassengers,
+      value: transfer.passengers.length
+        ? String(transfer.passengers.length)
+        : undefined
+    },
     {icon: <FaSuitcase />, label: t.Luggage, value: transfer.details?.luggage},
-    {icon: <FaBaby />, label: t.ChildSeats, value: transfer.details?.childSeats},
+    {
+      icon: <FaBaby />,
+      label: t.ChildSeats,
+      value: transfer.details?.childSeats
+    },
     {icon: <FaPlane />, label: t.Flight, value: transfer.details?.flightNumber}
   ].filter(f => f.value)
 
@@ -428,7 +549,10 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
     <Box p="4" pb="8">
       <Stack gap="4">
         <HStack justify="space-between">
-          <Button size="sm" variant="ghost" onClick={() => navigate('/transfers')}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate('/transfers')}>
             <FaArrowLeft />
             {t.DetailBackMine}
           </Button>
@@ -438,10 +562,19 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
         </HStack>
 
         {/* The pickup: the time large, the address, one tap to the map. */}
-        <Box rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
+        <Box
+          rounded="surface"
+          borderWidth="1px"
+          borderColor="border.default"
+          bg="bg.surface"
+          p="4">
           <HStack justify="space-between" align="flex-start" gap="3">
             <Box minW="0">
-              <Text textStyle="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wider">
+              <Text
+                textStyle="xs"
+                color="fg.muted"
+                textTransform="uppercase"
+                letterSpacing="wider">
                 {t.Pickup} · {formatDay(transfer.rideDateISO, code)}
               </Text>
               <Heading size="3xl" lineHeight="1" mt="1">
@@ -458,7 +591,14 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
               </Text>
             </Box>
             {map && (
-              <IconButton asChild size="lg" variant="outline" colorPalette="brand" aria-label={t.OpenMap} minW="14" minH="14">
+              <IconButton
+                asChild
+                size="lg"
+                variant="outline"
+                colorPalette="brand"
+                aria-label={t.OpenMap}
+                minW="14"
+                minH="14">
                 <Link href={map} target="_blank" rel="noopener noreferrer">
                   <FaMapMarkedAlt />
                 </Link>
@@ -468,10 +608,19 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
         </Box>
 
         {/* The passenger, one tap to call. */}
-        <Box rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
+        <Box
+          rounded="surface"
+          borderWidth="1px"
+          borderColor="border.default"
+          bg="bg.surface"
+          p="4">
           <HStack justify="space-between" gap="3">
             <Box minW="0">
-              <Text textStyle="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wider">
+              <Text
+                textStyle="xs"
+                color="fg.muted"
+                textTransform="uppercase"
+                letterSpacing="wider">
                 {t.Passenger}
               </Text>
               <Text fontWeight="semibold" textStyle="lg" truncate>
@@ -508,10 +657,17 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
               <FaCommentDots />
             </Box>
             <Box>
-              <Text textStyle="xs" color="fg.muted" textTransform="uppercase" letterSpacing="wider">
+              <Text
+                textStyle="xs"
+                color="fg.muted"
+                textTransform="uppercase"
+                letterSpacing="wider">
                 {t.Wishes}
               </Text>
-              <Text textStyle="sm" color={transfer.details?.message ? 'fg.default' : 'fg.muted'} whiteSpace="pre-wrap">
+              <Text
+                textStyle="sm"
+                color={transfer.details?.message ? 'fg.default' : 'fg.muted'}
+                whiteSpace="pre-wrap">
                 {transfer.details?.message || t.NoWishes}
               </Text>
             </Box>
@@ -520,22 +676,43 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
 
         {/* After COMPLETED: the fare, the one price a driver sees. */}
         {done && (
-          <Box rounded="surface" borderWidth="1px" colorPalette="green" borderColor="colorPalette.solid" bg="colorPalette.subtle" p="4">
+          <Box
+            rounded="surface"
+            borderWidth="1px"
+            colorPalette="green"
+            borderColor="colorPalette.solid"
+            bg="colorPalette.subtle"
+            p="4">
             <HStack gap="2" color="colorPalette.fg">
               <FaEuroSign />
               <Text fontWeight="semibold">{t.FareTitle}</Text>
             </HStack>
             {transfer.price != null ? (
               <>
-                <MoneyText value={transfer.price} textStyle="4xl" fontWeight="bold" display="block" mt="1" />
+                <MoneyText
+                  value={transfer.price}
+                  textStyle="4xl"
+                  fontWeight="bold"
+                  display="block"
+                  mt="1"
+                />
                 <Text textStyle="sm" mt="1">
                   {transfer.paymentMethode
-                    ? fill(t.FareBy, {method: enumLabel(t, 'Pay_', transfer.paymentMethode)})
+                    ? fill(t.FareBy, {
+                        method: enumLabel(t, 'Pay_', transfer.paymentMethode)
+                      })
                     : t.FareUnknown}
                 </Text>
                 {transfer.paymentMethode && (
-                  <Badge mt="2" colorPalette={transfer.paymentMethode === 'CASH' ? 'green' : 'gray'} variant="solid">
-                    {transfer.paymentMethode === 'CASH' ? t.FareCashHint : t.FareNoCashHint}
+                  <Badge
+                    mt="2"
+                    colorPalette={
+                      transfer.paymentMethode === 'CASH' ? 'green' : 'gray'
+                    }
+                    variant="solid">
+                    {transfer.paymentMethode === 'CASH'
+                      ? t.FareCashHint
+                      : t.FareNoCashHint}
                   </Badge>
                 )}
               </>
@@ -547,14 +724,117 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
           </Box>
         )}
 
-        {/* The slider, while the ride is the driver's to move. */}
-        {stage >= 0 && !done && (
-          <Box rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
-            <RideSlider transfer={transfer} onMoved={onChanged} />
+        {/* The request: Annehmen and Ablehnen with the reason, above the locked slider. */}
+        {requested && !done && (
+          <Box
+            rounded="surface"
+            borderWidth="1px"
+            colorPalette="orange"
+            borderColor="colorPalette.solid"
+            bg="colorPalette.subtle"
+            p="4"
+            data-testid="driver-request">
+            <HStack justify="space-between" gap="2">
+              <Text fontWeight="semibold">{t.RequestTitle}</Text>
+              <DriverAnswerBadge status="REQUESTED" />
+            </HStack>
+            <Text textStyle="sm" color="fg.muted" mt="1">
+              {t.RequestHint}
+            </Text>
+            {answerError && (
+              <Box mt="3">
+                <ErrorBanner message={answerError} />
+              </Box>
+            )}
+            <Stack gap="1" mt="3">
+              <Text textStyle="xs" color="fg.muted">
+                {t.DeclineReasonLabel}
+              </Text>
+              <Textarea
+                size="sm"
+                rows={2}
+                bg="bg.surface"
+                placeholder={t.DeclineReasonPlaceholder}
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+              />
+            </Stack>
+            <Stack direction={{base: 'column', sm: 'row'}} gap="3" mt="3">
+              <Button
+                size="lg"
+                colorPalette="green"
+                flex="1"
+                minH="12"
+                loading={answering === 'accept'}
+                disabled={answering === 'decline'}
+                onClick={() => void accept()}>
+                <FaCheck />
+                {t.Accept}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                colorPalette="red"
+                flex="1"
+                minH="12"
+                loading={answering === 'decline'}
+                disabled={answering === 'accept'}
+                onClick={() => void decline()}>
+                <FaTimes />
+                {t.Reject}
+              </Button>
+            </Stack>
+          </Box>
+        )}
+
+        {/* The slider, while the ride is the driver's to move, locked while the request is open. */}
+        {(stage >= 0 || requested) && !done && (
+          <Box
+            rounded="surface"
+            borderWidth="1px"
+            borderColor="border.default"
+            bg="bg.surface"
+            p="4">
+            <RideSlider
+              transfer={transfer}
+              onMoved={onChanged}
+              locked={requested}
+            />
             {exitError && (
               <Box mt="3">
                 <ErrorBanner message={exitError} />
               </Box>
+            )}
+            {/* A driver who said yes and cannot drive after all: the no, with its reason, while the car has not left. */}
+            {canDecline && !requested && (
+              <Stack gap="3" mt="4">
+                {answerError && <ErrorBanner message={answerError} />}
+                {declineOpen && (
+                  <Stack gap="1">
+                    <Text textStyle="xs" color="fg.muted">
+                      {t.DeclineReasonLabel}
+                    </Text>
+                    <Textarea
+                      size="sm"
+                      rows={2}
+                      placeholder={t.DeclineReasonPlaceholder}
+                      value={reason}
+                      onChange={e => setReason(e.target.value)}
+                    />
+                  </Stack>
+                )}
+                <Button
+                  w="full"
+                  size="lg"
+                  variant="outline"
+                  colorPalette="red"
+                  loading={answering === 'decline'}
+                  onClick={() =>
+                    declineOpen ? void decline() : setDeclineOpen(true)
+                  }>
+                  {declineOpen ? t.DeclineConfirm : t.Reject}
+                </Button>
+              </Stack>
             )}
             {exit && (
               <Button
@@ -564,13 +844,13 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
                 variant="outline"
                 colorPalette="red"
                 onClick={() => setConfirmExit(exit)}>
-                {exit === 'REJECTED' ? t.Reject : t.NoShow}
+                {t.NoShow}
               </Button>
             )}
           </Box>
         )}
 
-        {stage < 0 && !done && (
+        {stage < 0 && !requested && !done && (
           <EmptyState
             title={isClosed(transfer.state) ? t.RideClosed : t.NotYourRide}
             icon={<FaClock />}
@@ -582,9 +862,9 @@ function DriverRideScreen({transfer, onChanged}: {transfer: TransferRow; onChang
         open={!!confirmExit}
         onClose={() => setConfirmExit(null)}
         onConfirm={takeExit}
-        title={confirmExit === 'REJECTED' ? t.RejectConfirmTitle : t.NoShowConfirmTitle}
-        body={confirmExit === 'REJECTED' ? t.RejectConfirmBody : t.NoShowConfirmBody}
-        confirmLabel={confirmExit === 'REJECTED' ? t.Reject : t.NoShow}
+        title={t.NoShowConfirmTitle}
+        body={t.NoShowConfirmBody}
+        confirmLabel={t.NoShow}
         destructive
         loading={exiting}
       />
@@ -607,7 +887,7 @@ function DetailScreen({
   onChanged: (row: TransferRow) => void
   onRefresh: () => void
 }) {
-  const {t, tc, code} = useTransferStrings()
+  const {t, code} = useTransferStrings()
   const navigate = useAppNavigate()
   const stateLabel = useStateLabel()
   const {drivers} = useDrivers()
@@ -620,22 +900,92 @@ function DetailScreen({
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [returnOpen, setReturnOpen] = useState(false)
+  // The offer: compiled in the browser and sent, then the documents read again.
+  const [offerOpen, setOfferOpen] = useState(false)
+  const [documentsVersion, setDocumentsVersion] = useState(0)
+  const {strings: so} = getI18nOffers(code)
+  const offerable =
+    editable && transfer.price != null && canSendOffer(transfer.customerStatus)
+  const [unassignOpen, setUnassignOpen] = useState(false)
+  const [unassigning, setUnassigning] = useState(false)
+
+  // Who was asked, newest first, for the dispatcher. The names come from the
+  // driver list and the users page, the id stands in for a name not loaded.
+  const nameOf = (id: string | undefined): string | undefined => {
+    if (!id) return undefined
+    const account =
+      drivers.find(d => d.id === id) ?? users.find(u => u.id === id)
+    return account ? driverDisplayName(account) : id
+  }
+  const colorOf = (id: string | undefined): string | undefined =>
+    id ? drivers.find(d => d.id === id)?.driverColor : undefined
+  const attemptWord = (
+    a: AssignmentAttempt
+  ): {text: string; tone: 'orange' | 'green' | 'red' | 'gray'} =>
+    !a.answer
+      ? {text: t.AttemptOpen, tone: 'orange'}
+      : a.answer === 'ACCEPTED'
+        ? {text: t.AttemptAccepted, tone: 'green'}
+        : a.answer === 'DECLINED'
+          ? {text: t.AttemptDeclined, tone: 'red'}
+          : {text: t.AttemptWithdrawn, tone: 'gray'}
+  // The declined driver stays on the page until the next request, like on the board.
+  const declinedId =
+    transfer.driverStatus === 'DECLINED'
+      ? (transfer.attempts?.[0] ?? transfer.lastAttempt)?.driverId
+      : undefined
+  const canUnassign =
+    editable &&
+    !!transfer.driverId &&
+    !isClosed(transfer.state) &&
+    (transfer.driverStatus === 'REQUESTED' ||
+      transfer.driverStatus === 'ACCEPTED')
+
+  const unassign = async () => {
+    setUnassigning(true)
+    try {
+      const row = await unassignDriver(transfer.id)
+      onChanged(row)
+      toaster.success({title: t.ToastUnassigned})
+      setUnassignOpen(false)
+    } catch (err) {
+      toaster.error({title: t.ToastFailed, description: errorMessage(err, '')})
+    } finally {
+      setUnassigning(false)
+    }
+  }
 
   // "Rückfahrt anlegen" is offered on an origin without a return yet. A
   // return leg never gets one, a third leg is created from the origin, and
   // a row read without its links (an old schema) offers nothing.
-  const canCreateReturn = editable && !transfer.referenceId && transfer.returns !== undefined && transfer.returns.length === 0
+  const canCreateReturn =
+    editable &&
+    !transfer.referenceId &&
+    transfer.returns !== undefined &&
+    transfer.returns.length === 0
   // The origin's code, from the linked row, or the stripped id while the API has no code.
-  const originCode = transfer.reference?.code ?? (transfer.referenceId ? transferCode(transfer.referenceId) : undefined)
-  const originPath = transfer.reference ? transferPath(transfer.reference) : `/transfers/${transfer.referenceId}`
+  const originCode =
+    transfer.reference?.code ??
+    (transfer.referenceId ? transferCode(transfer.referenceId) : undefined)
+  const originPath = transfer.reference
+    ? transferPath(transfer.reference)
+    : `/transfers/${transfer.referenceId}`
 
   const driver = useMemo(
-    () => (transfer.driverId ? drivers.find(d => d.id === transfer.driverId) ?? users.find(u => u.id === transfer.driverId) : undefined),
+    () =>
+      transfer.driverId
+        ? (drivers.find(d => d.id === transfer.driverId) ??
+          users.find(u => u.id === transfer.driverId))
+        : undefined,
     [drivers, users, transfer.driverId]
   )
-  const customer = useMemo(() => users.find(u => u.id === transfer.customerId), [users, transfer.customerId])
+  const customer = useMemo(
+    () => users.find(u => u.id === transfer.customerId),
+    [users, transfer.customerId]
+  )
   const car = useMemo(
-    () => (transfer.carId ? cars.find(c => c.id === transfer.carId) : undefined),
+    () =>
+      transfer.carId ? cars.find(c => c.id === transfer.carId) : undefined,
     [cars, transfer.carId]
   )
   const passenger = transfer.passengers[0]
@@ -659,58 +1009,100 @@ function DetailScreen({
     <Box p={{base: '4', md: '6'}} maxW="full">
       <Stack gap="4">
         <HStack justify="space-between" flexWrap="wrap" gap="2">
-          <Button size="sm" variant="ghost" onClick={() => navigate('/transfers')}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate('/transfers')}>
             <FaArrowLeft />
             {editable ? t.DetailBack : t.DetailBackMine}
           </Button>
-          <IconButton size="sm" variant="outline" aria-label={tc.Refresh} onClick={onRefresh}>
-            <FaSyncAlt />
-          </IconButton>
+          <RefreshButton onClick={onRefresh} />
         </HStack>
 
         <PageHeader
           title={fill(t.DetailHeading, {code: transfer.code})}
           mono
-          meta={<StatusBadge state={transfer.state} size="lg" />}
+          meta={
+            <>
+              <StatusBadge state={transfer.state} size="lg" />
+              <CustomerStatusBadge status={transfer.customerStatus} size="lg" />
+            </>
+          }
           actions={
             editable ? (
               <>
-              <Button size="sm" colorPalette="brand" onClick={() => setAssignOpen(true)}>
-                {transfer.driverId ? t.ActionReassign : t.ActionAssign}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setPriceOpen(true)}>
-                {t.ActionPrice}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setStateOpen(true)}>
-                {t.ActionState}
-              </Button>
-              {canCreateReturn && (
-                <Button size="sm" variant="outline" onClick={() => setReturnOpen(true)}>
-                  <FaExchangeAlt />
-                  {t.ActionReturnTrip}
+                <Button
+                  size="sm"
+                  colorPalette="brand"
+                  onClick={() => setAssignOpen(true)}>
+                  {transfer.driverId ? t.ActionReassign : t.ActionAssign}
                 </Button>
-              )}
-              {!closed && (
-                <Button size="sm" variant="outline" colorPalette="red" onClick={() => setCancelOpen(true)}>
-                  {t.ActionCancel}
+                {offerable && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    colorPalette="brand"
+                    onClick={() => setOfferOpen(true)}
+                    data-testid="send-offer">
+                    {transfer.customerStatus === 'OFFERED'
+                      ? so.SendOfferAgain
+                      : so.SendOffer}
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPriceOpen(true)}>
+                  {t.ActionPrice}
                 </Button>
-              )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setStateOpen(true)}>
+                  {t.ActionState}
+                </Button>
+                {canCreateReturn && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setReturnOpen(true)}>
+                    <FaExchangeAlt />
+                    {t.ActionReturnTrip}
+                  </Button>
+                )}
+                {!closed && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    colorPalette="red"
+                    onClick={() => setCancelOpen(true)}>
+                    {t.ActionCancel}
+                  </Button>
+                )}
               </>
             ) : undefined
           }
         />
 
-        <Box display="grid" gridTemplateColumns={{base: '1fr', md: '1fr 1fr'}} gap="4">
+        <Box
+          display="grid"
+          gridTemplateColumns={{base: '1fr', md: '1fr 1fr'}}
+          gap="4">
           <Section title={t.SectionRoute}>
             <DataList.Root orientation="horizontal" size="sm">
               <Item label={t.Pickup} value={transfer.pickup} />
               <Item label={t.Dropoff} value={transfer.dropoff} />
-              {transfer.subject && <Item label={t.LabelSubject} value={transfer.subject} />}
+              {transfer.subject && (
+                <Item label={t.LabelSubject} value={transfer.subject} />
+              )}
               {transfer.referenceId && (
                 <Item
                   label={t.LabelReturnOf}
                   value={
-                    <Link colorPalette="brand" fontFamily="mono" onClick={() => navigate(originPath)}>
+                    <Link
+                      colorPalette="brand"
+                      fontFamily="mono"
+                      onClick={() => navigate(originPath)}>
                       {originCode}
                     </Link>
                   }
@@ -722,7 +1114,11 @@ function DetailScreen({
                   value={
                     <HStack gap="2" flexWrap="wrap">
                       {transfer.returns.map(r => (
-                        <Link key={r.id} colorPalette="brand" fontFamily="mono" onClick={() => navigate(transferPath(r))}>
+                        <Link
+                          key={r.id}
+                          colorPalette="brand"
+                          fontFamily="mono"
+                          onClick={() => navigate(transferPath(r))}>
                           {r.code}
                         </Link>
                       ))}
@@ -735,11 +1131,27 @@ function DetailScreen({
 
           <Section title={t.SectionSchedule}>
             <DataList.Root orientation="horizontal" size="sm">
-              <Item label={t.LabelDate} value={formatDay(transfer.rideDateISO, code)} />
+              <Item
+                label={t.LabelDate}
+                value={formatDay(transfer.rideDateISO, code)}
+              />
               <Item label={t.LabelTime} value={transfer.rideTime} />
-              <Item label={t.LabelRequestedAt} value={formatDateTime(transfer.requestedAt, code)} />
-              {transfer.startDateTime && <Item label={t.LabelStarted} value={formatDateTime(transfer.startDateTime, code)} />}
-              {transfer.endDateTime && <Item label={t.LabelEnded} value={formatDateTime(transfer.endDateTime, code)} />}
+              <Item
+                label={t.LabelRequestedAt}
+                value={formatDateTime(transfer.requestedAt, code)}
+              />
+              {transfer.startDateTime && (
+                <Item
+                  label={t.LabelStarted}
+                  value={formatDateTime(transfer.startDateTime, code)}
+                />
+              )}
+              {transfer.endDateTime && (
+                <Item
+                  label={t.LabelEnded}
+                  value={formatDateTime(transfer.endDateTime, code)}
+                />
+              )}
             </DataList.Root>
           </Section>
 
@@ -752,7 +1164,9 @@ function DetailScreen({
                     label={t.LabelPhone}
                     value={
                       telHref(passenger.phone) ? (
-                        <Link href={telHref(passenger.phone)} colorPalette="brand">
+                        <Link
+                          href={telHref(passenger.phone)}
+                          colorPalette="brand">
                           {passenger.phone}
                         </Link>
                       ) : (
@@ -761,15 +1175,24 @@ function DetailScreen({
                     }
                   />
                 )}
-                {passenger?.email && <Item label={t.LabelEmail} value={passenger.email} />}
-                {passenger?.language && <Item label={t.LabelLanguage} value={passenger.language} />}
-                <Item label={t.LabelPassengers} value={String(transfer.passengers.length)} />
+                {passenger?.email && (
+                  <Item label={t.LabelEmail} value={passenger.email} />
+                )}
+                {passenger?.language && (
+                  <Item label={t.LabelLanguage} value={passenger.language} />
+                )}
+                <Item
+                  label={t.LabelPassengers}
+                  value={String(transfer.passengers.length)}
+                />
                 {transfer.passengers.length > 1 && (
                   <Item
                     label=""
                     value={transfer.passengers
                       .slice(1)
-                      .map(p => `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim())
+                      .map(p =>
+                        `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim()
+                      )
                       .filter(Boolean)
                       .join(', ')}
                   />
@@ -784,14 +1207,42 @@ function DetailScreen({
 
           <Section title={t.SectionRide}>
             <DataList.Root orientation="horizontal" size="sm">
-              <Item label={t.LabelFlight} value={transfer.details?.flightNumber} />
+              <Item
+                label={t.LabelFlight}
+                value={transfer.details?.flightNumber}
+              />
               <Item label={t.LabelLuggage} value={transfer.details?.luggage} />
-              <Item label={t.LabelChildSeats} value={transfer.details?.childSeats} />
-              <Item label={t.LabelExtraTime} value={transfer.details?.extraTime} />
-              <Item label={t.LabelCarClass} value={enumLabel(t, 'Class_', transfer.details?.preferredCarClass) || undefined} />
-              <Item label={t.LabelCarName} value={transfer.details?.preferredCarName} />
-              <Item label={t.LabelCategory} value={enumLabel(t, 'Cat_', transfer.transferCategory) || undefined} />
-              <Item label={t.LabelType} value={enumLabel(t, 'Type_', transfer.transferType) || undefined} />
+              <Item
+                label={t.LabelChildSeats}
+                value={transfer.details?.childSeats}
+              />
+              <Item
+                label={t.LabelExtraTime}
+                value={transfer.details?.extraTime}
+              />
+              <Item
+                label={t.LabelCarClass}
+                value={
+                  enumLabel(t, 'Class_', transfer.details?.preferredCarClass) ||
+                  undefined
+                }
+              />
+              <Item
+                label={t.LabelCarName}
+                value={transfer.details?.preferredCarName}
+              />
+              <Item
+                label={t.LabelCategory}
+                value={
+                  enumLabel(t, 'Cat_', transfer.transferCategory) || undefined
+                }
+              />
+              <Item
+                label={t.LabelType}
+                value={
+                  enumLabel(t, 'Type_', transfer.transferType) || undefined
+                }
+              />
             </DataList.Root>
           </Section>
 
@@ -799,19 +1250,68 @@ function DetailScreen({
             title={t.SectionDriver}
             action={
               editable && (
-                <Button size="xs" variant="ghost" colorPalette="brand" onClick={() => setAssignOpen(true)}>
-                  {transfer.driverId ? t.ActionReassign : t.ActionAssign}
-                </Button>
+                <HStack gap="2">
+                  {canUnassign && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorPalette="red"
+                      onClick={() => setUnassignOpen(true)}>
+                      {t.ActionUnassign}
+                    </Button>
+                  )}
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    colorPalette="brand"
+                    onClick={() => setAssignOpen(true)}>
+                    {transfer.driverId ? t.ActionReassign : t.ActionAssign}
+                  </Button>
+                </HStack>
               )
             }>
             {transfer.driverId ? (
               <HStack gap="3">
                 <DriverColorDot color={driver?.driverColor} size="4" />
                 <Box>
-                  <Text fontWeight="medium">{driver ? driverDisplayName(driver) : transfer.driverId}</Text>
+                  <HStack gap="2">
+                    <Text fontWeight="medium">
+                      {driver ? driverDisplayName(driver) : transfer.driverId}
+                    </Text>
+                    <DriverAnswerBadge status={transfer.driverStatus} />
+                  </HStack>
                   {driver && (
                     <Text textStyle="xs" color="fg.muted">
                       {driver.primaryEmailAddress}
+                    </Text>
+                  )}
+                </Box>
+              </HStack>
+            ) : declinedId ? (
+              <HStack gap="3">
+                <DriverColorDot color={colorOf(declinedId)} size="4" />
+                <Box>
+                  <HStack gap="2">
+                    <Text
+                      fontWeight="medium"
+                      color="fg.muted"
+                      textDecoration="line-through">
+                      {nameOf(declinedId)}
+                    </Text>
+                    <DriverAnswerBadge
+                      status="DECLINED"
+                      reason={
+                        (transfer.attempts?.[0] ?? transfer.lastAttempt)?.reason
+                      }
+                    />
+                  </HStack>
+                  {(transfer.attempts?.[0] ?? transfer.lastAttempt)?.reason && (
+                    <Text textStyle="xs" color="fg.muted">
+                      {fill(t.DeclineReason, {
+                        reason:
+                          (transfer.attempts?.[0] ?? transfer.lastAttempt)
+                            ?.reason ?? ''
+                      })}
                     </Text>
                   )}
                 </Box>
@@ -823,13 +1323,66 @@ function DetailScreen({
             )}
           </Section>
 
+          {/* Who was asked and what they said, newest first. Dispatch information, the backend answers it to admins only. */}
+          {editable && transfer.attempts !== undefined && (
+            <Section title={t.AttemptsTitle}>
+              {transfer.attempts.length === 0 ? (
+                <Text textStyle="sm" color="fg.muted">
+                  {t.NoAttempts}
+                </Text>
+              ) : (
+                <Stack gap="2" data-testid="attempts">
+                  {transfer.attempts.map(a => {
+                    const word = attemptWord(a)
+                    return (
+                      <HStack key={a.id} align="flex-start" gap="3">
+                        <DriverColorDot color={colorOf(a.driverId)} size="3" />
+                        <Box minW="0" flex="1">
+                          <HStack gap="2" flexWrap="wrap">
+                            <Text textStyle="sm" fontWeight="medium">
+                              {nameOf(a.driverId)}
+                            </Text>
+                            <Badge
+                              size="sm"
+                              variant="subtle"
+                              colorPalette={word.tone}>
+                              {word.text}
+                            </Badge>
+                          </HStack>
+                          <Text textStyle="xs" color="fg.muted">
+                            {formatDateTime(a.requestedAt, code)}
+                            {a.answeredAt && a.answer
+                              ? ` → ${formatDateTime(a.answeredAt, code)}`
+                              : ''}
+                            {a.by
+                              ? ` · ${fill(t.AttemptBy, {name: nameOf(a.by) ?? ''})}`
+                              : ''}
+                          </Text>
+                          {a.reason && (
+                            <Text textStyle="xs" color="fg.muted">
+                              {fill(t.DeclineReason, {reason: a.reason})}
+                            </Text>
+                          )}
+                        </Box>
+                      </HStack>
+                    )
+                  })}
+                </Stack>
+              )}
+            </Section>
+          )}
+
           <Section title={t.SectionVehicle}>
             {transfer.carId ? (
               <HStack gap="3">
-                <DriverColorDot color={transfer.car?.color ?? car?.color} size="4" />
+                <DriverColorDot
+                  color={transfer.car?.color ?? car?.color}
+                  size="4"
+                />
                 <Box>
                   <Text fontWeight="medium">
-                    {transfer.car?.carName ?? (car ? carDisplayName(car) : transfer.carId)}
+                    {transfer.car?.carName ??
+                      (car ? carDisplayName(car) : transfer.carId)}
                   </Text>
                   <Text textStyle="xs" color="fg.muted">
                     {transfer.car?.licensePlate ?? car?.licensePlate}
@@ -851,7 +1404,11 @@ function DetailScreen({
             title={t.SectionMoney}
             action={
               editable && (
-                <Button size="xs" variant="ghost" colorPalette="brand" onClick={() => setPriceOpen(true)}>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  colorPalette="brand"
+                  onClick={() => setPriceOpen(true)}>
                   {t.ActionPrice}
                 </Button>
               )
@@ -861,34 +1418,79 @@ function DetailScreen({
                 label={t.TotalFare}
                 value={
                   transfer.price != null ? (
-                    <MoneyText value={transfer.price} fontWeight="semibold" textStyle="lg" />
+                    <MoneyText
+                      value={transfer.price}
+                      fontWeight="semibold"
+                      textStyle="lg"
+                    />
                   ) : editable ? (
-                    <Badge as="button" colorPalette="orange" cursor="pointer" onClick={() => setPriceOpen(true)}>
+                    <Badge
+                      as="button"
+                      colorPalette="orange"
+                      cursor="pointer"
+                      onClick={() => setPriceOpen(true)}>
                       {t.SetPrice}
                     </Badge>
                   ) : undefined
                 }
               />
-              <Item label={t.PaymentLabel} value={enumLabel(t, 'Pay_', transfer.paymentMethode) || undefined} />
-              <Item label={t.PayingPartyLabel} value={enumLabel(t, 'Party_', transfer.payingParty) || undefined} />
+              <Item
+                label={t.PaymentLabel}
+                value={
+                  enumLabel(t, 'Pay_', transfer.paymentMethode) || undefined
+                }
+              />
+              <Item
+                label={t.PayingPartyLabel}
+                value={
+                  enumLabel(t, 'Party_', transfer.payingParty) || undefined
+                }
+              />
             </DataList.Root>
           </Section>
 
           <Section title={t.LabelCustomer}>
             <DataList.Root orientation="horizontal" size="sm">
-              <Item label={t.LabelCustomer} value={customer ? driverDisplayName(customer) : undefined} />
-              <Item label={t.LabelCustomerId} value={<chakra.span fontFamily="mono">{transfer.customerId}</chakra.span>} />
+              <Item
+                label={t.LabelCustomer}
+                value={customer ? driverDisplayName(customer) : undefined}
+              />
+              <Item
+                label={t.LabelCustomerId}
+                value={
+                  <chakra.span fontFamily="mono">
+                    {transfer.customerId}
+                  </chakra.span>
+                }
+              />
             </DataList.Root>
           </Section>
 
-          <ExtrasSection transfer={transfer} editable={editable} onChanged={onChanged} />
+          <ExtrasSection
+            transfer={transfer}
+            editable={editable}
+            onChanged={onChanged}
+          />
 
           <Section title={t.SectionNotes}>
-            <Text textStyle="sm" whiteSpace="pre-wrap" color={transfer.details?.message ? 'fg.default' : 'fg.muted'}>
+            <Text
+              textStyle="sm"
+              whiteSpace="pre-wrap"
+              color={transfer.details?.message ? 'fg.default' : 'fg.muted'}>
               {transfer.details?.message || t.NoNotes}
             </Text>
           </Section>
         </Box>
+
+        {/* The money side: the customer's status as a timeline, the documents, the invoice upload. */}
+        {editable && (
+          <MoneySection
+            transfer={transfer}
+            editable={editable}
+            onChanged={onChanged}
+            documentsVersion={documentsVersion}
+          />
+        )}
 
         {/* Where the driver is: the dispatcher's card with the small map. */}
         {editable && (
@@ -909,7 +1511,12 @@ function DetailScreen({
                     color: transfer.car.color ?? null
                   }
                 : car
-                  ? {carName: carDisplayName(car), licensePlate: car.licensePlate ?? null, carClass: car.carClass ?? null, color: car.color ?? null}
+                  ? {
+                      carName: carDisplayName(car),
+                      licensePlate: car.licensePlate ?? null,
+                      carClass: car.carClass ?? null,
+                      color: car.color ?? null
+                    }
                   : null
             }}
           />
@@ -932,8 +1539,28 @@ function DetailScreen({
             cars={cars}
             onAssigned={onChanged}
           />
-          <PriceDialog open={priceOpen} onClose={() => setPriceOpen(false)} transfer={transfer} onSaved={onChanged} />
-          <StateDialog open={stateOpen} onClose={() => setStateOpen(false)} transfer={transfer} onSaved={onChanged} />
+          <PriceDialog
+            open={priceOpen}
+            onClose={() => setPriceOpen(false)}
+            transfer={transfer}
+            onSaved={onChanged}
+          />
+          <OfferDialog
+            open={offerOpen}
+            onClose={() => setOfferOpen(false)}
+            transfer={transfer}
+            onSent={() => {
+              // sendOffer moved the status on the pylon: the ride is read again, and the documents with it.
+              setDocumentsVersion(v => v + 1)
+              onRefresh()
+            }}
+          />
+          <StateDialog
+            open={stateOpen}
+            onClose={() => setStateOpen(false)}
+            transfer={transfer}
+            onSaved={onChanged}
+          />
           <CreateTransferDialog
             open={returnOpen}
             onClose={() => setReturnOpen(false)}
@@ -942,7 +1569,13 @@ function DetailScreen({
             prefill={returnTripPrefill(transfer)}
             onCreated={row => {
               // The origin now has its return, then the new leg is opened.
-              onChanged({...transfer, returns: [...(transfer.returns ?? []), {id: row.id, code: row.code}]})
+              onChanged({
+                ...transfer,
+                returns: [
+                  ...(transfer.returns ?? []),
+                  {id: row.id, code: row.code}
+                ]
+              })
               navigate(transferPath(row))
             }}
           />
@@ -955,6 +1588,16 @@ function DetailScreen({
             confirmLabel={t.ActionCancel}
             destructive
             loading={cancelling}
+          />
+          <ConfirmDialog
+            open={unassignOpen}
+            onClose={() => setUnassignOpen(false)}
+            onConfirm={unassign}
+            title={t.UnassignConfirmTitle}
+            body={t.UnassignConfirmBody}
+            confirmLabel={t.ActionUnassign}
+            destructive
+            loading={unassigning}
           />
         </>
       )}
@@ -972,17 +1615,29 @@ export function TransferDetailView() {
   const mobile = useIsMobile()
   const {t} = useTransferStrings()
   const navigate = useAppNavigate()
-  const {transfer, isLoading, error, notFound, refetch, replace} = useTransfer(transferId)
+  const {transfer, isLoading, error, isFetching, notFound, refetch, replace} =
+    useTransfer(transferId)
+  useViewRefresh(refetch, isFetching)
   // Offline the ride is the stored answer, read again when the connection returns.
   useRefetchOnReconnect(() => void refetch())
 
   // The driver's phone sends its position while this ride is live. The hint
   // is the row's state, so the loop follows the slider without a round trip.
-  const ownRide = !!transfer && caller.isDriver && !caller.isAdmin && transfer.driverId === caller.userId
-  useDriverPositionSender({ride: ownRide && transfer ? {transferId: transfer.id, state: transfer.state} : undefined})
+  const ownRide =
+    !!transfer &&
+    caller.isDriver &&
+    !caller.isAdmin &&
+    transfer.driverId === caller.userId
+  useDriverPositionSender({
+    ride:
+      ownRide && transfer
+        ? {transferId: transfer.id, state: transfer.state}
+        : undefined
+  })
 
   // The page's shape in grey until the ride is there, never a spinner.
-  if (caller.loading || (isLoading && !transfer)) return <DetailSkeleton cards={3} />
+  if (caller.loading || (isLoading && !transfer))
+    return <DetailSkeleton cards={3} />
 
   if (error && !transfer) {
     return (
@@ -995,7 +1650,10 @@ export function TransferDetailView() {
   if (!transfer || notFound) {
     return (
       <EmptyState title={t.DetailNotFound} description={t.DetailNotFoundBody}>
-        <Button size="sm" variant="outline" onClick={() => navigate('/transfers')}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => navigate('/transfers')}>
           <FaArrowLeft />
           {caller.isAdmin ? t.DetailBack : t.DetailBackMine}
         </Button>
@@ -1009,7 +1667,8 @@ export function TransferDetailView() {
   // scopes the read, but the ownership check stays as the second lock.
   // The driver's screens carry the offline banner, the dispatcher's does not,
   // no promise is made about it there.
-  const banner = caller.isDriver && !caller.isAdmin ? <OfflineBanner m="4" mb="0" /> : null
+  const banner =
+    caller.isDriver && !caller.isAdmin ? <OfflineBanner m="4" mb="0" /> : null
 
   if (ownRide && mobile) {
     return (
@@ -1023,7 +1682,12 @@ export function TransferDetailView() {
   return (
     <>
       {banner}
-      <DetailScreen transfer={transfer} editable={caller.isAdmin} onChanged={replace} onRefresh={() => void refetch()} />
+      <DetailScreen
+        transfer={transfer}
+        editable={caller.isAdmin}
+        onChanged={replace}
+        onRefresh={() => void refetch()}
+      />
     </>
   )
 }
