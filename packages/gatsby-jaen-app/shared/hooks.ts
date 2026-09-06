@@ -16,9 +16,17 @@
  * inline, so no input type is ever named in a document and the same code works
  * against either deployment. It also brings the auth header and the per-brand
  * endpoint with it, which is why this file no longer needs either.
+ *
+ * Every read here is a query of the one client in hooks/query.ts, keyed per
+ * domain, so a screen that mounts renders what the client holds and refetches
+ * behind it, and a reload offline renders the persisted answer. The hooks
+ * keep their names and shapes, the pager keeps its cursor trail, and the
+ * views do not know the difference. See okf/architecture/data-layer.md.
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useMemo } from 'react'
+import { keepPreviousData } from '@tanstack/react-query'
 import { fetchGraphQL } from '../client/limosen'
+import { cachedRead, keys, queryClient, useAppQuery, usePager } from './hooks/query'
 
 /**
  * One GraphQL document, with its arguments written into the document itself.
@@ -158,39 +166,32 @@ const organizationId = (): string | undefined => {
  * The right fix is for both brands to run the same pylon. This keeps the app
  * usable until they do, and keeps it usable the next time they drift.
  */
-let transferFieldsPromise: Promise<Set<string>> | undefined
+const readTransferFieldNames = async (): Promise<string[]> => {
+  const result: any = await fetchGraphQL(
+    {
+      query: 'query { __type(name: "Transfer") { fields { name } } }',
+      variables: undefined,
+      operationName: undefined
+    },
+    {}
+  )
+  const fields = result?.data?.__type?.fields
+  return Array.isArray(fields) ? fields.map((f: any) => String(f?.name)).filter(Boolean) : []
+}
 
-const transferFields = (): Promise<Set<string>> => {
-  if (!transferFieldsPromise) {
-    // The fetcher is allowed to answer synchronously, so it is wrapped rather
-    // than chained.
-    transferFieldsPromise = (async () => {
-      try {
-        const result: any = await fetchGraphQL(
-          {
-            query: 'query { __type(name: "Transfer") { fields { name } } }',
-            variables: undefined,
-            operationName: undefined
-          },
-          {}
-        )
-
-        const fields = result?.data?.__type?.fields
-
-        return new Set<string>(
-          Array.isArray(fields)
-            ? fields.map((f: any) => String(f?.name)).filter(Boolean)
-            : []
-        )
-      } catch {
-        // An endpoint that will not introspect is not a reason to render
-        // nothing: assume the current schema and let the read decide.
-        return new Set<string>()
-      }
-    })()
+/**
+ * Through the query client, so the answer is cached and persisted with the
+ * rest: a reload within the schema's staleTime asks nothing, and offline
+ * the last answer serves. An endpoint that will not introspect is not a
+ * reason to render nothing: assume the current schema and let the read
+ * decide.
+ */
+const transferFields = async (): Promise<Set<string>> => {
+  try {
+    return new Set<string>(await cachedRead(keys.schema('transferFields'), readTransferFieldNames))
+  } catch {
+    return new Set<string>()
   }
-
-  return transferFieldsPromise
 }
 
 /**
@@ -368,101 +369,87 @@ export interface TransferDateFilter {
   toISO?: string
 }
 
-export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?: TransferDateFilter) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [transfers, setTransfers] = useState<ResourceTransfer[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState<PaginationState>({
-    hasNextPage: false, hasPreviousPage: false,
-    endCursor: null, startCursor: null,
-    totalCount: 0, currentPage: 1, totalPages: 1,
-  })
-  const cursorStackRef = useRef<string[]>([])
-  const currentAfterRef = useRef<string | undefined>(undefined)
+interface TransferPageResult {
+  rows: ResourceTransfer[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
+}
 
+const EMPTY_TRANSFERS: ResourceTransfer[] = []
+
+const readTransferPage = async (args: {
+  first: number
+  after?: string
+  fromISO?: string
+  toISO?: string
+}): Promise<TransferPageResult> => {
+  const available = await transferFields()
+
+  const optional = ['price', 'paymentMethode', 'payingParty', 'referenceId']
+    .filter(name => available.size === 0 || available.has(name))
+    .join(' ')
+
+  const result = await query(
+    'transfers',
+    { args },
+    `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id customerId driverId pickupDateTime ` +
+      `pickupLocation dropoffLocation subject state requestedAt carId ` +
+      `transferCategory transferType ${optional} } } }`
+  )
+
+  const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
+  return {
+    rows: edges.map((e: any) => e?.node).filter(Boolean).map(mapTransferRow),
+    endCursor: result?.pageInfo?.endCursor ?? null,
+    hasNextPage: !!result?.pageInfo?.hasNextPage,
+    totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
+  }
+}
+
+const pageOf = (
+  page: {hasNextPage: boolean; endCursor?: string | null; totalCount: number} | undefined,
+  current: number,
+  pageSize: number
+): PaginationState => {
+  const totalCount = page?.totalCount ?? 0
+  return {
+    hasNextPage: !!page?.hasNextPage,
+    hasPreviousPage: current > 1,
+    endCursor: page?.endCursor ?? null,
+    startCursor: null,
+    totalCount,
+    currentPage: current,
+    totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+  }
+}
+
+export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?: TransferDateFilter) {
   const fromISO = dateFilter?.fromISO
   const toISO = dateFilter?.toISO
+  const pager = usePager(JSON.stringify({first: pageSize, fromISO, toISO}))
+  const args = useMemo(
+    () => ({first: pageSize, after: pager.after, fromISO, toISO}),
+    [pageSize, pager.after, fromISO, toISO]
+  )
 
-  const fetchPage = useCallback(async (after?: string, page = 1) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const args: any = { first: pageSize }
-      if (after) args.after = after
-      if (fromISO) args.fromISO = fromISO
-      if (toISO) args.toISO = toISO
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.transfers({kind: 'legacy', ...args}),
+    queryFn: () => readTransferPage(args),
+    placeholderData: keepPreviousData
+  })
 
-      const available = await transferFields()
-
-      const optional = ['price', 'paymentMethode', 'payingParty', 'referenceId']
-        .filter(name => available.size === 0 || available.has(name))
-        .join(' ')
-
-      const result = await query(
-        'transfers',
-        { args },
-        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id customerId driverId pickupDateTime ` +
-          `pickupLocation dropoffLocation subject state requestedAt carId ` +
-          `transferCategory transferType ${optional} } } }`
-      )
-
-      const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
-      const items = edges.map((e: any) => e?.node).filter(Boolean).map(mapTransferRow)
-      const totalCount = typeof result?.totalCount === 'number' ? result.totalCount : 0
-
-      setTransfers(items)
-      setPagination({
-        hasNextPage: !!result?.pageInfo?.hasNextPage,
-        hasPreviousPage: page > 1,
-        endCursor: result?.pageInfo?.endCursor ?? null,
-        startCursor: result?.pageInfo?.startCursor ?? null,
-        totalCount,
-        currentPage: page,
-        totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load transfers')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [pageSize, fromISO, toISO])
-
-  useEffect(() => {
-    cursorStackRef.current = []
-    currentAfterRef.current = undefined
-    fetchPage(undefined, 1)
-  }, [fetchPage])
+  const page = q.data
+  const transfers = page?.rows ?? EMPTY_TRANSFERS
+  const pagination = useMemo(() => pageOf(page, pager.page, pageSize), [page, pager.page, pageSize])
 
   const nextPage = useCallback(() => {
-    if (pagination.hasNextPage && pagination.endCursor) {
-      cursorStackRef.current = [...cursorStackRef.current, currentAfterRef.current ?? '']
-      currentAfterRef.current = pagination.endCursor
-      fetchPage(pagination.endCursor, pagination.currentPage + 1)
-    }
-  }, [pagination, fetchPage])
-
-  const prevPage = useCallback(() => {
-    if (pagination.currentPage > 1) {
-      const stack = [...cursorStackRef.current]
-      const prev = stack.pop()
-      cursorStackRef.current = stack
-      const cursor = prev || undefined
-      currentAfterRef.current = cursor
-      fetchPage(cursor, pagination.currentPage - 1)
-    }
-  }, [pagination, fetchPage])
-
-  const goToPage = useCallback((page: number) => {
-    if (page === 1) {
-      cursorStackRef.current = []
-      currentAfterRef.current = undefined
-      fetchPage(undefined, 1)
-    }
-  }, [fetchPage])
-
-  const refetch = useCallback(() => {
-    fetchPage(currentAfterRef.current, pagination.currentPage)
-  }, [fetchPage, pagination.currentPage])
+    if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
+  }, [page, pager])
+  const prevPage = pager.prev
+  const goToPage = useCallback((n: number) => {
+    if (n === 1) pager.first()
+  }, [pager])
 
   return { transfers, isLoading, error, pagination, nextPage, prevPage, goToPage, refetch }
 }
@@ -471,88 +458,62 @@ export function useTransfers(pageSize = DEFAULT_TRANSFER_PAGE_SIZE, dateFilter?:
 
 const DEFAULT_USER_PAGE_SIZE = 20
 
+interface UserPageResult {
+  rows: ResourceUser[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
+}
+
+const EMPTY_USERS: ResourceUser[] = []
+
+const readUserPage = async (args: {first: number; after?: string; organizationId?: string}): Promise<UserPageResult> => {
+  const result = await query(
+    'users',
+    { args },
+    `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { __typename id userName state ` +
+      `preferredLoginName creationDate changeDate } } }`
+  )
+
+  const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
+  const items = edges.map((e: any) => e?.node).filter(Boolean).map(mapUserRow)
+
+  const rows = await Promise.all(
+    items.map(async u => ({
+      ...u,
+      driverColor: await resolveDriverColor(u.id)
+    }))
+  )
+
+  return {
+    rows,
+    endCursor: result?.pageInfo?.endCursor ?? null,
+    hasNextPage: !!result?.pageInfo?.hasNextPage,
+    totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
+  }
+}
+
 export function useUsers(pageSize = DEFAULT_USER_PAGE_SIZE) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [users, setUsers] = useState<ResourceUser[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState<PaginationState>({
-    hasNextPage: false, hasPreviousPage: false,
-    endCursor: null, startCursor: null,
-    totalCount: 0, currentPage: 1, totalPages: 1,
+  const pager = usePager(JSON.stringify({kind: 'basic', first: pageSize}))
+  const args = useMemo(
+    () => ({first: pageSize, after: pager.after, organizationId: organizationId()}),
+    [pageSize, pager.after]
+  )
+
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.users({kind: 'basic', ...args}),
+    queryFn: () => readUserPage(args),
+    placeholderData: keepPreviousData
   })
-  const cursorStackRef = useRef<string[]>([])
-  const currentAfterRef = useRef<string | undefined>(undefined)
 
-  const fetchPage = useCallback(async (after?: string, page = 1) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const args: any = { first: pageSize }
-      if (after) args.after = after
-
-      const result = await query(
-        'users',
-        { args: { ...args, organizationId: organizationId() } },
-        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { __typename id userName state ` +
-          `preferredLoginName creationDate changeDate } } }`
-      )
-
-      const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
-      const items = edges.map((e: any) => e?.node).filter(Boolean).map(mapUserRow)
-      const totalCount = typeof result?.totalCount === 'number' ? result.totalCount : 0
-
-      const enriched = await Promise.all(
-        items.map(async u => ({
-          ...u,
-          driverColor: await resolveDriverColor(u.id)
-        }))
-      )
-
-      setUsers(enriched)
-      setPagination({
-        hasNextPage: !!result?.pageInfo?.hasNextPage,
-        hasPreviousPage: page > 1,
-        endCursor: result?.pageInfo?.endCursor ?? null,
-        startCursor: result?.pageInfo?.startCursor ?? null,
-        totalCount,
-        currentPage: page,
-        totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load users')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [pageSize])
-
-  useEffect(() => {
-    cursorStackRef.current = []
-    currentAfterRef.current = undefined
-    fetchPage(undefined, 1)
-  }, [fetchPage])
+  const page = q.data
+  const users = page?.rows ?? EMPTY_USERS
+  const pagination = useMemo(() => pageOf(page, pager.page, pageSize), [page, pager.page, pageSize])
 
   const nextPage = useCallback(() => {
-    if (pagination.hasNextPage && pagination.endCursor) {
-      cursorStackRef.current = [...cursorStackRef.current, currentAfterRef.current ?? '']
-      currentAfterRef.current = pagination.endCursor
-      fetchPage(pagination.endCursor, pagination.currentPage + 1)
-    }
-  }, [pagination, fetchPage])
-
-  const prevPage = useCallback(() => {
-    if (pagination.currentPage > 1) {
-      const stack = [...cursorStackRef.current]
-      const prev = stack.pop()
-      cursorStackRef.current = stack
-      const cursor = prev || undefined
-      currentAfterRef.current = cursor
-      fetchPage(cursor, pagination.currentPage - 1)
-    }
-  }, [pagination, fetchPage])
-
-  const refetch = useCallback(() => {
-    fetchPage(currentAfterRef.current, pagination.currentPage)
-  }, [fetchPage, pagination.currentPage])
+    if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
+  }, [page, pager])
+  const prevPage = pager.prev
 
   return { users, isLoading, error, pagination, nextPage, prevPage, refetch }
 }
@@ -570,205 +531,162 @@ export function useUsers(pageSize = DEFAULT_USER_PAGE_SIZE) {
  * dropped here rather than in the view, because an inactive driver is not a
  * choice on any screen.
  */
+const EMPTY_DRIVERS: ResourceUser[] = []
+
+const readDrivers = async (): Promise<ResourceUser[]> => {
+  const roleKey = driverRoleKey()
+
+  // A consumer that configures no role gets the old behaviour rather than
+  // an empty screen.
+  if (!roleKey) return []
+
+  const result = await query(
+    'usersByRole',
+    { args: { roleKey, first: 200, organizationId: organizationId() } },
+    `{ edges { node { __typename id userName preferredLoginName state creationDate ` +
+      `... on HumanUser { profiles { edges { node { firstName lastName avatarUrl } } } } } } }`
+  )
+
+  const rows = (Array.isArray(result?.edges) ? result.edges : [])
+    .map((e: any) => e?.node)
+    .filter(Boolean)
+    .filter((n: any) => n?.state === 'USER_STATE_ACTIVE')
+    .map((n: any) => {
+      const mapped = mapUserRow(n)
+      const profile = (n?.profiles?.edges ?? [])[0]?.node
+
+      return profile
+        ? {
+            ...mapped,
+            details: {
+              avatarURL: profile.avatarUrl ?? undefined,
+              firstName: profile.firstName ?? undefined,
+              lastName: profile.lastName ?? undefined
+            }
+          }
+        : mapped
+    })
+
+  // The colour, once per driver rather than once per transfer row. A
+  // dispatcher has a handful of drivers and a page has fifteen transfers,
+  // so this is the cheap end of the join, and it is what feeds both the
+  // picker swatch and the coloured border on the transfer list.
+  const colours = await Promise.all(
+    rows.map((row: ResourceUser) => resolveDriverColor(row.id))
+  )
+  colours.forEach((colour, index) => {
+    if (colour) rows[index].driverColor = colour
+  })
+
+  // By name, so the picker reads the way a person would look through it.
+  rows.sort((a: ResourceUser, b: ResourceUser) =>
+    `${a.details?.firstName ?? ''} ${a.details?.lastName ?? ''}`.trim().localeCompare(
+      `${b.details?.firstName ?? ''} ${b.details?.lastName ?? ''}`.trim()
+    )
+  )
+
+  return rows
+}
+
 export function useDrivers() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [drivers, setDrivers] = useState<ResourceUser[]>([])
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchDrivers = useCallback(async () => {
-    const roleKey = driverRoleKey()
-
-    if (!roleKey) {
-      // A consumer that configures no role gets the old behaviour rather than
-      // an empty screen.
-      setDrivers([])
-      setIsLoading(false)
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const result = await query(
-        'usersByRole',
-        { args: { roleKey, first: 200, organizationId: organizationId() } },
-        `{ edges { node { __typename id userName preferredLoginName state creationDate ` +
-          `... on HumanUser { profiles { edges { node { firstName lastName avatarUrl } } } } } } }`
-      )
-
-      const rows = (Array.isArray(result?.edges) ? result.edges : [])
-        .map((e: any) => e?.node)
-        .filter(Boolean)
-        .filter((n: any) => n?.state === 'USER_STATE_ACTIVE')
-        .map((n: any) => {
-          const mapped = mapUserRow(n)
-          const profile = (n?.profiles?.edges ?? [])[0]?.node
-
-          return profile
-            ? {
-                ...mapped,
-                details: {
-                  avatarURL: profile.avatarUrl ?? undefined,
-                  firstName: profile.firstName ?? undefined,
-                  lastName: profile.lastName ?? undefined
-                }
-              }
-            : mapped
-        })
-
-      // The colour, once per driver rather than once per transfer row. A
-      // dispatcher has a handful of drivers and a page has fifteen transfers,
-      // so this is the cheap end of the join, and it is what feeds both the
-      // picker swatch and the coloured border on the transfer list.
-      const colours = await Promise.all(
-        rows.map((row: ResourceUser) => resolveDriverColor(row.id))
-      )
-      colours.forEach((colour, index) => {
-        if (colour) rows[index].driverColor = colour
-      })
-
-      // By name, so the picker reads the way a person would look through it.
-      rows.sort((a: ResourceUser, b: ResourceUser) =>
-        `${a.details?.firstName ?? ''} ${a.details?.lastName ?? ''}`.trim().localeCompare(
-          `${b.details?.firstName ?? ''} ${b.details?.lastName ?? ''}`.trim()
-        )
-      )
-
-      setDrivers(rows)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load drivers')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { fetchDrivers() }, [fetchDrivers])
-
-  return { drivers, isLoading, error, refetch: fetchDrivers }
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.drivers(),
+    queryFn: readDrivers
+  })
+  return { drivers: q.data ?? EMPTY_DRIVERS, isLoading, error, refetch }
 }
 
 // --------------- useLocations (paginated) ---------------
 
 const DEFAULT_LOCATION_PAGE_SIZE = 20
 
+interface LocationPageResult {
+  rows: ResourceLocationRow[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
+}
+
+const EMPTY_LOCATIONS: ResourceLocationRow[] = []
+
+const readLocationPage = async (args: {first: number; after?: string}): Promise<LocationPageResult> => {
+  const driverConn = await query(
+    'driverLocations',
+    { args },
+    `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id latitude longitude accuracy recordedAt updatedAt driverId } } }`
+  )
+
+  const customerConn = await query(
+    'customerLocations',
+    { args },
+    `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id latitude longitude accuracy recordedAt updatedAt customerId } } }`
+  ).catch(() => null)
+
+  const out: ResourceLocationRow[] = []
+
+  const driverEdges: any[] = Array.isArray(driverConn?.edges) ? driverConn.edges : []
+  for (const e of driverEdges) {
+    const n = e?.node
+    if (!n) continue
+    out.push({
+      kind: 'driver',
+      id: String(n?.id ?? ''),
+      userId: String(n?.driverId ?? ''),
+      latitude: Number(n?.latitude ?? 0),
+      longitude: Number(n?.longitude ?? 0),
+      accuracy: typeof n?.accuracy === 'number' ? n.accuracy : undefined,
+      recordedAtISO: n?.recordedAt ? String(n.recordedAt) : undefined,
+      updatedAtISO: n?.updatedAt ? String(n.updatedAt) : undefined,
+    })
+  }
+
+  const customerEdges: any[] = Array.isArray(customerConn?.edges) ? customerConn.edges : []
+  for (const e of customerEdges) {
+    const n = e?.node
+    if (!n) continue
+    out.push({
+      kind: 'customer',
+      id: String(n?.id ?? ''),
+      userId: String(n?.customerId ?? ''),
+      latitude: Number(n?.latitude ?? 0),
+      longitude: Number(n?.longitude ?? 0),
+      accuracy: typeof n?.accuracy === 'number' ? n.accuracy : undefined,
+      recordedAtISO: n?.recordedAt ? String(n.recordedAt) : undefined,
+      updatedAtISO: n?.updatedAt ? String(n.updatedAt) : undefined,
+    })
+  }
+
+  out.sort((a, b) => String(b.updatedAtISO ?? '').localeCompare(String(a.updatedAtISO ?? '')))
+
+  const driverTotal = typeof driverConn?.totalCount === 'number' ? driverConn.totalCount : driverEdges.length
+  const customerTotal = typeof customerConn?.totalCount === 'number' ? customerConn.totalCount : customerEdges.length
+
+  return {
+    rows: out,
+    endCursor: driverConn?.pageInfo?.endCursor ?? customerConn?.pageInfo?.endCursor ?? null,
+    hasNextPage: !!driverConn?.pageInfo?.hasNextPage || !!customerConn?.pageInfo?.hasNextPage,
+    totalCount: driverTotal + customerTotal
+  }
+}
+
 export function useLocations(pageSize = DEFAULT_LOCATION_PAGE_SIZE) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [locations, setLocations] = useState<ResourceLocationRow[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState<PaginationState>({
-    hasNextPage: false, hasPreviousPage: false,
-    endCursor: null, startCursor: null,
-    totalCount: 0, currentPage: 1, totalPages: 1,
+  const pager = usePager(JSON.stringify({first: pageSize}))
+  const args = useMemo(() => ({first: pageSize, after: pager.after}), [pageSize, pager.after])
+
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.locations(args),
+    queryFn: () => readLocationPage(args),
+    placeholderData: keepPreviousData
   })
-  const cursorStackRef = useRef<string[]>([])
-  const currentAfterRef = useRef<string | undefined>(undefined)
 
-  const fetchPage = useCallback(async (after?: string, page = 1) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const args: any = { first: pageSize }
-      if (after) args.after = after
-
-      const driverConn = await query(
-        'driverLocations',
-        { args },
-        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id latitude longitude accuracy recordedAt updatedAt driverId } } }`
-      )
-
-      const customerConn = await query(
-        'customerLocations',
-        { args },
-        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id latitude longitude accuracy recordedAt updatedAt customerId } } }`
-      ).catch(() => null)
-
-      const out: ResourceLocationRow[] = []
-
-      const driverEdges: any[] = Array.isArray(driverConn?.edges) ? driverConn.edges : []
-      for (const e of driverEdges) {
-        const n = e?.node
-        if (!n) continue
-        out.push({
-          kind: 'driver',
-          id: String(n?.id ?? ''),
-          userId: String(n?.driverId ?? ''),
-          latitude: Number(n?.latitude ?? 0),
-          longitude: Number(n?.longitude ?? 0),
-          accuracy: typeof n?.accuracy === 'number' ? n.accuracy : undefined,
-          recordedAtISO: n?.recordedAt ? String(n.recordedAt) : undefined,
-          updatedAtISO: n?.updatedAt ? String(n.updatedAt) : undefined,
-        })
-      }
-
-      const customerEdges: any[] = Array.isArray(customerConn?.edges) ? customerConn.edges : []
-      for (const e of customerEdges) {
-        const n = e?.node
-        if (!n) continue
-        out.push({
-          kind: 'customer',
-          id: String(n?.id ?? ''),
-          userId: String(n?.customerId ?? ''),
-          latitude: Number(n?.latitude ?? 0),
-          longitude: Number(n?.longitude ?? 0),
-          accuracy: typeof n?.accuracy === 'number' ? n.accuracy : undefined,
-          recordedAtISO: n?.recordedAt ? String(n.recordedAt) : undefined,
-          updatedAtISO: n?.updatedAt ? String(n.updatedAt) : undefined,
-        })
-      }
-
-      out.sort((a, b) => String(b.updatedAtISO ?? '').localeCompare(String(a.updatedAtISO ?? '')))
-
-      const driverTotal = typeof driverConn?.totalCount === 'number' ? driverConn.totalCount : driverEdges.length
-      const customerTotal = typeof customerConn?.totalCount === 'number' ? customerConn.totalCount : customerEdges.length
-      const totalCount = driverTotal + customerTotal
-      const hasNextPage = !!driverConn?.pageInfo?.hasNextPage || !!customerConn?.pageInfo?.hasNextPage
-
-      setLocations(out)
-      setPagination({
-        hasNextPage,
-        hasPreviousPage: page > 1,
-        endCursor: driverConn?.pageInfo?.endCursor ?? customerConn?.pageInfo?.endCursor ?? null,
-        startCursor: null,
-        totalCount,
-        currentPage: page,
-        totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load locations')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [pageSize])
-
-  useEffect(() => {
-    cursorStackRef.current = []
-    currentAfterRef.current = undefined
-    fetchPage(undefined, 1)
-  }, [fetchPage])
+  const page = q.data
+  const locations = page?.rows ?? EMPTY_LOCATIONS
+  const pagination = useMemo(() => pageOf(page, pager.page, pageSize), [page, pager.page, pageSize])
 
   const nextPage = useCallback(() => {
-    if (pagination.hasNextPage && pagination.endCursor) {
-      cursorStackRef.current = [...cursorStackRef.current, currentAfterRef.current ?? '']
-      currentAfterRef.current = pagination.endCursor
-      fetchPage(pagination.endCursor, pagination.currentPage + 1)
-    }
-  }, [pagination, fetchPage])
-
-  const prevPage = useCallback(() => {
-    if (pagination.currentPage > 1) {
-      const stack = [...cursorStackRef.current]
-      const prev = stack.pop()
-      cursorStackRef.current = stack
-      const cursor = prev || undefined
-      currentAfterRef.current = cursor
-      fetchPage(cursor, pagination.currentPage - 1)
-    }
-  }, [pagination, fetchPage])
-
-  const refetch = useCallback(() => {
-    fetchPage(currentAfterRef.current, pagination.currentPage)
-  }, [fetchPage, pagination.currentPage])
+    if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
+  }, [page, pager])
+  const prevPage = pager.prev
 
   return { locations, isLoading, error, pagination, nextPage, prevPage, refetch }
 }
@@ -785,50 +703,42 @@ export interface ResourceCar {
   driverName?: string
 }
 
-export function useCars() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [cars, setCars] = useState<ResourceCar[]>([])
-  const [error, setError] = useState<string | null>(null)
+const EMPTY_CARS: ResourceCar[] = []
 
-  const fetchCars = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      // One path now. The try/catch around a raw document with the GQty call
-      // as its fallback existed because the document failed on booklimo; the
-      // fallback is the only half that ever worked there, so it is all that
-      // is left.
-      const conn = await query(
-        'cars',
-        { args: { first: 200 } },
-        `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id carName licensePlate color ` +
-          `carClass driverId driverName } } }`
-      )
-      const edges: any[] = Array.isArray(conn?.edges) ? conn.edges : []
+const readCars = async (): Promise<ResourceCar[]> => {
+  // One path now. The try/catch around a raw document with the GQty call
+  // as its fallback existed because the document failed on booklimo; the
+  // fallback is the only half that ever worked there, so it is all that
+  // is left.
+  const conn = await query(
+    'cars',
+    { args: { first: 200 } },
+    `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id carName licensePlate color ` +
+      `carClass driverId driverName } } }`
+  )
+  const edges: any[] = Array.isArray(conn?.edges) ? conn.edges : []
 
-      const items: ResourceCar[] = edges.map((e: any) => {
-        const n = e?.node
-        return {
-          id: String(n?.id ?? ''),
-          carName: n?.carName ?? undefined,
-          licensePlate: String(n?.licensePlate ?? ''),
-          color: String(n?.color ?? ''),
-          carClass: n?.carClass ?? undefined,
-          driverId: n?.driverId ?? undefined,
-          driverName: n?.driverName ?? undefined,
-        }
-      })
-      setCars(items)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load cars')
-    } finally {
-      setIsLoading(false)
+  return edges.map((e: any) => {
+    const n = e?.node
+    return {
+      id: String(n?.id ?? ''),
+      carName: n?.carName ?? undefined,
+      licensePlate: String(n?.licensePlate ?? ''),
+      color: String(n?.color ?? ''),
+      carClass: n?.carClass ?? undefined,
+      driverId: n?.driverId ?? undefined,
+      driverName: n?.driverName ?? undefined,
     }
-  }, [])
+  })
+}
 
-  useEffect(() => { fetchCars() }, [fetchCars])
-
-  return { cars, isLoading, error, refetch: fetchCars }
+/** The cars for the pickers, under the fleet's key so a fleet mutation refreshes them too. */
+export function useCars() {
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.fleetPicker(),
+    queryFn: readCars
+  })
+  return { cars: q.data ?? EMPTY_CARS, isLoading, error, refetch }
 }
 
 // --------------- Driver Color ---------------
@@ -837,7 +747,16 @@ export async function fetchDriverColor(userId: string): Promise<string | undefin
   return resolveDriverColor(userId)
 }
 
+/**
+ * The colour is read on the driver's row, in the pickers, on the dashboard
+ * and on a customer's booking, so every one of those is invalidated.
+ */
 export async function setDriverColorMutation(userId: string, color: string): Promise<boolean> {
   const result = await query('setDriverColor', { userId, color }, '', 'mutation')
+  await Promise.all(
+    [['users'], ['user', userId], ['drivers'], ['driverColor', userId], ['bookingDriver', userId], ['dashboard']].map(
+      queryKey => queryClient.invalidateQueries({ queryKey })
+    )
+  )
   return !!result
 }

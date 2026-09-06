@@ -15,7 +15,10 @@
  * The bottom bar
  * that used to sit on a phone is gone: Apple put the home indicator exactly
  * there, and nothing in this shell is fixed to the bottom of the viewport on
- * any breakpoint, so the safe-area padding that cleared it is gone with it.
+ * any breakpoint by default. The one exception is opt-in: the glass tab bar
+ * of GlassTabBar.tsx, mounted here, which exists only in app mode (the PWA
+ * installed) and only while the switch on the Me page is on. While it is on,
+ * and only then, the content gets the bottom padding that clears it.
  *
  * Theme bridge, or rather the absence of one. There is nothing to provide
  * here and the app must not mount a provider of its own. gatsby-plugin-jaen's
@@ -48,6 +51,7 @@ import {fetchTransfer, transferPath, transferSlug, useTransferList} from '../../
 import {isOnline, isOfflineMessage, setOfflineLanguage} from '../../shared/offline'
 import {getI18nOffline} from '../../shared/locales/i18nOffline'
 import {navFor} from './nav'
+import {GlassTabBar, GLASS_TAB_BAR_CLEARANCE, useGlassTabBarActive} from './GlassTabBar'
 
 export interface AppShellProps {
   children: React.ReactNode
@@ -168,6 +172,9 @@ export function AppShell({children}: AppShellProps) {
   setOfflineLanguage(code)
 
   const nothingToOffer = !caller.loading && navFor(caller).length === 0
+  // App mode and the switch on. The bar itself hides at md in CSS, and so
+  // does the padding, so a tablet turned sideways is not re-rendered.
+  const tabBar = useGlassTabBarActive()
 
   const retry = () => {
     resetCaller()
@@ -193,7 +200,11 @@ export function AppShell({children}: AppShellProps) {
           once per session. A dispatcher who also drives gets it too. */}
       {caller.isDriver && caller.userId ? <DriverShiftPrefetch userId={caller.userId} /> : null}
 
-      <Box as="main" flex="1" position="relative">
+      <Box
+        as="main"
+        flex="1"
+        position="relative"
+        pb={tabBar ? {base: GLASS_TAB_BAR_CLEARANCE, md: 0} : undefined}>
         {caller.error ? (
           <Box p="4">
             {/* Offline with nothing stored, the roles could not be read: the
@@ -214,6 +225,8 @@ export function AppShell({children}: AppShellProps) {
           children
         )}
       </Box>
+      {/* Renders nothing outside app mode or with the switch off. */}
+      <GlassTabBar />
     </Box>
   )
 }

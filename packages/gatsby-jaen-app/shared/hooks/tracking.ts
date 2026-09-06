@@ -24,12 +24,18 @@
  * and the driver's ride screen can both be mounted and there is still one
  * GPS watch and one send loop. The integrator mounts `DriverPositionSender`
  * once in the shell and that is enough for the loop to run on every screen.
+ *
+ * The reads are queries of the one client in ./query.ts: `['tracking',
+ * transferId]`, polled by the client while the ride is live, `['geocode',
+ * address]` and `['driverColor', userId]`. See okf/architecture/data-layer.md.
  */
-import {useCallback, useEffect, useState} from 'react'
+import {useCallback, useEffect, useMemo, useState} from 'react'
+import {useQueries} from '@tanstack/react-query'
 import {useCaller} from '../auth'
 import {isOnline} from '../offline'
 import {gql} from './bookings'
 import {fetchDriverColor} from '../hooks'
+import {keys, queryClient, useAppQuery, useRestored} from './query'
 import {readPosition, readReason, type GeoPosition, type GeolocationReason} from './use-geolocation'
 
 // --------------- The live states ---------------
@@ -140,7 +146,10 @@ export interface UseTransferTrackingOptions {
 
 /**
  * One transfer's tracking, polled every `pollMs` while the ride is live and
- * the tab is visible, read once and left alone otherwise.
+ * the tab is visible, read once and left alone otherwise. The client does
+ * the polling: `refetchInterval` while live, paused while the tab is hidden,
+ * and a read at once when the tab comes back, because the read is never
+ * fresh.
  */
 export function useTransferTracking(
   transferId: string | undefined,
@@ -148,72 +157,27 @@ export function useTransferTracking(
   options: UseTransferTrackingOptions = {}
 ) {
   const enabled = options.enabled ?? true
-  const [tracking, setTracking] = useState<TransferTracking | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(!!transferId && enabled)
-  const [error, setError] = useState<string | null>(null)
+  const id = transferId ?? ''
+
+  const {query: q, isLoading, error: message, refetch} = useAppQuery({
+    queryKey: keys.tracking(id),
+    queryFn: () => fetchTransferTracking(id),
+    enabled: !!transferId && enabled,
+    refetchInterval: query => {
+      const held = query.state.data
+      return held && isTracked(held.state) && !!transferId && enabled ? Math.max(2_000, pollMs) : false
+    },
+    refetchIntervalInBackground: false
+  })
+
+  const tracking = q.data ?? null
   /** The deployment does not know the field. Nothing to poll. */
-  const [unavailable, setUnavailable] = useState(false)
-  const [fetchedAt, setFetchedAt] = useState<number | null>(null)
-
-  const load = useCallback(async () => {
-    if (!transferId || !enabled) return
-    try {
-      const next = await fetchTransferTracking(transferId)
-      setTracking(next)
-      setError(null)
-      setUnavailable(false)
-      setFetchedAt(Date.now())
-    } catch (err) {
-      if (isMissingField(err)) {
-        setUnavailable(true)
-        return
-      }
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setIsLoading(false)
-    }
-  }, [transferId, enabled])
-
-  useEffect(() => {
-    setTracking(null)
-    setError(null)
-    setUnavailable(false)
-    setIsLoading(!!transferId && enabled)
-    void load()
-  }, [load, transferId, enabled])
-
+  const unavailable = isMissingField(q.error)
+  const error = unavailable ? null : message
+  const fetchedAt = q.dataUpdatedAt || null
   const live = !!tracking && isTracked(tracking.state) && !unavailable && enabled
 
-  useEffect(() => {
-    if (!live) return
-    let timer: number | undefined
-
-    const start = () => {
-      stop()
-      timer = window.setInterval(() => void load(), Math.max(2_000, pollMs))
-    }
-    const stop = () => {
-      if (timer !== undefined) window.clearInterval(timer)
-      timer = undefined
-    }
-    // A hidden tab reads nothing, a tab that comes back reads at once.
-    const onVisibility = () => {
-      if (document.visibilityState === 'hidden') stop()
-      else {
-        void load()
-        start()
-      }
-    }
-
-    if (document.visibilityState !== 'hidden') start()
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      stop()
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [live, load, pollMs])
-
-  return {tracking, isLoading, error, unavailable, fetchedAt, live, refetch: load}
+  return {tracking, isLoading, error, unavailable, fetchedAt, live, refetch}
 }
 
 // --------------- Geocoding the pickup ---------------
@@ -223,126 +187,75 @@ export interface LngLat {
   lat: number
 }
 
-/** One answer per address per tab. The same pickup is asked once, not every poll. */
-const geocodeCache = new Map<string, Promise<LngLat | null>>()
-
 /**
  * The pickup address as a point, through Mapbox's forward geocoder with the
  * same public token the map uses. Vienna is the proximity hint, the fleet's
  * home, so "Stephansplatz" finds the one in Vienna. Null when nothing was
  * found or the token is empty, and the caller draws the map without a pin.
+ * The same address is one query `['geocode', address]` of the client, asked
+ * once and kept.
  */
-export const geocodeAddress = (address: string, token: string): Promise<LngLat | null> => {
+export const geocodeAddress = async (address: string, token: string): Promise<LngLat | null> => {
   const key = address.trim().toLowerCase()
-  if (!key || !token) return Promise.resolve(null)
-  const cached = geocodeCache.get(key)
-  if (cached) return cached
-
-  const promise = (async () => {
-    const url =
-      'https://api.mapbox.com/search/geocode/v6/forward' +
-      `?q=${encodeURIComponent(address.trim())}` +
-      '&limit=1&proximity=16.3738,48.2082' +
-      `&access_token=${encodeURIComponent(token)}`
-    const res = await fetch(url)
-    if (!res.ok) throw new Error(`Geocoding answered ${res.status}`)
-    const body: any = await res.json()
-    const coords = body?.features?.[0]?.geometry?.coordinates
-    const lng = number(coords?.[0])
-    const lat = number(coords?.[1])
-    return lng !== undefined && lat !== undefined ? {lng, lat} : null
-  })().catch(err => {
-    // A failed lookup is not cached, the next mount asks again.
-    geocodeCache.delete(key)
-    throw err
-  })
-
-  geocodeCache.set(key, promise)
-  return promise
+  if (!key || !token) return null
+  const url =
+    'https://api.mapbox.com/search/geocode/v6/forward' +
+    `?q=${encodeURIComponent(address.trim())}` +
+    '&limit=1&proximity=16.3738,48.2082' +
+    `&access_token=${encodeURIComponent(token)}`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Geocoding answered ${res.status}`)
+  const body: any = await res.json()
+  const coords = body?.features?.[0]?.geometry?.coordinates
+  const lng = number(coords?.[0])
+  const lat = number(coords?.[1])
+  return lng !== undefined && lat !== undefined ? {lng, lat} : null
 }
 
 export function useGeocode(address: string | null | undefined, token: string) {
-  const [point, setPoint] = useState<LngLat | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(!!address && !!token)
-
-  useEffect(() => {
-    let cancelled = false
-    if (!address || !token) {
-      setPoint(null)
-      setIsLoading(false)
-      return
-    }
-    setIsLoading(true)
-    geocodeAddress(address, token)
-      .then(p => {
-        if (cancelled) return
-        setPoint(p)
-        setError(null)
-      })
-      .catch(err => {
-        if (cancelled) return
-        setPoint(null)
-        setError(err instanceof Error ? err.message : String(err))
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [address, token])
-
-  return {point, error, isLoading}
+  const key = (address ?? '').trim().toLowerCase()
+  const {query: q, isLoading, error} = useAppQuery({
+    queryKey: keys.geocode(key),
+    queryFn: () => geocodeAddress(address ?? '', token),
+    enabled: !!key && !!token
+  })
+  return {point: q.data ?? null, error, isLoading}
 }
 
 // --------------- Driver colours for the dispatcher's map ---------------
 
-/** One colour per driver per tab, the map asks for a handful and never twice. */
-const colorCache = new Map<string, Promise<string | undefined>>()
+const NO_COLORS: Record<string, string | undefined> = {}
 
 /**
- * The colours of the drivers on the map, by user id. `fetchDriverColor`
- * answers undefined for the silver default and for any failure, and the map
- * draws those grey: see markerColorFor in components/locations/mapbox-token.
+ * The colours of the drivers on the map, by user id, one query
+ * `['driverColor', userId]` each. `fetchDriverColor` answers undefined for
+ * the silver default and for any failure, and the map draws those grey: see
+ * markerColorFor in components/locations/mapbox-token. The record is only
+ * rebuilt when an answer changes.
  */
 export function useDriverColors(userIds: string[]): Record<string, string | undefined> {
-  const [colors, setColors] = useState<Record<string, string | undefined>>({})
+  const restored = useRestored()
   const key = userIds.filter(Boolean).sort().join('|')
+  const ids = useMemo(() => (key ? key.split('|') : []), [key])
 
-  useEffect(() => {
-    let cancelled = false
-    const ids = key ? key.split('|') : []
-    const missing = ids.filter(id => !(id in colors))
-    if (missing.length === 0) return
-
-    void Promise.all(
-      missing.map(id => {
-        let p = colorCache.get(id)
-        if (!p) {
-          p = fetchDriverColor(id)
-          colorCache.set(id, p)
-        }
-        return p.then(c => [id, c] as const)
-      })
-    ).then(pairs => {
-      if (cancelled) return
-      setColors(prev => {
-        const next = {...prev}
-        for (const [id, c] of pairs) next[id] = c
-        return next
-      })
-    })
-
-    return () => {
-      cancelled = true
-    }
-    // `colors` is deliberately not a dependency: the effect fills it in and
-    // must not run again for its own write.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
-
-  return colors
+  return useQueries(
+    {
+      queries: ids.map(id => ({
+        queryKey: keys.driverColor(id),
+        queryFn: () => fetchDriverColor(id),
+        enabled: restored
+      })),
+      combine: results => {
+        const out: Record<string, string | undefined> = {}
+        results.forEach((r, i) => {
+          const id = ids[i]
+          if (id && r.isSuccess) out[id] = r.data
+        })
+        return Object.keys(out).length ? out : NO_COLORS
+      }
+    },
+    queryClient
+  )
 }
 
 // --------------- The driver's sender ---------------

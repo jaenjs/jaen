@@ -8,11 +8,12 @@
  * colour mode like every other surface in the app.
  */
 import {useState, useMemo, useCallback} from 'react'
-import {Button, CloseButton, DataList, Drawer, HStack, Portal, Text} from '@chakra-ui/react'
+import {CloseButton, DataList, Drawer, HStack, Portal, Text} from '@chakra-ui/react'
 import {FaMapMarkerAlt} from '@react-icons/all-files/fa/FaMapMarkerAlt'
 import {useI18nCode} from '../../i18n'
 import {getI18nTracking} from '../../locales/i18nTracking'
 import {DriverColorDot} from '../DriverColor'
+import {DialogActions} from '../DialogActions'
 import {LocationMapView} from './LocationMapView'
 import {rowColorFor} from './mapbox-token'
 
@@ -141,15 +142,18 @@ function LocationDetailDrawer({location, onClose}: {location: LocationRow | null
                 </DataList.Root>
               )}
             </Drawer.Body>
-            <Drawer.Footer>
-              {navigateUrl && (
-                <Button asChild colorPalette="brand" w="full">
-                  <a href={navigateUrl} target="_blank" rel="noopener noreferrer">
-                    <FaMapMarkerAlt /> {t.PlanRoute}
-                  </a>
-                </Button>
-              )}
-            </Drawer.Footer>
+            {navigateUrl && (
+              <Drawer.Footer>
+                <DialogActions
+                  href={navigateUrl}
+                  confirmLabel={
+                    <>
+                      <FaMapMarkerAlt /> {t.PlanRoute}
+                    </>
+                  }
+                />
+              </Drawer.Footer>
+            )}
           </Drawer.Content>
         </Drawer.Positioner>
       </Portal>

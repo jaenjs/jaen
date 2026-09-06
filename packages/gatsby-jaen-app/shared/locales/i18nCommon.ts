@@ -1,5 +1,9 @@
 import type { I18nCode } from '../i18n'
 
+/** `{name}` style placeholders, filled in. */
+export const fill = (template: string, values: Record<string, string | number>): string =>
+  Object.entries(values).reduce((s, [k, v]) => s.split(`{${k}}`).join(String(v)), template)
+
 export function getI18nCommon(code: I18nCode) {
   if (code === 'en-US') {
     return {
@@ -16,6 +20,7 @@ export function getI18nCommon(code: I18nCode) {
         Previous: 'Previous',
         Next: 'Next',
         PaginationOf: 'of {totalPages} ({totalCount} total)',
+        PageLabel: 'Page {page} of {pages}',
 
         StatusCompleted: 'Completed',
         StatusPlanned: 'Planned',
@@ -88,6 +93,7 @@ export function getI18nCommon(code: I18nCode) {
         Previous: 'Önceki',
         Next: 'Sonraki',
         PaginationOf: '{totalPages} sayfa ({totalCount} toplam)',
+        PageLabel: 'Sayfa {page} / {pages}',
 
         StatusCompleted: 'Tamamlandı',
         StatusPlanned: 'Planlandı',
@@ -160,6 +166,7 @@ export function getI18nCommon(code: I18nCode) {
         Previous: 'السابق',
         Next: 'التالي',
         PaginationOf: 'من {totalPages} ({totalCount} إجمالي)',
+        PageLabel: 'الصفحة {page} من {pages}',
 
         StatusCompleted: 'مكتمل',
         StatusPlanned: 'مخطط',
@@ -232,6 +239,7 @@ export function getI18nCommon(code: I18nCode) {
       Previous: 'Zurück',
       Next: 'Weiter',
       PaginationOf: 'von {totalPages} ({totalCount} gesamt)',
+      PageLabel: 'Seite {page} von {pages}',
 
       StatusCompleted: 'Abgeschlossen',
       StatusPlanned: 'Geplant',

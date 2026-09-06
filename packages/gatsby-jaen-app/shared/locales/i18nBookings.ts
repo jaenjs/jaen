@@ -122,6 +122,12 @@ export function getI18nBookings(code: I18nCode) {
         StatementsColRoute: 'Route',
         StatementsColAmount: 'Amount',
         StatementsColShare: 'Share',
+        StatementsColNr: 'No.',
+        StatementsColVehicle: 'Vehicle',
+        StatementsColPayment: 'Payment',
+        StatementsColFiles: 'Files',
+        StatementsCount: '{count} statements',
+        StatementsLinesCount: '{count} rides',
       },
     }
   }
@@ -238,6 +244,12 @@ export function getI18nBookings(code: I18nCode) {
         StatementsColRoute: 'Güzergah',
         StatementsColAmount: 'Tutar',
         StatementsColShare: 'Pay',
+        StatementsColNr: 'No',
+        StatementsColVehicle: 'Araç',
+        StatementsColPayment: 'Ödeme',
+        StatementsColFiles: 'Dosyalar',
+        StatementsCount: '{count} hesap özeti',
+        StatementsLinesCount: '{count} yolculuk',
       },
     }
   }
@@ -354,6 +366,12 @@ export function getI18nBookings(code: I18nCode) {
         StatementsColRoute: 'المسار',
         StatementsColAmount: 'المبلغ',
         StatementsColShare: 'الحصة',
+        StatementsColNr: 'رقم',
+        StatementsColVehicle: 'المركبة',
+        StatementsColPayment: 'الدفع',
+        StatementsColFiles: 'الملفات',
+        StatementsCount: '{count} كشوف حساب',
+        StatementsLinesCount: '{count} رحلات',
       },
     }
   }
@@ -470,6 +488,12 @@ export function getI18nBookings(code: I18nCode) {
       StatementsColRoute: 'Strecke',
       StatementsColAmount: 'Betrag',
       StatementsColShare: 'Anteil',
+      StatementsColNr: 'Nr.',
+      StatementsColVehicle: 'Fahrzeug',
+      StatementsColPayment: 'Zahlung',
+      StatementsColFiles: 'Dateien',
+      StatementsCount: '{count} Abrechnungen',
+      StatementsLinesCount: '{count} Fahrten',
     },
   }
 }

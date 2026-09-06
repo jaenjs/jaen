@@ -7,11 +7,18 @@
  * these hooks shows a FORBIDDEN banner to anyone else. That is intended: the
  * shell hides the entry, the backend refuses the read, and this file does not
  * try to be a third gate.
+ *
+ * The reads are queries of the one client in ./query.ts, `['users', args]`
+ * per page, `['user', id]` per account, and the mutations invalidate them.
+ * The hooks keep their names and shapes, see okf/architecture/data-layer.md.
  */
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useMemo, useState} from 'react'
+import {keepPreviousData} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
 import {ADMIN_ROLE, brandKnownRoles, CUSTOMER_ROLE, DRIVER_ROLE} from '../auth'
 import {setDriverColorMutation, type PaginationState} from '../hooks'
+import {fetchDashboard} from './dashboard'
+import {cachedRead, keys, queryClient, useAppQuery, usePager} from './query'
 
 export {setDriverColorMutation}
 
@@ -85,37 +92,37 @@ export const gql = async (
  * its shape. `__typename` is valid on any object, which is all a screen needs
  * back from "deactivate this account" before it refetches.
  */
-let mutationShapePromise: Promise<Map<string, string>> | undefined
-
 const unwrap = (t: any): any => (t?.ofType ? unwrap(t.ofType) : t)
 
-const mutationShapes = (): Promise<Map<string, string>> => {
-  if (!mutationShapePromise) {
-    mutationShapePromise = (async () => {
-      const shapes = new Map<string, string>()
-      try {
-        const result: any = await fetchGraphQL(
-          {
-            query:
-              'query { __schema { mutationType { fields { name type { kind ofType { kind ofType { kind ofType { kind } } } } } } } }',
-            variables: undefined,
-            operationName: undefined
-          },
-          {}
-        )
-        const fields = result?.data?.__schema?.mutationType?.fields
-        if (Array.isArray(fields)) {
-          for (const f of fields)
-            shapes.set(String(f?.name), String(unwrap(f?.type)?.kind ?? ''))
-        }
-      } catch {
-        // An endpoint that will not introspect gets the scalar guess. A
-        // wrong guess is a loud validation error, not a silent one.
-      }
-      return shapes
-    })()
+const readMutationShapes = async (): Promise<Record<string, string>> => {
+  const shapes: Record<string, string> = {}
+  const result: any = await fetchGraphQL(
+    {
+      query:
+        'query { __schema { mutationType { fields { name type { kind ofType { kind ofType { kind ofType { kind } } } } } } } }',
+      variables: undefined,
+      operationName: undefined
+    },
+    {}
+  )
+  const fields = result?.data?.__schema?.mutationType?.fields
+  if (Array.isArray(fields)) {
+    for (const f of fields) shapes[String(f?.name)] = String(unwrap(f?.type)?.kind ?? '')
   }
-  return mutationShapePromise
+  return shapes
+}
+
+/**
+ * Through the query client, cached and persisted with the rest. An endpoint
+ * that will not introspect gets the scalar guess. A wrong guess is a loud
+ * validation error, not a silent one.
+ */
+const mutationShapes = async (): Promise<Map<string, string>> => {
+  try {
+    return new Map(Object.entries(await cachedRead(keys.schema('mutations'), readMutationShapes)))
+  } catch {
+    return new Map()
+  }
 }
 
 const selectionFor = async (
@@ -232,182 +239,130 @@ const readColor = async (userId: string): Promise<string | undefined> => {
 
 const DEFAULT_PAGE_SIZE = 25
 
-export function useUserDirectory(pageSize = DEFAULT_PAGE_SIZE) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [users, setUsers] = useState<DirectoryUser[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState<PaginationState>({
-    hasNextPage: false,
-    hasPreviousPage: false,
-    endCursor: null,
-    startCursor: null,
-    totalCount: 0,
-    currentPage: 1,
-    totalPages: 1
-  })
-  const cursorStackRef = useRef<string[]>([])
-  const currentAfterRef = useRef<string | undefined>(undefined)
+interface DirectoryPage {
+  rows: DirectoryUser[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
+}
 
-  const fetchPage = useCallback(
-    async (after?: string, page = 1) => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const args: any = {first: pageSize, organizationId: organizationId()}
-        if (after) args.after = after
+const EMPTY_USERS: DirectoryUser[] = []
 
-        const base =
-          'id userName state preferredLoginName creationDate changeDate'
-        const connection = `{ totalCount pageInfo { endCursor hasNextPage } edges { node { __typename ${base} ${PROFILE_FRAGMENT} ${ROLES_FRAGMENT} } } }`
+const readDirectoryPage = async (args: {first: number; after?: string; organizationId?: string}): Promise<DirectoryPage> => {
+  const base = 'id userName state preferredLoginName creationDate changeDate'
+  const connection = `{ totalCount pageInfo { endCursor hasNextPage } edges { node { __typename ${base} ${PROFILE_FRAGMENT} ${ROLES_FRAGMENT} } } }`
 
-        // The profile and the roles are asked for with the page. Should a
-        // deployment refuse that shape, the plain page is asked for instead,
-        // so the list shows names or, failing that, login names, never nothing.
-        const result = await gql('users', {args}, connection).catch(() =>
-          gql(
-            'users',
-            {args},
-            `{ totalCount pageInfo { endCursor hasNextPage } edges { node { __typename ${base} } } }`
-          )
-        )
-
-        const rows: DirectoryUser[] = (
-          Array.isArray(result?.edges) ? result.edges : []
-        )
-          .map((e: any) => e?.node)
-          .filter(Boolean)
-          .map(mapNode)
-
-        const colours = await Promise.all(rows.map(r => readColor(r.id)))
-        colours.forEach((c, i) => {
-          if (c) rows[i]!.driverColor = c
-        })
-
-        const totalCount =
-          typeof result?.totalCount === 'number'
-            ? result.totalCount
-            : rows.length
-        setUsers(rows)
-        setPagination({
-          hasNextPage: !!result?.pageInfo?.hasNextPage,
-          hasPreviousPage: page > 1,
-          endCursor: result?.pageInfo?.endCursor ?? null,
-          startCursor: null,
-          totalCount,
-          currentPage: page,
-          totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
-        })
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load users')
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [pageSize]
+  // The profile and the roles are asked for with the page. Should a
+  // deployment refuse that shape, the plain page is asked for instead,
+  // so the list shows names or, failing that, login names, never nothing.
+  const result = await gql('users', {args}, connection).catch(() =>
+    gql(
+      'users',
+      {args},
+      `{ totalCount pageInfo { endCursor hasNextPage } edges { node { __typename ${base} } } }`
+    )
   )
 
-  useEffect(() => {
-    cursorStackRef.current = []
-    currentAfterRef.current = undefined
-    void fetchPage(undefined, 1)
-  }, [fetchPage])
+  const rows: DirectoryUser[] = (Array.isArray(result?.edges) ? result.edges : [])
+    .map((e: any) => e?.node)
+    .filter(Boolean)
+    .map(mapNode)
+
+  const colours = await Promise.all(rows.map(r => readColor(r.id)))
+  colours.forEach((c, i) => {
+    if (c) rows[i]!.driverColor = c
+  })
+
+  return {
+    rows,
+    endCursor: result?.pageInfo?.endCursor ?? null,
+    hasNextPage: !!result?.pageInfo?.hasNextPage,
+    totalCount: typeof result?.totalCount === 'number' ? result.totalCount : rows.length
+  }
+}
+
+export function useUserDirectory(pageSize = DEFAULT_PAGE_SIZE) {
+  const pager = usePager(JSON.stringify({kind: 'directory', first: pageSize}))
+  const args = useMemo(
+    () => ({first: pageSize, after: pager.after, organizationId: organizationId()}),
+    [pageSize, pager.after]
+  )
+
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.users({kind: 'directory', ...args}),
+    queryFn: () => readDirectoryPage(args),
+    placeholderData: keepPreviousData
+  })
+
+  const page = q.data
+  const users = page?.rows ?? EMPTY_USERS
+  const pagination = useMemo<PaginationState>(() => {
+    const totalCount = page?.totalCount ?? 0
+    return {
+      hasNextPage: !!page?.hasNextPage,
+      hasPreviousPage: pager.page > 1,
+      endCursor: page?.endCursor ?? null,
+      startCursor: null,
+      totalCount,
+      currentPage: pager.page,
+      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+    }
+  }, [page, pager.page, pageSize])
 
   const nextPage = useCallback(() => {
-    if (pagination.hasNextPage && pagination.endCursor) {
-      cursorStackRef.current = [
-        ...cursorStackRef.current,
-        currentAfterRef.current ?? ''
-      ]
-      currentAfterRef.current = pagination.endCursor
-      void fetchPage(pagination.endCursor, pagination.currentPage + 1)
-    }
-  }, [pagination, fetchPage])
-
-  const prevPage = useCallback(() => {
-    if (pagination.currentPage > 1) {
-      const stack = [...cursorStackRef.current]
-      const prev = stack.pop()
-      cursorStackRef.current = stack
-      const cursor = prev || undefined
-      currentAfterRef.current = cursor
-      void fetchPage(cursor, pagination.currentPage - 1)
-    }
-  }, [pagination, fetchPage])
-
-  const refetch = useCallback(() => {
-    void fetchPage(currentAfterRef.current, pagination.currentPage)
-  }, [fetchPage, pagination.currentPage])
+    if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
+  }, [page, pager])
+  const prevPage = pager.prev
 
   return {users, isLoading, error, pagination, nextPage, prevPage, refetch}
 }
 
 // --------------- One account ---------------
 
+const readUser = async (userId: string): Promise<UserDetail | null> => {
+  const args = {id: userId, organizationId: organizationId()}
+  const base = '__typename id userName state preferredLoginName creationDate changeDate'
+
+  // Three reads rather than one, kept apart so a brand that lacks the
+  // profile or the roles still answers the account. The colour and the
+  // payout share are the fleet database's and fail soft on their own.
+  const [node, profileEdges, roleEdges, color, payoutPercent] = await Promise.all([
+    gql('user', {args}, `{ ${base} }`),
+    gql('user', {args}, `{ ${PROFILE_FRAGMENT} }`)
+      .then((u: any) => u?.profiles?.edges)
+      .catch(() => null),
+    gql('user', {args}, `{ ${ROLES_FRAGMENT} }`)
+      .then((u: any) => u?.roles?.edges)
+      .catch(() => null),
+    readColor(userId),
+    readPayoutPercent(userId)
+  ])
+
+  if (!node) return null
+
+  const mapped = mapNode({
+    ...node,
+    profiles: {edges: profileEdges ?? []},
+    roles: {edges: roleEdges ?? []}
+  })
+  const profile = (profileEdges as any[])?.[0]?.node
+
+  return {
+    ...mapped,
+    avatarUrl: profile?.avatarUrl ?? undefined,
+    preferredLanguage: profile?.preferredLanguage ?? undefined,
+    driverColor: color,
+    payoutPercent
+  }
+}
+
 export function useUserDetail(userId: string) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [user, setUser] = useState<UserDetail>()
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchUser = useCallback(async () => {
-    if (!userId) {
-      setUser(undefined)
-      setIsLoading(false)
-      return
-    }
-    setIsLoading(true)
-    setError(null)
-    try {
-      const args = {id: userId, organizationId: organizationId()}
-      const base =
-        '__typename id userName state preferredLoginName creationDate changeDate'
-
-      // Three reads rather than one, kept apart so a brand that lacks the
-      // profile or the roles still answers the account. The colour and the
-      // payout share are the fleet database's and fail soft on their own.
-      const [node, profileEdges, roleEdges, color, payoutPercent] =
-        await Promise.all([
-          gql('user', {args}, `{ ${base} }`),
-          gql('user', {args}, `{ ${PROFILE_FRAGMENT} }`)
-            .then((u: any) => u?.profiles?.edges)
-            .catch(() => null),
-          gql('user', {args}, `{ ${ROLES_FRAGMENT} }`)
-            .then((u: any) => u?.roles?.edges)
-            .catch(() => null),
-          readColor(userId),
-          readPayoutPercent(userId)
-        ])
-
-      if (!node) {
-        setUser(undefined)
-        return
-      }
-
-      const mapped = mapNode({
-        ...node,
-        profiles: {edges: profileEdges ?? []},
-        roles: {edges: roleEdges ?? []}
-      })
-      const profile = (profileEdges as any[])?.[0]?.node
-
-      setUser({
-        ...mapped,
-        avatarUrl: profile?.avatarUrl ?? undefined,
-        preferredLanguage: profile?.preferredLanguage ?? undefined,
-        driverColor: color,
-        payoutPercent
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load user')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [userId])
-
-  useEffect(() => {
-    void fetchUser()
-  }, [fetchUser])
-
-  return {user, isLoading, error, refetch: fetchUser}
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.user(userId),
+    queryFn: () => readUser(userId),
+    enabled: !!userId
+  })
+  return {user: q.data ?? undefined, isLoading, error, refetch}
 }
 
 /**
@@ -450,51 +405,29 @@ export const monthKey = (d = new Date()) =>
 
 /**
  * The driver's row of the dashboard query, `dashboard(args:{month})
- * { drivers { id completed revenue cash payoutDue } }`. The dashboard is
- * admin only, which is right: this card sits on the admin's user screen and
- * nowhere else. `stats` stays undefined when the account has no row, which is
- * every account that is not a driver.
+ * { drivers { id completed revenue cash payoutDue } }`, selected out of the
+ * one dashboard read the client holds under `['dashboard', month]`. The
+ * dashboard is admin only, which is right: this card sits on the admin's
+ * user screen and nowhere else. `stats` stays undefined when the account
+ * has no row, which is every account that is not a driver.
  */
 export function useDriverMonthStats(userId: string, month: string) {
-  const [stats, setStats] = useState<DriverMonthStats>()
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    if (!userId) return
-    setIsLoading(true)
-    setError(null)
-    try {
-      const result = await gql(
-        'dashboard',
-        {args: {month}},
-        '{ drivers { id completed revenue cash payoutDue } }'
-      )
-      const row = (result?.drivers ?? []).find(
-        (d: any) => String(d?.id) === userId
-      )
-      setStats(
-        row
-          ? {
-              completed: Number(row.completed ?? 0),
-              revenue: Number(row.revenue ?? 0),
-              cash: Number(row.cash ?? 0),
-              payoutDue: Number(row.payoutDue ?? 0)
-            }
-          : undefined
-      )
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load statistics')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [userId, month])
-
-  useEffect(() => {
-    void load()
-  }, [load])
-
-  return {stats, isLoading, error, refetch: load}
+  const select = useCallback(
+    (dashboard: Awaited<ReturnType<typeof fetchDashboard>>): DriverMonthStats | null => {
+      const row = dashboard.drivers.find(d => d.id === userId)
+      return row
+        ? {completed: row.completed, revenue: row.revenue, cash: row.cash, payoutDue: row.payoutDue}
+        : null
+    },
+    [userId]
+  )
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.dashboard(month),
+    queryFn: () => fetchDashboard(month),
+    enabled: !!userId,
+    select
+  })
+  return {stats: q.data ?? undefined, isLoading, error, refetch}
 }
 
 // --------------- Expenses ---------------
@@ -535,39 +468,25 @@ const isUnknownField = (err: unknown, field: string) =>
  * own answer so the dispatcher still sees what they just typed. Any other
  * failure is the backend's own message.
  */
+const EMPTY_EXPENSES: DriverExpense[] = []
+
+const readExpenses = async (userId: string, month: string | undefined): Promise<DriverExpense[]> => {
+  const rows = await gql('driverExpenses', {args: {userId, month}}, '{ id date amount note }')
+  return (Array.isArray(rows) ? rows : []).map(mapExpense)
+}
+
 export function useDriverExpenses(userId: string, month?: string) {
-  const [expenses, setExpenses] = useState<DriverExpense[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [unsupported, setUnsupported] = useState(false)
-
-  const load = useCallback(async () => {
-    if (!userId) return
-    setIsLoading(true)
-    setError(null)
-    try {
-      const rows = await gql(
-        'driverExpenses',
-        {args: {userId, month}},
-        '{ id date amount note }'
-      )
-      setUnsupported(false)
-      setExpenses((Array.isArray(rows) ? rows : []).map(mapExpense))
-    } catch (err) {
-      if (isUnknownField(err, 'driverExpenses')) {
-        setUnsupported(true)
-        setExpenses([])
-      } else {
-        setError(err instanceof Error ? err.message : 'Failed to load expenses')
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }, [userId, month])
-
-  useEffect(() => {
-    void load()
-  }, [load])
+  const {query: q, isLoading, error: message, refetch} = useAppQuery({
+    queryKey: keys.expenses(userId, month),
+    queryFn: () => readExpenses(userId, month),
+    enabled: !!userId
+  })
+  // Rows added in a session against a deployment without the list are kept
+  // on the query, and the card keeps saying the list is not there.
+  const [localOnly, setLocalOnly] = useState(false)
+  const unsupported = localOnly || isUnknownField(q.error, 'driverExpenses')
+  const error = unsupported ? null : message
+  const expenses = q.data ?? EMPTY_EXPENSES
 
   /**
    * After a successful add: refetch where the list exists, otherwise keep the
@@ -576,20 +495,30 @@ export function useDriverExpenses(userId: string, month?: string) {
   const added = useCallback(
     async (expense: DriverExpense) => {
       if (!unsupported) {
-        await load()
+        await queryClient.invalidateQueries({queryKey: keys.expenses(userId, month)})
         return
       }
+      setLocalOnly(true)
       if (!month || expense.date.startsWith(month)) {
-        setExpenses(prev => [...prev, expense])
+        queryClient.setQueryData<DriverExpense[]>(keys.expenses(userId, month), prev => [...(prev ?? []), expense])
       }
     },
-    [unsupported, month, load]
+    [unsupported, userId, month]
   )
 
-  return {expenses, isLoading, error, unsupported, refetch: load, added}
+  return {expenses, isLoading, error, unsupported, refetch, added}
 }
 
 // --------------- Mutations ---------------
+
+/** The directory, the pickers and, when one is named, the account: read again after a write. */
+const invalidatePeople = async (userId?: string) => {
+  await Promise.all(
+    [['users'], ['drivers'], ...(userId ? [keys.user(userId)] : [])].map(queryKey =>
+      queryClient.invalidateQueries({queryKey})
+    )
+  )
+}
 
 export interface CreateDriverArgs {
   email: string
@@ -622,6 +551,7 @@ export async function createDriverMutation(
     },
     '{ __typename userId temporaryPassword roleGranted }'
   )
+  await invalidatePeople()
   return {
     userId: String(result?.userId ?? ''),
     temporaryPassword:
@@ -652,16 +582,19 @@ export async function setUserRolesMutation(
   roleKeys: string[]
 ): Promise<void> {
   const ours = brandKnownRoles()
-  const keys = Array.from(new Set(roleKeys.filter(k => ours.includes(k))))
-  await mutate('setUserRoles', {args: {userId, roleKeys: keys}})
+  const wanted = Array.from(new Set(roleKeys.filter(k => ours.includes(k))))
+  await mutate('setUserRoles', {args: {userId, roleKeys: wanted}})
+  await invalidatePeople(userId)
 }
 
 export async function deactivateUserMutation(userId: string): Promise<void> {
   await mutate('deactivateUser', {args: {userId}})
+  await invalidatePeople(userId)
 }
 
 export async function reactivateUserMutation(userId: string): Promise<void> {
   await mutate('reactivateUser', {args: {userId}})
+  await invalidatePeople(userId)
 }
 
 /** `percent` is a percentage, 0 to 100, never a fraction. */
@@ -673,6 +606,7 @@ export async function setDriverPayoutPercentMutation(
     throw new Error('percent must be between 0 and 100')
   }
   await mutate('setDriverPayoutPercent', {args: {userId, percent}})
+  await queryClient.invalidateQueries({queryKey: keys.user(userId)})
 }
 
 export interface AddDriverExpenseArgs {

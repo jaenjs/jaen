@@ -8,11 +8,12 @@
  *
  * The list is the dispatcher's board with the customer's columns: the same
  * list state and chips (today, tomorrow, all, a custom range), the status
- * filter, search and sort, BoardTable with the day header rows and the two
- * stripes (the driver's colour on the left, today green and tomorrow yellow
- * on the right), CardList on a phone, the Pager. Until 2026-09-05 this screen
- * drew its own flat Table.Root beside it, one design for the same rows on
- * two routes. The rows come through useTransferList, the board's own read,
+ * filter, search and sort, the shared DataTable with the day header rows and
+ * the two stripes (the driver's colour on the left, today green and tomorrow
+ * yellow on the right), the board's cards on a phone, the pager. Until
+ * 2026-09-05 this screen drew its own flat Table.Root beside it, one design
+ * for the same rows on two routes, and since 2026-09-06 the board's pieces
+ * are one component under shared/components/table. The rows come through useTransferList, the board's own read,
  * and the driver's name and colour through useBookingDrivers, because a
  * customer may not call getDriverColor and transferTracking is the read the
  * matrix gives them for the person picking them up.
@@ -48,7 +49,7 @@ import {useAppNavigate} from '../navigation'
 import {useI18nCode} from '../i18n'
 import {useCaller} from '../auth'
 import {getI18nBookings} from '../locales/i18nBookings'
-import {getI18nCommon} from '../locales/i18nCommon'
+import {fill, getI18nCommon} from '../locales/i18nCommon'
 import {
   bookRide,
   bookingPath,
@@ -61,33 +62,25 @@ import {
 } from '../hooks/bookings'
 import {useTransferList} from '../hooks/transfers'
 import {TRANSFER_STATES} from '../locales/i18nStates'
-import {EmptyState, ErrorBanner, LoadingOverlay, toaster, PageHeader} from '../components'
+import {DialogActions, EmptyState, ErrorBanner, toaster, PageHeader} from '../components'
+import {DataTable, type DataColumn} from '../components/table'
 import {
   applyClientFilters,
-  BoardTable,
-  CardList,
   DateFilter,
-  groupByDay,
-  localDay,
-  Pager,
   SortMenu,
   StatusFilter,
-  useIsMobile,
+  TransferCard,
+  useDayGroup,
   useListState,
   useServerArgs,
+  useTodayTomorrow,
+  useTransferColumns,
   type BoardRow,
-  type ColumnConfig,
   type ColumnId,
   type RowActions
 } from './TransfersView'
 
 type Strings = ReturnType<typeof getI18nBookings>['strings']
-
-const fill = (template: string, values: Record<string, string | number>) =>
-  Object.entries(values).reduce(
-    (s, [k, v]) => s.replace(`{${k}}`, String(v)),
-    template
-  )
 
 const usePaymentLabel = (t: Strings) => (method: string | null | undefined): string => {
   if (!method) return ''
@@ -140,7 +133,6 @@ const toInt = (raw: string): number | undefined => {
 function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
   const code = useI18nCode()
   const {strings: t} = getI18nBookings(code)
-  const {strings: tc} = getI18nCommon(code)
   const paymentLabel = usePaymentLabel(t)
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -388,17 +380,14 @@ function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
               </Stack>
             </Dialog.Body>
             <Dialog.Footer>
-              <Button variant="outline" onClick={close} disabled={submitting}>
-                {tc.Cancel}
-              </Button>
-              <Button
-                type="submit"
-                colorPalette="brand"
+              <DialogActions
+                onCancel={close}
+                confirmLabel={t.BookingSubmit}
+                confirmType="submit"
                 loading={submitting}
                 loadingText={t.BookingSubmitting}
-                disabled={touched && !valid}>
-                {t.BookingSubmit}
-              </Button>
+                confirmDisabled={touched && !valid}
+              />
             </Dialog.Footer>
             </chakra.form>
             <Dialog.CloseTrigger asChild>
@@ -419,9 +408,7 @@ function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
  * not on it (the customer sees the name and the colour, never the number),
  * nor the columns that are the dispatcher's alone.
  */
-const CUSTOMER_COLUMNS: ColumnConfig[] = (
-  ['code', 'pickup', 'route', 'capacity', 'status', 'driver', 'price'] as ColumnId[]
-).map(id => ({id, visible: true}))
+const CUSTOMER_COLUMNS: ColumnId[] = ['code', 'pickup', 'route', 'capacity', 'status', 'driver', 'price']
 
 const PAGE_SIZE = 25
 
@@ -431,14 +418,8 @@ export function BookingView() {
   const {strings: t} = getI18nBookings(code)
   const {strings: tc} = getI18nCommon(code)
   const caller = useCaller()
-  const mobile = useIsMobile()
 
-  const today = useMemo(() => localDay(new Date()), [])
-  const tomorrow = useMemo(() => {
-    const d = new Date()
-    d.setDate(d.getDate() + 1)
-    return localDay(d)
-  }, [])
+  const {today, tomorrow} = useTodayTomorrow()
 
   // The same chips and filters as the board, with the board's defaults:
   // today, every state. The list is scoped in the resolver, so a customer
@@ -463,12 +444,21 @@ export function BookingView() {
     [rows, drivers, t.DriverAssigned]
   )
   const filtered = useMemo(() => applyClientFilters(enriched, list), [enriched, list])
-  const groups = useMemo(() => groupByDay(filtered), [filtered])
 
   const [dialogOpen, setDialogOpen] = useState(false)
 
   // Links carry the code, the pylon resolves it, see transfer-codes.md.
-  const actions: RowActions = {onOpen: row => navigate(bookingPath(row))}
+  const actions = useMemo<RowActions>(() => ({onOpen: row => navigate(bookingPath(row))}), [navigate])
+  // The board's cells, the customer's subset in the customer's order, every one shown.
+  const boardColumns = useTransferColumns(actions)
+  const columns = useMemo(
+    () =>
+      CUSTOMER_COLUMNS.map(id => boardColumns.find(c => c.id === id))
+        .filter((c): c is DataColumn<BoardRow> => !!c)
+        .map(c => ({...c, defaultVisible: true})),
+    [boardColumns]
+  )
+  const group = useDayGroup(today, tomorrow)
 
   const onBooked = (booking: Booking) => {
     setDialogOpen(false)
@@ -518,40 +508,43 @@ export function BookingView() {
           <SortMenu value={list.sort} onChange={list.setSort} />
         </Flex>
 
-        <Text textStyle="sm" color="fg.muted">
-          {fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
-        </Text>
-
-        {error && <ErrorBanner message={error} onRetry={refetch} />}
-
-        <Box position="relative" minH="40">
-          {isLoading && <LoadingOverlay overlay />}
-          {!isLoading && !error && filtered.length === 0 ? (
-            <EmptyState
-              title={nothingBooked ? t.EmptyMessage : t.EmptyFiltered}
-              description={nothingBooked ? t.EmptyHint : t.EmptyFilteredHint}
-              icon={<FaCalendarCheck />}>
-              <Button colorPalette="brand" onClick={() => setDialogOpen(true)}>
-                <FaPlus /> {t.BookTransferButton}
-              </Button>
-            </EmptyState>
-          ) : mobile ? (
-            <CardList groups={groups} today={today} tomorrow={tomorrow} actions={actions} />
-          ) : (
-            <BoardTable columns={CUSTOMER_COLUMNS} groups={groups} today={today} tomorrow={tomorrow} actions={actions} />
+        <DataTable
+          tableId="bookings"
+          columns={columns}
+          rows={filtered}
+          rowId={row => row.id}
+          onOpen={actions.onOpen}
+          group={group}
+          stripe={row => row.driverColor}
+          card={(row, api) => (
+            <TransferCard row={row} expanded={api.expanded} onToggle={api.toggle} actions={actions} dayTone={api.tone} />
           )}
-        </Box>
-
-        {(pagination.hasNextPage || pagination.currentPage > 1) && (
-          <Pager
-            page={pagination.currentPage}
-            pages={pagination.totalPages}
-            hasNext={pagination.hasNextPage}
-            onFirst={firstPage}
-            onPrev={prevPage}
-            onNext={nextPage}
-          />
-        )}
+          summary={fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
+          isLoading={isLoading}
+          error={error}
+          onRetry={refetch}
+          // A failed read shows its banner over the rows it still has, never the empty words.
+          empty={
+            error ? null : (
+              <EmptyState
+                title={nothingBooked ? t.EmptyMessage : t.EmptyFiltered}
+                description={nothingBooked ? t.EmptyHint : t.EmptyFilteredHint}
+                icon={<FaCalendarCheck />}>
+                <Button colorPalette="brand" onClick={() => setDialogOpen(true)}>
+                  <FaPlus /> {t.BookTransferButton}
+                </Button>
+              </EmptyState>
+            )
+          }
+          pager={{
+            page: pagination.currentPage,
+            pages: pagination.totalPages,
+            hasNext: pagination.hasNextPage,
+            onFirst: firstPage,
+            onPrev: prevPage,
+            onNext: nextPage
+          }}
+        />
       </Stack>
 
       <BookRideDialog open={dialogOpen} onClose={() => setDialogOpen(false)} onBooked={onBooked} />

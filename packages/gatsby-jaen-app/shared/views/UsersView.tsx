@@ -6,6 +6,11 @@
  * the browser. "Create driver" is the one create path: a customer creates
  * themselves by booking, a dispatcher is made by hand in Zitadel.
  *
+ * The list is the shared DataTable (okf/architecture/data-layer.md,
+ * acceptance 4): the board's header row, the driver's colour on the left
+ * edge of a row and a card, the column popover, cards below `md` and the
+ * pager, with the directory's own columns and its cursor pages.
+ *
  * Admin only. The shell offers the entry only to an admin and the backend
  * refuses `users` to anyone else, so the screen itself only has to say so
  * politely when a link brought somebody here who has no business here.
@@ -30,10 +35,8 @@ import {
   SimpleGrid,
   Stack,
   Stat,
-  Table,
   Text,
   Wrap,
-  chakra,
 } from '@chakra-ui/react'
 import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
 import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
@@ -42,16 +45,17 @@ import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTria
 import {useAppNavigate} from '../navigation'
 import {useI18nCode} from '../i18n'
 import {getI18nUsers, type UsersStrings} from '../locales/i18nUsers'
-import {getI18nCommon} from '../locales/i18nCommon'
+import {fill, getI18nCommon} from '../locales/i18nCommon'
 import {ADMIN_ROLE, CUSTOMER_ROLE, DRIVER_ROLE, useCaller} from '../auth'
 import {
+  DialogActions,
   DriverColorDot,
   EmptyState,
   ErrorBanner,
-  LoadingOverlay,
   toaster,
   PageHeader
 } from '../components'
+import {DataTable, type DataColumn} from '../components/table'
 import {
   createDriverMutation,
   fullName,
@@ -206,9 +210,6 @@ export const contrastFor = (hex: string): string => {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5 ? '#000' : '#fff'
 }
 
-/** A whole row as one button, for the phone list. Box and HStack type as a div and refuse `type`. */
-const RowButton = chakra('button')
-
 const formatDate = (iso: string | null, code: string) => {
   if (!iso) return ''
   const d = new Date(iso)
@@ -235,6 +236,55 @@ export function UsersView() {
       )
     )
   }, [users, search])
+
+  // The directory's columns as DataTable takes them. The name cell carries
+  // the colour dot and the avatar as the old table did, the same colour sits
+  // on the row's left edge through `stripe`.
+  const columns = useMemo<DataColumn<DirectoryUser>[]>(
+    () => [
+      {
+        id: 'user',
+        label: t.ColUser,
+        width: 280,
+        cell: u => (
+          <HStack gap="3" minW="0">
+            <DriverColorDot color={u.driverColor} />
+            <UserAvatar user={u} />
+            <PersonName user={u} />
+          </HStack>
+        )
+      },
+      {
+        id: 'email',
+        label: t.ColEmail,
+        width: 240,
+        cell: u => (
+          <Text color="fg.muted" lineClamp={1}>
+            {u.email}
+          </Text>
+        )
+      },
+      {id: 'roles', label: t.ColRoles, width: 200, cell: u => <RoleChips roles={u.roles} t={t} />},
+      {id: 'status', label: t.ColStatus, width: 110, cell: u => <ActiveBadge active={u.isActive} t={t} />},
+      {
+        id: 'created',
+        label: t.ColCreated,
+        width: 120,
+        cell: u => (
+          <Text color="fg.muted" whiteSpace="nowrap">
+            {formatDate(u.createdAt, code)}
+          </Text>
+        )
+      }
+    ],
+    [t, code]
+  )
+
+  // The pager walks back one cursor per call, so the first page is the
+  // trail walked back to its start in one tick.
+  const firstPage = () => {
+    for (let page = pagination.currentPage; page > 1; page--) prevPage()
+  }
 
   if (!caller.loading && !caller.isAdmin) {
     // A driver or a customer landed on a dispatch screen: they have a role,
@@ -288,122 +338,28 @@ export function UsersView() {
         />
       </InputGroup>
 
-      {error && <ErrorBanner message={error} onRetry={refetch} />}
-
-      <Card.Root position="relative" overflow="hidden">
-        {isLoading && <LoadingOverlay overlay />}
-        {!isLoading && filtered.length === 0 ? (
-          <EmptyState title={t.EmptyMessage} />
-        ) : (
-          <>
-            <Box display={{base: 'none', md: 'block'}} overflowX="auto">
-              <Table.Root size="md" interactive>
-                <Table.Header>
-                  <Table.Row>
-                    <Table.ColumnHeader>{t.ColUser}</Table.ColumnHeader>
-                    <Table.ColumnHeader>{t.ColEmail}</Table.ColumnHeader>
-                    <Table.ColumnHeader>{t.ColRoles}</Table.ColumnHeader>
-                    <Table.ColumnHeader>{t.ColStatus}</Table.ColumnHeader>
-                    <Table.ColumnHeader>{t.ColCreated}</Table.ColumnHeader>
-                    <Table.ColumnHeader />
-                  </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                  {filtered.map(u => (
-                    <Table.Row
-                      key={u.id}
-                      cursor="pointer"
-                      onClick={() => navigate(`/users/${u.id}`)}>
-                      <Table.Cell>
-                        <HStack gap="3">
-                          <DriverColorDot color={u.driverColor} />
-                          <UserAvatar user={u} />
-                          <PersonName user={u} />
-                        </HStack>
-                      </Table.Cell>
-                      <Table.Cell color="fg.muted">{u.email}</Table.Cell>
-                      <Table.Cell>
-                        <RoleChips roles={u.roles} t={t} />
-                      </Table.Cell>
-                      <Table.Cell>
-                        <ActiveBadge active={u.isActive} t={t} />
-                      </Table.Cell>
-                      <Table.Cell color="fg.muted" whiteSpace="nowrap">
-                        {formatDate(u.createdAt, code)}
-                      </Table.Cell>
-                      <Table.Cell textAlign="end">
-                        <Button
-                          size="xs"
-                          variant="ghost"
-                          colorPalette="brand"
-                          onClick={e => {
-                            e.stopPropagation()
-                            navigate(`/users/${u.id}`)
-                          }}>
-                          {tc.Details}
-                        </Button>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table.Root>
-            </Box>
-
-            <Stack display={{base: 'flex', md: 'none'}} gap="0" divideY="1px">
-              {filtered.map(u => (
-                <RowButton
-                  key={u.id}
-                  type="button"
-                  display="flex"
-                  alignItems="center"
-                  textAlign="start"
-                  w="full"
-                  gap="3"
-                  p="3"
-                  borderStartWidth="4px"
-                  borderStartColor={u.driverColor || 'transparent'}
-                  _hover={{bg: 'bg.subtle'}}
-                  onClick={() => navigate(`/users/${u.id}`)}>
-                  <UserAvatar user={u} size="md" />
-                  <Box flex="1" minW="0">
-                    <PersonName user={u} />
-                    <Box mt="1">
-                      <RoleChips roles={u.roles} t={t} />
-                    </Box>
-                  </Box>
-                  <ActiveBadge active={u.isActive} t={t} />
-                </RowButton>
-              ))}
-            </Stack>
-          </>
-        )}
-      </Card.Root>
-
-      <HStack justify="space-between">
-        <Text textStyle="sm" color="fg.muted">
-          {pagination.currentPage}{' '}
-          {tc.PaginationOf.replace(
-            '{totalPages}',
-            String(pagination.totalPages)
-          ).replace('{totalCount}', String(pagination.totalCount))}
-        </Text>
-        <HStack>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={prevPage}
-            disabled={!pagination.hasPreviousPage || isLoading}>
-            {tc.Previous}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={nextPage}
-            disabled={!pagination.hasNextPage || isLoading}>
-            {tc.Next}
-          </Button>
-        </HStack>
-      </HStack>
+      <DataTable
+        tableId="users"
+        columns={columns}
+        rows={filtered}
+        rowId={u => u.id}
+        onOpen={u => navigate(`/users/${u.id}`)}
+        stripe={u => u.driverColor}
+        summary={fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
+        isLoading={isLoading}
+        error={error}
+        onRetry={refetch}
+        empty={<EmptyState title={t.EmptyMessage} />}
+        pager={{
+          page: pagination.currentPage,
+          pages: pagination.totalPages,
+          hasNext: pagination.hasNextPage,
+          onFirst: firstPage,
+          onPrev: prevPage,
+          onNext: nextPage,
+          always: true
+        }}
+      />
 
       <CreateDriverDialog
         open={createOpen}
@@ -473,7 +429,6 @@ function CreateDriverDialog({
 }: CreateDriverDialogProps) {
   const code = useI18nCode()
   const {strings: t} = getI18nUsers(code)
-  const {strings: tc} = getI18nCommon(code)
   const [form, setForm] = useState<CreateDriverArgs>(EMPTY)
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -593,9 +548,7 @@ function CreateDriverDialog({
                 </Stack>
               </Dialog.Body>
               <Dialog.Footer>
-                <Button colorPalette="brand" onClick={finish}>
-                  {t.OpenAccount}
-                </Button>
+                <DialogActions confirmLabel={t.OpenAccount} onConfirm={finish} />
               </Dialog.Footer>
               <Dialog.CloseTrigger asChild>
                 <CloseButton size="sm" />
@@ -676,12 +629,7 @@ function CreateDriverDialog({
                 </Stack>
               </Dialog.Body>
               <Dialog.Footer>
-                <Button variant="outline" onClick={finish} disabled={saving}>
-                  {tc.Cancel}
-                </Button>
-                <Button type="submit" colorPalette="brand" loading={saving}>
-                  {t.CreateDriver}
-                </Button>
+                <DialogActions onCancel={finish} confirmLabel={t.CreateDriver} confirmType="submit" loading={saving} />
               </Dialog.Footer>
               <Dialog.CloseTrigger asChild>
                 <CloseButton size="sm" disabled={saving} />

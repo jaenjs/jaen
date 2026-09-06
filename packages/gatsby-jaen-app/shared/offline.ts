@@ -1,37 +1,46 @@
 /**
- * Offline: the store of last answers, the online state the screens render,
- * and the one rule for what may happen without a connection.
+ * Offline: the store the query client is persisted to, the online state the
+ * screens render, and the one rule for what may happen without a connection.
  *
  * A driver in a garage or on the airport's lower level keeps seeing what the
  * app last knew, marked as such, and is never told that something happened
- * when it did not. See okf/architecture/offline.md, this file is that page.
+ * when it did not. See okf/architecture/offline.md and, for the layer that
+ * now holds the answers, okf/architecture/data-layer.md.
  *
  * Three pieces, all brand neutral:
  *
- * - The store. IndexedDB `taxi-app-cache`, one object store, key = sha-256
- *   of the document plus its variables plus the caller's OIDC subject, value
- *   = the response and a `storedAt` instant. The subject in the key and an
- *   owner record keep two accounts apart on one phone, and a logout clears
- *   everything. Storage may be missing or throw (private mode, quota, an
- *   old WebView), and then every function here is a pass-through: reads
- *   answer nothing, writes are dropped, and the layer around queryFetcher
- *   behaves as if this file did not exist.
- * - The state. `online` is what the screens render the banner from. It goes
- *   false on the browser's `offline` event and whenever a fetch fails for
- *   want of a network, and true on the `online` event and on the next
- *   successful fetch. `storedAt` is the instant of the newest stored answer
- *   served since the connection went, which is what "Offline, Stand 14:32"
- *   says.
- * - The rule. `throughCache` wraps one send. A query is stored on success and
- *   answered from the store on a network failure. A mutation is never stored,
- *   never replayed, and refused on the device while offline, so that it
- *   reaches the pylon zero times: a dispatcher who sees "unterwegs" has to be
- *   able to trust it.
+ * - The store. IndexedDB `taxi-app-cache`, one object store, one record per
+ *   query of the TanStack Query client: key = sha-256 of the query's hash
+ *   plus the caller's OIDC subject, value = the dehydrated query and a
+ *   `storedAt` instant. `offlinePersister` is the Persister the client is
+ *   written through, see hooks/query.ts. The subject in the key and an owner
+ *   record keep two accounts apart on one phone, and a logout clears
+ *   everything. Storage may be missing or throw (private mode, quota, an old
+ *   WebView), and then the persister is a pass-through: nothing is restored,
+ *   writes are dropped, and the client behaves as if this file did not exist.
+ *   The hand-rolled read cache that answered the fetcher from this store is
+ *   gone: an answer from the cache while offline is what the query client
+ *   does by itself.
+ * - The state. `online` is what the screens render the banner from. It is
+ *   the query client's onlineManager, so a change here is what makes the
+ *   client refetch when the connection returns. It goes false on the
+ *   browser's `offline` event and whenever a fetch fails for want of a
+ *   network, and true on the `online` event, on a successful probe and on
+ *   the next successful fetch. `storedAt` is the instant of the newest answer
+ *   shown since the connection went (the query's `dataUpdatedAt`, reported by
+ *   the hooks), which is what "Offline, Stand 14:32" says.
+ * - The rule. `throughCache` wraps one send. A query that finds no network
+ *   fails with the layer's OfflineError, and the query client keeps what it
+ *   held. A mutation is never stored, never replayed, and refused on the
+ *   device while offline, so that it reaches the pylon zero times: a
+ *   dispatcher who sees "unterwegs" has to be able to trust it.
  *
- * Nothing here imports the client. The client imports this, and the hooks
- * import the client, so the dependency runs one way.
+ * Nothing here imports the client or the hooks. The client imports this, the
+ * hooks import the client, so the dependency runs one way.
  */
 import {useEffect, useRef, useState} from 'react'
+import {onlineManager} from '@tanstack/react-query'
+import type {PersistedClient, Persister} from '@tanstack/react-query-persist-client'
 import {useAuth} from 'jaen'
 import type {I18nCode} from './i18n'
 import {getI18nOffline, type OfflineStrings} from './locales/i18nOffline'
@@ -46,14 +55,17 @@ const OFFLINE_DB_VERSION = 1
 /** The one record that is not an answer: whose answers the store holds. */
 const OWNER_KEY = '__owner'
 
+/** How long a persisted answer is worth restoring, and how long the client keeps one in memory. */
+export const PERSIST_MAX_AGE = 7 * 24 * 60 * 60 * 1000
+
 export interface StoredAnswer {
+  /** The dehydrated query, as the client hands it to the persister. */
   response: unknown
-  /** ISO 8601, when the response was stored. */
+  /** ISO 8601, when the answer was fetched. */
   storedAt: string
 }
 
 let dbPromise: Promise<IDBDatabase> | undefined
-
 
 /**
  * The open database, opened once per page. A failure to open is not cached:
@@ -91,60 +103,57 @@ const openDb = (): Promise<IDBDatabase> => {
   return dbPromise
 }
 
-const request = <T>(run: (store: IDBObjectStore) => IDBRequest<T>, mode: IDBTransactionMode): Promise<T> =>
+/**
+ * One transaction over the store. `run` issues its requests and may return a
+ * value read through them, the promise settles when the transaction does, so
+ * a write that is reported done is on disk.
+ */
+const transaction = <T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => T): Promise<T> =>
   openDb().then(
     db =>
       new Promise<T>((resolve, reject) => {
         const tx = db.transaction(OFFLINE_STORE_NAME, mode)
-        const req = run(tx.objectStore(OFFLINE_STORE_NAME))
-        req.onsuccess = () => resolve(req.result)
-        req.onerror = () => reject(req.error ?? new Error('indexedDB request failed'))
+        let result: T
+        try {
+          result = run(tx.objectStore(OFFLINE_STORE_NAME))
+        } catch (err) {
+          reject(err)
+          return
+        }
+        tx.oncomplete = () => resolve(result)
+        tx.onerror = () => reject(tx.error ?? new Error('indexedDB transaction failed'))
         tx.onabort = () => reject(tx.error ?? new Error('indexedDB transaction aborted'))
       })
   )
 
-/** The stored answer under `key`, or undefined, and undefined when storage throws. */
-export const readAnswer = async (key: string): Promise<StoredAnswer | undefined> => {
-  try {
-    const value = await request<unknown>(store => store.get(key), 'readonly')
-    if (value && typeof value === 'object' && typeof (value as StoredAnswer).storedAt === 'string') {
-      return value as StoredAnswer
-    }
-    return undefined
-  } catch {
-    // Swallowed on purpose: no storage means no stored answer, and the
-    // caller then shows the error it would have shown before this layer.
-    return undefined
-  }
-}
-
-/** Store one answer. Never throws, a dropped write is the pass-through. */
-export const writeAnswer = async (key: string, response: unknown): Promise<void> => {
-  try {
-    const value: StoredAnswer = {response, storedAt: new Date().toISOString()}
-    await request(store => store.put(value, key), 'readwrite')
-  } catch {
-    // Swallowed on purpose: quota, private mode, a closed database. The
-    // screen has its answer, only the next offline visit will not.
-  }
-}
-
 /**
- * The store's generation: bumped by every clear, read by every request before
- * it sends and again before it writes. A query that was in flight across the
- * sign-out would otherwise land its answer after the clear, which a slow
- * pylon makes visible, and the next person to open the app on that phone
- * would find one answer of the last one in the store.
+ * The store's generation: bumped by every clear and read by the persister
+ * before it writes. A persist that was computed across the sign-out would
+ * otherwise land its records after the clear, and the next person to open
+ * the app on that phone would find the last one's answers in the store.
  */
 let generation = 0
+
+const clearListeners = new Set<() => void>()
+
+/** What else empties with the store: the query client registers itself here. */
+export const onOfflineStoreCleared = (listener: () => void): (() => void) => {
+  clearListeners.add(listener)
+  return () => {
+    clearListeners.delete(listener)
+  }
+}
 
 /** Everything, including the owner record. The sign-out calls this, see OfflineSession. */
 export const clearOfflineStore = async (): Promise<void> => {
   generation += 1
-  // The next subject stamps the owner record again, whoever it is.
-  ownerReconcile = undefined
+  written.clear()
+  ownerWritten = undefined
+  clearListeners.forEach(l => l())
   try {
-    await request(store => store.clear(), 'readwrite')
+    await transaction('readwrite', store => {
+      store.clear()
+    })
   } catch {
     // Nothing to clear when there is no storage.
   }
@@ -153,47 +162,42 @@ export const clearOfflineStore = async (): Promise<void> => {
 /** How many answers are stored, for a screen or a test that wants to know. */
 export const countAnswers = async (): Promise<number> => {
   try {
-    const n = await request<number>(store => store.count(), 'readonly')
-    // The owner record is not an answer.
-    const owner = await request<unknown>(store => store.get(OWNER_KEY), 'readonly')
-    return Math.max(0, n - (owner === undefined ? 0 : 1))
+    return await transaction('readonly', store => {
+      const n = store.count()
+      const owner = store.get(OWNER_KEY)
+      return {n, owner}
+    }).then(({n, owner}) => Math.max(0, n.result - (owner.result === undefined ? 0 : 1)))
   } catch {
     return 0
   }
 }
 
-/**
- * The store belongs to one subject. When a different account uses the
- * layer, what the previous account left behind is cleared first. The key
- * already carries the subject, so this is belt and braces against a phone
- * that is handed from one driver to the next without a logout. A request
- * without a subject touches nothing: a second tab of the same site has no
- * session of its own and must not empty the store under the first one, the
- * logout is what empties it.
- *
- * One reconcile per subject per page, and every request of that subject
- * awaits it: the first answers of a session used to be written while the
- * clear was still on its way and were wiped by it, so the very documents a
- * screen opens with, the introspection and the list, were the ones missing
- * offline.
- */
-let ownerReconcile: {subject: string; done: Promise<void>} | undefined
+// --------------- The subject ---------------
 
-export const reconcileOwner = (subject: string | undefined): Promise<void> => {
-  if (!subject) return Promise.resolve()
-  if (ownerReconcile?.subject === subject) return ownerReconcile.done
-  const done = (async () => {
-    try {
-      const owner = await request<unknown>(store => store.get(OWNER_KEY), 'readonly')
-      if (owner === subject) return
-      await request(store => store.clear(), 'readwrite')
-      await request(store => store.put(subject, OWNER_KEY), 'readwrite')
-    } catch {
-      // No storage, nothing to reconcile.
-    }
-  })()
-  ownerReconcile = {subject, done}
-  return done
+declare const __JAEN_ZITADEL_GQL__: {authority?: string; clientId?: string} | undefined
+
+let lastRaw: string | null | undefined
+let lastSubject: string | undefined
+
+/**
+ * The subject of the OIDC session in this tab, read from the same storage
+ * the GraphQL client takes its bearer token from. Read on every call, parsed
+ * only when the stored session changed, because the hooks ask on every
+ * render.
+ */
+export const sessionSubject = (): string | undefined => {
+  try {
+    const z = typeof __JAEN_ZITADEL_GQL__ !== 'undefined' ? __JAEN_ZITADEL_GQL__ : null
+    if (!z?.authority || !z?.clientId) return undefined
+    const raw = window.sessionStorage?.getItem(`oidc.user:${z.authority}:${z.clientId}`)
+    if (raw === lastRaw) return lastSubject
+    lastRaw = raw
+    const sub = raw ? JSON.parse(raw)?.profile?.sub : undefined
+    lastSubject = typeof sub === 'string' && sub ? sub : undefined
+    return lastSubject
+  } catch {
+    return undefined
+  }
 }
 
 // --------------- The key ---------------
@@ -201,27 +205,176 @@ export const reconcileOwner = (subject: string | undefined): Promise<void> => {
 const hex = (bytes: ArrayBuffer): string =>
   Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('')
 
-export interface CacheKeyParts {
-  operationName?: string | null
-  query: string
-  variables?: unknown
-  subject?: string
-}
+const keyCache = new Map<string, Promise<string>>()
 
 /**
- * The key: sha-256 of the operation name, the document, the variables and
- * the subject. The hooks write their arguments into the document as
- * literals and send no name and no variables, so the document is what
- * varies for them, and a GQty query carries its name and variables beside
- * it. All four go in so the rule is the same whoever built the request.
- * Rejects when there is no subtle crypto, which the layer reads as
- * "no storage".
+ * The record key: sha-256 of the query's hash and the subject. Rejects when
+ * there is no subtle crypto, which the persister reads as "no storage".
  */
-export const cacheKey = async (parts: CacheKeyParts): Promise<string> => {
-  const text = [parts.operationName ?? '', parts.query, JSON.stringify(parts.variables ?? null), parts.subject ?? '']
-    .join('\n')
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return hex(digest)
+export const recordKey = (queryHash: string, subject: string): Promise<string> => {
+  const text = `${queryHash}\n${subject}`
+  let promise = keyCache.get(text)
+  if (!promise) {
+    promise = crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(hex)
+    promise.catch(() => keyCache.delete(text))
+    keyCache.set(text, promise)
+  }
+  return promise
+}
+
+// --------------- The persister ---------------
+
+/** A dehydrated query, the part of the client's shape the persister reads. */
+interface DehydratedQueryLike {
+  queryHash: string
+  queryKey: unknown
+  state: {
+    data?: unknown
+    dataUpdatedAt: number
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+
+const isDehydratedQuery = (v: unknown): v is DehydratedQueryLike =>
+  !!v &&
+  typeof v === 'object' &&
+  typeof (v as DehydratedQueryLike).queryHash === 'string' &&
+  !!(v as DehydratedQueryLike).state &&
+  typeof (v as DehydratedQueryLike).state.dataUpdatedAt === 'number'
+
+/** The `dataUpdatedAt` last written per key, so an unchanged answer is not written again. */
+const written = new Map<string, number>()
+let ownerWritten: string | undefined
+
+/**
+ * What a record holds of a query: the answer and when it was fetched, as a
+ * success. A query that failed offline after it had an answer is persisted
+ * as the answer it had, not as the failure, because the failure is not what
+ * a reload wants back.
+ */
+const asStored = (q: DehydratedQueryLike): StoredAnswer => ({
+  response: {
+    ...q,
+    state: {
+      ...q.state,
+      status: 'success',
+      error: null,
+      fetchStatus: 'idle',
+      fetchFailureCount: 0,
+      fetchFailureReason: null,
+      errorUpdateCount: 0
+    }
+  },
+  storedAt: new Date(q.state.dataUpdatedAt).toISOString()
+})
+
+/**
+ * The persister the query client is written through, see hooks/query.ts.
+ *
+ * `persistClient` writes one record per query and drops the records of
+ * queries the client no longer holds, in one transaction. Without a subject
+ * nothing is written: a visitor's answers are nobody's. `restoreClient`
+ * reads every record back as the client's dehydrated state, and a store that
+ * belongs to another subject is cleared instead of restored, which is what
+ * keeps two accounts apart on a phone handed from one driver to the next
+ * without a sign-out. Every failure is swallowed: no storage, no store.
+ */
+export const offlinePersister: Persister = {
+  persistClient: async (client: PersistedClient) => {
+    const subject = sessionSubject()
+    if (!subject) return
+    const gen = generation
+    const queries = (client.clientState.queries as unknown[]).filter(isDehydratedQuery)
+    let entries: Array<{key: string; query: DehydratedQueryLike}>
+    try {
+      entries = await Promise.all(
+        queries.map(async query => ({key: await recordKey(query.queryHash, subject), query}))
+      )
+    } catch {
+      return
+    }
+    if (gen !== generation) return
+    const pending = new Map<string, number>()
+    try {
+      await transaction('readwrite', store => {
+        const keep = new Set(entries.map(e => e.key))
+        keep.add(OWNER_KEY)
+        const all = store.getAllKeys()
+        all.onsuccess = () => {
+          for (const k of all.result) if (!keep.has(String(k))) store.delete(k)
+        }
+        for (const {key, query} of entries) {
+          const at = query.state.dataUpdatedAt
+          if (written.get(key) === at) continue
+          store.put(asStored(query), key)
+          pending.set(key, at)
+        }
+        if (ownerWritten !== subject) store.put(subject, OWNER_KEY)
+      })
+      if (gen !== generation) return
+      pending.forEach((at, key) => written.set(key, at))
+      ownerWritten = subject
+    } catch {
+      // Swallowed on purpose: quota, private mode, a closed database. The
+      // screen has its answer, only the next offline visit will not.
+    }
+  },
+
+  restoreClient: async () => {
+    const subject = sessionSubject()
+    if (!subject) return undefined
+    try {
+      const {owner, keys, values} = await transaction('readonly', store => ({
+        owner: store.get(OWNER_KEY),
+        keys: store.getAllKeys(),
+        values: store.getAll()
+      })).then(({owner, keys, values}) => ({owner: owner.result, keys: keys.result, values: values.result}))
+
+      if (owner !== subject) {
+        // Another account's answers, or a store that was emptied by hand and
+        // lost its owner: nothing of it is this subject's.
+        if (owner !== undefined || keys.length) {
+          await transaction('readwrite', store => {
+            store.clear()
+          })
+        }
+        return undefined
+      }
+
+      const queries: unknown[] = []
+      let newest = 0
+      keys.forEach((k, i) => {
+        const value = values[i] as StoredAnswer | undefined
+        if (String(k) === OWNER_KEY || !value || !isDehydratedQuery(value.response)) return
+        queries.push(value.response)
+        newest = Math.max(newest, value.response.state.dataUpdatedAt)
+        written.set(String(k), value.response.state.dataUpdatedAt)
+      })
+      ownerWritten = subject
+      if (!queries.length) return undefined
+      return {
+        timestamp: newest,
+        buster: subject,
+        clientState: {queries: queries as PersistedClient['clientState']['queries'], mutations: []}
+      }
+    } catch {
+      // No storage, nothing to restore.
+      return undefined
+    }
+  },
+
+  removeClient: async () => {
+    written.clear()
+    ownerWritten = undefined
+    try {
+      await transaction('readwrite', store => {
+        store.clear()
+      })
+    } catch {
+      // Nothing to remove when there is no storage.
+    }
+  }
 }
 
 /** A document whose first operation is a mutation. Comments before it are skipped. */
@@ -233,17 +386,20 @@ export const isMutationDocument = (query: string): boolean =>
 export interface OfflineState {
   /** False while the browser says so or the last fetch found no network. */
   online: boolean
-  /** ISO 8601, the newest stored answer served since the connection went. */
+  /** ISO 8601, the newest answer shown since the connection went. */
   storedAt?: string
 }
 
 const browserOnline = (): boolean => (typeof navigator === 'undefined' ? true : navigator.onLine !== false)
 
-let state: OfflineState = {online: browserOnline()}
+let storedAt: string | undefined
+let state: OfflineState = {online: true}
 
 const listeners = new Set<(s: OfflineState) => void>()
 
-const publish = (next: OfflineState) => {
+const publish = () => {
+  const online = onlineManager.isOnline()
+  const next: OfflineState = {online, storedAt: online ? undefined : storedAt}
   if (next.online === state.online && next.storedAt === state.storedAt) return
   state = next
   listeners.forEach(l => l(state))
@@ -254,33 +410,53 @@ export const offlineState = (): OfflineState => state
 /** True unless the browser or the last fetch said otherwise. */
 export const isOnline = (): boolean => state.online
 
-/** A fetch reached the backend: the connection is back, whatever the banner said. */
+/**
+ * A fetch reached the backend: the connection is back, whatever the banner
+ * said. The query client hears it through its onlineManager and refetches
+ * what is stale.
+ */
 export const markOnline = () => {
   stopProbing()
-  publish({online: true, storedAt: undefined})
+  storedAt = undefined
+  onlineManager.setOnline(true)
+  publish()
 }
 
 /**
- * A fetch found no network. `storedAt` is the answer that was served in its
- * place, and the banner shows the newest one seen while offline.
+ * A fetch found no network, or an answer is being shown without one. `at` is
+ * the instant of that answer, and the banner shows the newest one seen
+ * while offline.
  */
-export const markOffline = (storedAt?: string) => {
-  const newest = [state.storedAt, storedAt].filter((s): s is string => !!s).sort().pop()
-  publish({online: false, storedAt: newest})
+export const markOffline = (at?: string) => {
+  storedAt = [storedAt, at].filter((s): s is string => !!s).sort().pop()
+  onlineManager.setOnline(false)
   startProbing()
+  publish()
 }
 
 /**
  * The browser is the authority when it says offline, and its `online` event
- * is what brings the banner down on a phone. Both are wired once, and the
- * first subscriber is what wires them, so a server render touches nothing.
+ * is what brings the banner down on a phone. The onlineManager listens to
+ * both events itself, this file listens to the onlineManager, and the first
+ * subscriber is what wires it, so a server render touches nothing. The
+ * manager starts out online whatever the browser says, so a page opened
+ * without a connection is told so here.
  */
 let wired = false
 const wire = () => {
   if (wired || typeof window === 'undefined') return
   wired = true
-  window.addEventListener('online', () => markOnline())
-  window.addEventListener('offline', () => markOffline())
+  onlineManager.subscribe(online => {
+    if (online) {
+      stopProbing()
+      storedAt = undefined
+    } else {
+      startProbing()
+    }
+    publish()
+  })
+  if (!browserOnline()) onlineManager.setOnline(false)
+  publish()
 }
 
 export const subscribeOffline = (listener: (s: OfflineState) => void): (() => void) => {
@@ -347,8 +523,6 @@ export const setOfflineLanguage = (code: I18nCode) => {
   language = code
 }
 
-declare const __JAEN_ZITADEL_GQL__: {authority?: string; clientId?: string} | undefined
-
 const guessLanguage = (): I18nCode => {
   const codes: I18nCode[] = ['en-US', 'de-AT', 'tr-TR', 'ar-EG']
   const match = (raw: unknown): I18nCode | undefined => {
@@ -408,9 +582,13 @@ export const isNetworkFailure = (err: unknown): boolean => !browserOnline() || e
 export interface GraphQLResponse {
   data?: unknown
   errors?: unknown[]
-  /** Set by this layer on an answer served from the store. */
-  offline?: true
-  storedAt?: string
+}
+
+export interface CacheKeyParts {
+  operationName?: string | null
+  query: string
+  variables?: unknown
+  subject?: string
 }
 
 /**
@@ -419,14 +597,13 @@ export interface GraphQLResponse {
  *
  * - a mutation: refused on the device while offline, sent otherwise, never
  *   stored, and a network failure on the way is the same refusal;
- * - a query while the browser says offline: the stored answer, or the
- *   decided error;
- * - a query otherwise: sent, stored on success, and on a network failure
- *   the stored answer, or the decided error.
+ * - a query while the browser says offline: the decided error, and the
+ *   query client keeps showing what it holds;
+ * - a query otherwise: sent, and on a network failure the decided error.
  *
- * Every stored answer served is tagged `{offline: true, storedAt}`, so a hook
- * that wants to know can, and the banner reads the same instant from the
- * state.
+ * The name and the parts are the fetcher's contract from the time this
+ * function also stored and served answers. The query client holds them now,
+ * see hooks/query.ts, and the parts are read for nothing but the document.
  */
 export async function throughCache(
   parts: CacheKeyParts,
@@ -449,46 +626,20 @@ export async function throughCache(
     }
   }
 
-  await reconcileOwner(parts.subject)
-
-  // No key means no storage, and the request goes through untouched.
-  const key = await cacheKey(parts).catch(() => undefined)
-
-  const fromStore = async (): Promise<GraphQLResponse> => {
-    const stored = key ? await readAnswer(key) : undefined
-    if (stored && stored.response && typeof stored.response === 'object') {
-      markOffline(stored.storedAt)
-      return {...(stored.response as GraphQLResponse), offline: true, storedAt: stored.storedAt}
-    }
+  if (!browserOnline()) {
     markOffline()
     throw new OfflineError(offlineStrings().NoConnectionNoData)
   }
 
-  if (!browserOnline()) return fromStore()
-
-  const sentIn = generation
   let response: GraphQLResponse
   try {
     response = await send()
   } catch (err) {
     if (!isNetworkFailure(err)) throw err
-    return fromStore()
+    markOffline()
+    throw new OfflineError(offlineStrings().NoConnectionNoData)
   }
-
   markOnline()
-  // Only a whole answer is worth keeping: a response with errors is the
-  // backend's refusal, and offline it would be shown as if it were current.
-  // And only an answer of this generation: a clear in between means the
-  // session it was asked for is gone.
-  if (
-    key &&
-    sentIn === generation &&
-    response &&
-    typeof response === 'object' &&
-    !(Array.isArray(response.errors) && response.errors.length)
-  ) {
-    void writeAnswer(key, response)
-  }
   return response
 }
 
@@ -503,8 +654,9 @@ export async function throughCache(
 export function useOnline(): OfflineState {
   const [value, setValue] = useState<OfflineState>({online: true})
   useEffect(() => {
+    const unsubscribe = subscribeOffline(setValue)
     setValue(state)
-    return subscribeOffline(setValue)
+    return unsubscribe
   }, [])
   return value
 }
@@ -513,7 +665,10 @@ export function useOnline(): OfflineState {
  * Refetch once when the connection comes back. The `online` event, a
  * successful probe or any successful fetch flips the state, and every
  * screen that shows a stored answer replaces it with a fresh one then. The
- * first render never refetches: the hook it belongs to is loading already.
+ * query client refetches its stale queries on the same signal by itself,
+ * and a refetch of a read already on its way is folded into it, so a screen
+ * that still calls this costs nothing. The first render never refetches: the
+ * hook it belongs to is loading already.
  */
 export function useRefetchOnReconnect(refetch: () => void) {
   const {online} = useOnline()
@@ -539,9 +694,10 @@ export function useRefetchOnReconnect(refetch: () => void) {
  * oidc-client-ts, and the app has no hook in that page. What it has is the
  * user manager's `userUnloaded` event, which fires when the session is
  * removed from storage, before the browser is sent to the identity server.
- * This component subscribes to it and clears the store then. It renders
- * nothing and is mounted by the plugin's wrapPageElement on every page,
- * because /logout is a page of its own and the shell is not on it.
+ * This component subscribes to it and clears the store then, and the query
+ * client with it. It renders nothing and is mounted by the plugin's
+ * wrapPageElement on every page, because /logout is a page of its own and
+ * the shell is not on it.
  *
  * jaen's `useAuth` carries react-oidc-context's `events` only once the OIDC
  * runtime is loaded, which it is on every page that requires a session, so

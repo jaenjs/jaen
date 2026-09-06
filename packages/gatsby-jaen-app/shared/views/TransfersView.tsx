@@ -24,6 +24,8 @@
  * Chakra parts (Table, Popover, Menu, Dialog, Drawer, Checkbox, Switch,
  * SegmentGroup) and jaen's semantic tokens.
  *
+ * The table and the cards are DataTable's (shared/components/table), the
+ * board hands it the columns, the day grouping, the stripes and its card.
  * The dialogs are exported: TransferDetailView opens the same ones.
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
@@ -50,7 +52,6 @@ import {
   Separator,
   Stack,
   Switch,
-  Table,
   Text,
   Textarea,
   chakra,
@@ -58,17 +59,11 @@ import {
 import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
 import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
 import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
-import {FaColumns} from '@react-icons/all-files/fa/FaColumns'
 import {FaFilter} from '@react-icons/all-files/fa/FaFilter'
 import {FaSortAmountDown} from '@react-icons/all-files/fa/FaSortAmountDown'
 import {FaSortAmountUp} from '@react-icons/all-files/fa/FaSortAmountUp'
 import {FaChevronDown} from '@react-icons/all-files/fa/FaChevronDown'
 import {FaChevronUp} from '@react-icons/all-files/fa/FaChevronUp'
-import {FaChevronLeft} from '@react-icons/all-files/fa/FaChevronLeft'
-import {FaChevronRight} from '@react-icons/all-files/fa/FaChevronRight'
-import {FaAngleDoubleLeft} from '@react-icons/all-files/fa/FaAngleDoubleLeft'
-import {FaGripVertical} from '@react-icons/all-files/fa/FaGripVertical'
-import {FaUndo} from '@react-icons/all-files/fa/FaUndo'
 import {FaUsers} from '@react-icons/all-files/fa/FaUsers'
 import {FaSuitcase} from '@react-icons/all-files/fa/FaSuitcase'
 import {FaPlane} from '@react-icons/all-files/fa/FaPlane'
@@ -104,49 +99,44 @@ import {
   type TransferRow
 } from '../hooks/transfers'
 import {
+  AmountInput,
   DriverColorDot,
   EmptyState,
+  DialogActions,
   ErrorBanner,
   LoadingOverlay,
   MoneyText,
   StatusBadge,
   toaster,
   useStateLabel,
-  PageHeader
+  PageHeader,
+  formatAmount,
+  parseAmount
 } from '../components'
 import {OfflineBanner} from '../components/OfflineBanner'
+import {DataTable, useIsMobile, type DataColumn, type DataGroup, type DayTone} from '../components/table'
 import {useRefetchOnReconnect} from '../offline'
 import {getI18nCommon} from '../locales/i18nCommon'
 import {fill, getI18nTransfers, type TransfersStrings} from '../locales/i18nTransfers'
+
+// TransferDetailView reads the breakpoint from here since before the table module existed.
+export {useIsMobile}
 import {asTransferState, TRANSFER_STATES, type TransferState} from '../locales/i18nStates'
 
 // ============================================================
 // Small shared helpers
 // ============================================================
 
-/** The account's catalogues, for every component on this screen. */
+/**
+ * The account's catalogues, for every component on this screen. Memoised on
+ * the code, so the column definitions built from them keep their identity
+ * between renders.
+ */
 export function useTransferStrings() {
   const code = useI18nCode()
-  const {strings: t} = getI18nTransfers(code)
-  const {strings: tc} = getI18nCommon(code)
+  const t = useMemo(() => getI18nTransfers(code).strings, [code])
+  const tc = useMemo(() => getI18nCommon(code).strings, [code])
   return {code, t, tc}
-}
-
-/**
- * Below Chakra's `md` (48em) the board is cards and the driver's detail is
- * the phone screen. matchMedia after mount, false during SSR, so the server
- * and the first client render agree.
- */
-export function useIsMobile(): boolean {
-  const [mobile, setMobile] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 47.99em)')
-    const update = () => setMobile(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
-  return mobile
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
@@ -359,7 +349,7 @@ export interface AssignDialogProps {
  * an SMS on either side (okf/architecture/notifications.md).
  */
 export function AssignDialog({open, onClose, transfer, drivers, cars, onAssigned}: AssignDialogProps) {
-  const {t, tc} = useTransferStrings()
+  const {t} = useTransferStrings()
   const [driverId, setDriverId] = useState<string | undefined>(undefined)
   const [carId, setCarId] = useState<string>('')
   const [driverSearch, setDriverSearch] = useState('')
@@ -426,14 +416,13 @@ export function AssignDialog({open, onClose, transfer, drivers, cars, onAssigned
       size="lg"
       busy={busy}
       footer={
-        <>
-          <Button variant="outline" onClick={onClose} disabled={busy}>
-            {tc.Cancel}
-          </Button>
-          <Button colorPalette="brand" onClick={() => void submit()} loading={busy} disabled={!driverId}>
-            {t.AssignSubmit}
-          </Button>
-        </>
+        <DialogActions
+          onCancel={onClose}
+          confirmLabel={t.AssignSubmit}
+          onConfirm={submit}
+          loading={busy}
+          confirmDisabled={!driverId}
+        />
       }>
       <Stack gap="5">
         {error && <ErrorBanner message={error} />}
@@ -570,22 +559,27 @@ export interface PriceDialogProps {
 }
 
 export function PriceDialog({open, onClose, transfer, onSaved}: PriceDialogProps) {
-  const {t, tc} = useTransferStrings()
+  const {t} = useTransferStrings()
+  const code = useI18nCode()
   const [value, setValue] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
-      setValue(transfer?.price != null ? String(transfer.price) : '')
+      // The stored price is shown the way the field shows any amount at rest,
+      // `12,50 €`, and a focus turns it back into the bare number.
+      setValue(transfer?.price != null ? formatAmount(code, transfer.price) : '')
       setError(null)
     }
-  }, [open, transfer?.id, transfer?.price])
+  }, [open, transfer?.id, transfer?.price, code])
 
   const submit = async () => {
     if (!transfer) return
-    const n = Number(value.replace(',', '.'))
-    if (!Number.isFinite(n) || n < 0) {
+    // parseAmount reads `12,5`, `12.5` and `12,50 €` alike and rounds to two
+    // decimals, so the backend gets 12.5 for all three.
+    const n = parseAmount(value)
+    if (n === null || n < 0) {
       setError(t.PriceInvalid)
       return
     }
@@ -610,28 +604,17 @@ export function PriceDialog({open, onClose, transfer, onSaved}: PriceDialogProps
       title={t.PriceTitle}
       size="sm"
       busy={busy}
-      footer={
-        <>
-          <Button variant="outline" onClick={onClose} disabled={busy}>
-            {tc.Cancel}
-          </Button>
-          <Button colorPalette="brand" onClick={() => void submit()} loading={busy}>
-            {t.PriceSubmit}
-          </Button>
-        </>
-      }>
+      footer={<DialogActions onCancel={onClose} confirmLabel={t.PriceSubmit} onConfirm={submit} loading={busy} />}>
       <Stack gap="3">
         {error && <ErrorBanner message={error} />}
         <Field.Root invalid={!!error}>
           <Field.Label>{t.PriceLabel}</Field.Label>
-          <Input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min="0"
+          <AmountInput
             autoFocus
+            data-testid="price-input"
+            placeholder={t.PricePlaceholder}
             value={value}
-            onChange={e => setValue(e.target.value)}
+            onChange={setValue}
             onKeyDown={e => {
               if (e.key === 'Enter') void submit()
             }}
@@ -651,7 +634,7 @@ export interface StateDialogProps {
 
 /** The dispatcher's state modal: the real twelve, any of them. */
 export function StateDialog({open, onClose, transfer, onSaved}: StateDialogProps) {
-  const {t, tc} = useTransferStrings()
+  const {t} = useTransferStrings()
   const label = useStateLabel()
   const current = asTransferState(transfer?.state)
   const [value, setValue] = useState<TransferState | undefined>(current)
@@ -689,14 +672,13 @@ export function StateDialog({open, onClose, transfer, onSaved}: StateDialogProps
       size="sm"
       busy={busy}
       footer={
-        <>
-          <Button variant="outline" onClick={onClose} disabled={busy}>
-            {tc.Cancel}
-          </Button>
-          <Button colorPalette="brand" onClick={() => void submit()} loading={busy} disabled={!value || value === current}>
-            {t.StateSubmit}
-          </Button>
-        </>
+        <DialogActions
+          onCancel={onClose}
+          confirmLabel={t.StateSubmit}
+          onConfirm={submit}
+          loading={busy}
+          confirmDisabled={!value || value === current}
+        />
       }>
       <Stack gap="3">
         {error && <ErrorBanner message={error} />}
@@ -892,7 +874,7 @@ function FormSection({title, children}: {title: string; children: React.ReactNod
  * dialog works inside a drawer on a phone without a portal fight.
  */
 export function CreateTransferDialog({open, onClose, customers, cars, onCreated, prefill}: CreateTransferDialogProps) {
-  const {t, tc} = useTransferStrings()
+  const {t} = useTransferStrings()
   const [form, setForm] = useState<CreateForm>(emptyForm)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -927,7 +909,9 @@ export function CreateTransferDialog({open, onClose, customers, cars, onCreated,
       setError(t.DateInvalid)
       return
     }
-    const priceNumber = form.price.trim() ? Number(form.price.replace(',', '.')) : undefined
+    // The same reading as PriceDialog: `12,5`, `12.5` and `12,50 €` all become
+    // 12.5, an empty field means no price yet.
+    const priceNumber = form.price.trim() ? parseAmount(form.price) ?? NaN : undefined
     if (priceNumber !== undefined && (!Number.isFinite(priceNumber) || priceNumber < 0)) {
       setError(t.PriceInvalid)
       return
@@ -1001,14 +985,13 @@ export function CreateTransferDialog({open, onClose, customers, cars, onCreated,
       size="xl"
       busy={busy}
       footer={
-        <>
-          <Button variant="outline" onClick={onClose} disabled={busy}>
-            {tc.Cancel}
-          </Button>
-          <Button colorPalette="brand" onClick={() => void submit()} loading={busy} loadingText={t.CreateSubmitting}>
-            {t.CreateSubmit}
-          </Button>
-        </>
+        <DialogActions
+          onCancel={onClose}
+          confirmLabel={t.CreateSubmit}
+          onConfirm={submit}
+          loading={busy}
+          loadingText={t.CreateSubmitting}
+        />
       }>
       <Stack gap="6">
         {error && <ErrorBanner message={error} />}
@@ -1221,14 +1204,12 @@ export function CreateTransferDialog({open, onClose, customers, cars, onCreated,
           <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root>
               <Field.Label>{t.LabelPrice}</Field.Label>
-              <Input
+              <AmountInput
                 size="sm"
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
+                data-testid="create-price-input"
+                placeholder={t.PricePlaceholder}
                 value={form.price}
-                onChange={e => set('price', e.target.value)}
+                onChange={v => set('price', v)}
               />
             </Field.Root>
             <Field.Root>
@@ -1447,7 +1428,7 @@ export function StatusFilter({selected, onChange}: StatusFilterProps) {
                 <Text textStyle="sm" fontWeight="medium">
                   {fill(t.FilterStatusCount, {count: selected.size, total: TRANSFER_STATES.length})}
                 </Text>
-                <HStack gap="1">
+                <HStack gap="2">
                   <Button size="2xs" variant="ghost" onClick={() => onChange(new Set(TRANSFER_STATES))}>
                     {t.FilterStatusAll}
                   </Button>
@@ -1546,11 +1527,6 @@ export type ColumnId =
   | 'extras'
   | 'notes'
 
-export interface ColumnConfig {
-  id: ColumnId
-  visible: boolean
-}
-
 const COLUMN_WIDTHS: Record<ColumnId, number> = {
   code: 96,
   status: 120,
@@ -1569,9 +1545,12 @@ const COLUMN_WIDTHS: Record<ColumnId, number> = {
   notes: 180
 }
 
-const ACTIONS_WIDTH = 72
-
-const DEFAULT_COLUMNS: ColumnConfig[] = [
+/**
+ * The board's order, and which columns a fresh browser shows. The layout a
+ * dispatcher makes of it is DataTable's business, remembered under the
+ * table id `transfers`, the key the board always used.
+ */
+const BOARD_COLUMNS: Array<{id: ColumnId; visible: boolean}> = [
   {id: 'code', visible: true},
   {id: 'status', visible: true},
   {id: 'route', visible: true},
@@ -1588,34 +1567,6 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   {id: 'extras', visible: false},
   {id: 'notes', visible: false}
 ]
-
-const COLUMNS_KEY = 'taxi-app.transfers.columns'
-
-/** The column layout, remembered per browser. Storage may be missing or throw, then the default. */
-const loadColumns = (): ColumnConfig[] => {
-  try {
-    const raw = window.localStorage.getItem(COLUMNS_KEY)
-    if (!raw) return DEFAULT_COLUMNS
-    const parsed = JSON.parse(raw) as ColumnConfig[]
-    const known = new Set(DEFAULT_COLUMNS.map(c => c.id))
-    const kept = parsed.filter(c => known.has(c.id))
-    // A column added since the layout was saved is appended with its default.
-    DEFAULT_COLUMNS.forEach(c => {
-      if (!kept.some(k => k.id === c.id)) kept.push(c)
-    })
-    return kept
-  } catch {
-    return DEFAULT_COLUMNS
-  }
-}
-
-const saveColumns = (columns: ColumnConfig[]) => {
-  try {
-    window.localStorage.setItem(COLUMNS_KEY, JSON.stringify(columns))
-  } catch {
-    /* a browser that blocks storage keeps the layout for the tab only */
-  }
-}
 
 const columnLabel = (t: TransfersStrings, id: ColumnId): string => {
   const map: Record<ColumnId, string> = {
@@ -1636,99 +1587,6 @@ const columnLabel = (t: TransfersStrings, id: ColumnId): string => {
     notes: t.ColNotes
   }
   return map[id]
-}
-
-function ColumnsPopover({
-  columns,
-  onChange
-}: {
-  columns: ColumnConfig[]
-  onChange: (next: ColumnConfig[]) => void
-}) {
-  const {t, tc} = useTransferStrings()
-  const [dragged, setDragged] = useState<ColumnId | null>(null)
-
-  const move = (from: ColumnId, to: ColumnId) => {
-    if (from === to) return
-    const next = [...columns]
-    const fromIndex = next.findIndex(c => c.id === from)
-    const toIndex = next.findIndex(c => c.id === to)
-    if (fromIndex < 0 || toIndex < 0) return
-    const [removed] = next.splice(fromIndex, 1)
-    if (removed) next.splice(toIndex, 0, removed)
-    onChange(next)
-  }
-
-  return (
-    <Popover.Root positioning={{placement: 'bottom-end'}} lazyMount unmountOnExit>
-      <Popover.Trigger asChild>
-        <Button size="sm" variant="outline" colorPalette="gray">
-          <FaColumns />
-          <chakra.span display={{base: 'none', sm: 'inline'}}>{tc.ColumnsLabel}</chakra.span>
-        </Button>
-      </Popover.Trigger>
-      <Portal>
-        <Popover.Positioner>
-          <Popover.Content w="2xs">
-            <Popover.Arrow />
-            <Popover.Header>
-              <HStack justify="space-between">
-                <Box>
-                  <Text textStyle="sm" fontWeight="medium">
-                    {tc.ColumnsCustomize}
-                  </Text>
-                  <Text textStyle="xs" color="fg.muted">
-                    {tc.ColumnsDragHint}
-                  </Text>
-                </Box>
-                <Button size="2xs" variant="ghost" onClick={() => onChange(DEFAULT_COLUMNS)}>
-                  <FaUndo />
-                  {tc.ColumnsReset}
-                </Button>
-              </HStack>
-            </Popover.Header>
-            <Popover.Body maxH="60vh" overflowY="auto">
-              <Stack gap="0.5">
-                {columns.map(col => (
-                  <HStack
-                    key={col.id}
-                    gap="2"
-                    px="2"
-                    py="1.5"
-                    rounded="md"
-                    cursor="grab"
-                    draggable
-                    opacity={dragged === col.id ? 0.5 : 1}
-                    _hover={{bg: 'bg.subtle'}}
-                    onDragStart={() => setDragged(col.id)}
-                    onDragOver={e => {
-                      e.preventDefault()
-                      if (dragged) move(dragged, col.id)
-                    }}
-                    onDragEnd={() => setDragged(null)}>
-                    <Box color="fg.muted" flexShrink={0}>
-                      <FaGripVertical />
-                    </Box>
-                    <Checkbox.Root
-                      size="sm"
-                      colorPalette="brand"
-                      checked={col.visible}
-                      onCheckedChange={e =>
-                        onChange(columns.map(c => (c.id === col.id ? {...c, visible: e.checked === true} : c)))
-                      }>
-                      <Checkbox.HiddenInput />
-                      <Checkbox.Control />
-                      <Checkbox.Label>{columnLabel(t, col.id)}</Checkbox.Label>
-                    </Checkbox.Root>
-                  </HStack>
-                ))}
-              </Stack>
-            </Popover.Body>
-          </Popover.Content>
-        </Popover.Positioner>
-      </Portal>
-    </Popover.Root>
-  )
 }
 
 // ============================================================
@@ -1768,17 +1626,6 @@ const enrich = (
   })
 }
 
-export const groupByDay = (rows: BoardRow[]): Array<[string, BoardRow[]]> => {
-  const m = new Map<string, BoardRow[]>()
-  rows.forEach(r => {
-    const k = r.rideDateISO || ''
-    const list = m.get(k)
-    if (list) list.push(r)
-    else m.set(k, [r])
-  })
-  return [...m.entries()]
-}
-
 /** The date header's stripe: green for today, yellow for tomorrow, nothing otherwise. */
 /**
  * The two stripes on a transfer, and why there are two.
@@ -1796,10 +1643,32 @@ export const groupByDay = (rows: BoardRow[]): Array<[string, BoardRow[]]> => {
  * date colour onto the day header's left edge and dropped the right stripe,
  * and the Chakra port copied that. Restored 2026-09-05 at the owner's request.
  */
-type DayTone = 'green' | 'yellow' | undefined
-
-const dayPalette = (day: string, today: string, tomorrow: string): DayTone =>
+export const dayPalette = (day: string, today: string, tomorrow: string): DayTone =>
   day === today ? 'green' : day === tomorrow ? 'yellow' : undefined
+
+/** Today and tomorrow as local days, read once per screen. */
+export const useTodayTomorrow = () => {
+  const today = useMemo(() => localDay(new Date()), [])
+  const tomorrow = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return localDay(d)
+  }, [])
+  return {today, tomorrow}
+}
+
+/** The board's grouping for DataTable: one section per ride day, named and toned by dayPalette. */
+export const useDayGroup = (today: string, tomorrow: string): DataGroup<BoardRow> => {
+  const {code} = useTransferStrings()
+  return useMemo(
+    () => ({
+      key: (row: BoardRow) => row.rideDateISO || '',
+      label: (day: string) => formatDay(day, code),
+      tone: (day: string) => dayPalette(day, today, tomorrow)
+    }),
+    [code, today, tomorrow]
+  )
+}
 
 export interface RowActions {
   onOpen: (row: BoardRow) => void
@@ -1988,193 +1857,130 @@ function ExtrasText({row}: {row: BoardRow}) {
 }
 
 // ============================================================
-// The table
+// The columns, as DataTable takes them
 // ============================================================
 
-interface BoardTableProps {
-  columns: ColumnConfig[]
-  groups: Array<[string, BoardRow[]]>
-  today: string
-  tomorrow: string
-  actions: RowActions
+/** One cell of the board, the same words and parts in the table and on a card. */
+function transferCell(row: BoardRow, id: ColumnId, actions: RowActions, t: TransfersStrings, code: I18nCode): React.ReactNode {
+  switch (id) {
+    case 'code':
+      return (
+        <Text fontWeight="medium" whiteSpace="nowrap" fontFamily="mono" textStyle="sm">
+          {row.code}
+        </Text>
+      )
+    case 'status':
+      return <StatusCell row={row} actions={actions} />
+    case 'route':
+      return (
+        <Box minW="0">
+          <Text textStyle="sm" fontWeight="medium" truncate>
+            {row.pickup}
+          </Text>
+          <Text textStyle="sm" color="fg.muted" truncate>
+            {row.dropoff}
+          </Text>
+        </Box>
+      )
+    case 'pickup':
+      return (
+        <Box whiteSpace="nowrap">
+          <Text textStyle="sm" fontWeight="medium">
+            {formatDay(row.rideDateISO, code)}
+          </Text>
+          <Text textStyle="sm" color="fg.muted">
+            {row.rideTime}
+          </Text>
+        </Box>
+      )
+    case 'passenger': {
+      const name = passengerName(row)
+      const phone = row.passengers[0]?.phone
+      return (
+        <Box minW="0">
+          <Text textStyle="sm" fontWeight="medium" truncate>
+            {name || '–'}
+          </Text>
+          {phone && (
+            <Text textStyle="xs" color="fg.muted" truncate>
+              {phone}
+            </Text>
+          )}
+        </Box>
+      )
+    }
+    case 'capacity':
+      return <CapacityText row={row} />
+    case 'flight':
+      return (
+        <Text textStyle="sm" color={row.details?.flightNumber ? undefined : 'fg.muted'}>
+          {row.details?.flightNumber || '–'}
+        </Text>
+      )
+    case 'driver':
+      return <DriverCell row={row} actions={actions} />
+    case 'vehicle':
+      return <VehicleCell row={row} actions={actions} />
+    case 'price':
+      return <PriceCell row={row} actions={actions} />
+    case 'customer':
+      return (
+        <Box minW="0">
+          <Text textStyle="sm" fontWeight="medium" truncate>
+            {row.customerName || '–'}
+          </Text>
+          <Text textStyle="xs" color="fg.muted" truncate>
+            {row.customerId}
+          </Text>
+        </Box>
+      )
+    case 'category':
+      return (
+        <Text textStyle="sm">
+          {enumLabel(t, 'Cat_', row.transferCategory)}
+          {row.transferType ? ` · ${enumLabel(t, 'Type_', row.transferType)}` : ''}
+        </Text>
+      )
+    case 'payment':
+      return (
+        <Text textStyle="sm" color={row.paymentMethode ? undefined : 'fg.muted'}>
+          {row.paymentMethode ? enumLabel(t, 'Pay_', row.paymentMethode) : '–'}
+          {row.payingParty ? ` · ${enumLabel(t, 'Party_', row.payingParty)}` : ''}
+        </Text>
+      )
+    case 'extras':
+      return <ExtrasText row={row} />
+    case 'notes':
+      return (
+        <Text textStyle="sm" color="fg.muted" truncate title={row.details?.message}>
+          {row.details?.message || '–'}
+        </Text>
+      )
+    default:
+      return null
+  }
 }
 
-export function BoardTable({columns, groups, today, tomorrow, actions}: BoardTableProps) {
-  const {t, tc, code} = useTransferStrings()
-  const visible = columns.filter(c => c.visible)
-  const minWidth = visible.reduce((sum, c) => sum + COLUMN_WIDTHS[c.id], ACTIONS_WIDTH)
-
-  const cell = (row: BoardRow, id: ColumnId): React.ReactNode => {
-    switch (id) {
-      case 'code':
-        return (
-          <Text fontWeight="medium" whiteSpace="nowrap" fontFamily="mono" textStyle="sm">
-            {row.code}
-          </Text>
-        )
-      case 'status':
-        return <StatusCell row={row} actions={actions} />
-      case 'route':
-        return (
-          <Box minW="0">
-            <Text textStyle="sm" fontWeight="medium" truncate>
-              {row.pickup}
-            </Text>
-            <Text textStyle="sm" color="fg.muted" truncate>
-              {row.dropoff}
-            </Text>
-          </Box>
-        )
-      case 'pickup':
-        return (
-          <Box whiteSpace="nowrap">
-            <Text textStyle="sm" fontWeight="medium">
-              {formatDay(row.rideDateISO, code)}
-            </Text>
-            <Text textStyle="sm" color="fg.muted">
-              {row.rideTime}
-            </Text>
-          </Box>
-        )
-      case 'passenger': {
-        const name = passengerName(row)
-        const phone = row.passengers[0]?.phone
-        return (
-          <Box minW="0">
-            <Text textStyle="sm" fontWeight="medium" truncate>
-              {name || '–'}
-            </Text>
-            {phone && (
-              <Text textStyle="xs" color="fg.muted" truncate>
-                {phone}
-              </Text>
-            )}
-          </Box>
-        )
-      }
-      case 'capacity':
-        return <CapacityText row={row} />
-      case 'flight':
-        return (
-          <Text textStyle="sm" color={row.details?.flightNumber ? undefined : 'fg.muted'}>
-            {row.details?.flightNumber || '–'}
-          </Text>
-        )
-      case 'driver':
-        return <DriverCell row={row} actions={actions} />
-      case 'vehicle':
-        return <VehicleCell row={row} actions={actions} />
-      case 'price':
-        return <PriceCell row={row} actions={actions} />
-      case 'customer':
-        return (
-          <Box minW="0">
-            <Text textStyle="sm" fontWeight="medium" truncate>
-              {row.customerName || '–'}
-            </Text>
-            <Text textStyle="xs" color="fg.muted" truncate>
-              {row.customerId}
-            </Text>
-          </Box>
-        )
-      case 'category':
-        return (
-          <Text textStyle="sm">
-            {enumLabel(t, 'Cat_', row.transferCategory)}
-            {row.transferType ? ` · ${enumLabel(t, 'Type_', row.transferType)}` : ''}
-          </Text>
-        )
-      case 'payment':
-        return (
-          <Text textStyle="sm" color={row.paymentMethode ? undefined : 'fg.muted'}>
-            {row.paymentMethode ? enumLabel(t, 'Pay_', row.paymentMethode) : '–'}
-            {row.payingParty ? ` · ${enumLabel(t, 'Party_', row.payingParty)}` : ''}
-          </Text>
-        )
-      case 'extras':
-        return <ExtrasText row={row} />
-      case 'notes':
-        return (
-          <Text textStyle="sm" color="fg.muted" truncate title={row.details?.message}>
-            {row.details?.message || '–'}
-          </Text>
-        )
-      default:
-        return null
-    }
-  }
-
-  return (
-    <Table.ScrollArea borderWidth="1px" rounded="lg" bg="bg.surface">
-      <Table.Root size="sm" variant="line" tableLayout="fixed" style={{minWidth}}>
-        <Table.Header>
-          <Table.Row bg="bg.subtle">
-            {visible.map(c => (
-              <Table.ColumnHeader key={c.id} style={{width: COLUMN_WIDTHS[c.id]}} color="fg.muted" whiteSpace="nowrap">
-                {columnLabel(t, c.id)}
-              </Table.ColumnHeader>
-            ))}
-            <Table.ColumnHeader style={{width: ACTIONS_WIDTH}} />
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {groups.map(([day, rows]) => {
-            const palette = dayPalette(day, today, tomorrow)
-            return (
-              <React.Fragment key={day || 'none'}>
-                <Table.Row
-                  colorPalette={palette}
-                  bg={palette ? 'colorPalette.subtle' : 'bg.subtle'}
-                  borderInlineStartWidth="4px"
-                  borderInlineStartColor="transparent"
-                  borderInlineEndWidth="4px"
-                  borderInlineEndColor={palette ? 'colorPalette.solid' : 'transparent'}>
-                  <Table.Cell colSpan={visible.length + 1} py="1.5">
-                    <Text textStyle="sm" fontWeight="semibold" color={palette ? 'colorPalette.fg' : 'fg.muted'}>
-                      {formatDay(day, code)}
-                    </Text>
-                  </Table.Cell>
-                </Table.Row>
-                {rows.map(row => {
-                  const done = asTransferState(row.state) === 'COMPLETED'
-                  return (
-                    <Table.Row
-                      key={row.id}
-                      cursor="pointer"
-                      opacity={done ? 0.7 : 1}
-                      colorPalette={palette}
-                      borderInlineStartWidth="4px"
-                      borderInlineStartColor={row.driverColor ?? 'transparent'}
-                      borderInlineEndWidth="4px"
-                      borderInlineEndColor={palette ? 'colorPalette.solid' : 'transparent'}
-                      _hover={{bg: 'bg.subtle'}}
-                      onClick={() => actions.onOpen(row)}>
-                      {visible.map(c => (
-                        <Table.Cell key={c.id} verticalAlign="middle" style={{width: COLUMN_WIDTHS[c.id]}}>
-                          {cell(row, c.id)}
-                        </Table.Cell>
-                      ))}
-                      <Table.Cell verticalAlign="middle" style={{width: ACTIONS_WIDTH}}>
-                        <Button
-                          size="xs"
-                          variant="plain"
-                          colorPalette="brand"
-                          onClick={e => {
-                            e.stopPropagation()
-                            actions.onOpen(row)
-                          }}>
-                          {tc.Details}
-                        </Button>
-                      </Table.Cell>
-                    </Table.Row>
-                  )
-                })}
-              </React.Fragment>
-            )
-          })}
-        </Table.Body>
-      </Table.Root>
-    </Table.ScrollArea>
+/**
+ * The board's columns as DataTable takes them: the id, the header word in
+ * the account's language, the width the board always had, whether a fresh
+ * browser shows it, and the cell. The dispatcher's cells carry the row
+ * actions (assign, price, state), a list without them draws the plain
+ * value. Bookings picks the customer's subset by id from the same list, so
+ * every cell is written once.
+ */
+export function useTransferColumns(actions: RowActions): DataColumn<BoardRow>[] {
+  const {t, code} = useTransferStrings()
+  return useMemo(
+    () =>
+      BOARD_COLUMNS.map(({id, visible}) => ({
+        id,
+        label: columnLabel(t, id),
+        width: COLUMN_WIDTHS[id],
+        defaultVisible: visible,
+        cell: (row: BoardRow) => transferCell(row, id, actions, t, code)
+      })),
+    [t, code, actions]
   )
 }
 
@@ -2340,97 +2146,6 @@ export function TransferCard({row, expanded, onToggle, actions, compact = false,
   )
 }
 
-interface CardListProps {
-  groups: Array<[string, BoardRow[]]>
-  today: string
-  tomorrow: string
-  actions: RowActions
-  compact?: boolean
-}
-
-export function CardList({groups, today, tomorrow, actions, compact}: CardListProps) {
-  const {code} = useTransferStrings()
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
-  const toggle = (id: string) =>
-    setExpanded(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  return (
-    <Stack gap="3">
-      {groups.map(([day, rows]) => {
-        const palette = dayPalette(day, today, tomorrow)
-        return (
-          <React.Fragment key={day || 'none'}>
-            <Box
-              colorPalette={palette}
-              px="3"
-              py="1.5"
-              rounded="md"
-              bg={palette ? 'colorPalette.subtle' : 'bg.subtle'}
-              borderInlineEndWidth="4px"
-              borderInlineEndColor={palette ? 'colorPalette.solid' : 'transparent'}>
-              <Text textStyle="sm" fontWeight="semibold" color={palette ? 'colorPalette.fg' : 'fg.muted'}>
-                {formatDay(day, code)}
-              </Text>
-            </Box>
-            {rows.map(row => (
-              <TransferCard
-                key={row.id}
-                row={row}
-                expanded={expanded.has(row.id)}
-                onToggle={() => toggle(row.id)}
-                actions={actions}
-                compact={compact}
-                dayTone={palette}
-              />
-            ))}
-          </React.Fragment>
-        )
-      })}
-    </Stack>
-  )
-}
-
-// ============================================================
-// Pagination
-// ============================================================
-
-interface PagerProps {
-  page: number
-  pages: number
-  hasNext: boolean
-  onFirst: () => void
-  onPrev: () => void
-  onNext: () => void
-}
-
-export function Pager({page, pages, hasNext, onFirst, onPrev, onNext}: PagerProps) {
-  const {t, tc} = useTransferStrings()
-  return (
-    <HStack justify="space-between" flexWrap="wrap" gap="2">
-      <Text textStyle="sm" color="fg.muted">
-        {fill(t.PageLabel, {page, pages})}
-      </Text>
-      <HStack gap="1">
-        <IconButton size="sm" variant="outline" aria-label={tc.Previous} disabled={page <= 1} onClick={onFirst} minH="44px">
-          <FaAngleDoubleLeft />
-        </IconButton>
-        <Button size="sm" variant="outline" disabled={page <= 1} onClick={onPrev} minH="44px">
-          <FaChevronLeft />
-          <chakra.span display={{base: 'none', sm: 'inline'}}>{tc.Previous}</chakra.span>
-        </Button>
-        <Button size="sm" variant="outline" disabled={!hasNext} onClick={onNext} minH="44px">
-          <chakra.span display={{base: 'none', sm: 'inline'}}>{tc.Next}</chakra.span>
-          <FaChevronRight />
-        </Button>
-      </HStack>
-    </HStack>
-  )
-}
-
 // ============================================================
 // The list, shared by the board and "my rides"
 // ============================================================
@@ -2535,31 +2250,16 @@ const BOARD_PAGE_SIZE = 25
 function DispatchBoard() {
   const {t, tc} = useTransferStrings()
   const navigate = useAppNavigate()
-  const mobile = useIsMobile()
   const {drivers} = useDrivers()
   const {cars, refetch: refetchCars} = useCars()
   const {users} = useUsers(100)
 
-  const today = useMemo(() => localDay(new Date()), [])
-  const tomorrow = useMemo(() => {
-    const d = new Date()
-    d.setDate(d.getDate() + 1)
-    return localDay(d)
-  }, [])
+  const {today, tomorrow} = useTodayTomorrow()
 
   const list = useListState('today', new Set(TRANSFER_STATES))
   const args = useServerArgs(list, today, tomorrow, BOARD_PAGE_SIZE)
   const {rows, isLoading, error, pagination, nextPage, prevPage, firstPage, refetch, replaceRow} =
     useTransferList(args)
-
-  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS)
-  useEffect(() => {
-    setColumns(loadColumns())
-  }, [])
-  const changeColumns = (next: ColumnConfig[]) => {
-    setColumns(next)
-    saveColumns(next)
-  }
 
   const [assignFor, setAssignFor] = useState<TransferRow | null>(null)
   const [priceFor, setPriceFor] = useState<TransferRow | null>(null)
@@ -2568,14 +2268,18 @@ function DispatchBoard() {
 
   const enriched = useMemo(() => enrich(rows, drivers, users, cars), [rows, drivers, users, cars])
   const filtered = useMemo(() => applyClientFilters(enriched, list), [enriched, list])
-  const groups = useMemo(() => groupByDay(filtered), [filtered])
 
-  const actions: RowActions = {
-    onOpen: row => navigate(transferPath(row)),
-    onAssign: setAssignFor,
-    onPrice: setPriceFor,
-    onState: setStateFor
-  }
+  const actions = useMemo<RowActions>(
+    () => ({
+      onOpen: row => navigate(transferPath(row)),
+      onAssign: setAssignFor,
+      onPrice: setPriceFor,
+      onState: setStateFor
+    }),
+    [navigate]
+  )
+  const columns = useTransferColumns(actions)
+  const group = useDayGroup(today, tomorrow)
 
   const onSaved = useCallback(
     (row: TransferRow) => {
@@ -2634,33 +2338,32 @@ function DispatchBoard() {
           </HStack>
         )}
 
-        <HStack justify="space-between" flexWrap="wrap" gap="2">
-          <Text textStyle="sm" color="fg.muted">
-            {fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
-          </Text>
-          {!mobile && <ColumnsPopover columns={columns} onChange={changeColumns} />}
-        </HStack>
-
-        {error && <ErrorBanner message={error} onRetry={refetch} />}
-
-        <Box position="relative" minH="40">
-          {isLoading && <LoadingOverlay overlay />}
-          {!isLoading && filtered.length === 0 ? (
-            <EmptyState title={t.EmptyMessage} description={t.EmptyHint} />
-          ) : mobile ? (
-            <CardList groups={groups} today={today} tomorrow={tomorrow} actions={actions} />
-          ) : (
-            <BoardTable columns={columns} groups={groups} today={today} tomorrow={tomorrow} actions={actions} />
+        <DataTable
+          tableId="transfers"
+          columns={columns}
+          rows={filtered}
+          rowId={row => row.id}
+          onOpen={actions.onOpen}
+          group={group}
+          stripe={row => row.driverColor}
+          muted={row => asTransferState(row.state) === 'COMPLETED'}
+          card={(row, api) => (
+            <TransferCard row={row} expanded={api.expanded} onToggle={api.toggle} actions={actions} dayTone={api.tone} />
           )}
-        </Box>
-
-        <Pager
-          page={pagination.currentPage}
-          pages={pagination.totalPages}
-          hasNext={pagination.hasNextPage}
-          onFirst={firstPage}
-          onPrev={prevPage}
-          onNext={nextPage}
+          summary={fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
+          isLoading={isLoading}
+          error={error}
+          onRetry={refetch}
+          empty={<EmptyState title={t.EmptyMessage} description={t.EmptyHint} />}
+          pager={{
+            page: pagination.currentPage,
+            pages: pagination.totalPages,
+            hasNext: pagination.hasNextPage,
+            onFirst: firstPage,
+            onPrev: prevPage,
+            onNext: nextPage,
+            always: true
+          }}
         />
       </Stack>
 
@@ -2700,12 +2403,7 @@ function MyRides({heading, subtitle}: {heading: string; subtitle?: string}) {
   const {t, tc} = useTransferStrings()
   const navigate = useAppNavigate()
 
-  const today = useMemo(() => localDay(new Date()), [])
-  const tomorrow = useMemo(() => {
-    const d = new Date()
-    d.setDate(d.getDate() + 1)
-    return localDay(d)
-  }, [])
+  const {today, tomorrow} = useTodayTomorrow()
 
   // A driver wants what is still to do. The chips and the status filter can widen it.
   const list = useListState('today', OPEN_STATES)
@@ -2719,9 +2417,10 @@ function MyRides({heading, subtitle}: {heading: string; subtitle?: string}) {
 
   const enriched = useMemo(() => enrich(rows, [], [], []), [rows])
   const filtered = useMemo(() => applyClientFilters(enriched, list), [enriched, list])
-  const groups = useMemo(() => groupByDay(filtered), [filtered])
 
-  const actions: RowActions = {onOpen: row => navigate(transferPath(row))}
+  const actions = useMemo<RowActions>(() => ({onOpen: row => navigate(transferPath(row))}), [navigate])
+  const columns = useTransferColumns(actions)
+  const group = useDayGroup(today, tomorrow)
 
   return (
     <Box p={{base: '4', md: '6'}} maxW="full">
@@ -2743,27 +2442,41 @@ function MyRides({heading, subtitle}: {heading: string; subtitle?: string}) {
         </Flex>
 
         <OfflineBanner />
-        {error && <ErrorBanner message={error} onRetry={refetch} />}
 
-        <Box position="relative" minH="40">
-          {isLoading && <LoadingOverlay overlay />}
-          {!isLoading && filtered.length === 0 ? (
-            <EmptyState title={t.EmptyMessage} description={t.EmptyHint} icon={<FaCar />} />
-          ) : (
-            <CardList groups={groups} today={today} tomorrow={tomorrow} actions={actions} compact />
+        {/* The driver's list is cards at every width, without the dispatcher's cells. */}
+        <DataTable
+          tableId="my-rides"
+          columns={columns}
+          rows={filtered}
+          rowId={row => row.id}
+          onOpen={actions.onOpen}
+          group={group}
+          stripe={row => row.driverColor}
+          cardsOnly
+          columnsControl={false}
+          card={(row, api) => (
+            <TransferCard
+              row={row}
+              expanded={api.expanded}
+              onToggle={api.toggle}
+              actions={actions}
+              dayTone={api.tone}
+              compact
+            />
           )}
-        </Box>
-
-        {(pagination.hasNextPage || pagination.currentPage > 1) && (
-          <Pager
-            page={pagination.currentPage}
-            pages={pagination.totalPages}
-            hasNext={pagination.hasNextPage}
-            onFirst={firstPage}
-            onPrev={prevPage}
-            onNext={nextPage}
-          />
-        )}
+          isLoading={isLoading}
+          error={error}
+          onRetry={refetch}
+          empty={<EmptyState title={t.EmptyMessage} description={t.EmptyHint} icon={<FaCar />} />}
+          pager={{
+            page: pagination.currentPage,
+            pages: pagination.totalPages,
+            hasNext: pagination.hasNextPage,
+            onFirst: firstPage,
+            onPrev: prevPage,
+            onNext: nextPage
+          }}
+        />
       </Stack>
     </Box>
   )

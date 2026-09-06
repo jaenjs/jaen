@@ -79,6 +79,7 @@ const de = {
   // Price dialog
   PriceTitle: 'Preis festlegen',
   PriceLabel: 'Preis (EUR)',
+  PricePlaceholder: 'z. B. 12,50',
   PriceSubmit: 'Speichern',
   PriceInvalid: 'Bitte einen gültigen Betrag eingeben',
 
@@ -323,6 +324,7 @@ const en: TransfersStrings = {
 
   PriceTitle: 'Set price',
   PriceLabel: 'Price (EUR)',
+  PricePlaceholder: 'e.g. 12.50',
   PriceSubmit: 'Save',
   PriceInvalid: 'Please enter a valid amount',
 
@@ -559,6 +561,7 @@ const tr: TransfersStrings = {
 
   PriceTitle: 'Fiyat belirle',
   PriceLabel: 'Fiyat (EUR)',
+  PricePlaceholder: 'örn. 12,50',
   PriceSubmit: 'Kaydet',
   PriceInvalid: 'Lütfen geçerli bir tutar girin',
 
@@ -795,6 +798,7 @@ const ar: TransfersStrings = {
 
   PriceTitle: 'تحديد السعر',
   PriceLabel: 'السعر (يورو)',
+  PricePlaceholder: 'مثلاً 12,50',
   PriceSubmit: 'حفظ',
   PriceInvalid: 'يرجى إدخال مبلغ صحيح',
 
@@ -972,6 +976,5 @@ export function getI18nTransfers(code: I18nCode): {code: I18nCode; strings: Tran
   return {code, strings: de}
 }
 
-/** `{name}` style placeholders, filled in. */
-export const fill = (template: string, values: Record<string, string | number>): string =>
-  Object.entries(values).reduce((s, [k, v]) => s.split(`{${k}}`).join(String(v)), template)
+/** `{name}` style placeholders, filled in. The one helper lives with the common words. */
+export {fill} from './i18nCommon'

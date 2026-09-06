@@ -7,13 +7,17 @@
  * never open a door. See okf/architecture/permissions.md.
  *
  * The roles come from the `currentUser` query the app already relies on, read
- * as `roles { edges { node { key } } }`, and are asked for once per session:
- * every screen and the shell call useCaller(), and the answer is cached at
- * module level and keyed on the signed-in subject, so a second account in the
- * same tab starts over instead of inheriting the first account's roles.
+ * as `roles { edges { node { key } } }`, and are one query of the client in
+ * hooks/query.ts, `['caller', subject]`: every screen and the shell call
+ * useCaller(), the answer is held for five minutes and keyed on the signed-in
+ * subject, so a second account in the same tab starts over instead of
+ * inheriting the first account's roles, and a reload offline answers from
+ * the persisted store, which is what lets the driver's rides render without
+ * a connection. See okf/architecture/data-layer.md.
  */
-import {useEffect, useState} from 'react'
 import {fetchGraphQL} from '../client/limosen'
+import {keys, queryClient, useAppQuery} from './hooks/query'
+import {sessionSubject} from './offline'
 
 export const ADMIN_ROLE = 'jaen:admin'
 export const DRIVER_ROLE = 'limosen:driver'
@@ -112,26 +116,6 @@ const driverRoleKeys = (): string[] => {
   return keys
 }
 
-/**
- * The subject of the OIDC session in this tab, read from the same storage the
- * GraphQL client takes its bearer token from. It is the cache key: as long as
- * it is unchanged, the roles are unchanged.
- */
-const sessionSubject = (): string | undefined => {
-  try {
-    const z =
-      typeof __JAEN_ZITADEL_GQL__ !== 'undefined' ? __JAEN_ZITADEL_GQL__ : null
-    if (!z?.authority || !z?.clientId) return undefined
-    const raw = window.sessionStorage?.getItem(
-      `oidc.user:${z.authority}:${z.clientId}`
-    )
-    if (!raw) return undefined
-    return JSON.parse(raw)?.profile?.sub
-  } catch {
-    return undefined
-  }
-}
-
 const fromRoles = (userId: string | undefined, roles: string[]): Caller => {
   const drivers = driverRoleKeys()
   const customers = Array.from(new Set([CUSTOMER_ROLE, brandCustomerRole()]))
@@ -167,51 +151,9 @@ const fetchCaller = async (): Promise<Caller> => {
   return fromRoles(typeof user?.id === 'string' ? user.id : undefined, roles)
 }
 
-// One answer per signed-in subject per tab. `value` is what every subscriber
-// renders, `promise` is what dedups the requests while it is in flight.
-let cache:
-  | {subject: string | undefined; promise: Promise<Caller>; value: Caller}
-  | undefined
-
-const listeners = new Set<(c: Caller) => void>()
-
-const publish = (value: Caller) => {
-  if (cache) cache.value = value
-  listeners.forEach(l => l(value))
-}
-
-const load = (): Caller => {
-  const subject = sessionSubject()
-
-  if (cache && cache.subject === subject) return cache.value
-
-  const promise = fetchCaller()
-    .then(caller => {
-      // A sign-in that happened while the request was out belongs to a
-      // different cache entry, so only the entry that started it publishes.
-      if (cache?.promise === promise) publish(caller)
-      return caller
-    })
-    .catch((err: unknown) => {
-      // Swallowed on purpose: a caller with no roles sees the shell and an
-      // empty navigation, which is the honest rendering of "we could not
-      // find out who you are". The message is kept so a screen can say so.
-      const failed: Caller = {
-        ...NOBODY,
-        loading: false,
-        error: err instanceof Error ? err.message : String(err)
-      }
-      if (cache?.promise === promise) publish(failed)
-      return failed
-    })
-
-  cache = {subject, promise, value: NOBODY}
-  return cache.value
-}
-
 /** Forget the cached answer, for a screen that just changed the caller's own roles. */
 export const resetCaller = () => {
-  cache = undefined
+  void queryClient.invalidateQueries({queryKey: ['caller']})
 }
 
 /**
@@ -219,21 +161,20 @@ export const resetCaller = () => {
  *
  * Renders `loading: true` until the roles are known, so a screen can hold its
  * role-bound parts back for one render rather than flashing the wrong one.
+ * The session may appear or change between renders, the OIDC redirect lands
+ * on /loading and only then reaches the app, so the subject is read on every
+ * render and a new subject is a new query.
  */
 export function useCaller(): Caller {
-  const [caller, setCaller] = useState<Caller>(() =>
-    typeof window === 'undefined' ? NOBODY : load()
-  )
-
-  useEffect(() => {
-    listeners.add(setCaller)
-    // The session may have appeared or changed since the initial render, the
-    // OIDC redirect lands on /loading and only then reaches the app.
-    setCaller(load())
-    return () => {
-      listeners.delete(setCaller)
-    }
-  }, [])
-
-  return caller
+  const subject = typeof window === 'undefined' ? undefined : sessionSubject()
+  const {query, error} = useAppQuery({
+    queryKey: keys.caller(subject),
+    queryFn: fetchCaller
+  })
+  if (query.data) return query.data
+  // A caller with no roles sees the shell and an empty navigation, which is
+  // the honest rendering of "we could not find out who you are". The message
+  // is kept so a screen can say so.
+  if (error) return {...NOBODY, loading: false, error}
+  return NOBODY
 }

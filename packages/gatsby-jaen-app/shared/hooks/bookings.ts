@@ -12,9 +12,16 @@
  * resolver signature and those names differ between deployments, a literal
  * names nothing. The helper is a copy of the one in hooks.ts, which is not
  * exported and which this file must not edit.
+ *
+ * The reads are queries of the one client in ./query.ts, `['bookings',
+ * args]` per page, `['booking', idOrCode]` per booking, `['bookingDriver',
+ * driverId]` per driver on a page, and the two writes invalidate what shows
+ * a transfer. See okf/architecture/data-layer.md.
  */
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useMemo} from 'react'
+import {keepPreviousData, useQueries} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
+import {invalidateTransfers, keys, queryClient, useAppQuery, usePager, useRestored} from './query'
 import {hasTransferField, transferCode, transferSlug} from './transfers'
 
 /**
@@ -247,82 +254,62 @@ const DEFAULT_PAGE_SIZE = 15
  * order, pickupDateTime descending, so the first page is the next ride and
  * the pages behind it are the past. Cursor pagination, one page in memory.
  */
-export function useBookings(pageSize = DEFAULT_PAGE_SIZE) {
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState<BookingPage>({
-    hasNextPage: false,
-    hasPreviousPage: false,
-    endCursor: null,
-    totalCount: 0,
-    currentPage: 1,
-    totalPages: 1
-  })
-  // The cursors that led to the current page, so "previous" can walk back.
-  const trail = useRef<Array<string | undefined>>([])
-  const current = useRef<string | undefined>(undefined)
+interface BookingsPage {
+  rows: Booking[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
+}
 
-  const fetchPage = useCallback(
-    async (after: string | undefined, number: number) => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const args: Record<string, unknown> = {first: pageSize}
-        if (after) args.after = after
+const EMPTY_BOOKINGS: Booking[] = []
 
-        const result = await gql(
-          'transfers',
-          {args},
-          `{ totalCount pageInfo { endCursor hasNextPage } edges { node ${await bookingSelection()} } }`
-        )
+const readBookingsPage = async (args: {first: number; after?: string}): Promise<BookingsPage> => {
+  const listArgs: Record<string, unknown> = {first: args.first}
+  if (args.after) listArgs.after = args.after
 
-        const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
-        const totalCount = typeof result?.totalCount === 'number' ? result.totalCount : 0
-
-        setBookings(edges.map(e => e?.node).filter(Boolean).map(mapBooking))
-        setPage({
-          hasNextPage: !!result?.pageInfo?.hasNextPage,
-          hasPreviousPage: number > 1,
-          endCursor: result?.pageInfo?.endCursor ?? null,
-          totalCount,
-          currentPage: number,
-          totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
-        })
-      } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [pageSize]
+  const result = await gql(
+    'transfers',
+    {args: listArgs},
+    `{ totalCount pageInfo { endCursor hasNextPage } edges { node ${await bookingSelection()} } }`
   )
 
-  useEffect(() => {
-    trail.current = []
-    current.current = undefined
-    void fetchPage(undefined, 1)
-  }, [fetchPage])
+  const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
+  return {
+    rows: edges.map(e => e?.node).filter(Boolean).map(mapBooking),
+    endCursor: result?.pageInfo?.endCursor ?? null,
+    hasNextPage: !!result?.pageInfo?.hasNextPage,
+    totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
+  }
+}
+
+export function useBookings(pageSize = DEFAULT_PAGE_SIZE) {
+  const pager = usePager(JSON.stringify({first: pageSize}))
+  const args = useMemo(() => ({first: pageSize, after: pager.after}), [pageSize, pager.after])
+
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.bookings(args),
+    queryFn: () => readBookingsPage(args),
+    placeholderData: keepPreviousData
+  })
+
+  const current = q.data
+  const bookings = current?.rows ?? EMPTY_BOOKINGS
+  const page = useMemo<BookingPage>(() => {
+    const totalCount = current?.totalCount ?? 0
+    return {
+      hasNextPage: !!current?.hasNextPage,
+      hasPreviousPage: pager.page > 1,
+      endCursor: current?.endCursor ?? null,
+      totalCount,
+      currentPage: pager.page,
+      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+    }
+  }, [current, pager.page, pageSize])
 
   const nextPage = useCallback(() => {
-    if (!page.hasNextPage || !page.endCursor) return
-    trail.current = [...trail.current, current.current]
-    current.current = page.endCursor
-    void fetchPage(page.endCursor, page.currentPage + 1)
-  }, [page, fetchPage])
-
-  const prevPage = useCallback(() => {
-    if (page.currentPage <= 1) return
-    const back = [...trail.current]
-    const cursor = back.pop()
-    trail.current = back
-    current.current = cursor
-    void fetchPage(cursor, page.currentPage - 1)
-  }, [page, fetchPage])
-
-  const refetch = useCallback(() => {
-    void fetchPage(current.current, page.currentPage)
-  }, [fetchPage, page.currentPage])
+    if (current?.hasNextPage && current.endCursor) pager.next(current.endCursor)
+  }, [current, pager])
+  const prevPage = pager.prev
 
   return {bookings, isLoading, error, page, nextPage, prevPage, refetch}
 }
@@ -366,33 +353,29 @@ export async function fetchBooking(transferId: string): Promise<Booking | null> 
   return null
 }
 
+/** A booking as a screen or a write answered it, into every detail that shows it. */
+const rememberBooking = (booking: Booking) => {
+  queryClient.setQueriesData<Booking | null>({queryKey: ['booking']}, held =>
+    held && held.id === booking.id ? booking : held
+  )
+}
+
 export function useBooking(transferId: string) {
-  const [booking, setBooking] = useState<Booking | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.booking(transferId),
+    queryFn: () => fetchBooking(transferId),
+    enabled: !!transferId
+  })
 
-  const load = useCallback(async () => {
-    if (!transferId) {
-      setBooking(null)
-      setIsLoading(false)
-      return
-    }
-    setIsLoading(true)
-    setError(null)
-    try {
-      setBooking(await fetchBooking(transferId))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setIsLoading(false)
-    }
-  }, [transferId])
+  const setBooking = useCallback(
+    (booking: Booking | null) => {
+      if (booking) rememberBooking(booking)
+      queryClient.setQueryData<Booking | null>(keys.booking(transferId), booking)
+    },
+    [transferId]
+  )
 
-  useEffect(() => {
-    void load()
-  }, [load])
-
-  return {booking, isLoading, error, refetch: load, setBooking}
+  return {booking: q.data ?? null, isLoading, error, refetch, setBooking}
 }
 
 // --------------- Booking a ride ---------------
@@ -473,6 +456,7 @@ export async function bookRide(input: BookRideInput): Promise<Booking> {
   }
 
   const result = await gql('bookTransfer', {args}, await bookingSelection(), 'mutation')
+  void invalidateTransfers()
   return mapBooking(result)
 }
 
@@ -488,7 +472,10 @@ export async function cancelBooking(transferId: string): Promise<Booking> {
     await bookingSelection(),
     'mutation'
   )
-  return mapBooking(result)
+  const booking = mapBooking(result)
+  rememberBooking(booking)
+  void invalidateTransfers()
+  return booking
 }
 
 export const isCancelable = (state: string | undefined): boolean =>
@@ -504,9 +491,6 @@ export interface BookingDriver {
 
 /** The silver the schema defaults DriverData.color to, which every screen draws as "no colour". */
 const SILVER = '#C0C0C0'
-
-/** One read per driver per tab: a customer's page has a handful of drivers and asks for each once. */
-const driverCache = new Map<string, Promise<BookingDriver>>()
 
 /**
  * The driver of one booking as `transferTracking` tells it: name and colour,
@@ -529,13 +513,16 @@ const readBookingDriver = async (transferId: string): Promise<BookingDriver> => 
   }
 }
 
+const NO_DRIVERS: Record<string, BookingDriver> = {}
+
 /**
- * The drivers of the rows on the page, by user id. Each driver is read once
- * through the first row that names them, and a driver already known from an
- * earlier page costs nothing.
+ * The drivers of the rows on the page, by user id. Each driver is one query
+ * `['bookingDriver', driverId]` of the client, read through the first row
+ * that names them, and a driver already known from an earlier page costs
+ * nothing. The record is only rebuilt when an answer changes.
  */
 export function useBookingDrivers(rows: Array<{id: string; driverId?: string}>): Record<string, BookingDriver> {
-  const [drivers, setDrivers] = useState<Record<string, BookingDriver>>({})
+  const restored = useRestored()
 
   // One row per driver, the first one on the page. The key is the driver ids,
   // so a page with the same drivers in a different order asks nothing.
@@ -543,41 +530,28 @@ export function useBookingDrivers(rows: Array<{id: string; driverId?: string}>):
   rows.forEach(r => {
     if (r.driverId && !firstRows.has(r.driverId)) firstRows.set(r.driverId, r.id)
   })
-  const key = [...firstRows.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([driverId, transferId]) => `${driverId}=${transferId}`)
-    .join('|')
-
-  useEffect(() => {
-    let cancelled = false
-    const pairs = key ? key.split('|').map(p => p.split('=') as [string, string]) : []
-    const missing = pairs.filter(([driverId]) => !(driverId in drivers))
-    if (missing.length === 0) return
-
-    void Promise.all(
-      missing.map(([driverId, transferId]) => {
-        let p = driverCache.get(driverId)
-        if (!p) {
-          p = readBookingDriver(transferId)
-          driverCache.set(driverId, p)
-        }
-        return p.then(d => [driverId, d] as const)
-      })
-    ).then(found => {
-      if (cancelled) return
-      setDrivers(prev => {
-        const next = {...prev}
-        for (const [driverId, d] of found) next[driverId] = d
-        return next
-      })
-    })
-
-    return () => {
-      cancelled = true
-    }
-    // `drivers` is what the effect fills in, and it must not run again for its own write.
+  const pairs = useMemo(
+    () => [...firstRows.entries()].sort(([a], [b]) => a.localeCompare(b)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+    [[...firstRows.entries()].map(([d, t]) => `${d}=${t}`).join('|')]
+  )
 
-  return drivers
+  return useQueries(
+    {
+      queries: pairs.map(([driverId, transferId]) => ({
+        queryKey: keys.bookingDriver(driverId),
+        queryFn: () => readBookingDriver(transferId),
+        enabled: restored
+      })),
+      combine: results => {
+        const out: Record<string, BookingDriver> = {}
+        results.forEach((r, i) => {
+          const driverId = pairs[i]?.[0]
+          if (driverId && r.data) out[driverId] = r.data
+        })
+        return Object.keys(out).length ? out : NO_DRIVERS
+      }
+    },
+    queryClient
+  )
 }

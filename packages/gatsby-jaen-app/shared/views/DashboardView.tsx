@@ -391,7 +391,7 @@ export function DashboardView() {
       <Stack gap="3">
         <Flex justify="space-between" align="center" gap="3" wrap="wrap">
           <Heading size="md">{isCurrentMonth ? t.SectionMonth : monthLabel}</Heading>
-          <HStack gap="1">
+          <HStack gap="2">
             <IconButton
               aria-label={t.PrevMonth}
               variant="ghost"

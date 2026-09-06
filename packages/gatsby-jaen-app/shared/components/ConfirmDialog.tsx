@@ -7,7 +7,8 @@
  * `destructive` paints the confirm button red, the default keeps the brand.
  */
 import React from 'react'
-import {Button, CloseButton, Dialog, Portal, Text} from '@chakra-ui/react'
+import {CloseButton, Dialog, Portal, Text} from '@chakra-ui/react'
+import {DialogActions} from './DialogActions'
 import {useI18nCode} from '../i18n'
 import {getI18nCommon} from '../locales/i18nCommon'
 
@@ -62,15 +63,14 @@ export function ConfirmDialog({
               </Dialog.Body>
             )}
             <Dialog.Footer>
-              <Button variant="outline" onClick={onClose} disabled={loading}>
-                {cancelLabel ?? strings.Cancel}
-              </Button>
-              <Button
-                colorPalette={destructive ? 'red' : 'brand'}
-                onClick={() => void onConfirm()}
-                loading={loading}>
-                {confirmLabel ?? strings.Confirm}
-              </Button>
+              <DialogActions
+                onCancel={onClose}
+                cancelLabel={cancelLabel}
+                confirmLabel={confirmLabel ?? strings.Confirm}
+                onConfirm={onConfirm}
+                loading={loading}
+                destructive={destructive}
+              />
             </Dialog.Footer>
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" disabled={loading} />

@@ -10,9 +10,13 @@
  * The document is written by hand with the arguments inlined, the way
  * shared/hooks.ts does it: a document that names no input type is valid
  * against whichever pylon build a brand happens to serve.
+ *
+ * The read is the query `['dashboard', month]` of the one client in
+ * ./query.ts, which the driver's month card on the user screen selects its
+ * row from as well. See okf/architecture/data-layer.md.
  */
-import { useCallback, useEffect, useState } from 'react'
 import { fetchGraphQL } from '../../client/limosen'
+import { keys, useAppQuery } from './query'
 
 export interface DashboardToday {
   rides: number
@@ -150,25 +154,9 @@ export async function fetchDashboard(month: string): Promise<Dashboard> {
  * matter which month is being looked at.
  */
 export function useDashboard(month: string) {
-  const [data, setData] = useState<Dashboard | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      setData(await fetchDashboard(month))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [month])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  return { data, isLoading, error, refetch: load }
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.dashboard(month),
+    queryFn: () => fetchDashboard(month)
+  })
+  return { data: q.data ?? null, isLoading, error, refetch }
 }

@@ -21,6 +21,7 @@ const de = {
   ColClass: 'Klasse',
   ColColor: 'Farbe',
   ColDriver: 'Fahrer',
+  CountLabel: '{count} Fahrzeuge',
   NoDriver: 'Kein Fahrer',
 
   FieldPlate: 'Kennzeichen',
@@ -64,6 +65,7 @@ const en: FleetStrings = {
   ColClass: 'Class',
   ColColor: 'Colour',
   ColDriver: 'Driver',
+  CountLabel: '{count} vehicles',
   NoDriver: 'No driver',
 
   FieldPlate: 'Licence plate',
@@ -105,6 +107,7 @@ const tr: FleetStrings = {
   ColClass: 'Sınıf',
   ColColor: 'Renk',
   ColDriver: 'Şoför',
+  CountLabel: '{count} araç',
   NoDriver: 'Şoför yok',
 
   FieldPlate: 'Plaka',
@@ -146,6 +149,7 @@ const ar: FleetStrings = {
   ColClass: 'الفئة',
   ColColor: 'اللون',
   ColDriver: 'السائق',
+  CountLabel: '{count} مركبات',
   NoDriver: 'بدون سائق',
 
   FieldPlate: 'رقم اللوحة',

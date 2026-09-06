@@ -15,10 +15,20 @@
  * below is the same shape as the one in ../hooks.ts, which is not exported.
  * INTEGRATOR: export `query` (and EnumValue) from shared/hooks.ts and delete
  * the copy here, or keep both until hooks.ts is retired.
+ *
+ * The reads are queries of the one client in ./query.ts: `['transfers',
+ * args]` per page of a list and `['transfer', idOrCode]` per ride. A screen
+ * that mounts renders what the client holds and refetches behind it, a
+ * mutation swaps its answer into every page and every detail that shows the
+ * row and invalidates the lists, and a reload offline renders the persisted
+ * answer. The hooks keep their names and shapes, see
+ * okf/architecture/data-layer.md.
  */
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useMemo} from 'react'
+import {keepPreviousData} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
 import {asTransferState, TRANSFER_STATES, type TransferState} from '../locales/i18nStates'
+import {cachedRead, invalidateTransfers, keys, queryClient, useAppQuery, usePager} from './query'
 
 // --------------- The document builder ---------------
 
@@ -378,39 +388,42 @@ export const mapHref = (address: string | undefined): string | undefined =>
 
 // --------------- Feature detection ---------------
 
-let schemaFieldsPromise: Promise<{transfer: Set<string>; query: Set<string>}> | undefined
+interface SchemaFieldNames {
+  transfer: string[]
+  query: string[]
+}
+
+const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
+  const result: any = await fetchGraphQL(
+    {
+      query:
+        'query { transfer: __type(name: "Transfer") { fields { name } } ' +
+        'root: __type(name: "Query") { fields { name } } }',
+      variables: undefined,
+      operationName: undefined
+    },
+    {}
+  )
+  const names = (v: any): string[] =>
+    Array.isArray(v?.fields) ? v.fields.map((f: any) => String(f?.name)).filter(Boolean) : []
+  return {transfer: names(result?.data?.transfer), query: names(result?.data?.root)}
+}
 
 /**
  * Which fields the deployed schema carries. The two brands have not always run
- * the same build: booklimo went without `price` for a while and neither has a
- * `transfer(id)` root field today. Asked once per page load, and an endpoint
- * that will not introspect is taken to be the current schema.
+ * the same build: booklimo went without `price` for a while and neither had a
+ * `transfer(id)` root field for a time. Asked through the query client, so a
+ * reload within the schema's staleTime asks nothing and offline the last
+ * answer serves, and an endpoint that will not introspect is taken to be the
+ * current schema.
  */
-const schemaFields = (): Promise<{transfer: Set<string>; query: Set<string>}> => {
-  if (!schemaFieldsPromise) {
-    schemaFieldsPromise = (async () => {
-      try {
-        const result: any = await fetchGraphQL(
-          {
-            query:
-              'query { transfer: __type(name: "Transfer") { fields { name } } ' +
-              'root: __type(name: "Query") { fields { name } } }',
-            variables: undefined,
-            operationName: undefined
-          },
-          {}
-        )
-        const names = (v: any) =>
-          new Set<string>(
-            Array.isArray(v?.fields) ? v.fields.map((f: any) => String(f?.name)).filter(Boolean) : []
-          )
-        return {transfer: names(result?.data?.transfer), query: names(result?.data?.root)}
-      } catch {
-        return {transfer: new Set<string>(), query: new Set<string>()}
-      }
-    })()
+const schemaFields = async (): Promise<{transfer: Set<string>; query: Set<string>}> => {
+  try {
+    const names = await cachedRead(keys.schema('transfer'), readSchemaFieldNames)
+    return {transfer: new Set(names.transfer), query: new Set(names.query)}
+  } catch {
+    return {transfer: new Set<string>(), query: new Set<string>()}
   }
-  return schemaFieldsPromise
 }
 
 /** Whether the deployed Transfer type carries a field. True for every field on an endpoint that will not introspect. */
@@ -467,20 +480,66 @@ const transferSelection = async (options: {relations?: boolean} = {}): Promise<s
   return `{ ${scalars.join(' ')} ${nested.join(' ')} }`
 }
 
-// --------------- The detail cache ---------------
+// --------------- The rows the client holds ---------------
 
-/**
- * The rows the list has seen, by id. A detail opened from the list starts
- * from what the list already had and reads the fresh row behind it.
- */
-const seen = new Map<string, TransferRow>()
-
-export const rememberTransfers = (rows: TransferRow[]) => {
-  rows.forEach(r => seen.set(r.id, r))
+/** One page of a list, as the query holds it. */
+export interface TransferPage {
+  rows: TransferRow[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
 }
 
+/**
+ * Every page of every list the client holds, so a detail opened from a list
+ * starts from the row the list already had, and a mutation's answer lands on
+ * every page that shows the row.
+ */
+const heldPages = (): Array<[readonly unknown[], TransferPage | undefined]> =>
+  queryClient.getQueriesData<TransferPage>({queryKey: ['transfers']})
+
+/** The row an id or a code names, from the details and the pages the client holds. */
+export const seenBy = (key: string): TransferRow | undefined => {
+  for (const [, row] of queryClient.getQueriesData<TransferRow | null>({queryKey: ['transfer']})) {
+    if (row && (row.id === key || row.code === key)) return row
+  }
+  for (const [, page] of heldPages()) {
+    const row = page?.rows.find(r => r.id === key || r.code === key)
+    if (row) return row
+  }
+  return undefined
+}
+
+/**
+ * A row as a mutation or a screen answered it, swapped into every page and
+ * every detail that shows it. A mutation answers without the links to the
+ * other leg, and the links do not change with a driver or a price, so what
+ * the client held of them is kept.
+ */
+export const rememberTransfer = (row: TransferRow) => {
+  const merged = (before: TransferRow): TransferRow => ({
+    ...row,
+    reference: row.reference ?? before.reference,
+    returns: row.returns ?? before.returns
+  })
+  queryClient.setQueriesData<TransferPage>({queryKey: ['transfers']}, page =>
+    page && page.rows.some(r => r.id === row.id)
+      ? {...page, rows: page.rows.map(r => (r.id === row.id ? merged(r) : r))}
+      : page
+  )
+  queryClient.setQueriesData<TransferRow | null>({queryKey: ['transfer']}, held =>
+    held && held.id === row.id ? merged(held) : held
+  )
+}
+
+/** The rows a list has seen. The client holds them as the list's own page, nothing to do. */
+export const rememberTransfers = (_rows: TransferRow[]) => undefined
+
+/** Drop what the client holds of one ride, so the next screen reads it fresh. */
 export const forgetTransfer = (id: string) => {
-  seen.delete(id)
+  const held = seenBy(id)
+  const codes = held ? [held.id, held.code] : [id]
+  for (const key of codes) queryClient.removeQueries({queryKey: keys.transfer(key), exact: true})
 }
 
 // --------------- The list ---------------
@@ -503,112 +562,80 @@ export interface TransferPagination {
 
 const DEFAULT_PAGE_SIZE = 25
 
+const EMPTY_ROWS: TransferRow[] = []
+
+interface ListPageArgs {
+  first: number
+  after?: string
+  fromISO?: string
+  toISO?: string
+  state?: TransferState
+}
+
+const readTransferPage = async (args: ListPageArgs): Promise<TransferPage> => {
+  const listArgs: Record<string, unknown> = {first: args.first}
+  if (args.after) listArgs.after = args.after
+  if (args.fromISO) listArgs.fromISO = args.fromISO
+  if (args.toISO) listArgs.toISO = args.toISO
+  if (args.state) listArgs.state = new EnumValue(args.state)
+
+  const selection = await transferSelection()
+  const result = await gql(
+    'transfers',
+    {args: listArgs},
+    `{ totalCount pageInfo { endCursor hasNextPage } edges { node ${selection} } }`
+  )
+
+  return {
+    rows: (Array.isArray(result?.edges) ? result.edges : [])
+      .map((e: any) => e?.node)
+      .filter(Boolean)
+      .map(mapTransfer),
+    endCursor: result?.pageInfo?.endCursor ?? null,
+    hasNextPage: !!result?.pageInfo?.hasNextPage,
+    totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
+  }
+}
+
 export function useTransferList(args: TransferListArgs = {}) {
   const pageSize = args.pageSize ?? DEFAULT_PAGE_SIZE
   const {fromISO, toISO, state} = args
 
-  const [rows, setRows] = useState<TransferRow[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState<TransferPagination>({
-    hasNextPage: false,
-    hasPreviousPage: false,
-    totalCount: 0,
-    currentPage: 1,
-    totalPages: 1
-  })
-
-  const endCursorRef = useRef<string | null>(null)
-  const cursorStackRef = useRef<string[]>([])
-  const currentAfterRef = useRef<string | undefined>(undefined)
-  const requestRef = useRef(0)
-
-  const fetchPage = useCallback(
-    async (after: string | undefined, page: number) => {
-      const request = ++requestRef.current
-      setIsLoading(true)
-      setError(null)
-      try {
-        const listArgs: Record<string, unknown> = {first: pageSize}
-        if (after) listArgs.after = after
-        if (fromISO) listArgs.fromISO = fromISO
-        if (toISO) listArgs.toISO = toISO
-        if (state) listArgs.state = new EnumValue(state)
-
-        const selection = await transferSelection()
-        const result = await gql(
-          'transfers',
-          {args: listArgs},
-          `{ totalCount pageInfo { endCursor hasNextPage } edges { node ${selection} } }`
-        )
-
-        // A slower earlier answer must not overwrite a newer one.
-        if (request !== requestRef.current) return
-
-        const items = (Array.isArray(result?.edges) ? result.edges : [])
-          .map((e: any) => e?.node)
-          .filter(Boolean)
-          .map(mapTransfer)
-        const totalCount = typeof result?.totalCount === 'number' ? result.totalCount : 0
-
-        rememberTransfers(items)
-        endCursorRef.current = result?.pageInfo?.endCursor ?? null
-        setRows(items)
-        setPagination({
-          hasNextPage: !!result?.pageInfo?.hasNextPage,
-          hasPreviousPage: page > 1,
-          totalCount,
-          currentPage: page,
-          totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
-        })
-      } catch (err) {
-        if (request !== requestRef.current) return
-        setError(err instanceof Error ? err.message : String(err))
-      } finally {
-        if (request === requestRef.current) setIsLoading(false)
-      }
-    },
-    [pageSize, fromISO, toISO, state]
+  const pager = usePager(JSON.stringify({first: pageSize, fromISO, toISO, state}))
+  const pageArgs = useMemo<ListPageArgs>(
+    () => ({first: pageSize, after: pager.after, fromISO, toISO, state}),
+    [pageSize, pager.after, fromISO, toISO, state]
   )
 
-  useEffect(() => {
-    cursorStackRef.current = []
-    currentAfterRef.current = undefined
-    void fetchPage(undefined, 1)
-  }, [fetchPage])
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.transfers({...pageArgs}),
+    queryFn: () => readTransferPage(pageArgs),
+    // The page shown stays while the next one is read, as it always did.
+    placeholderData: keepPreviousData
+  })
+
+  const page = q.data
+  const rows = page?.rows ?? EMPTY_ROWS
+  const pagination = useMemo<TransferPagination>(() => {
+    const totalCount = page?.totalCount ?? 0
+    return {
+      hasNextPage: !!page?.hasNextPage,
+      hasPreviousPage: pager.page > 1,
+      totalCount,
+      currentPage: pager.page,
+      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+    }
+  }, [page, pager.page, pageSize])
 
   const nextPage = useCallback(() => {
-    const cursor = endCursorRef.current
-    if (!pagination.hasNextPage || !cursor) return
-    cursorStackRef.current = [...cursorStackRef.current, currentAfterRef.current ?? '']
-    currentAfterRef.current = cursor
-    void fetchPage(cursor, pagination.currentPage + 1)
-  }, [pagination, fetchPage])
-
-  const prevPage = useCallback(() => {
-    if (pagination.currentPage <= 1) return
-    const stack = [...cursorStackRef.current]
-    const prev = stack.pop()
-    cursorStackRef.current = stack
-    const cursor = prev || undefined
-    currentAfterRef.current = cursor
-    void fetchPage(cursor, pagination.currentPage - 1)
-  }, [pagination, fetchPage])
-
-  const firstPage = useCallback(() => {
-    cursorStackRef.current = []
-    currentAfterRef.current = undefined
-    void fetchPage(undefined, 1)
-  }, [fetchPage])
-
-  const refetch = useCallback(() => {
-    void fetchPage(currentAfterRef.current, pagination.currentPage)
-  }, [fetchPage, pagination.currentPage])
+    if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
+  }, [page, pager])
+  const prevPage = pager.prev
+  const firstPage = pager.first
 
   /** Swap one row in place, for a mutation that answered with the new row. */
   const replaceRow = useCallback((row: TransferRow) => {
-    seen.set(row.id, row)
-    setRows(current => current.map(r => (r.id === row.id ? row : r)))
+    rememberTransfer(row)
   }, [])
 
   return {rows, isLoading, error, pagination, nextPage, prevPage, firstPage, refetch, replaceRow}
@@ -629,7 +656,7 @@ const WALK_PAGES = 20
  * the id or the code. Rows the list already showed are served from the cache
  * first either way, see useTransfer.
  */
-export const fetchTransfer = async (id: string): Promise<TransferRow | null> => {
+const readTransfer = async (id: string): Promise<TransferRow | null> => {
   if (!id) return null
   const selection = await transferSelection({relations: true})
   const {query} = await schemaFields()
@@ -659,73 +686,58 @@ export const fetchTransfer = async (id: string): Promise<TransferRow | null> => 
   return null
 }
 
-/** The cached row an id or a code names. */
-const seenBy = (key: string): TransferRow | undefined => {
-  const byId = seen.get(key)
-  if (byId) return byId
-  for (const row of seen.values()) if (row.code === key) return row
-  return undefined
-}
+/**
+ * One transfer, read now and held by the client under `['transfer', id]`,
+ * so the shell's prefetch of a shift lands every ride where the ride screen
+ * reads it, and the persisted store keeps it for the outage. A read that
+ * fails while the client holds the ride answers what it holds.
+ */
+export const fetchTransfer = (id: string): Promise<TransferRow | null> =>
+  cachedRead(keys.transfer(id), () => readTransfer(id), 0)
 
-/** One transfer for a screen, by id or by code, the list's cache first and a fresh read always. */
+/**
+ * One transfer for a screen, by id or by code. The row a list already
+ * showed is the placeholder until the fresh read lands, and the fresh read
+ * is what carries the links to the other leg.
+ */
 export function useTransfer(id: string | undefined) {
-  const [row, setRow] = useState<TransferRow | null>(() => (id ? seenBy(id) ?? null : null))
-  const [isLoading, setIsLoading] = useState(() => !(id && seenBy(id)))
-  const [error, setError] = useState<string | null>(null)
-  const [notFound, setNotFound] = useState(false)
-  const requestRef = useRef(0)
+  const key = id ?? ''
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.transfer(key),
+    queryFn: () => readTransfer(key),
+    enabled: !!id,
+    placeholderData: () => (id ? seenBy(id) : undefined)
+  })
 
-  const load = useCallback(async () => {
-    if (!id) return
-    const request = ++requestRef.current
-    const cached = seenBy(id)
-    if (cached) setRow(cached)
-    setIsLoading(!cached)
-    setError(null)
-    try {
-      const fresh = await fetchTransfer(id)
-      if (request !== requestRef.current) return
-      if (fresh) {
-        seen.set(fresh.id, fresh)
-        setRow(fresh)
-        setNotFound(false)
-      } else {
-        setNotFound(!cached)
-      }
-    } catch (err) {
-      if (request !== requestRef.current) return
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      if (request === requestRef.current) setIsLoading(false)
-    }
-  }, [id])
-
-  useEffect(() => {
-    void load()
-  }, [load])
+  const transfer = q.data ?? null
+  const notFound = q.isSuccess && q.data === null
 
   const replace = useCallback((next: TransferRow) => {
-    seen.set(next.id, next)
-    setRow(next)
+    rememberTransfer(next)
   }, [])
 
-  return {transfer: row, isLoading, error, notFound, refetch: load, replace}
+  return {transfer, isLoading, error, notFound, refetch, replace}
 }
 
 // --------------- Mutations ---------------
 
+/**
+ * One write, and what it changes on the screens: the answered row lands on
+ * every page and detail that shows it at once, and the lists are read again
+ * behind it, because a state or a driver can move a row into or out of a
+ * filter the client cannot judge.
+ */
 const mutate = async (field: string, args: Record<string, unknown>): Promise<TransferRow> => {
   const selection = await transferSelection()
   const node = await gql(field, args, selection, 'mutation')
   const row = mapTransfer(node)
-  // A mutation answers without the links to the other leg. The detail keeps
-  // the ones it read, the links do not change with a driver or a price.
-  const before = seen.get(row.id)
+  const before = seenBy(row.id)
   if (before) {
-    row.reference = before.reference
-    row.returns = before.returns
+    row.reference = row.reference ?? before.reference
+    row.returns = row.returns ?? before.returns
   }
-  seen.set(row.id, row)
+  rememberTransfer(row)
+  void invalidateTransfers()
   return row
 }
 
@@ -757,12 +769,12 @@ export const cancelTransfer = (transferId: string) => mutate('cancelTransfer', {
 export const addTransferExtra = async (transferId: string, type: ExtraType, amount: number) => {
   // `type` is a String on the resolver, not the ExtraType enum, so it is quoted.
   await mutate('addTransferExtra', {transferId, type, amount})
-  return (await fetchTransfer(transferId)) ?? seen.get(transferId) ?? null
+  return (await fetchTransfer(transferId)) ?? seenBy(transferId) ?? null
 }
 
 export const removeTransferExtra = async (transferId: string, type: ExtraType) => {
   await mutate('removeTransferExtra', {transferId, type})
-  return (await fetchTransfer(transferId)) ?? seen.get(transferId) ?? null
+  return (await fetchTransfer(transferId)) ?? seenBy(transferId) ?? null
 }
 
 export interface CreateTransferInput {

@@ -6,10 +6,15 @@
  * on the row on a desk and the same select in the dialog on a phone, and it
  * is a one-column update on the backend, see hooks/fleet.ts.
  *
+ * The list is the shared DataTable (okf/architecture/data-layer.md,
+ * acceptance 4): the board's header row, the driver's colour on the left
+ * edge of a row and a card, the column popover, and cards below `md`, with
+ * the fleet's own columns and the select on the row.
+ *
  * Admin only. `cars` answers a driver too, but the writes do not, and the
  * shell offers the entry to an admin alone.
  */
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import {
   Box,
   Button,
@@ -26,28 +31,27 @@ import {
   SimpleGrid,
   Stack,
   Stat,
-  Table,
   Text,
   parseColor,
 } from '@chakra-ui/react'
 import {FaCar} from '@react-icons/all-files/fa/FaCar'
-import {FaEdit} from '@react-icons/all-files/fa/FaEdit'
 import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
 import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
 import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTriangle'
 import {useI18nCode} from '../i18n'
 import {getI18nFleet, type FleetStrings} from '../locales/i18nFleet'
-import {getI18nCommon} from '../locales/i18nCommon'
+import {fill, getI18nCommon} from '../locales/i18nCommon'
 import {useCaller} from '../auth'
 import {useDrivers, type ResourceUser} from '../hooks'
 import {
+  DialogActions,
   DriverColorDot,
   EmptyState,
   ErrorBanner,
-  LoadingOverlay,
   toaster,
   PageHeader
 } from '../components'
+import {DataTable, type CardApi, type DataColumn} from '../components/table'
 import {
   CAR_CLASSES,
   asCarClass,
@@ -86,6 +90,64 @@ function CarSwatch({color, size = '5'}: {color: string; size?: string}) {
   )
 }
 
+interface FleetCardProps {
+  car: FleetCar
+  /** The driver's name from the picker's list, or what the car remembers. */
+  driver: string | undefined
+  /** WHO, on the left edge. */
+  stripe: string | undefined
+  t: FleetStrings
+  onOpen: (car: FleetCar) => void
+}
+
+/**
+ * A car below `md`, in the board's card frame: the paint and the plate on
+ * the title line, the name under it, the driver with the colour dot last.
+ * The dialog does the handing over on a phone, so the card carries no
+ * select.
+ */
+function FleetCard({car, driver, stripe, t, onOpen}: FleetCardProps) {
+  return (
+    <Box
+      rounded="lg"
+      borderWidth="1px"
+      borderColor="border.default"
+      bg="bg.surface"
+      p="3"
+      w="full"
+      minW="0"
+      borderInlineStartWidth="4px"
+      borderInlineStartColor={stripe ?? 'border.emphasized'}
+      onClick={() => onOpen(car)}
+      cursor="pointer">
+      <HStack gap="3" minW="0">
+        <CarSwatch color={car.color} size="8" />
+        <Box flex="1" minW="0">
+          <HStack gap="2" minW="0">
+            <Text fontWeight="semibold" fontFamily="mono" whiteSpace="nowrap">
+              {car.licensePlate}
+            </Text>
+            <Text textStyle="xs" color="fg.muted" lineClamp={1}>
+              {classLabel(car.carClass, t)}
+            </Text>
+          </HStack>
+          {car.carName && (
+            <Text textStyle="sm" lineClamp={1}>
+              {car.carName}
+            </Text>
+          )}
+        </Box>
+      </HStack>
+      <HStack mt="2" gap="2" textStyle="sm">
+        <DriverColorDot color={stripe} />
+        <Text color={driver ? 'fg.default' : 'fg.muted'} lineClamp={1}>
+          {driver || t.NoDriver}
+        </Text>
+      </HStack>
+    </Box>
+  )
+}
+
 export function FleetView() {
   const caller = useCaller()
   const code = useI18nCode()
@@ -97,18 +159,6 @@ export function FleetView() {
     open: false
   })
   const [assigning, setAssigning] = useState<string | null>(null)
-
-  if (!caller.loading && !caller.isAdmin) {
-    // A driver or a customer landed on a dispatch screen: they have a role,
-    // just not this one. Only an account with no role at all is told so.
-    return (
-      <EmptyState
-        title={tc.NoAccessTitle}
-        description={caller.roles.length ? tc.AdminOnlyBody : tc.NoAccessBody}
-        icon={<FaExclamationTriangle />}
-      />
-    )
-  }
 
   const driverById = new Map(drivers.map(d => [d.id, d]))
   const nameFor = (car: FleetCar) => {
@@ -159,6 +209,54 @@ export function FleetView() {
     </NativeSelect.Root>
   )
 
+  // The fleet's columns as DataTable takes them. The driver cell is the
+  // select of the old table, still stopping the click so the row does not
+  // open the dialog under it.
+  const columns = useMemo<DataColumn<FleetCar>[]>(
+    () => [
+      {id: 'color', label: t.ColColor, width: 72, cell: car => <CarSwatch color={car.color} />},
+      {
+        id: 'plate',
+        label: t.ColPlate,
+        width: 150,
+        cell: car => (
+          <Text as="span" fontWeight="semibold" fontFamily="mono" whiteSpace="nowrap">
+            {car.licensePlate}
+          </Text>
+        )
+      },
+      {id: 'name', label: t.ColName, width: 200, cell: car => <Text lineClamp={1}>{car.carName || '-'}</Text>},
+      {id: 'class', label: t.ColClass, width: 150, cell: car => <Text color="fg.muted">{classLabel(car.carClass, t)}</Text>},
+      {
+        id: 'driver',
+        label: t.ColDriver,
+        width: 260,
+        cell: car => (
+          <HStack>
+            <DriverColorDot color={colourFor(car)} />
+            {driverSelect(car)}
+          </HStack>
+        )
+      }
+    ],
+    // The cells read the drivers and the assigning state through the closures
+    // above, which change with them, so the columns follow those two alone.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, drivers, assigning]
+  )
+
+  if (!caller.loading && !caller.isAdmin) {
+    // A driver or a customer landed on a dispatch screen: they have a role,
+    // just not this one. Only an account with no role at all is told so.
+    return (
+      <EmptyState
+        title={tc.NoAccessTitle}
+        description={caller.roles.length ? tc.AdminOnlyBody : tc.NoAccessBody}
+        icon={<FaExclamationTriangle />}
+      />
+    )
+  }
+
   return (
     <Stack gap="6" p={{base: '4', md: '6'}} maxW="full">
       <PageHeader
@@ -186,11 +284,22 @@ export function FleetView() {
         />
       </SimpleGrid>
 
-      {error && <ErrorBanner message={error} onRetry={refetch} />}
-
-      <Card.Root position="relative" overflow="hidden">
-        {isLoading && <LoadingOverlay overlay />}
-        {!isLoading && cars.length === 0 ? (
+      <DataTable
+        tableId="fleet"
+        columns={columns}
+        rows={cars}
+        rowId={car => car.id}
+        onOpen={car => setDialog({open: true, car})}
+        stripe={colourFor}
+        actionLabel={tc.Edit}
+        card={(car, _api: CardApi) => (
+          <FleetCard car={car} driver={nameFor(car)} stripe={colourFor(car)} t={t} onOpen={c => setDialog({open: true, car: c})} />
+        )}
+        summary={fill(t.CountLabel, {count: cars.length})}
+        isLoading={isLoading}
+        error={error}
+        onRetry={refetch}
+        empty={
           <EmptyState title={t.EmptyMessage} icon={<FaCar />}>
             <Button
               size="sm"
@@ -199,106 +308,8 @@ export function FleetView() {
               <FaPlus /> {t.CreateCar}
             </Button>
           </EmptyState>
-        ) : (
-          <>
-            <Box display={{base: 'none', md: 'block'}} overflowX="auto">
-              <Table.Root size="md" interactive>
-                <Table.Header>
-                  <Table.Row>
-                    <Table.ColumnHeader w="12">{t.ColColor}</Table.ColumnHeader>
-                    <Table.ColumnHeader>{t.ColPlate}</Table.ColumnHeader>
-                    <Table.ColumnHeader>{t.ColName}</Table.ColumnHeader>
-                    <Table.ColumnHeader>{t.ColClass}</Table.ColumnHeader>
-                    <Table.ColumnHeader minW="56">
-                      {t.ColDriver}
-                    </Table.ColumnHeader>
-                    <Table.ColumnHeader />
-                  </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                  {cars.map(car => (
-                    <Table.Row
-                      key={car.id}
-                      cursor="pointer"
-                      onClick={() => setDialog({open: true, car})}>
-                      <Table.Cell>
-                        <CarSwatch color={car.color} />
-                      </Table.Cell>
-                      <Table.Cell
-                        fontWeight="semibold"
-                        fontFamily="mono"
-                        whiteSpace="nowrap">
-                        {car.licensePlate}
-                      </Table.Cell>
-                      <Table.Cell>{car.carName || '-'}</Table.Cell>
-                      <Table.Cell color="fg.muted">
-                        {classLabel(car.carClass, t)}
-                      </Table.Cell>
-                      <Table.Cell>
-                        <HStack>
-                          <DriverColorDot color={colourFor(car)} />
-                          {driverSelect(car)}
-                        </HStack>
-                      </Table.Cell>
-                      <Table.Cell textAlign="end">
-                        <IconButton
-                          aria-label={tc.Edit}
-                          size="xs"
-                          variant="ghost"
-                          onClick={e => {
-                            e.stopPropagation()
-                            setDialog({open: true, car})
-                          }}>
-                          <FaEdit />
-                        </IconButton>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table.Root>
-            </Box>
-
-            <Stack display={{base: 'flex', md: 'none'}} gap="0" divideY="1px">
-              {cars.map(car => (
-                <HStack key={car.id} gap="3" p="3" align="start">
-                  <CarSwatch color={car.color} size="8" />
-                  <Box flex="1" minW="0">
-                    <HStack>
-                      <Text fontWeight="semibold" fontFamily="mono">
-                        {car.licensePlate}
-                      </Text>
-                      <Text textStyle="xs" color="fg.muted">
-                        {classLabel(car.carClass, t)}
-                      </Text>
-                    </HStack>
-                    {car.carName && (
-                      <Text textStyle="sm" lineClamp={1}>
-                        {car.carName}
-                      </Text>
-                    )}
-                    <HStack mt="1" gap="2">
-                      <DriverColorDot color={colourFor(car)} />
-                      <Text
-                        textStyle="sm"
-                        color={nameFor(car) ? 'fg.default' : 'fg.muted'}
-                        lineClamp={1}>
-                        {nameFor(car) || t.NoDriver}
-                      </Text>
-                    </HStack>
-                  </Box>
-                  <IconButton
-                    aria-label={tc.Edit}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setDialog({open: true, car})}>
-                    <FaEdit />
-                  </IconButton>
-                </HStack>
-              ))}
-            </Stack>
-          </>
-        )}
-      </Card.Root>
+        }
+      />
 
       <CarDialog
         open={dialog.open}
@@ -542,12 +553,7 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
               </Stack>
             </Dialog.Body>
             <Dialog.Footer>
-              <Button variant="outline" onClick={onClose} disabled={saving}>
-                {tc.Cancel}
-              </Button>
-              <Button type="submit" colorPalette="brand" loading={saving}>
-                {tc.Save}
-              </Button>
+              <DialogActions onCancel={onClose} confirmLabel={tc.Save} confirmType="submit" loading={saving} />
             </Dialog.Footer>
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" disabled={saving} />

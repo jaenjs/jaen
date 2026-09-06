@@ -5,8 +5,12 @@
  * `cars` is admin and driver on the backend, the mutations admin only. A car
  * carries a plate and a driver, which is why the public `fleet` query the
  * booking form reads is a different, plateless field and is not used here.
+ *
+ * The read is the query `['fleet']` of the one client in ./query.ts, and
+ * every mutation invalidates it, the pickers under it and the transfer
+ * lists that show a car. See okf/architecture/data-layer.md.
  */
-import {useCallback, useEffect, useState} from 'react'
+import {keys, queryClient, useAppQuery} from './query'
 import {gql, mutate} from './users'
 
 /** The Prisma enum CarClass, one entry each, so a class the backend knows has a word on screen. */
@@ -45,40 +49,35 @@ const mapCar = (n: any): FleetCar => ({
   updatedAt: n?.updatedAt ?? undefined
 })
 
+const EMPTY_CARS: FleetCar[] = []
+
+const readFleet = async (): Promise<FleetCar[]> => {
+  const conn = await gql(
+    'cars',
+    {args: {first: 100}},
+    '{ edges { node { id licensePlate carName carClass color driverId driverName updatedAt } } }'
+  )
+  const rows = (Array.isArray(conn?.edges) ? conn.edges : [])
+    .map((e: any) => e?.node)
+    .filter(Boolean)
+    .map(mapCar)
+  rows.sort((a: FleetCar, b: FleetCar) => a.licensePlate.localeCompare(b.licensePlate))
+  return rows
+}
+
 export function useFleet() {
-  const [cars, setCars] = useState<FleetCar[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.fleet(),
+    queryFn: readFleet
+  })
+  return {cars: q.data ?? EMPTY_CARS, isLoading, error, refetch}
+}
 
-  const load = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const conn = await gql(
-        'cars',
-        {args: {first: 100}},
-        '{ edges { node { id licensePlate carName carClass color driverId driverName updatedAt } } }'
-      )
-      const rows = (Array.isArray(conn?.edges) ? conn.edges : [])
-        .map((e: any) => e?.node)
-        .filter(Boolean)
-        .map(mapCar)
-      rows.sort((a: FleetCar, b: FleetCar) =>
-        a.licensePlate.localeCompare(b.licensePlate)
-      )
-      setCars(rows)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load cars')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    void load()
-  }, [load])
-
-  return {cars, isLoading, error, refetch: load}
+/** The fleet and the pickers under its key, and the transfer lists that show a car. */
+const invalidateFleet = async () => {
+  await Promise.all(
+    [['fleet'], ['transfers']].map(queryKey => queryClient.invalidateQueries({queryKey}))
+  )
 }
 
 export interface CarInput {
@@ -115,6 +114,7 @@ export async function createCarMutation(
     {args: carArgs(input)},
     CAR_SELECTION
   )
+  await invalidateFleet()
   return typeof result?.id === 'string' ? result.id : undefined
 }
 
@@ -124,6 +124,7 @@ export async function updateCarMutation(
   input: Partial<CarInput>
 ): Promise<void> {
   await mutate('updateCar', {args: {carId, ...carArgs(input)}}, CAR_SELECTION)
+  await invalidateFleet()
 }
 
 /**
@@ -140,4 +141,5 @@ export async function assignCarToDriverMutation(
     {args: {carId, driverId: driverId || undefined}},
     CAR_SELECTION
   )
+  await invalidateFleet()
 }

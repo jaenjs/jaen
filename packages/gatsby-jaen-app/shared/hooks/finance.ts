@@ -9,11 +9,15 @@
  * GraphQL client sends. The browser cannot be pointed at that URL directly,
  * a navigation carries no Authorization header, so the file is fetched here
  * and handed over as a blob. See okf/architecture/finance.md, the download.
+ *
+ * The reads are queries of the one client in ./query.ts, `['statements',
+ * userId]` for the months and `['statements', userId, month, kind]` for the
+ * lines of one. See okf/architecture/data-layer.md.
  */
-import {useCallback, useEffect, useState} from 'react'
 import {User} from 'oidc-client-ts'
 import {endpointUrl} from '../../client/limosen'
 import {gql} from './bookings'
+import {keys, useAppQuery} from './query'
 
 export type StatementKind = 'CUSTOMER' | 'DRIVER'
 export type StatementFormat = 'pdf' | 'xlsx'
@@ -97,33 +101,15 @@ export async function fetchStatementMonths(userId: string): Promise<StatementMon
     .sort((a: StatementMonth, b: StatementMonth) => b.month.localeCompare(a.month))
 }
 
+const EMPTY_MONTHS: StatementMonth[] = []
+
 export function useStatementMonths(userId: string | undefined) {
-  const [months, setMonths] = useState<StatementMonth[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    if (!userId) {
-      setMonths([])
-      setIsLoading(false)
-      return
-    }
-    setIsLoading(true)
-    setError(null)
-    try {
-      setMonths(await fetchStatementMonths(userId))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setIsLoading(false)
-    }
-  }, [userId])
-
-  useEffect(() => {
-    void load()
-  }, [load])
-
-  return {months, isLoading, error, refetch: load}
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.statements(userId ?? ''),
+    queryFn: () => fetchStatementMonths(userId ?? ''),
+    enabled: !!userId
+  })
+  return {months: q.data ?? EMPTY_MONTHS, isLoading, error, refetch}
 }
 
 export async function fetchStatementLines(userId: string, month: string, kind: StatementKind): Promise<StatementLine[]> {
@@ -147,33 +133,19 @@ export async function fetchStatementLines(userId: string, month: string, kind: S
   }))
 }
 
+const EMPTY_LINES: StatementLine[] = []
+
 /**
  * The rides of one statement, loaded when asked for (`enabled`), because a
  * month is opened far less often than the list is looked at.
  */
 export function useStatementLines(userId: string | undefined, month: string, kind: StatementKind, enabled: boolean) {
-  const [lines, setLines] = useState<StatementLine[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    if (!userId || !enabled) return
-    setIsLoading(true)
-    setError(null)
-    try {
-      setLines(await fetchStatementLines(userId, month, kind))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setIsLoading(false)
-    }
-  }, [userId, month, kind, enabled])
-
-  useEffect(() => {
-    void load()
-  }, [load])
-
-  return {lines, isLoading, error, refetch: load}
+  const {query: q, isLoading, error, refetch} = useAppQuery({
+    queryKey: keys.statementLines(userId ?? '', month, kind),
+    queryFn: () => fetchStatementLines(userId ?? '', month, kind),
+    enabled: !!userId && enabled
+  })
+  return {lines: q.data ?? EMPTY_LINES, isLoading, error, refetch}
 }
 
 /** The file name the Worker chose, or one built from what was asked for. */

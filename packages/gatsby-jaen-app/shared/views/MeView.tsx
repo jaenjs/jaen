@@ -35,6 +35,10 @@ import { usePushNotifications } from '../hooks/push'
 import { DriverColorDot, EmptyState, ErrorBanner, toaster, PageHeader} from '../components'
 import { useI18nCode } from '../i18n'
 import { getI18nMe } from '../locales/i18nMe'
+import { getI18nTabBar } from '../locales/i18nTabBar'
+// The bar's two gates live with the bar, in the plugin's src, so the switch
+// here and the shell's padding read the same answers the bar reads.
+import { setGlassTabBarEnabled, useAppMode, useGlassTabBarEnabled } from '../../src/components/GlassTabBar'
 
 // ---------------------------------------------------------------------------
 // The colours a driver can pick. A driver may type any hex, these are the
@@ -133,12 +137,43 @@ export function MeView() {
     }
   }
 
+  // ----- the glass tab bar, app mode only -----
+  const appMode = useAppMode()
+  const tabBarOn = useGlassTabBarEnabled()
+  const { strings: tb } = getI18nTabBar(code)
+
+  /**
+   * The switch "Untere Leiste", shown only when the PWA runs installed: in a
+   * browser tab there is no bar to switch on, so there is no switch either.
+   * Per device, see GlassTabBar.tsx.
+   */
+  const tabBarCard = appMode ? (
+    <Card.Root variant="outline" bg="bg.surface" data-testid="glass-tab-bar-card">
+      <Card.Header>
+        <Card.Title>{tb.Heading}</Card.Title>
+        <Card.Description>{tb.Body}</Card.Description>
+      </Card.Header>
+      <Card.Body>
+        <Switch.Root
+          size="lg"
+          colorPalette="brand"
+          checked={tabBarOn}
+          onCheckedChange={e => setGlassTabBarEnabled(e.checked)}>
+          <Switch.HiddenInput data-testid="glass-tab-bar-switch" />
+          <Switch.Control />
+          <Switch.Label>{tb.Switch}</Switch.Label>
+        </Switch.Root>
+      </Card.Body>
+    </Card.Root>
+  ) : null
+
   if (caller.loading) return null
 
   if (!caller.isDriver) {
     return (
       <Stack gap="6" p={{ base: '4', md: '6' }} maxW="full">
         <PageHeader title={t.Heading} />
+        {tabBarCard}
         <EmptyState title={t.Heading} description={t.NotADriver} />
       </Stack>
     )
@@ -300,6 +335,9 @@ export function MeView() {
           </Button>
         </Card.Footer>
       </Card.Root>
+
+      {/* The bottom bar, app mode only */}
+      {tabBarCard}
     </Stack>
   )
 }

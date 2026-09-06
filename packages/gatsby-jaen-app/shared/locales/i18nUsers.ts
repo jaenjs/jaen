@@ -20,6 +20,7 @@ const de = {
   ColRoles: 'Rollen',
   ColStatus: 'Status',
   ColCreated: 'Erstellt',
+  CountLabel: '{total} Benutzer, {count} auf dieser Seite',
   StatusActive: 'Aktiv',
   StatusInactive: 'Inaktiv',
 
@@ -132,6 +133,7 @@ const en: UsersStrings = {
   ColRoles: 'Roles',
   ColStatus: 'Status',
   ColCreated: 'Created',
+  CountLabel: '{total} users, {count} on this page',
   StatusActive: 'Active',
   StatusInactive: 'Inactive',
 
@@ -241,6 +243,7 @@ const tr: UsersStrings = {
   ColRoles: 'Roller',
   ColStatus: 'Durum',
   ColCreated: 'Oluşturulma',
+  CountLabel: '{total} kullanıcı, bu sayfada {count}',
   StatusActive: 'Aktif',
   StatusInactive: 'Pasif',
 
@@ -349,6 +352,7 @@ const ar: UsersStrings = {
   ColRoles: 'الأدوار',
   ColStatus: 'الحالة',
   ColCreated: 'تاريخ الإنشاء',
+  CountLabel: '{total} مستخدمين، {count} في هذه الصفحة',
   StatusActive: 'نشط',
   StatusInactive: 'غير نشط',
 
