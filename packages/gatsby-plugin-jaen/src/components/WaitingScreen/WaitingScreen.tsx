@@ -33,9 +33,27 @@ export interface WaitingScreenProps {
   lines?: Record<string, string[]>
 }
 
+/**
+ * The language of the lines. The server renders German, the product's first
+ * language, because the intl locale at build time is the catalogue default
+ * and rendering that would flash English at every German visitor for the
+ * second before hydration. On the client the browser's language decides,
+ * reduced to the four the sites speak, with the intl locale as the fallback.
+ */
+const pickLanguage = (intlLocale: string): string => {
+  if (typeof navigator === 'undefined') return 'de'
+  const fromBrowser = (navigator.language || '').toLowerCase().slice(0, 2)
+  if (fromBrowser in LINES) return fromBrowser
+  const fromIntl = (intlLocale || 'de').toLowerCase().slice(0, 2)
+  return fromIntl in LINES ? fromIntl : 'de'
+}
+
 export const WaitingScreen: React.FC<WaitingScreenProps> = ({lines = LINES}) => {
   const intl = useIntl()
-  const lang = (intl.locale || 'de').toLowerCase().slice(0, 2)
+  const [lang, setLang] = React.useState('de')
+  React.useEffect(() => {
+    setLang(pickLanguage(intl.locale))
+  }, [intl.locale])
   const list = lines[lang] ?? lines.de ?? Object.values(lines)[0] ?? []
   const [index, setIndex] = React.useState(0)
 
