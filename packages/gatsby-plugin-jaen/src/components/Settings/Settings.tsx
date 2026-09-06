@@ -26,9 +26,9 @@ import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
 import {FaCheck} from '@react-icons/all-files/fa6/FaCheck'
 import {FaX} from '@react-icons/all-files/fa6/FaX'
 import {MdRefresh} from '@react-icons/all-files/md/MdRefresh'
-import {useEffect, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {MessageDescriptor, defineMessages, useIntl} from 'react-intl'
-import {useUiLocale} from '../../locales/ui-locale'
+import {getUiLocale, useUiLocale} from '../../locales/ui-locale'
 
 export interface SettingsProps {
   user: AuthUser
@@ -119,7 +119,7 @@ export const Settings: React.FC<SettingsProps> = props => {
 
   const intl = useIntl()
   const notify = useNotificationsContext()
-  const {setPreviewLocale} = useUiLocale()
+  const {setUiLocale} = useUiLocale()
 
   const [user, setUser] = useState(props.user)
 
@@ -149,6 +149,51 @@ export const Settings: React.FC<SettingsProps> = props => {
     // Update profile information on form submission
     await props.onProfileUpdate(user.human.profile)
     setIsProfileUpdating(false)
+  }
+
+  // The language the account holds right now, read during render so the
+  // handler below sees the refetched profile and not the closure it started
+  // with.
+  const accountLanguage = useRef<string | undefined>(undefined)
+  accountLanguage.current = props.user?.human?.profile?.preferredLanguage
+  const languageChangeSeq = useRef(0)
+
+  /**
+   * The language changes the moment it is chosen, not at the next login.
+   *
+   * The store is set first, so the frame, this page and the app read the new
+   * language before the identity server has answered, then the profile is
+   * written. profileUpdate reports a failure with a toast and resolves either
+   * way, so success is read off the refetched account: on success jaen
+   * refetches the profile before the promise settles and the new value
+   * arrives with the next render, on failure it never does. When it has not
+   * arrived after two seconds the pick is taken back, on the screen and in
+   * the store.
+   */
+  const handleLanguageChange = async (language: string) => {
+    const seq = ++languageChangeSeq.current
+    const previousUi = getUiLocale()
+    const previousUser = user
+    const profile = {...user.human.profile, preferredLanguage: language}
+
+    setUser({...user, human: {...user.human, profile}})
+    setUiLocale(language)
+
+    await props.onProfileUpdate(profile)
+
+    const deadline = Date.now() + 2000
+
+    while (accountLanguage.current !== language && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 50))
+    }
+
+    // A newer pick owns the outcome now.
+    if (seq !== languageChangeSeq.current) return
+
+    if (accountLanguage.current !== language) {
+      setUiLocale(previousUi)
+      setUser(previousUser)
+    }
   }
 
   const [isChangingPassword, setIsChangingPassword] = useState(false)
@@ -582,20 +627,10 @@ export const Settings: React.FC<SettingsProps> = props => {
                                 user?.human?.profile?.preferredLanguage || ''
                               }
                               onChange={e => {
-                                // The UI follows the pick at once; Save is
-                                // what writes it to the account.
-                                setPreviewLocale(e.target.value)
-
-                                setUser({
-                                  ...user,
-                                  human: {
-                                    ...user.human,
-                                    profile: {
-                                      ...user.human.profile,
-                                      preferredLanguage: e.target.value
-                                    }
-                                  }
-                                })
+                                // The screen and the account follow the pick
+                                // at once, no Save needed, see
+                                // handleLanguageChange.
+                                void handleLanguageChange(e.target.value)
                               }}>
                               <option value="" disabled>
                                 {intl.formatMessage({
