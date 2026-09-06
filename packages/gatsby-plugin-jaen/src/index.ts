@@ -7,3 +7,13 @@ export {system} from './theme/system'
 export {Link} from './components/shared/Link'
 export {PasswordField} from './components/shared/PasswordField'
 export {JaenLogo, JaenFullLogo} from './components/shared/JaenLogo/JaenLogo'
+// The language of the screen. The app's own I18nProvider subscribes to it so
+// the frame and the app change language together, see locales/ui-locale.tsx.
+export {
+  useUiLocale,
+  subscribeUiLocale,
+  getUiLocale,
+  setUiLocale,
+  seedUiLocale,
+  UI_LOCALE_STORAGE_KEY
+} from './locales/ui-locale'
