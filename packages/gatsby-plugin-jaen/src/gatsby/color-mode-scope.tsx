@@ -54,7 +54,18 @@ export const COLOR_MODE_ROUTE_PREFIXES = [
     flash a white screen into a dark app on the way to the dashboard.
   */
   '/loading',
-  '/app'
+  '/app',
+  /*
+    gatsby-plugin-offline's app shell. The service worker serves this one
+    page for every navigation whose resources it holds, online and offline
+    alike, so its markup stands in for /app/dashboard and every other route
+    of the app on a phone that runs the installed PWA. Left out of the list
+    it was built with forcedTheme light, and the offline app opened light on
+    a dark brand. The route a visitor is really on is decided at run time
+    from window.location, by the no-flash script and by useScopedPathname,
+    so listing the shell only frees its server render from the forced light.
+  */
+  '/offline-plugin-app-shell-fallback'
 ] as const
 
 export const hasColorMode = (pathname: string): boolean => {
@@ -95,6 +106,21 @@ export const useScopedPathname = (ssrPathname?: string): string =>
       (typeof window !== 'undefined' ? window.location.pathname : '/')
   )
 
+/**
+ * next-themes' own inline script is rendered inert. It bakes the page's
+ * forcedTheme and default into the HTML and knows nothing of the route, and
+ * one page, the offline app shell above, is served for every route the
+ * service worker holds: with that script live the shell painted the site
+ * default onto the public pages and, before the shell was listed, forced
+ * light onto the app. The no-flash script in gatsby-ssr.tsx already makes
+ * the same decision before the first paint, from this list and the same
+ * storage key, against the URL the visitor is really on, so it is the one
+ * script that paints. next-themes applies the theme again in its mount
+ * effect, from the same key, and takes over from there. There is no prop to
+ * drop the script, hence the type the browser does not execute.
+ */
+const INERT_SCRIPT = {type: 'text/plain'} as const
+
 export const ColorModeScope: FC<ColorModeScopeProps> = ({
   ssrPathname,
   defaultMode,
@@ -108,6 +134,7 @@ export const ColorModeScope: FC<ColorModeScopeProps> = ({
       defaultTheme={defaultMode}
       forcedTheme={hasColorMode(pathname) ? undefined : 'light'}
       storageKey={COLOR_MODE_STORAGE_KEY}
+      scriptProps={INERT_SCRIPT}
       enableSystem
       disableTransitionOnChange>
       {children}

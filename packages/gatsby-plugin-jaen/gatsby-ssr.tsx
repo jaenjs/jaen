@@ -12,10 +12,13 @@ import {
 
 /**
  * The no-flash script, hand-written because next-themes only ships a Next.js
- * one. It has to agree with next-themes' storage contract exactly, or the two
- * disagree for one paint: the key is COLOR_MODE_STORAGE_KEY (`jaen:colorMode`,
- * the provider's `storageKey`), values light|dark|system, class on the <html>
- * element. The class is what v3's conditions select on
+ * one, and the one script that paints before React is up: next-themes' own
+ * inline script is rendered inert by ColorModeScope because it is not route
+ * aware and the offline app shell is one page served for every route. It has
+ * to agree with next-themes' storage contract exactly, or the first paint and
+ * the provider's mount effect disagree: the key is COLOR_MODE_STORAGE_KEY
+ * (`jaen:colorMode`, the provider's `storageKey`), values light|dark|system,
+ * class on the <html> element. The class is what v3's conditions select on
  * (`.dark, .dark .chakra-theme:not(.light)`), and `color-scheme` is what stops
  * the browser painting white scrollbars over a dark page.
  *
