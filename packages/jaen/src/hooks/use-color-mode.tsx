@@ -57,7 +57,8 @@ export function useColorMode(): UseColorModeReturn {
   // the systemTheme initialiser calls matchMedia in the same render. Measured
   // against next-themes 0.4.6 as installed: server render gives undefined,
   // while the first browser render gives 'dark' for a dark-OS visitor with
-  // theme=dark or theme=system stored. Rendering that value during hydration
+  // dark or system stored under the provider's storageKey (jaen:colorMode,
+  // gatsby-plugin-jaen's color-mode-scope.tsx). Rendering that value during hydration
   // is a mismatch React 18 does not repair in production, so the SSR classes
   // stick and the JS-derived colours stay on the wrong branch.
   //
