@@ -14,7 +14,7 @@
  * DataTable's own, built from the visible columns. Numbers wait as
  * skeletons like every other screen.
  */
-import React, {useCallback, useMemo, useState} from 'react'
+import {useCallback, useMemo, useState} from 'react'
 import {
   Box,
   Button,
@@ -26,7 +26,6 @@ import {
   Text
 } from '@chakra-ui/react'
 import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
-import {FaFilePdf} from '@react-icons/all-files/fa/FaFilePdf'
 import {FaFileContract} from '@react-icons/all-files/fa/FaFileContract'
 import {FaSyncAlt} from '@react-icons/all-files/fa/FaSyncAlt'
 import {useCaller} from '../auth'
@@ -40,15 +39,10 @@ import {
   type CustomerStatus,
   type OfferRow
 } from '../hooks/offers'
-import {openDocument} from '../hooks/documents'
+import {useRideDocuments} from '../hooks/finance'
+import {RideDocumentButtons} from '../components/documents/RideDocumentButtons'
 import {transferPath} from '../hooks/transfers'
-import {
-  EmptyState,
-  MoneyText,
-  PageHeader,
-  StatusBadge,
-  toaster
-} from '../components'
+import {EmptyState, MoneyText, PageHeader, StatusBadge} from '../components'
 import {
   CustomerStatusBadge,
   CUSTOMER_STATUS_PALETTE
@@ -95,36 +89,6 @@ function StatusChips({
   )
 }
 
-/** The document as a link: the signed URL is fetched on the click and opened in a new tab. */
-function DocumentButton({row, s}: {row: OfferRow; s: OffersStrings}) {
-  const [opening, setOpening] = useState(false)
-  const open = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setOpening(true)
-    try {
-      await openDocument(row.id)
-    } catch (err) {
-      toaster.error({
-        title: s.OpenFailed,
-        description: err instanceof Error ? err.message : String(err)
-      })
-    } finally {
-      setOpening(false)
-    }
-  }
-  return (
-    <Button
-      size="xs"
-      variant="outline"
-      minH={{base: '44px', md: '6'}}
-      loading={opening}
-      onClick={e => void open(e)}
-      data-testid="offer-document">
-      <FaFilePdf /> {s.OpenPdf}
-    </Button>
-  )
-}
-
 export function OffersView() {
   const caller = useCaller()
   const navigate = useAppNavigate()
@@ -151,6 +115,9 @@ export function OffersView() {
     month: month || undefined,
     search
   })
+  // The invoice of each offered ride, when one was uploaded, one request
+  // for the page (customer-experience.md, section 5). The offer is the row.
+  const {documents} = useRideDocuments(rows.map(r => r.transferId))
 
   const onOpen = useCallback(
     (row: OfferRow) =>
@@ -281,11 +248,18 @@ export function OffersView() {
       {
         id: 'document',
         label: s.ColDocument,
-        width: 110,
-        cell: row => <DocumentButton row={row} s={s} />
+        width: 220,
+        cell: row => (
+          <RideDocumentButtons
+            docs={{
+              offer: {id: row.id, kind: 'OFFER', number: row.number},
+              invoice: documents[row.transferId]?.invoice
+            }}
+          />
+        )
       }
     ],
-    [s, code]
+    [s, code, documents]
   )
 
   // The widths sum to 1300 px plus the Details column, so the whole table sits

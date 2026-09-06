@@ -28,21 +28,48 @@
  * The reads are queries of the one client in ./query.ts: `['tracking',
  * transferId]`, polled by the client while the ride is live, `['geocode',
  * address]` and `['driverColors', ids]` (colors.ts). See okf/architecture/data-layer.md.
+ *
+ * The customer's map (`useCustomerActiveTracking`) is the same tracking read
+ * once per ride of theirs that is under way: the list of their rides around
+ * today, `['transfers', {view: 'customer-underway', ...}]`, polled every ten
+ * seconds while the tab is open, and one `['tracking', id]` per ride in
+ * ON_THE_WAY, AT_PICKUP or ONGOING, polled the same way. Nothing of other
+ * customers can appear: the list is scoped by the token and the tracking
+ * read refuses a ride that is not the caller's.
  */
-import {useCallback, useEffect, useState} from 'react'
+import {useCallback, useEffect, useMemo, useState} from 'react'
+import {useQueries} from '@tanstack/react-query'
 import {useCaller} from '../auth'
 import {isOnline} from '../offline'
 import {gql} from './bookings'
-import {keys, useAppQuery} from './query'
-import {readPosition, readReason, type GeoPosition, type GeolocationReason} from './use-geolocation'
+import {
+  errorMessage,
+  keys,
+  queryClient,
+  useAppQuery,
+  useRestored
+} from './query'
+import {
+  readPosition,
+  readReason,
+  type GeoPosition,
+  type GeolocationReason
+} from './use-geolocation'
 
 // --------------- The live states ---------------
 
 /** The states in which a driver is on the job and their position matters. */
-export const TRACKED_STATES = ['ASSIGNED', 'ON_THE_WAY', 'AT_PICKUP', 'ONGOING'] as const
+export const TRACKED_STATES = [
+  'ASSIGNED',
+  'ON_THE_WAY',
+  'AT_PICKUP',
+  'ONGOING'
+] as const
 
 export const isTracked = (state: string | null | undefined): boolean =>
-  (TRACKED_STATES as readonly string[]).includes(String(state ?? '').toUpperCase())
+  (TRACKED_STATES as readonly string[]).includes(
+    String(state ?? '').toUpperCase()
+  )
 
 // --------------- The read ---------------
 
@@ -128,12 +155,17 @@ export const mapTracking = (node: any): TransferTracking | null => {
   }
 }
 
-export const fetchTransferTracking = async (transferId: string): Promise<TransferTracking | null> =>
-  mapTracking(await gql('transferTracking', {args: {transferId}}, TRACKING_SELECTION))
+export const fetchTransferTracking = async (
+  transferId: string
+): Promise<TransferTracking | null> =>
+  mapTracking(
+    await gql('transferTracking', {args: {transferId}}, TRACKING_SELECTION)
+  )
 
 /** True when the deployed schema has no transferTracking field yet. */
 const isMissingField = (err: unknown): boolean =>
-  err instanceof Error && /Cannot query field "transferTracking"/.test(err.message)
+  err instanceof Error &&
+  /Cannot query field "transferTracking"/.test(err.message)
 
 export const DEFAULT_TRACKING_POLL_MS = 10_000
 
@@ -157,13 +189,20 @@ export function useTransferTracking(
   const enabled = options.enabled ?? true
   const id = transferId ?? ''
 
-  const {query: q, isLoading, error: message, refetch} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error: message,
+    refetch
+  } = useAppQuery({
     queryKey: keys.tracking(id),
     queryFn: () => fetchTransferTracking(id),
     enabled: !!transferId && enabled,
     refetchInterval: query => {
       const held = query.state.data
-      return held && isTracked(held.state) && !!transferId && enabled ? Math.max(2_000, pollMs) : false
+      return held && isTracked(held.state) && !!transferId && enabled
+        ? Math.max(2_000, pollMs)
+        : false
     },
     refetchIntervalInBackground: false
   })
@@ -173,9 +212,209 @@ export function useTransferTracking(
   const unavailable = isMissingField(q.error)
   const error = unavailable ? null : message
   const fetchedAt = q.dataUpdatedAt || null
-  const live = !!tracking && isTracked(tracking.state) && !unavailable && enabled
+  const live =
+    !!tracking && isTracked(tracking.state) && !unavailable && enabled
 
   return {tracking, isLoading, error, unavailable, fetchedAt, live, refetch}
+}
+
+// --------------- The customer's rides under way ---------------
+
+/**
+ * The states in which a driver is on the road for a ride. ASSIGNED is
+ * tracked too (the position is already on the ride) but the customer's map
+ * draws a marker only once the driver has left: an accepted ride waits
+ * under the map as "unterwegs ab hh:mm".
+ */
+export const UNDERWAY_STATES = ['ON_THE_WAY', 'AT_PICKUP', 'ONGOING'] as const
+
+export const isUnderway = (state: string | null | undefined): boolean =>
+  (UNDERWAY_STATES as readonly string[]).includes(
+    String(state ?? '').toUpperCase()
+  )
+
+export interface CustomerRide {
+  /** `transfer:<uuid>`, for the tracking read. Never shown. */
+  id: string
+  /** What the customer reads beside the marker. */
+  code: string
+  state: string
+  pickupAtISO: string | null
+  pickupLocation: string | null
+  driverId: string | null
+  /** The plate stamped on the ride, the tracking answer's own wins when present. */
+  licensePlate: string | null
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/** YYYY-MM-DD of a local instant, what the list's range arguments take as a day. */
+const dateOnly = (d: Date): string =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+
+/**
+ * Yesterday to tomorrow as bare dates, which the pylon reads as whole Vienna
+ * days. A ride under way is one of today's, give or take a night, and an
+ * accepted ride of next week is not "unterwegs ab" anything yet.
+ */
+export const customerRideWindow = (
+  now: Date = new Date()
+): {fromISO: string; toISO: string} => {
+  const from = new Date(now)
+  from.setDate(from.getDate() - 1)
+  const to = new Date(now)
+  to.setDate(to.getDate() + 1)
+  return {fromISO: dateOnly(from), toISO: dateOnly(to)}
+}
+
+const CUSTOMER_RIDE_SELECTION =
+  '{ edges { node { id code state pickupDateTime pickupLocation driverId car { licensePlate } } } }'
+
+export const mapCustomerRide = (node: any): CustomerRide => ({
+  id: String(node?.id ?? ''),
+  code: text(node?.code) ?? '',
+  state: String(node?.state ?? ''),
+  pickupAtISO: text(node?.pickupDateTime) ?? null,
+  pickupLocation: text(node?.pickupLocation) ?? null,
+  driverId: text(node?.driverId) ?? null,
+  licensePlate: text(node?.car?.licensePlate) ?? null
+})
+
+/**
+ * The caller's rides of the window. The read is scoped by the token, a
+ * customer only ever gets their own rows, so no customerId is sent, and one
+ * page of a hundred is every ride a hotel has in three days.
+ */
+export const fetchCustomerRides = async (window: {
+  fromISO: string
+  toISO: string
+}): Promise<CustomerRide[]> => {
+  const result = await gql(
+    'transfers',
+    {args: {first: 100, fromISO: window.fromISO, toISO: window.toISO}},
+    CUSTOMER_RIDE_SELECTION
+  )
+  const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
+  return edges
+    .map(e => e?.node)
+    .filter(Boolean)
+    .map(mapCustomerRide)
+    .filter(r => r.id)
+}
+
+const NO_RIDES: CustomerRide[] = []
+
+export interface CustomerLiveRide {
+  ride: CustomerRide
+  /** The tracking answer for the ride, null until the first one landed. */
+  tracking: TransferTracking | null
+  /** The tracking read's refusal or failure for this one ride, or null. */
+  error: string | null
+}
+
+export interface UseCustomerActiveTrackingOptions {
+  /** False holds every read back, for a screen that is not the customer's. */
+  enabled?: boolean
+}
+
+/**
+ * Every ride of the customer that a driver is on the road for, each with
+ * its tracking answer, and the accepted rides that wait for their driver
+ * to leave. Both lists are polled every `pollMs` while the tab is visible,
+ * the rides through the list read and each position through
+ * `transferTracking`, so a ride that starts while the map is open gets its
+ * marker within one poll. The refetch refreshes both at once, for the
+ * view's refresh button.
+ */
+export function useCustomerActiveTracking(
+  pollMs: number = DEFAULT_TRACKING_POLL_MS,
+  options: UseCustomerActiveTrackingOptions = {}
+) {
+  const enabled = options.enabled ?? true
+  const interval = Math.max(2_000, pollMs)
+  // The window moves with the day, so the key does too, once a day.
+  const today = dateOnly(new Date())
+  const window = useMemo(() => customerRideWindow(), [today]) // eslint-disable-line react-hooks/exhaustive-deps
+  const args = useMemo(
+    () => ({view: 'customer-underway', first: 100, ...window}),
+    [window]
+  )
+
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
+    queryKey: keys.transfers(args),
+    queryFn: () => fetchCustomerRides(window),
+    enabled,
+    refetchInterval: enabled ? interval : false,
+    refetchIntervalInBackground: false
+  })
+  const rides = q.data ?? NO_RIDES
+
+  const underway = useMemo(
+    () => rides.filter(r => isUnderway(r.state)),
+    [rides]
+  )
+  const accepted = useMemo(
+    () =>
+      rides
+        .filter(r => r.state.toUpperCase() === 'ASSIGNED')
+        .sort((a, b) =>
+          String(a.pickupAtISO ?? '').localeCompare(String(b.pickupAtISO ?? ''))
+        ),
+    [rides]
+  )
+
+  // One tracking query per ride under way, on the client above the provider
+  // like every other read, held until the persisted cache is restored.
+  const restored = useRestored()
+  const trackings = useQueries(
+    {
+      queries: underway.map(r => ({
+        queryKey: keys.tracking(r.id),
+        queryFn: () => fetchTransferTracking(r.id),
+        enabled: enabled && restored,
+        refetchInterval: interval,
+        refetchIntervalInBackground: false,
+        staleTime: 0
+      })),
+      combine: results => ({
+        data: results.map(r => (r.data ?? null) as TransferTracking | null),
+        errors: results.map(r => (r.error ? errorMessage(r.error) : null)),
+        isFetching: results.some(r => r.isFetching)
+      })
+    },
+    queryClient
+  )
+
+  const live = useMemo<CustomerLiveRide[]>(
+    () =>
+      underway.map((ride, i) => ({
+        ride,
+        tracking: trackings.data[i] ?? null,
+        error: trackings.errors[i] ?? null
+      })),
+    [underway, trackings.data, trackings.errors]
+  )
+
+  const refetchAll = useCallback(() => {
+    refetch()
+    void queryClient.refetchQueries({queryKey: ['tracking'], type: 'active'})
+  }, [refetch])
+
+  return {
+    live,
+    accepted,
+    isLoading,
+    error,
+    isFetching: isFetching || trackings.isFetching,
+    fetchedAt: q.dataUpdatedAt || null,
+    refetch: refetchAll
+  }
 }
 
 // --------------- Geocoding the pickup ---------------
@@ -193,7 +432,10 @@ export interface LngLat {
  * The same address is one query `['geocode', address]` of the client, asked
  * once and kept.
  */
-export const geocodeAddress = async (address: string, token: string): Promise<LngLat | null> => {
+export const geocodeAddress = async (
+  address: string,
+  token: string
+): Promise<LngLat | null> => {
   const key = address.trim().toLowerCase()
   if (!key || !token) return null
   const url =
@@ -212,12 +454,42 @@ export const geocodeAddress = async (address: string, token: string): Promise<Ln
 
 export function useGeocode(address: string | null | undefined, token: string) {
   const key = (address ?? '').trim().toLowerCase()
-  const {query: q, isLoading, error} = useAppQuery({
+  const {
+    query: q,
+    isLoading,
+    error
+  } = useAppQuery({
     queryKey: keys.geocode(key),
     queryFn: () => geocodeAddress(address ?? '', token),
     enabled: !!key && !!token
   })
   return {point: q.data ?? null, error, isLoading}
+}
+
+/**
+ * Several pickups at once, for the customer's map: one point per address in
+ * the order given, null where nothing was found yet or the address is
+ * empty. The same keys as useGeocode, so a pin the booking detail already
+ * found is not asked for again.
+ */
+export function useGeocodes(
+  addresses: ReadonlyArray<string | null | undefined>,
+  token: string
+): Array<LngLat | null> {
+  const restored = useRestored()
+  const trimmed = addresses.map(a => (a ?? '').trim())
+  return useQueries(
+    {
+      queries: trimmed.map(address => ({
+        queryKey: keys.geocode(address.toLowerCase()),
+        queryFn: () => geocodeAddress(address, token),
+        enabled: !!address && !!token && restored,
+        staleTime: Infinity
+      })),
+      combine: results => results.map(r => (r.data ?? null) as LngLat | null)
+    },
+    queryClient
+  )
 }
 
 // --------------- Driver colours for the dispatcher's map ---------------
@@ -299,14 +571,19 @@ const initialStatus = (): SenderStatus => ({
 })
 
 /** Metres between two fixes, haversine. */
-export const distanceMetres = (a: {latitude: number; longitude: number}, b: {latitude: number; longitude: number}): number => {
+export const distanceMetres = (
+  a: {latitude: number; longitude: number},
+  b: {latitude: number; longitude: number}
+): number => {
   const R = 6_371_000
   const toRad = (d: number) => (d * Math.PI) / 180
   const dLat = toRad(b.latitude - a.latitude)
   const dLng = toRad(b.longitude - a.longitude)
   const s =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLng / 2) ** 2
+    Math.cos(toRad(a.latitude)) *
+      Math.cos(toRad(b.latitude)) *
+      Math.sin(dLng / 2) ** 2
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)))
 }
 
@@ -345,7 +622,9 @@ const sendPosition = async (fix: GeoPosition): Promise<void> => {
  * so no driverId is sent. Rides older than a day and a half are not looked
  * at, a ride ONGOING for longer than that is a row somebody forgot.
  */
-const findActiveRide = async (driverId: string | undefined): Promise<{id: string; state: string} | null> => {
+const findActiveRide = async (
+  driverId: string | undefined
+): Promise<{id: string; state: string} | null> => {
   const fromISO = new Date(Date.now() - 36 * 3_600_000).toISOString()
   const result = await gql(
     'transfers',
@@ -358,12 +637,23 @@ const findActiveRide = async (driverId: string | undefined): Promise<{id: string
     .map((e: any) => e?.node)
     // The scope already limits a driver to their own rows. A dispatcher who
     // also drives reads everything, and only their own ride counts here.
-    .filter((n: any) => n && isTracked(n.state) && (!driverId || n.driverId === driverId))
-    .map((n: any) => ({id: String(n.id), state: String(n.state), pickupDateTime: text(n.pickupDateTime)}))
+    .filter(
+      (n: any) =>
+        n && isTracked(n.state) && (!driverId || n.driverId === driverId)
+    )
+    .map((n: any) => ({
+      id: String(n.id),
+      state: String(n.state),
+      pickupDateTime: text(n.pickupDateTime)
+    }))
   if (rows.length === 0) return null
   // The one that is furthest along wins, then the earliest pickup.
   const rank = (s: string) => (TRACKED_STATES as readonly string[]).indexOf(s)
-  rows.sort((a, b) => rank(b.state) - rank(a.state) || String(a.pickupDateTime).localeCompare(String(b.pickupDateTime)))
+  rows.sort(
+    (a, b) =>
+      rank(b.state) - rank(a.state) ||
+      String(a.pickupDateTime).localeCompare(String(b.pickupDateTime))
+  )
   const first = rows[0]
   return first ? {id: first.id, state: first.state} : null
 }
@@ -421,9 +711,19 @@ class SenderEngine {
    */
   hint(transferId: string, state: string) {
     if (isTracked(state)) {
-      this.set({active: true, activeTransferId: transferId, activeState: state, checkedAt: Date.now()})
+      this.set({
+        active: true,
+        activeTransferId: transferId,
+        activeState: state,
+        checkedAt: Date.now()
+      })
     } else if (this.status.activeTransferId === transferId) {
-      this.set({active: false, activeTransferId: undefined, activeState: undefined, checkedAt: Date.now()})
+      this.set({
+        active: false,
+        activeTransferId: undefined,
+        activeState: undefined,
+        checkedAt: Date.now()
+      })
     }
     this.reconcile()
   }
@@ -444,7 +744,10 @@ class SenderEngine {
     } catch (err) {
       // The ride stays what it was: a failed check must not stop a live
       // send loop over a flaky connection, and must not start one either.
-      this.set({checkError: err instanceof Error ? err.message : String(err), checkedAt: Date.now()})
+      this.set({
+        checkError: err instanceof Error ? err.message : String(err),
+        checkedAt: Date.now()
+      })
     } finally {
       this.checking = false
       this.reconcile()
@@ -452,10 +755,14 @@ class SenderEngine {
   }
 
   private reconcile() {
-    const wantChecks = this.subscribers > 0 && this.status.isDriver && this.status.enabled
+    const wantChecks =
+      this.subscribers > 0 && this.status.isDriver && this.status.enabled
     if (wantChecks && this.checkTimer === undefined) {
       void this.recheck()
-      this.checkTimer = window.setInterval(() => void this.recheck(), RIDE_CHECK_INTERVAL_MS)
+      this.checkTimer = window.setInterval(
+        () => void this.recheck(),
+        RIDE_CHECK_INTERVAL_MS
+      )
     } else if (!wantChecks && this.checkTimer !== undefined) {
       window.clearInterval(this.checkTimer)
       this.checkTimer = undefined
@@ -465,7 +772,11 @@ class SenderEngine {
     if (wantWatch && this.watchId === undefined) this.startWatch()
     else if (!wantWatch && this.watchId !== undefined) this.stopWatch()
 
-    if (wantChecks && !this.status.supported && this.status.reason !== 'unsupported') {
+    if (
+      wantChecks &&
+      !this.status.supported &&
+      this.status.reason !== 'unsupported'
+    ) {
       this.set({reason: 'unsupported'})
     }
     if (this.status.running !== wantWatch) this.set({running: wantWatch})
@@ -492,7 +803,8 @@ class SenderEngine {
   }
 
   private stopWatch() {
-    if (this.watchId !== undefined) navigator.geolocation.clearWatch(this.watchId)
+    if (this.watchId !== undefined)
+      navigator.geolocation.clearWatch(this.watchId)
     if (this.tickTimer !== undefined) window.clearInterval(this.tickTimer)
     this.watchId = undefined
     this.tickTimer = undefined
@@ -557,7 +869,9 @@ export interface UseDriverPositionSenderOptions {
  * the file comment. For anybody who is not a driver it renders the idle
  * status and starts nothing.
  */
-export function useDriverPositionSender(options: UseDriverPositionSenderOptions = {}) {
+export function useDriverPositionSender(
+  options: UseDriverPositionSenderOptions = {}
+) {
   const caller = useCaller()
   const [status, setStatus] = useState<SenderStatus>(() =>
     typeof window === 'undefined' ? initialStatus() : getEngine().status
@@ -580,7 +894,10 @@ export function useDriverPositionSender(options: UseDriverPositionSenderOptions 
     if (rideId && rideState) getEngine().hint(rideId, rideState)
   }, [rideId, rideState])
 
-  const setEnabled = useCallback((on: boolean) => getEngine().setEnabled(on), [])
+  const setEnabled = useCallback(
+    (on: boolean) => getEngine().setEnabled(on),
+    []
+  )
   const recheck = useCallback(() => getEngine().recheck(), [])
 
   return {...status, setEnabled, recheck}

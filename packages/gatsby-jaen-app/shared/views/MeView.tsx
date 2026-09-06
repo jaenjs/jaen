@@ -13,7 +13,7 @@
  * subscription against the pylon's VAPID key, see
  * okf/architecture/notifications.md section 7.
  */
-import { useEffect, useMemo, useState } from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {
   Button,
   Card,
@@ -24,21 +24,31 @@ import {
   Stack,
   Switch,
   Text,
-  parseColor,
+  parseColor
 } from '@chakra-ui/react'
-import { FaBell } from '@react-icons/all-files/fa/FaBell'
-import { FaCheck } from '@react-icons/all-files/fa/FaCheck'
-import { useCaller } from '../auth'
-import { fetchDriverColor, setDriverColorMutation } from '../hooks'
-import { useDriverPositionSender } from '../hooks/tracking'
-import { usePushNotifications } from '../hooks/push'
-import { DriverColorDot, EmptyState, ErrorBanner, toaster, PageHeader} from '../components'
-import { useI18nCode } from '../i18n'
-import { getI18nMe } from '../locales/i18nMe'
-import { getI18nTabBar } from '../locales/i18nTabBar'
+import {FaBell} from '@react-icons/all-files/fa/FaBell'
+import {FaCheck} from '@react-icons/all-files/fa/FaCheck'
+import {useCaller} from '../auth'
+import {fetchDriverColor, setDriverColorMutation} from '../hooks'
+import {useDriverPositionSender} from '../hooks/tracking'
+import {usePushNotifications} from '../hooks/push'
+import {
+  DriverColorDot,
+  EmptyState,
+  ErrorBanner,
+  toaster,
+  PageHeader
+} from '../components'
+import {useI18nCode} from '../i18n'
+import {getI18nMe} from '../locales/i18nMe'
+import {getI18nTabBar} from '../locales/i18nTabBar'
 // The bar's two gates live with the bar, in the plugin's src, so the switch
 // here and the shell's padding read the same answers the bar reads.
-import { setGlassTabBarEnabled, useAppMode, useGlassTabBarEnabled } from '../../src/components/GlassTabBar'
+import {
+  setGlassTabBarEnabled,
+  useAppMode,
+  useGlassTabBarEnabled
+} from '../../src/components/GlassTabBar'
 
 // ---------------------------------------------------------------------------
 // The colours a driver can pick. A driver may type any hex, these are the
@@ -46,8 +56,18 @@ import { setGlassTabBarEnabled, useAppMode, useGlassTabBarEnabled } from '../../
 // ---------------------------------------------------------------------------
 
 const SWATCHES = [
-  '#E53E3E', '#DD6B20', '#D69E2E', '#38A169', '#319795', '#3182CE',
-  '#5A67D8', '#805AD5', '#D53F8C', '#718096', '#2D3748', '#000000',
+  '#E53E3E',
+  '#DD6B20',
+  '#D69E2E',
+  '#38A169',
+  '#319795',
+  '#3182CE',
+  '#5A67D8',
+  '#805AD5',
+  '#D53F8C',
+  '#718096',
+  '#2D3748',
+  '#000000'
 ]
 
 const isHex = (v: string) => /^#[0-9a-f]{6}$/i.test(v)
@@ -55,7 +75,7 @@ const isHex = (v: string) => /^#[0-9a-f]{6}$/i.test(v)
 export function MeView() {
   const caller = useCaller()
   const code = useI18nCode()
-  const { strings: t } = getI18nMe(code)
+  const {strings: t} = getI18nMe(code)
 
   // ----- colour -----
   const [savedColor, setSavedColor] = useState<string | undefined>(undefined)
@@ -84,9 +104,12 @@ export function MeView() {
     try {
       await setDriverColorMutation(caller.userId, color)
       setSavedColor(color)
-      toaster.success({ title: t.ColorSaved })
+      toaster.success({title: t.ColorSaved})
     } catch (err) {
-      toaster.error({ title: t.ColorFailed, description: err instanceof Error ? err.message : undefined })
+      toaster.error({
+        title: t.ColorFailed,
+        description: err instanceof Error ? err.message : undefined
+      })
     } finally {
       setColorSaving(false)
     }
@@ -105,7 +128,11 @@ export function MeView() {
 
   const timeFormat = useMemo(() => {
     try {
-      return new Intl.DateTimeFormat(code, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      return new Intl.DateTimeFormat(code, {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
     } catch {
       return null
     }
@@ -117,30 +144,44 @@ export function MeView() {
   const togglePush = async (on: boolean) => {
     if (on) {
       const ok = await push.subscribe()
-      if (ok) toaster.success({ title: t.PushEnabled })
-      else if (push.permission === 'denied' || (typeof Notification !== 'undefined' && Notification.permission === 'denied')) {
-        toaster.error({ title: t.PushDenied })
+      if (ok) toaster.success({title: t.PushEnabled})
+      else if (
+        push.permission === 'denied' ||
+        (typeof Notification !== 'undefined' &&
+          Notification.permission === 'denied')
+      ) {
+        toaster.error({title: t.PushDenied})
       } else {
-        toaster.error({ title: t.PushFailed })
+        toaster.error({title: t.PushFailed})
       }
     } else {
       await push.unsubscribe()
-      toaster.info({ title: t.PushDisabled })
+      toaster.info({title: t.PushDisabled})
     }
   }
 
   const sendTest = async () => {
     try {
-      await push.showLocalNotification(t.PushTestTitle, caller.isAdmin ? t.PushTestBodyAdmin : t.PushTestBody)
+      await push.showLocalNotification(
+        t.PushTestTitle,
+        caller.isAdmin
+          ? t.PushTestBodyAdmin
+          : caller.isDriver
+            ? t.PushTestBody
+            : t.PushTestBodyCustomer
+      )
     } catch (err) {
-      toaster.error({ title: t.PushTestFailed, description: err instanceof Error ? err.message : undefined })
+      toaster.error({
+        title: t.PushTestFailed,
+        description: err instanceof Error ? err.message : undefined
+      })
     }
   }
 
   // ----- the glass tab bar, app mode only -----
   const appMode = useAppMode()
   const tabBarOn = useGlassTabBarEnabled()
-  const { strings: tb } = getI18nTabBar(code)
+  const {strings: tb} = getI18nTabBar(code)
 
   /**
    * The switch "Untere Leiste", shown only when the PWA runs installed: in a
@@ -148,7 +189,10 @@ export function MeView() {
    * Per device, see GlassTabBar.tsx.
    */
   const tabBarCard = appMode ? (
-    <Card.Root variant="outline" bg="bg.surface" data-testid="glass-tab-bar-card">
+    <Card.Root
+      variant="outline"
+      bg="bg.surface"
+      data-testid="glass-tab-bar-card">
       <Card.Header>
         <Card.Title>{tb.Heading}</Card.Title>
         <Card.Description>{tb.Body}</Card.Description>
@@ -168,17 +212,28 @@ export function MeView() {
   ) : null
 
   /**
-   * The push card, for the driver and for the office alike: a dispatcher
-   * hears every new booking and every assignment, section 8 of
-   * notifications.md, so the card says so to an admin and the same switch
-   * subscribes the same browser. One card, drawn by both branches below.
+   * The push card, for the driver, the office and the customer alike: a
+   * dispatcher hears every new booking and every assignment (section 8 of
+   * notifications.md), a customer the state of their own bookings (section
+   * 3 of customer-experience.md, worded "Status meiner Buchungen"), so the
+   * card says so to each and the same switch subscribes the same browser.
+   * One card, drawn by the three branches below.
    */
   const forOffice = caller.isAdmin
+  const forCustomer = !caller.isAdmin && !caller.isDriver
   const pushCard = (
     <Card.Root variant="outline" bg="bg.surface">
       <Card.Header>
-        <Card.Title>{t.PushHeading}</Card.Title>
-        <Card.Description>{forOffice ? t.PushBodyAdmin : t.PushBody}</Card.Description>
+        <Card.Title>
+          {forCustomer ? t.PushHeadingCustomer : t.PushHeading}
+        </Card.Title>
+        <Card.Description>
+          {forOffice
+            ? t.PushBodyAdmin
+            : forCustomer
+              ? t.PushBodyCustomer
+              : t.PushBody}
+        </Card.Description>
       </Card.Header>
       <Card.Body gap="3">
         <Switch.Root
@@ -203,13 +258,19 @@ export function MeView() {
             {t.PushDenied}
           </Text>
         )}
-        {push.error && <ErrorBanner title={t.PushFailed} message={push.error} />}
+        {push.error && (
+          <ErrorBanner title={t.PushFailed} message={push.error} />
+        )}
       </Card.Body>
       <Card.Footer justifyContent="flex-end">
         <Button
           variant="outline"
           onClick={sendTest}
-          disabled={typeof window === 'undefined' || !('Notification' in window) || push.permission === 'denied'}>
+          disabled={
+            typeof window === 'undefined' ||
+            !('Notification' in window) ||
+            push.permission === 'denied'
+          }>
           <FaBell /> {t.PushTest}
         </Button>
       </Card.Footer>
@@ -219,11 +280,17 @@ export function MeView() {
   if (caller.loading) return null
 
   if (!caller.isDriver && !caller.isAdmin) {
+    // The customer: no colour, no position, the status of their bookings.
+    // An account with none of the three roles keeps the empty state.
     return (
-      <Stack gap="6" p={{ base: '4', md: '6' }} maxW="full">
+      <Stack gap="6" p={{base: '4', md: '6'}} maxW="full">
         <PageHeader title={t.Heading} />
+        {caller.isCustomer ? (
+          pushCard
+        ) : (
+          <EmptyState title={t.Heading} description={t.NotADriver} />
+        )}
         {tabBarCard}
-        <EmptyState title={t.Heading} description={t.NotADriver} />
       </Stack>
     )
   }
@@ -231,7 +298,7 @@ export function MeView() {
   if (!caller.isDriver) {
     // The office without a car: no colour, no position, the notifications only.
     return (
-      <Stack gap="6" p={{ base: '4', md: '6' }} maxW="full">
+      <Stack gap="6" p={{base: '4', md: '6'}} maxW="full">
         <PageHeader title={t.Heading} />
         {pushCard}
         {tabBarCard}
@@ -240,7 +307,7 @@ export function MeView() {
   }
 
   return (
-    <Stack gap="6" p={{ base: '4', md: '6' }} maxW="full">
+    <Stack gap="6" p={{base: '4', md: '6'}} maxW="full">
       <PageHeader title={t.Heading} subtitle={t.Subtitle} />
 
       {/* Colour */}
@@ -294,7 +361,11 @@ export function MeView() {
             colorPalette="brand"
             onClick={saveColor}
             loading={colorSaving}
-            disabled={colorLoading || !isHex(color) || color.toUpperCase() === (savedColor ?? '').toUpperCase()}>
+            disabled={
+              colorLoading ||
+              !isHex(color) ||
+              color.toUpperCase() === (savedColor ?? '').toUpperCase()
+            }>
             {t.ColorSave}
           </Button>
         </Card.Footer>
@@ -332,7 +403,10 @@ export function MeView() {
           ) : sender.reason === 'timeout' ? (
             <ErrorBanner message={t.LocationTimeout} />
           ) : sender.sendError ? (
-            <ErrorBanner title={t.LocationSendFailed} message={sender.sendError} />
+            <ErrorBanner
+              title={t.LocationSendFailed}
+              message={sender.sendError}
+            />
           ) : !sender.active ? (
             <Text textStyle="sm" color="fg.muted">
               {sender.checkError ? t.LocationCheckFailed : t.LocationNoRide}
@@ -342,16 +416,20 @@ export function MeView() {
               {sender.lastSentAt
                 ? t.LocationLastSent.replace(
                     '{time}',
-                    timeFormat?.format(sender.lastSentAt) ?? new Date(sender.lastSentAt).toLocaleTimeString()
+                    timeFormat?.format(sender.lastSentAt) ??
+                      new Date(sender.lastSentAt).toLocaleTimeString()
                   )
                 : t.LocationWaiting}
             </Text>
           )}
-          {sender.enabled && sender.supported && sender.active && !sender.reason && (
-            <Text textStyle="xs" color="fg.muted">
-              {t.LocationRideHint}
-            </Text>
-          )}
+          {sender.enabled &&
+            sender.supported &&
+            sender.active &&
+            !sender.reason && (
+              <Text textStyle="xs" color="fg.muted">
+                {t.LocationRideHint}
+              </Text>
+            )}
         </Card.Body>
       </Card.Root>
 

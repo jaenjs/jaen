@@ -108,7 +108,9 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/app/locations/',
     label: 'NavLocations',
     icon: FaMapMarkerAlt,
-    roles: ['admin', 'driver'],
+    // A customer sees the drivers of their own live rides on the same route,
+    // scoped by the backend per booking (customer-experience.md, section 2).
+    roles: ['admin', 'driver', 'customer'],
     order: 40
   },
   {

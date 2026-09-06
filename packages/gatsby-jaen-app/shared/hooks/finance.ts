@@ -1,23 +1,30 @@
 /**
- * Statements: the months that have one, and the file itself.
+ * Statements: the months that have one, the rides of one, and the file.
  *
  * The list is a GraphQL read, `statementMonths(args: {userId})`, answered
  * for an admin about anybody and for everyone else about themselves only,
  * the backend decides. The file is not GraphQL: it is streamed from Google's
  * export of the tab by a Hono route on the same Worker,
- * `GET /statements/:userId/:month.:format`, with the same bearer token the
- * GraphQL client sends. The browser cannot be pointed at that URL directly,
- * a navigation carries no Authorization header, so the file is fetched here
- * and handed over as a blob. See okf/architecture/finance.md, the download.
+ * `GET /statements/:userId/:month.:format`. The app does not fetch it. It
+ * asks `statementUrl(args)` for a signed link that lives fifteen minutes
+ * and opens that link the way it opens a document, so the browser and the
+ * installed app download the same way and nothing is handed over as a
+ * blob, which a phone's installed app refused without a word. See
+ * okf/architecture/customer-experience.md, section 4, and finance.md.
  *
  * The reads are queries of the one client in ./query.ts, `['statements',
  * userId]` for the months and `['statements', userId, month, kind]` for the
  * lines of one. See okf/architecture/data-layer.md.
+ *
+ * At the bottom, the documents of many rides at once: the lists render an
+ * invoice or an offer button only where the document exists
+ * (customer-experience.md, section 5), and a list of twenty five rides
+ * asks once, one request with an alias per ride, rather than once per row.
  */
-import {User} from 'oidc-client-ts'
-import {endpointUrl} from '../../client/limosen'
 import {gql} from './bookings'
 import {keys, useAppQuery} from './query'
+import {mapDocument, type TransferDocument} from './documents'
+import {fetchGraphQL} from '../../client/limosen'
 
 export type StatementKind = 'CUSTOMER' | 'DRIVER'
 export type StatementFormat = 'pdf' | 'xlsx'
@@ -46,50 +53,7 @@ export interface StatementLine {
   share: number | null
 }
 
-declare const __JAEN_ZITADEL_GQL__:
-  | {authority?: string; clientId?: string}
-  | undefined
-
-/**
- * The bearer token of the session in this tab, read the way the GraphQL
- * client reads it, so the download is made by the same person as the list.
- */
-const accessToken = (): string | undefined => {
-  try {
-    const z =
-      typeof __JAEN_ZITADEL_GQL__ !== 'undefined' ? __JAEN_ZITADEL_GQL__ : null
-    if (!z?.authority || !z?.clientId) return undefined
-    const raw = window.sessionStorage?.getItem(
-      `oidc.user:${z.authority}:${z.clientId}`
-    )
-    if (!raw) return undefined
-    return User.fromStorageString(raw)?.access_token || undefined
-  } catch {
-    return undefined
-  }
-}
-
 const MONTH = /^\d{4}-\d{2}$/
-
-/**
- * The route lives beside /graphql on the same Worker. `kind` picks the tab
- * when the same month has both an invoice and a settlement, which is the
- * case for a person who is a customer and a driver at once. Without it the
- * Worker prefers the customer tab.
- */
-export const statementUrl = (
-  userId: string,
-  month: string,
-  format: StatementFormat,
-  kind?: StatementKind
-): string => {
-  const url = new URL(
-    `/statements/${encodeURIComponent(userId)}/${encodeURIComponent(month)}.${format}`,
-    endpointUrl
-  )
-  if (kind) url.searchParams.set('kind', kind)
-  return url.toString()
-}
 
 export async function fetchStatementMonths(
   userId: string
@@ -178,78 +142,128 @@ export function useStatementLines(
   return {lines: q.data ?? EMPTY_LINES, isLoading, error, refetch}
 }
 
-/** The file name the Worker chose, or one built from what was asked for. */
-const fileNameFrom = (response: Response, fallback: string): string => {
-  const header = response.headers.get('content-disposition') ?? ''
-  const utf8 = /filename\*=UTF-8''([^;]+)/i.exec(header)
-  if (utf8?.[1]) {
-    try {
-      return decodeURIComponent(utf8[1])
-    } catch {
-      /* fall through to the plain name */
-    }
-  }
-  const plain = /filename="?([^";]+)"?/i.exec(header)
-  return plain?.[1] || fallback
+// --------------- The file ---------------
+
+/**
+ * A signed link to the statement file, good for fifteen minutes from now,
+ * `statementUrl(args: {userId, month, format, kind})`. `kind` picks the tab
+ * when the same month has both an invoice and a settlement, which is the
+ * case for a person who is a customer and a driver at once. Without it the
+ * Worker prefers the customer tab.
+ */
+export const fetchStatementUrl = async (
+  userId: string,
+  month: string,
+  format: StatementFormat,
+  kind?: StatementKind
+): Promise<string> => {
+  if (!MONTH.test(month)) throw new Error('Invalid month')
+  const url = await gql(
+    'statementUrl',
+    {args: {userId, month, format, kind}},
+    ''
+  )
+  if (typeof url !== 'string' || !url) throw new Error('no link in the answer')
+  return url
 }
 
 /**
- * Fetch the statement with the bearer token and hand the file to the browser
- * through a temporary object URL on an anchor with `download`. The anchor
- * is what makes it a save rather than a navigation, and the object URL is
- * revoked once the click has been dispatched.
+ * Open the statement file. The tab is opened on the click, before the link
+ * is fetched, so a popup blocker sees a user gesture, and it is pointed at
+ * the signed link when that arrives. The Worker answers the file as an
+ * attachment, so the tab becomes a download and a browser closes it again.
+ * A refusal closes the tab and throws, so the screen can say why. The same
+ * shape as openDocument in ./documents.ts, on purpose.
  */
-export async function downloadStatement(
+export async function openStatement(
   userId: string,
   month: string,
   format: StatementFormat,
   kind?: StatementKind
 ): Promise<void> {
-  if (!MONTH.test(month)) throw new Error('Invalid month')
-
-  const token = accessToken()
-  const response = await fetch(statementUrl(userId, month, format, kind), {
-    method: 'GET',
-    mode: 'cors',
-    headers: token ? {Authorization: `Bearer ${token}`} : {}
-  })
-
-  if (!response.ok) {
-    // The Worker answers a refusal in the GraphQL shape, {errors: [{message,
-    // extensions: {code}}]}, so the message stays distinguishable: 401 is
-    // sign in, 403 is not yours, 404 is no tab for that month.
-    let detail = ''
-    try {
-      const body = await response.json()
-      const first = Array.isArray(body?.errors) ? body.errors[0] : undefined
-      detail = String(
-        first?.message ?? first?.extensions?.code ?? body?.message ?? ''
-      )
-    } catch {
-      /* the body was not JSON, the status is enough */
-    }
-    throw new Error(
-      detail ? `${response.status} ${detail}` : `HTTP ${response.status}`
-    )
-  }
-
-  const blob = await response.blob()
-  const name = fileNameFrom(
-    response,
-    `${kind ? kind.toLowerCase() : 'statement'}_${month}.${format}`
-  )
-  const url = URL.createObjectURL(blob)
+  const tab = typeof window !== 'undefined' ? window.open('', '_blank') : null
   try {
-    const a = document.createElement('a')
-    a.href = url
-    a.download = name
-    a.rel = 'noopener'
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-  } finally {
-    // Not before the click has been handled, some browsers read the URL late.
-    window.setTimeout(() => URL.revokeObjectURL(url), 10_000)
+    const url = await fetchStatementUrl(userId, month, format, kind)
+    if (tab) tab.location.href = url
+    else if (typeof window !== 'undefined') window.location.href = url
+  } catch (err) {
+    tab?.close()
+    throw err
   }
+}
+
+// --------------- The documents of many rides ---------------
+
+/** The offer and the invoice of a ride, when they exist. Either is undefined otherwise. */
+export interface RideDocuments {
+  offer?: TransferDocument
+  invoice?: TransferDocument
+}
+
+const DOCUMENT_FIELDS =
+  '{ id transferId kind number filename contentType size language createdAt }'
+
+/** A GraphQL alias for a transfer id: letters and digits only. */
+const alias = (i: number) => `r${i}`
+
+/**
+ * `transferDocuments(args: {transferId})` for every id in one request, an
+ * alias per ride. The pylon refuses a ride that is not the caller's with
+ * FORBIDDEN on that alias alone, and answers a driver nothing, so a refused
+ * alias is read as "no documents" here rather than as a failure of the
+ * whole list: the lists still draw, without a button on that row. The ids
+ * are sent sorted and distinct so the same set is one cache entry.
+ */
+export async function fetchRideDocuments(
+  transferIds: readonly string[]
+): Promise<Record<string, RideDocuments>> {
+  const ids = Array.from(new Set(transferIds.filter(Boolean))).sort()
+  const out: Record<string, RideDocuments> = {}
+  if (!ids.length) return out
+  const body = ids
+    .map(
+      (id, i) =>
+        `${alias(i)}: transferDocuments(args: {transferId: ${JSON.stringify(id)}}) ${DOCUMENT_FIELDS}`
+    )
+    .join(' ')
+  const result: any = await fetchGraphQL(
+    {
+      query: `query { ${body} }`,
+      variables: undefined,
+      operationName: undefined
+    },
+    {}
+  )
+  const data = result?.data ?? {}
+  ids.forEach((id, i) => {
+    const rows = data[alias(i)]
+    if (!Array.isArray(rows)) return
+    const docs = rows.map(mapDocument)
+    out[id] = {
+      offer: docs.find(d => d.kind === 'OFFER'),
+      invoice: docs.find(d => d.kind === 'INVOICE')
+    }
+  })
+  return out
+}
+
+const EMPTY_DOCUMENTS: Record<string, RideDocuments> = {}
+
+/**
+ * The documents of the rides on a screen, one query per set of ids under
+ * `['documents', 'rides', ids]`, so an upload's `invalidateDocuments()`
+ * without an id refreshes it too. `enabled` is false for a driver, who is
+ * answered nothing and has no button to draw.
+ */
+export function useRideDocuments(
+  transferIds: readonly string[],
+  enabled = true
+) {
+  const ids = Array.from(new Set(transferIds.filter(Boolean))).sort()
+  const {query: q, refetch} = useAppQuery({
+    queryKey: ['documents', 'rides', ids] as const,
+    queryFn: () => fetchRideDocuments(ids),
+    enabled: enabled && ids.length > 0
+  })
+  return {documents: q.data ?? EMPTY_DOCUMENTS, refetch}
 }

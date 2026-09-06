@@ -61,6 +61,8 @@ import {
   type PaymentMethod
 } from '../hooks/bookings'
 import {useTransferList} from '../hooks/transfers'
+import {useRideDocuments} from '../hooks/finance'
+import {RideDocumentButtons} from '../components/documents/RideDocumentButtons'
 import {TRANSFER_STATES} from '../locales/i18nStates'
 import {
   DialogActions,
@@ -503,6 +505,13 @@ export function BookingView() {
     () => applyClientFilters(enriched, list),
     [enriched, list]
   )
+  // The offer and the invoice of the rides on the page, one request, so a
+  // button is drawn only where the document exists (customer-experience.md,
+  // section 5). A driver is answered nothing and asks nothing.
+  const {documents} = useRideDocuments(
+    filtered.map(r => r.id),
+    !caller.loading && (caller.isAdmin || caller.isCustomer)
+  )
 
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -516,9 +525,9 @@ export function BookingView() {
   // The status cell carries the customer's own words beside the ride state
   // ("Angebot erhalten", "Bestätigt", "Rechnung erhalten", "Bezahlt"), the
   // board's cell carries the dispatcher's, see offers-and-documents.md.
-  const columns = useMemo(
-    () =>
-      CUSTOMER_COLUMNS.map(id => boardColumns.find(c => c.id === id))
+  const columns = useMemo<DataColumn<BoardRow>[]>(
+    () => [
+      ...CUSTOMER_COLUMNS.map(id => boardColumns.find(c => c.id === id))
         .filter((c): c is DataColumn<BoardRow> => !!c)
         .map(c =>
           c.id === 'status'
@@ -539,7 +548,17 @@ export function BookingView() {
               }
             : {...c, defaultVisible: true}
         ),
-    [boardColumns]
+      {
+        id: 'documents',
+        label: t.ColDocuments,
+        width: 220,
+        defaultVisible: true,
+        cell: (row: BoardRow) => (
+          <RideDocumentButtons docs={documents[row.id]} />
+        )
+      }
+    ],
+    [boardColumns, documents, t.ColDocuments]
   )
   const group = useDayGroup(today, tomorrow)
 
@@ -622,14 +641,17 @@ export function BookingView() {
           group={group}
           stripe={row => row.driverColor}
           card={(row, api) => (
-            <TransferCard
-              row={row}
-              expanded={api.expanded}
-              onToggle={api.toggle}
-              actions={actions}
-              dayTone={api.tone}
-              customerAudience="customer"
-            />
+            <Stack gap="2">
+              <TransferCard
+                row={row}
+                expanded={api.expanded}
+                onToggle={api.toggle}
+                actions={actions}
+                dayTone={api.tone}
+                customerAudience="customer"
+              />
+              <RideDocumentButtons docs={documents[row.id]} size="sm" px="1" />
+            </Stack>
           )}
           summary={fill(t.CountLabel, {
             total: pagination.totalCount,

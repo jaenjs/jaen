@@ -15,7 +15,8 @@ const de = {
   CardTitleCustomer: 'Ihr Fahrer',
   CardTitleAdmin: 'Wo der Fahrer ist',
   NotAssignedYet: 'Fahrer wird noch zugeteilt',
-  NotAssignedYetHint: 'Sobald die Zentrale einen Fahrer eingeteilt hat, sehen Sie ihn hier.',
+  NotAssignedYetHint:
+    'Sobald die Zentrale einen Fahrer eingeteilt hat, sehen Sie ihn hier.',
   DriverLabel: 'Fahrer',
   CarLabel: 'Fahrzeug',
   PlateLabel: 'Kennzeichen',
@@ -36,7 +37,8 @@ const de = {
   Pickup: 'Abholung',
 
   // Every map
-  MapNoToken: 'Karte nicht verfügbar: kein Mapbox-Token konfiguriert (GATSBY_MAPBOX_TOKEN).',
+  MapNoToken:
+    'Karte nicht verfügbar: kein Mapbox-Token konfiguriert (GATSBY_MAPBOX_TOKEN).',
   MapLoadFailed: 'Die Karte konnte nicht geladen werden',
   MapLoading: 'Karte wird geladen',
   MapRejected: 'Mapbox hat den Token abgelehnt, die Karte bleibt leer.',
@@ -57,7 +59,17 @@ const de = {
   UpdatedAt: 'Aktualisiert',
   RecordedAt: 'Aufgezeichnet',
   PlanRoute: 'Route planen',
-  Close: 'Schließen'
+  Close: 'Schließen',
+
+  // The customer's map: the drivers of their own live rides
+  CustomerSubtitle: 'Die Fahrer Ihrer laufenden Fahrten',
+  NoRideUnderway: 'Keine Fahrt unterwegs',
+  NoRideUnderwayHint:
+    'Sobald ein Fahrer zu einer Ihrer Fahrten unterwegs ist, sehen Sie ihn hier.',
+  UnderwayFrom: 'unterwegs ab {time}',
+  AcceptedRides: 'Bestätigte Fahrten',
+  LiveRidesOne: '1 Fahrt unterwegs',
+  LiveRidesMany: '{count} Fahrten unterwegs'
 }
 
 export type TrackingStrings = typeof de
@@ -66,7 +78,8 @@ const en: TrackingStrings = {
   CardTitleCustomer: 'Your driver',
   CardTitleAdmin: 'Where the driver is',
   NotAssignedYet: 'A driver is being assigned',
-  NotAssignedYetHint: 'As soon as the office has assigned a driver, you will see them here.',
+  NotAssignedYetHint:
+    'As soon as the office has assigned a driver, you will see them here.',
   DriverLabel: 'Driver',
   CarLabel: 'Vehicle',
   PlateLabel: 'Plate',
@@ -85,7 +98,8 @@ const en: TrackingStrings = {
   Updating: 'Updating',
   Pickup: 'Pickup',
 
-  MapNoToken: 'Map unavailable: no Mapbox token configured (GATSBY_MAPBOX_TOKEN).',
+  MapNoToken:
+    'Map unavailable: no Mapbox token configured (GATSBY_MAPBOX_TOKEN).',
   MapLoadFailed: 'The map could not be loaded',
   MapLoading: 'Loading map',
   MapRejected: 'Mapbox rejected the token, the map stays empty.',
@@ -105,7 +119,16 @@ const en: TrackingStrings = {
   UpdatedAt: 'Updated',
   RecordedAt: 'Recorded',
   PlanRoute: 'Plan route',
-  Close: 'Close'
+  Close: 'Close',
+
+  CustomerSubtitle: 'The drivers of your rides under way',
+  NoRideUnderway: 'No ride under way',
+  NoRideUnderwayHint:
+    'As soon as a driver is on the way to one of your rides, you will see them here.',
+  UnderwayFrom: 'under way from {time}',
+  AcceptedRides: 'Confirmed rides',
+  LiveRidesOne: '1 ride under way',
+  LiveRidesMany: '{count} rides under way'
 }
 
 const tr: TrackingStrings = {
@@ -131,7 +154,8 @@ const tr: TrackingStrings = {
   Updating: 'Güncelleniyor',
   Pickup: 'Alış',
 
-  MapNoToken: 'Harita kullanılamıyor: Mapbox anahtarı yapılandırılmamış (GATSBY_MAPBOX_TOKEN).',
+  MapNoToken:
+    'Harita kullanılamıyor: Mapbox anahtarı yapılandırılmamış (GATSBY_MAPBOX_TOKEN).',
   MapLoadFailed: 'Harita yüklenemedi',
   MapLoading: 'Harita yükleniyor',
   MapRejected: 'Mapbox anahtarı reddetti, harita boş kalıyor.',
@@ -151,7 +175,16 @@ const tr: TrackingStrings = {
   UpdatedAt: 'Güncellendi',
   RecordedAt: 'Kaydedildi',
   PlanRoute: 'Rota planla',
-  Close: 'Kapat'
+  Close: 'Kapat',
+
+  CustomerSubtitle: 'Yoldaki yolculuklarınızın şoförleri',
+  NoRideUnderway: 'Yolda yolculuk yok',
+  NoRideUnderwayHint:
+    'Bir şoför yolculuklarınızdan birine doğru yola çıkar çıkmaz onu burada göreceksiniz.',
+  UnderwayFrom: '{time} itibarıyla yolda',
+  AcceptedRides: 'Onaylanmış yolculuklar',
+  LiveRidesOne: '1 yolculuk yolda',
+  LiveRidesMany: '{count} yolculuk yolda'
 }
 
 const ar: TrackingStrings = {
@@ -197,10 +230,21 @@ const ar: TrackingStrings = {
   UpdatedAt: 'آخر تحديث',
   RecordedAt: 'وقت التسجيل',
   PlanRoute: 'تخطيط المسار',
-  Close: 'إغلاق'
+  Close: 'إغلاق',
+
+  CustomerSubtitle: 'سائقو رحلاتك الجارية',
+  NoRideUnderway: 'لا توجد رحلة جارية',
+  NoRideUnderwayHint: 'بمجرد أن ينطلق سائق نحو إحدى رحلاتك ستراه هنا.',
+  UnderwayFrom: 'في الطريق اعتبارًا من {time}',
+  AcceptedRides: 'الرحلات المؤكدة',
+  LiveRidesOne: 'رحلة واحدة جارية',
+  LiveRidesMany: '{count} رحلات جارية'
 }
 
-export function getI18nTracking(code: I18nCode): {code: I18nCode; strings: TrackingStrings} {
+export function getI18nTracking(code: I18nCode): {
+  code: I18nCode
+  strings: TrackingStrings
+} {
   if (code === 'en-US') return {code, strings: en}
   if (code === 'tr-TR') return {code, strings: tr}
   if (code === 'ar-EG') return {code, strings: ar}
@@ -208,8 +252,14 @@ export function getI18nTracking(code: I18nCode): {code: I18nCode; strings: Track
 }
 
 /** `{name}` style placeholders, filled in. */
-export const fillTracking = (template: string, values: Record<string, string | number>): string =>
-  Object.entries(values).reduce((s, [k, v]) => s.split(`{${k}}`).join(String(v)), template)
+export const fillTracking = (
+  template: string,
+  values: Record<string, string | number>
+): string =>
+  Object.entries(values).reduce(
+    (s, [k, v]) => s.split(`{${k}}`).join(String(v)),
+    template
+  )
 
 /**
  * "vor 20 s", "vor 3 min", "vor 2 h": how old a position is, in the

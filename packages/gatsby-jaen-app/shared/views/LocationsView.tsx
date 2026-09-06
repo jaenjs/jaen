@@ -1,28 +1,59 @@
 /**
- * The map of where everybody is, for the dispatcher.
+ * The map of where everybody is, for the dispatcher, and the map of the
+ * customer's own drivers.
  *
  * The map itself, its filter chips and the detail sheet are the components
  * under ../components/locations. This view is the frame around them: it
  * gives the map the full height of the screen below the sticky bars, says
  * out loud when the read failed, and decorates every driver row with the
  * driver's colour and name before the map draws it. The backend answers a
- * driver with their own position only and a customer with FORBIDDEN, so
- * that error is worth showing.
+ * driver with their own position only, so that map is theirs alone.
+ *
+ * A customer gets a different screen on the same route: one map with the
+ * driver of every own ride that is under way (ON_THE_WAY, AT_PICKUP or
+ * ONGOING), read through transferTracking per booking, the marker in the
+ * driver's colour with the plate and the code beside it, the pickup pin,
+ * refreshed every ten seconds while the tab is open, and under the map the
+ * accepted rides that wait for their driver to leave, "unterwegs ab hh:mm".
+ * Nothing of other customers can appear, the reads are scoped by the token
+ * (customer-experience.md, section 2).
  *
  * The colours come from getDriverColor, one call per driver, cached for the
  * tab. The names come from the driver directory, which only an admin may
  * read, so a driver looking at their own dot sees their id and no name.
  */
 import {useMemo} from 'react'
-import {Box, Flex, Skeleton} from '@chakra-ui/react'
+import {Box, Flex, HStack, Skeleton, Stack, Text} from '@chakra-ui/react'
+import {FaMapMarkerAlt} from '@react-icons/all-files/fa/FaMapMarkerAlt'
 import {useCaller} from '../auth'
 import {useDrivers, useLocations, type ResourceUser} from '../hooks'
-import {useDriverColors} from '../hooks/tracking'
-import {LocationsTab, type LocationRow} from '../components/locations'
-import {ErrorBanner, PageHeader} from '../components'
+import {
+  useCustomerActiveTracking,
+  useDriverColors,
+  useGeocodes,
+  type CustomerLiveRide,
+  type CustomerRide
+} from '../hooks/tracking'
+import {
+  LocationsTab,
+  TrackingMap,
+  mapboxToken,
+  type LocationRow,
+  type TrackingMapMarker,
+  type TrackingMapPin
+} from '../components/locations'
+import {
+  DriverColorDot,
+  EmptyState,
+  ErrorBanner,
+  PageHeader,
+  RefreshButton,
+  useStateLabel
+} from '../components'
 import {useViewRefresh} from '../hooks/view-refresh'
-import {useI18nCode} from '../i18n'
+import {useI18nCode, type I18nCode} from '../i18n'
 import {getI18nCommon} from '../locales/i18nCommon'
+import {fillTracking, getI18nTracking} from '../locales/i18nTracking'
 
 /**
  * The directory is an admin read, so the hook that asks for it is only
@@ -34,7 +65,11 @@ const NOBODY: ResourceUser[] = []
 export function LocationsView() {
   const caller = useCaller()
   if (caller.loading) return <LocationsSkeleton />
-  return caller.isAdmin ? <AdminLocations /> : <Locations drivers={NOBODY} />
+  if (caller.isAdmin) return <AdminLocations />
+  // A driver who also books rides is a driver here: their own dot, as
+  // before. A customer gets the drivers of their own rides.
+  if (!caller.isDriver && caller.isCustomer) return <CustomerLocations />
+  return <Locations drivers={NOBODY} />
 }
 
 /** The frame with its heading and the map's place in grey until the roles are known. */
@@ -118,5 +153,238 @@ function Locations({drivers}: {drivers: ResourceUser[]}) {
         />
       </Box>
     </Flex>
+  )
+}
+
+// --------------- The customer's map ---------------
+
+/** The map's height on the customer's screen: most of the viewport, never more than the page needs. */
+const CUSTOMER_MAP_HEIGHT = 'min(60dvh, 36rem)'
+
+/**
+ * hh:mm in the account's language for a pickup today, the day in front of
+ * it otherwise, so "unterwegs ab 09:00" is never tomorrow's nine o'clock
+ * read as today's.
+ */
+const formatPickupClock = (iso: string | null, code: I18nCode): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const sameDay = d.toDateString() === new Date().toDateString()
+  try {
+    return new Intl.DateTimeFormat(
+      code,
+      sameDay
+        ? {hour: '2-digit', minute: '2-digit'}
+        : {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}
+    ).format(d)
+  } catch {
+    return d.toTimeString().slice(0, 5)
+  }
+}
+
+/** The words beside a marker: the plate and the code, whichever are known. */
+const markerLabel = (r: CustomerLiveRide): string =>
+  [r.tracking?.car?.licensePlate ?? r.ride.licensePlate, r.ride.code]
+    .filter(Boolean)
+    .join(' · ')
+
+function CustomerLocations() {
+  const code = useI18nCode()
+  const tc = getI18nCommon(code).strings
+  const {strings: t} = getI18nTracking(code)
+  const token = mapboxToken()
+  const stateLabel = useStateLabel()
+
+  const {live, accepted, isLoading, error, isFetching, refetch} =
+    useCustomerActiveTracking()
+  // The refresh button in the header refetches the rides and every position at once.
+  useViewRefresh(refetch, isFetching)
+
+  // One pin per ride under way, at the pickup the tracking answer names, or
+  // the one the ride carries until the answer lands.
+  const addresses = useMemo(
+    () => live.map(r => r.tracking?.pickupLocation ?? r.ride.pickupLocation),
+    [live]
+  )
+  const points = useGeocodes(addresses, token)
+
+  const pins = useMemo<TrackingMapPin[]>(
+    () =>
+      live.flatMap((r, i) => {
+        const p = points[i]
+        return p ? [{id: r.ride.id, lng: p.lng, lat: p.lat}] : []
+      }),
+    [live, points]
+  )
+  const markers = useMemo<TrackingMapMarker[]>(
+    () =>
+      live.flatMap(r => {
+        const loc = r.tracking?.location
+        if (!loc) return []
+        return [
+          {
+            id: r.ride.id,
+            lng: loc.lng,
+            lat: loc.lat,
+            color: r.tracking?.driver?.color ?? null,
+            accuracy: loc.accuracy ?? null,
+            label: markerLabel(r)
+          }
+        ]
+      }),
+    [live]
+  )
+
+  const nothingYet = isLoading && live.length === 0 && accepted.length === 0
+  const caption =
+    live.length === 1
+      ? t.LiveRidesOne
+      : fillTracking(t.LiveRidesMany, {count: live.length})
+
+  return (
+    <Box p={{base: '4', md: '6'}} maxW="full" data-view="customer-locations">
+      <PageHeader
+        title={tc.NavLocations}
+        subtitle={t.CustomerSubtitle}
+        actions={<RefreshButton />}
+      />
+      <Stack gap="4" mt="4">
+        {error && <ErrorBanner message={error} onRetry={refetch} />}
+
+        {nothingYet ? (
+          <Skeleton
+            h={CUSTOMER_MAP_HEIGHT}
+            rounded="surface"
+            data-skeleton="map"
+          />
+        ) : live.length > 0 ? (
+          <TrackingMap
+            pickups={pins}
+            drivers={markers}
+            height={CUSTOMER_MAP_HEIGHT}
+            caption={caption}
+          />
+        ) : (
+          <EmptyState
+            title={t.NoRideUnderway}
+            description={t.NoRideUnderwayHint}
+            icon={<FaMapMarkerAlt />}
+            data-empty="locations"
+          />
+        )}
+
+        {live.length > 0 && (
+          <Stack gap="2" role="list" data-rides="underway">
+            {live.map(r => (
+              <UnderwayRow key={r.ride.id} entry={r} stateLabel={stateLabel} />
+            ))}
+          </Stack>
+        )}
+
+        {accepted.length > 0 && (
+          <Box>
+            <Text textStyle="sm" fontWeight="medium" color="fg.muted" mb="2">
+              {t.AcceptedRides}
+            </Text>
+            <Stack gap="2" role="list" data-rides="accepted">
+              {accepted.map(r => (
+                <AcceptedRow
+                  key={r.id}
+                  ride={r}
+                  clock={formatPickupClock(r.pickupAtISO, code)}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
+      </Stack>
+    </Box>
+  )
+}
+
+/** A ride the driver is on the road for: the code, the driver, the plate and the state. */
+function UnderwayRow({
+  entry,
+  stateLabel
+}: {
+  entry: CustomerLiveRide
+  stateLabel: (s: string) => string
+}) {
+  const code = useI18nCode()
+  const {strings: t} = getI18nTracking(code)
+  const plate = entry.tracking?.car?.licensePlate ?? entry.ride.licensePlate
+  const driverName = entry.tracking?.driver?.name
+  const state = entry.tracking?.state ?? entry.ride.state
+  return (
+    <HStack
+      role="listitem"
+      data-ride-row={entry.ride.code}
+      gap="3"
+      p="3"
+      borderWidth="1px"
+      borderColor="border.default"
+      rounded="surface"
+      bg="bg.surface"
+      align="flex-start">
+      <DriverColorDot
+        color={entry.tracking?.driver?.color}
+        size="3.5"
+        mt="1.5"
+      />
+      <Box minW="0" flex="1">
+        <HStack gap="2" flexWrap="wrap">
+          <Text fontFamily="mono" fontWeight="semibold" letterSpacing="wider">
+            {entry.ride.code}
+          </Text>
+          {plate && (
+            <Text fontFamily="mono" fontWeight="semibold" letterSpacing="wider">
+              {plate}
+            </Text>
+          )}
+          <Text color="fg.muted">{stateLabel(state)}</Text>
+        </HStack>
+        <Text textStyle="sm" color="fg.muted" truncate>
+          {[driverName, entry.ride.pickupLocation].filter(Boolean).join(' · ')}
+        </Text>
+        {entry.error && (
+          <Text textStyle="xs" color="fg.error">
+            {t.TrackingUnavailable}
+          </Text>
+        )}
+      </Box>
+    </HStack>
+  )
+}
+
+/** An accepted ride that waits for its driver to leave: "unterwegs ab hh:mm". */
+function AcceptedRow({ride, clock}: {ride: CustomerRide; clock: string}) {
+  const code = useI18nCode()
+  const {strings: t} = getI18nTracking(code)
+  return (
+    <HStack
+      role="listitem"
+      data-ride-row={ride.code}
+      gap="3"
+      p="3"
+      borderWidth="1px"
+      borderColor="border.default"
+      rounded="surface"
+      bg="bg.surface"
+      align="flex-start">
+      <Box minW="0" flex="1">
+        <HStack gap="2" flexWrap="wrap">
+          <Text fontFamily="mono" fontWeight="semibold" letterSpacing="wider">
+            {ride.code}
+          </Text>
+          <Text>{fillTracking(t.UnderwayFrom, {time: clock})}</Text>
+        </HStack>
+        {ride.pickupLocation && (
+          <Text textStyle="sm" color="fg.muted" truncate>
+            {ride.pickupLocation}
+          </Text>
+        )}
+      </Box>
+    </HStack>
   )
 }

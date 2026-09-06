@@ -1,7 +1,9 @@
 /**
- * The statements of one person: a row per month that has one, with PDF and
- * Excel, and on request the rides the month contains, each under its code,
- * the same lines the tab carries. A return booking is two lines, -1 and -2.
+ * The statements of one person: a row per month that has one, with the
+ * Monatsabrechnung as PDF and Excel opened through a signed link, and on
+ * request the rides the month contains, each under its code, the same lines
+ * the tab carries, with the ride's offer and invoice where they exist. A
+ * return booking is two lines, -1 and -2.
  *
  * Both lists are the shared DataTable (okf/architecture/data-layer.md,
  * acceptance 4, and finance.md, "The statements screen"): the months grouped
@@ -30,7 +32,8 @@ import {useAppNavigate} from '../navigation'
 import {fetchDriverColor} from '../hooks'
 import {keys, useAppQuery} from '../hooks/query'
 import {
-  downloadStatement,
+  openStatement,
+  useRideDocuments,
   useStatementLines,
   useStatementMonths,
   type StatementFormat,
@@ -42,6 +45,7 @@ import {EmptyState, MoneyText, toaster, PageHeader} from '../components'
 import {RefreshButton} from '../components/RefreshButton'
 import {useViewRefresh} from '../hooks/view-refresh'
 import {DataTable, type DataColumn, type DataGroup} from '../components/table'
+import {RideDocumentButtons} from '../components/documents/RideDocumentButtons'
 import {dayPalette, formatDay, useTodayTomorrow} from './TransfersView'
 
 type Strings = ReturnType<typeof getI18nBookings>['strings']
@@ -108,6 +112,13 @@ function StatementLines({
   )
   const stripe = useStatementStripe(userId, kind)
   const {today, tomorrow} = useTodayTomorrow()
+  // The offer and the invoice of the month's rides, one request, so a
+  // button is drawn only where the document exists (customer-experience.md,
+  // section 5). A driver settlement carries no money documents.
+  const {documents} = useRideDocuments(
+    lines.map(line => line.transferId),
+    kind === 'CUSTOMER'
+  )
 
   const columns = useMemo<DataColumn<StatementLine>[]>(() => {
     const own: DataColumn<StatementLine>[] = [
@@ -178,6 +189,14 @@ function StatementLines({
         cell: line => <MoneyText value={line.amount} />
       }
     ]
+    if (kind === 'CUSTOMER') {
+      own.push({
+        id: 'documents',
+        label: t.StatementsColDocuments,
+        width: 220,
+        cell: line => <RideDocumentButtons docs={documents[line.transferId]} />
+      })
+    }
     if (kind === 'DRIVER') {
       own.push({
         id: 'share',
@@ -188,7 +207,7 @@ function StatementLines({
       })
     }
     return own
-  }, [t, kind])
+  }, [t, kind, documents])
 
   const group = useMemo<DataGroup<StatementLine>>(
     () => ({
@@ -253,7 +272,7 @@ export function StatementsView({
     const key = `${row.kind}:${row.month}:${format}`
     setBusy(key)
     try {
-      await downloadStatement(userId, row.month, format, row.kind)
+      await openStatement(userId, row.month, format, row.kind)
     } catch (err) {
       toaster.error({
         title: t.StatementsDownloadError,
@@ -264,8 +283,10 @@ export function StatementsView({
     }
   }
 
-  // The two files of a month. On a desk they sit in the row, on a phone in
-  // the card, where a button is a thumb's 44px (hard-rules.md).
+  // The two files of a month, worded Monatsabrechnung so nobody takes them
+  // for an invoice. Each opens the signed link the Worker answers, the way
+  // a document opens. On a desk they sit in the row, on a phone in the
+  // card, where a button is a thumb's 44px (hard-rules.md).
   const files = (row: StatementMonth) => (
     <ButtonGroup
       size="sm"
@@ -275,6 +296,7 @@ export function StatementsView({
       <Button
         minH={{base: '44px', md: '8'}}
         onClick={() => void download(row, 'pdf')}
+        data-testid="statement-pdf"
         loading={busy === `${row.kind}:${row.month}:pdf`}
         disabled={busy !== null && busy !== `${row.kind}:${row.month}:pdf`}>
         <FaFilePdf /> {t.StatementsDownloadPdf}
@@ -282,6 +304,7 @@ export function StatementsView({
       <Button
         minH={{base: '44px', md: '8'}}
         onClick={() => void download(row, 'xlsx')}
+        data-testid="statement-xlsx"
         loading={busy === `${row.kind}:${row.month}:xlsx`}
         disabled={busy !== null && busy !== `${row.kind}:${row.month}:xlsx`}>
         <FaFileExcel /> {t.StatementsDownloadXlsx}
@@ -310,7 +333,7 @@ export function StatementsView({
       {
         id: 'files',
         label: t.StatementsColFiles,
-        width: 200,
+        width: 400,
         cell: files
       }
     ],
