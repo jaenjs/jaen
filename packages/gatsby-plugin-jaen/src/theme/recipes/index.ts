@@ -48,9 +48,17 @@ export const headingRecipe = defineRecipe({
  * no consumer, and its `textTransform: 'normal'` was not a legal CSS value in
  * the first place, so nothing is lost by dropping it. v3's badge is already
  * non-uppercase, so there is nothing to restore either.
+ *
+ * `borderRadius: 'control'` is rule 1 of design-consistency.md applied to the
+ * badge, over v3's own `l2` (4 px). A badge is the one element that is drawn
+ * both as a label and as a button (the state badge and the assign chips on
+ * the dispatcher's board are `Badge as="button"`), and the rule asks for one
+ * corner on every button, so the badge takes the control radius whether it
+ * is tapped or read. Measured before: every badge-as-button on the board at
+ * 4 px beside every other button at 8 px.
  */
 export const badgeRecipe = defineRecipe({
-  base: {colorPalette: 'brand'},
+  base: {colorPalette: 'brand', borderRadius: 'control'},
   variants: {
     size: {
       sm: {textStyle: 'xs', px: 2, py: 0.5},
