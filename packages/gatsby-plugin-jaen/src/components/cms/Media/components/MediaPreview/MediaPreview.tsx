@@ -383,7 +383,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                           outline: '2px solid',
                           outlineColor: 'brand.500',
                           outlineOffset: '2px',
-                          borderRadius: 'lg'
+                          borderRadius: 'surface'
                         })}
                         onClick={() => {
                           onSelectMediaNode(node)

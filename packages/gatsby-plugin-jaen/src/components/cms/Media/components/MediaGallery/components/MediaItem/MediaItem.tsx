@@ -79,7 +79,7 @@ export const MediaItem: React.FC<MediaItemProps> = ({
           outline: '2px solid',
           outlineColor: 'brand.500',
           outlineOffset: '3px',
-          borderRadius: 'lg'
+          borderRadius: 'surface'
         })}>
         <Image
           ref={imageRef}

@@ -42,12 +42,12 @@ export const FormMediaChooser: React.FC<FormMediaChooserProps> = props => {
 
   return (
     <Stack direction="row" gap="6" align="center" width="full">
-      <Box boxSize={36} minW="36" borderRadius="lg" bg="bg.subtle">
+      <Box boxSize={36} minW="36" borderRadius="surface" bg="bg.subtle">
         {src ? (
           <>
-            {loadedSrc !== src && <Skeleton borderRadius="lg" boxSize="100%" />}
+            {loadedSrc !== src && <Skeleton borderRadius="surface" boxSize="100%" />}
             <Image
-              borderRadius="lg"
+              borderRadius="surface"
               boxSize="100%"
               display={loadedSrc === src ? undefined : 'none'}
               src={src}
@@ -57,7 +57,7 @@ export const FormMediaChooser: React.FC<FormMediaChooserProps> = props => {
             />
           </>
         ) : (
-          <Center boxSize="100%" borderRadius="lg">
+          <Center boxSize="100%" borderRadius="surface">
             <Text color="muted" fontSize="sm">
               No image
             </Text>

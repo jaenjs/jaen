@@ -502,10 +502,10 @@ export const PageContentForm: React.FC<PageContentFormProps> = ({
                 <Image
                   boxSize={36}
                   minW="36"
-                  borderRadius="lg"
+                  borderRadius="surface"
                   bg="bg.subtle"
                   src={props.values?.image?.src}
-                  fallback={<Skeleton borderRadius="lg" boxSize="100%" />}
+                  fallback={<Skeleton borderRadius="surface" boxSize="100%" />}
                 />
               </Stack>
             )}

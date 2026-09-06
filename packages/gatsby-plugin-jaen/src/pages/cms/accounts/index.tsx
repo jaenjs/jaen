@@ -379,7 +379,7 @@ const AccountsPage: React.FC = () => {
           borderStyle="dashed"
           borderColor={emptyBorder}
           bg={emptyBg}
-          borderRadius="md"
+          borderRadius="surface"
           p="8"
           textAlign="center">
           <Heading size="sm" mb="2">

@@ -8,7 +8,7 @@ export const Placeholder: React.FC<BoxProps> = props => (
     bg={{base: 'bg.subtle', _dark: 'bg.muted'}}
     width="full"
     height="32"
-    rounded="xl"
+    rounded="surface"
     {...props}
   />
 )

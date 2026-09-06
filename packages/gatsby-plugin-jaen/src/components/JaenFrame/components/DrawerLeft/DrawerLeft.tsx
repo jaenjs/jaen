@@ -63,7 +63,7 @@ export const DrawerLeft: React.FC<DrawerLeftProps> = ({
               so the drawer needs no root of its own, and v3 offers no
               containerProps to put one on either way. */}
           <Drawer.Positioner>
-            <Drawer.Content borderRightRadius="xl">
+            <Drawer.Content borderRightRadius="surface">
               <Drawer.Header p="4">
                 <HStack justifyContent="space-between">
                   {/* Bounded the same way as the bar's slot, see JaenFrame. */}

@@ -26,7 +26,7 @@ export const DangerZone: FC<DangerZoneProps> = ({actions}) => {
       gap="4"
       p="4"
       border="2px"
-      borderRadius="md"
+      borderRadius="surface"
       borderColor={borderColor}>
       {actions.map((action, index) => (
         <List.Item key={index}>

@@ -96,7 +96,7 @@ export const DrawerRight: React.FC<DrawerRightProps> = ({
           {/* No id="momo" on the portal any more, for the reason spelled out
               in DrawerLeft: v3 emits the variables globally. */}
           <Drawer.Positioner>
-            <Drawer.Content borderLeftRadius="xl">
+            <Drawer.Content borderLeftRadius="surface">
               <Drawer.Header p="4">
                 <HStack justifyContent="space-between">
                   <Stack>

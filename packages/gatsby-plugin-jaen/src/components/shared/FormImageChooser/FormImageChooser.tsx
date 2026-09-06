@@ -74,15 +74,15 @@ export const FormImageChooser: React.FC<FormImageChooserProps> = props => {
       <Box
         boxSize={36}
         minW="36"
-        borderRadius="lg"
+        borderRadius="surface"
         bg="bg.subtle"
         cursor="pointer"
         {...getRootProps()}>
         {src ? (
           <>
-            {loadedSrc !== src && <Skeleton borderRadius="lg" boxSize="100%" />}
+            {loadedSrc !== src && <Skeleton borderRadius="surface" boxSize="100%" />}
             <Image
-              borderRadius="lg"
+              borderRadius="surface"
               boxSize="100%"
               display={loadedSrc === src ? undefined : 'none'}
               src={src}
@@ -92,7 +92,7 @@ export const FormImageChooser: React.FC<FormImageChooserProps> = props => {
             />
           </>
         ) : (
-          <Center boxSize="100%" borderRadius="lg">
+          <Center boxSize="100%" borderRadius="surface">
             <Text color="muted" fontSize="sm">
               No image
             </Text>
