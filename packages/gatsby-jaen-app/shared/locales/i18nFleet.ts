@@ -6,7 +6,7 @@
 import type {I18nCode} from '../i18n'
 
 const de = {
-  Heading: 'Fuhrpark',
+  Heading: 'Flotte',
   Subtitle: 'Fahrzeuge und wer sie fährt',
   EmptyMessage: 'Noch kein Fahrzeug angelegt',
   StatTotal: 'Fahrzeuge',

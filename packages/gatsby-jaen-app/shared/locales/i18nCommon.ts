@@ -263,7 +263,7 @@ export function getI18nCommon(code: I18nCode) {
       NavDashboard: 'Dashboard',
       NavTransfers: 'Transfers',
       NavUsers: 'Benutzer',
-      NavFleet: 'Fuhrpark',
+      NavFleet: 'Flotte',
       NavLocations: 'Standorte',
       NavMyRides: 'Meine Fahrten',
       NavMe: 'Ich',

@@ -42,6 +42,9 @@ export interface LocationMapViewProps {
 
 const SOURCE = 'locations'
 
+// 44 px below md, where a finger taps, Chakra's sm (token 8, 32 px) from md up.
+const TOUCH_HEIGHT = {base: '44px', md: '8'}
+
 function fitMapToLocations(map: any, locs: {latitude: number; longitude: number}[]) {
   const only = locs[0]
   if (!only) return
@@ -371,6 +374,12 @@ export function LocationMapView({
       )}
 
       {/* The filter chips, the refresh, and the legend. */}
+      {/*
+        hard-rules.md, "Two controls are never closer than a thumb": the chips
+        and the refresh sit in one row at gap 2, and below md each of them is
+        at least 44 px tall (the refresh 44 px square), measured 2026-09-06 at
+        6 px and 32 px before. From md up they are Chakra's sm.
+      */}
       <Box position="absolute" top="0" insetX="0" zIndex="2" p="3" pointerEvents="none">
         <HStack
           pointerEvents="auto"
@@ -380,12 +389,13 @@ export function LocationMapView({
           px="2.5"
           py="2"
           shadow="sm"
-          gap="1.5"
+          gap="2"
           flexWrap="wrap">
           {filterOptions.map(opt => (
             <Button
               key={opt.value}
-              size="xs"
+              size="sm"
+              minH={TOUCH_HEIGHT}
               variant={kindFilter === opt.value ? 'solid' : 'ghost'}
               colorPalette={kindFilter === opt.value ? 'brand' : 'gray'}
               onClick={() => onKindFilterChange(opt.value)}>
@@ -393,7 +403,14 @@ export function LocationMapView({
             </Button>
           ))}
           {onRefresh && (
-            <IconButton size="xs" variant="ghost" aria-label={t.Refresh} title={t.Refresh} onClick={onRefresh}>
+            <IconButton
+              size="sm"
+              minH={TOUCH_HEIGHT}
+              minW={TOUCH_HEIGHT}
+              variant="ghost"
+              aria-label={t.Refresh}
+              title={t.Refresh}
+              onClick={onRefresh}>
               <FaSyncAlt />
             </IconButton>
           )}
