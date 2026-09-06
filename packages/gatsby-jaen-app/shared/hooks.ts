@@ -27,6 +27,7 @@ import { useCallback, useMemo } from 'react'
 import { keepPreviousData } from '@tanstack/react-query'
 import { fetchGraphQL } from '../client/limosen'
 import { cachedRead, keys, queryClient, useAppQuery, usePager } from './hooks/query'
+import { readDriverColors } from './hooks/colors'
 
 /**
  * One GraphQL document, with its arguments written into the document itself.
@@ -195,22 +196,20 @@ const transferFields = async (): Promise<Set<string>> => {
 }
 
 /**
- * getDriverColor is a plain scalar field. Both brands deploy it today, but it
- * was missing from one of them for a while and every colour quietly became
- * undefined, so a caller that cannot read it still gets undefined rather than
- * an error.
+ * One driver's colour, through the batch read of hooks/colors.ts: answered
+ * from the board's batch when it holds the id, one request for the one id
+ * otherwise, never a request per driver. The colour field was missing from
+ * one brand for a while and every colour quietly became undefined, so a
+ * caller that cannot read it still gets undefined rather than an error, and
+ * that is where to look when every dot is grey.
  *
  * The silver default means "nobody chose a colour" and is mapped to undefined
  * on purpose: painting every row the same silver says less than painting none
  * of them.
  */
 async function resolveDriverColor(userId: string): Promise<string | undefined> {
-  try {
-    const color = await query('getDriverColor', { userId }, '')
-    return typeof color === 'string' && color !== '#C0C0C0' ? color : undefined
-  } catch {
-    return undefined
-  }
+  if (!userId) return undefined
+  return (await readDriverColors([userId]))[userId]
 }
 
 // --------------- Domain Types ---------------
@@ -476,14 +475,13 @@ const readUserPage = async (args: {first: number; after?: string; organizationId
   )
 
   const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
-  const items = edges.map((e: any) => e?.node).filter(Boolean).map(mapUserRow)
-
-  const rows = await Promise.all(
-    items.map(async u => ({
-      ...u,
-      driverColor: await resolveDriverColor(u.id)
-    }))
-  )
+  // No colours on a plain page of accounts: the board joins the colour from
+  // the driver list (readDrivers below, one batch), and this page is the
+  // customer picker and the name of a driver who is no longer active. A ride
+  // of a deactivated driver keeps its name and draws no stripe. Reading the
+  // colours here was a second batch on every board load, and before that
+  // the greater half of the burst that tripped the Worker.
+  const rows: ResourceUser[] = edges.map((e: any) => e?.node).filter(Boolean).map(mapUserRow)
 
   return {
     rows,
@@ -567,16 +565,16 @@ const readDrivers = async (): Promise<ResourceUser[]> => {
         : mapped
     })
 
-  // The colour, once per driver rather than once per transfer row. A
-  // dispatcher has a handful of drivers and a page has fifteen transfers,
-  // so this is the cheap end of the join, and it is what feeds both the
-  // picker swatch and the coloured border on the transfer list.
-  const colours = await Promise.all(
-    rows.map((row: ResourceUser) => resolveDriverColor(row.id))
-  )
-  colours.forEach((colour, index) => {
-    if (colour) rows[index].driverColor = colour
-  })
+  // The colours, one request for the whole list rather than one per driver
+  // (hooks/colors.ts). A dispatcher has a handful of drivers and a page has
+  // fifteen transfers, so this is the cheap end of the join, and it is what
+  // feeds both the picker swatch and the coloured border on the transfer
+  // list. The batch stays in the cache for the detail page and the map.
+  const colours = await readDriverColors(rows.map((row: ResourceUser) => row.id))
+  for (const row of rows) {
+    const colour = colours[row.id]
+    if (colour) row.driverColor = colour
+  }
 
   // By name, so the picker reads the way a person would look through it.
   rows.sort((a: ResourceUser, b: ResourceUser) =>
@@ -754,7 +752,7 @@ export async function fetchDriverColor(userId: string): Promise<string | undefin
 export async function setDriverColorMutation(userId: string, color: string): Promise<boolean> {
   const result = await query('setDriverColor', { userId, color }, '', 'mutation')
   await Promise.all(
-    [['users'], ['user', userId], ['drivers'], ['driverColor', userId], ['bookingDriver', userId], ['dashboard']].map(
+    [['users'], ['user', userId], ['drivers'], ['driverColor', userId], ['driverColors'], ['bookingDriver', userId], ['dashboard']].map(
       queryKey => queryClient.invalidateQueries({ queryKey })
     )
   )

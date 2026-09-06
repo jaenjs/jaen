@@ -19,6 +19,7 @@ import {ADMIN_ROLE, brandKnownRoles, CUSTOMER_ROLE, DRIVER_ROLE} from '../auth'
 import {setDriverColorMutation, type PaginationState} from '../hooks'
 import {fetchDashboard} from './dashboard'
 import {cachedRead, keys, queryClient, useAppQuery, usePager} from './query'
+import {readDriverColors} from './colors'
 
 export {setDriverColorMutation}
 
@@ -220,20 +221,16 @@ const mapNode = (n: any): DirectoryUser => {
 }
 
 /**
- * The silver default means "nobody chose a colour" and is mapped to undefined
- * on purpose, the same way shared/hooks.ts does it. A failed read is also
- * undefined: the colour is decoration and must not take the row with it, and
- * that is exactly what hides a missing backend field, so look here first when
- * every dot is grey.
+ * One account's colour through the batch read of ./colors.ts, so the detail
+ * page after the directory asks nothing. The silver default means "nobody
+ * chose a colour" and is mapped to undefined there, the same way
+ * shared/hooks.ts does it. A failed read is also undefined: the colour is
+ * decoration and must not take the row with it, and that is exactly what
+ * hides a missing backend field, so look in colors.ts first when every dot
+ * is grey.
  */
-const readColor = async (userId: string): Promise<string | undefined> => {
-  try {
-    const color = await gql('getDriverColor', {userId}, '')
-    return typeof color === 'string' && color !== '#C0C0C0' ? color : undefined
-  } catch {
-    return undefined
-  }
-}
+const readColor = async (userId: string): Promise<string | undefined> =>
+  userId ? (await readDriverColors([userId]))[userId] : undefined
 
 // --------------- The directory ---------------
 
@@ -268,10 +265,12 @@ const readDirectoryPage = async (args: {first: number; after?: string; organizat
     .filter(Boolean)
     .map(mapNode)
 
-  const colours = await Promise.all(rows.map(r => readColor(r.id)))
-  colours.forEach((c, i) => {
-    if (c) rows[i]!.driverColor = c
-  })
+  // One request for the page's colours, never one per account.
+  const colours = await readDriverColors(rows.map(r => r.id))
+  for (const row of rows) {
+    const c = colours[row.id]
+    if (c) row.driverColor = c
+  }
 
   return {
     rows,

@@ -24,6 +24,7 @@ import {
   mapboxToken,
   markerColorFor
 } from './mapbox-token'
+import {attachMapControls} from './map-controls'
 
 export interface TrackingMapPoint {
   lng: number
@@ -93,6 +94,7 @@ export function TrackingMap({pickup, driver, height = '18rem', caption}: Trackin
   useEffect(() => {
     if (!token || !container.current || mapRef.current) return
     let cancelled = false
+    let detachControls: (() => void) | null = null
 
     void (async () => {
       try {
@@ -111,7 +113,9 @@ export function TrackingMap({pickup, driver, height = '18rem', caption}: Trackin
           dragRotate: false,
           cooperativeGestures: true
         })
-        m.addControl(new mapboxgl.NavigationControl({showCompass: false}), 'bottom-right')
+        // The zoom control, placed by map-controls.ts: top right from md
+        // up, none on the phone, where pinching zooms.
+        detachControls = attachMapControls(m, mapboxgl)
         m.on('load', () => {
           if (!cancelled) setReady(true)
         })
@@ -130,6 +134,7 @@ export function TrackingMap({pickup, driver, height = '18rem', caption}: Trackin
 
     return () => {
       cancelled = true
+      detachControls?.()
       pickupMarker.current?.remove()
       driverMarker.current?.remove()
       pickupMarker.current = null

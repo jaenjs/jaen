@@ -50,6 +50,7 @@ import {
   Portal,
   SegmentGroup,
   Separator,
+  Skeleton,
   Stack,
   Switch,
   Text,
@@ -104,7 +105,6 @@ import {
   EmptyState,
   DialogActions,
   ErrorBanner,
-  LoadingOverlay,
   MoneyText,
   StatusBadge,
   toaster,
@@ -115,6 +115,7 @@ import {
 } from '../components'
 import {OfflineBanner} from '../components/OfflineBanner'
 import {DataTable, useIsMobile, type DataColumn, type DataGroup, type DayTone} from '../components/table'
+import {ListSkeleton, TableSkeleton} from '../components/skeletons'
 import {useRefetchOnReconnect} from '../offline'
 import {getI18nCommon} from '../locales/i18nCommon'
 import {fill, getI18nTransfers, type TransfersStrings} from '../locales/i18nTransfers'
@@ -2486,11 +2487,33 @@ function MyRides({heading, subtitle}: {heading: string; subtitle?: string}) {
 // The screen
 // ============================================================
 
+/** The columns' words while nobody opens a row yet. */
+const NO_ACTIONS: RowActions = {onOpen: () => undefined}
+
+/**
+ * The list before the roles are known: the heading as a grey line and the
+ * board's table, or its cards on a phone, in grey (design-consistency.md,
+ * rule 3). The dispatcher's board and the driver's list are both lists of
+ * rides, so whichever lands, the skeleton had its shape.
+ */
+function TransfersSkeleton() {
+  const columns = useTransferColumns(NO_ACTIONS)
+  const mobile = useIsMobile()
+  return (
+    <Box p={{base: '4', md: '6'}} maxW="full">
+      <Stack gap="5">
+        <Skeleton h="8" w="48" rounded="md" />
+        {mobile ? <ListSkeleton rows={8} /> : <TableSkeleton columns={columns.filter(c => c.defaultVisible !== false)} />}
+      </Stack>
+    </Box>
+  )
+}
+
 export function TransfersView() {
   const caller = useCaller()
   const {t} = useTransferStrings()
 
-  if (caller.loading) return <LoadingOverlay />
+  if (caller.loading) return <TransfersSkeleton />
   if (caller.isAdmin) return <DispatchBoard />
   if (caller.isDriver) return <MyRides heading={t.MyRidesHeading} subtitle={t.MyRidesSubtitle} />
   return <MyRides heading={t.BookingsHeading} />

@@ -55,11 +55,11 @@ import {
   DriverColorDot,
   EmptyState,
   ErrorBanner,
-  LoadingOverlay,
   MoneyText,
   toaster,
   PageHeader
 } from '../components'
+import {DetailSkeleton, NumberSkeleton, TableSkeleton} from '../components/skeletons'
 import {
   addDriverExpenseMutation,
   deactivateUserMutation,
@@ -157,7 +157,7 @@ export function UserDetailView() {
     </Button>
   )
 
-  if (isLoading) return <LoadingOverlay />
+  if (isLoading) return <DetailSkeleton cards={3} avatar back />
   if (error) {
     return (
       <Stack gap="4" p={{base: '4', md: '6'}}>
@@ -613,10 +613,20 @@ function StatsCard({
 
   return (
     <Section title={t.SectionStatistics}>
-      {isLoading ? (
-        <LoadingOverlay py="4" />
-      ) : error ? (
+      {error ? (
         <ErrorBanner message={error} onRetry={refetch} />
+      ) : isLoading ? (
+        // The four numbers wait as numbers, never as 0 (design-consistency.md, rule 3).
+        <SimpleGrid columns={{base: 2, md: 4}} gap="4">
+          {[t.StatCompleted, t.StatRevenue, t.StatCash, t.StatPayoutDue].map(label => (
+            <Stat.Root key={label}>
+              <Stat.Label>{label}</Stat.Label>
+              <Stat.ValueText>
+                <NumberSkeleton chars={5} />
+              </Stat.ValueText>
+            </Stat.Root>
+          ))}
+        </SimpleGrid>
       ) : !stats ? (
         <Text textStyle="sm" color="fg.muted">
           {t.StatsNoRow}
@@ -757,10 +767,19 @@ function ExpensesCard({
           </Text>
         )}
 
-        {isLoading ? (
-          <LoadingOverlay py="4" />
-        ) : error ? (
+        {error ? (
           <ErrorBanner message={error} onRetry={refetch} />
+        ) : isLoading ? (
+          <TableSkeleton
+            columns={[
+              {id: 'date', label: t.ExpenseDate, width: 120},
+              {id: 'note', label: t.ExpenseNote, width: 240},
+              {id: 'amount', label: t.ExpenseAmount, width: 120, align: 'end'}
+            ]}
+            rows={3}
+            dayHeader={false}
+            actionsWidth={0}
+          />
         ) : expenses.length === 0 ? (
           <Text textStyle="sm" color="fg.muted">
             {t.ExpensesEmpty}

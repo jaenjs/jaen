@@ -29,6 +29,7 @@ import {
   mapboxToken,
   rowColorFor
 } from './mapbox-token'
+import {attachMapControls} from './map-controls'
 
 export interface LocationMapViewProps {
   locations: LocationRow[]
@@ -198,6 +199,7 @@ export function LocationMapView({
   useEffect(() => {
     if (!token || !mapContainer.current || mapRef.current) return
     let cancelled = false
+    let detachControls: (() => void) | null = null
 
     void (async () => {
       try {
@@ -214,16 +216,9 @@ export function LocationMapView({
           pitchWithRotate: false
         })
 
-        m.addControl(new mapboxgl.NavigationControl({showCompass: false}), 'bottom-right')
-        // The dispatcher's own position on their own map, never sent anywhere.
-        m.addControl(
-          new mapboxgl.GeolocateControl({
-            positionOptions: {enableHighAccuracy: true},
-            trackUserLocation: true,
-            showUserHeading: true
-          }),
-          'bottom-right'
-        )
+        // The zoom and the locate control, placed by map-controls.ts: top
+        // right, and below md only the locate button, one round 44 px.
+        detachControls = attachMapControls(m, mapboxgl, {locate: true})
 
         m.on('load', () => {
           if (cancelled) return
@@ -282,6 +277,7 @@ export function LocationMapView({
 
     return () => {
       cancelled = true
+      detachControls?.()
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -381,7 +377,20 @@ export function LocationMapView({
         at least 44 px tall (the refresh 44 px square), measured 2026-09-06 at
         6 px and 32 px before. From md up they are Chakra's sm, 36 px.
       */}
-      <Box position="absolute" top="0" insetX="0" zIndex="2" p="3" pointerEvents="none">
+      {/*
+        Below md the top right corner belongs to the locate button of
+        map-controls.ts, 44 px plus the 12 px on either side, so the bar
+        stops short of it and wraps instead. From md up the controls stack
+        in the corner beside the bar's end, and the bar keeps its width.
+      */}
+      <Box
+        position="absolute"
+        top="0"
+        insetX="0"
+        zIndex="2"
+        p="3"
+        pe={{base: 'calc(44px + 24px)', md: 'calc(32px + 24px)'}}
+        pointerEvents="none">
         <HStack
           pointerEvents="auto"
           bg="bg.surface/90"
@@ -426,14 +435,37 @@ export function LocationMapView({
             </HStack>
           </HStack>
         </HStack>
+        {mapReady && count > 0 && (
+          <Box
+            display={{base: 'inline-block', md: 'none'}}
+            mt="2"
+            bg="bg.surface/90"
+            backdropFilter="blur(8px)"
+            rounded="md"
+            px="3"
+            py="1.5"
+            shadow="sm"
+            textStyle="xs"
+            color="fg.muted"
+            fontWeight="medium">
+            {count === 1 ? t.CountOne : fillTracking(t.CountMany, {count})}
+          </Box>
+        )}
       </Box>
 
+      {/*
+        The count, bottom left from md up. Below md nothing of the map's is
+        placed within 96 px of its bottom edge (rule 6, the glass bar covers
+        that strip), so the count sits under the filter bar instead, in the
+        same overlay, and the bottom left one is not rendered.
+      */}
       {mapReady && count > 0 && (
         <Box
           position="absolute"
           bottom="3"
           left="3"
           zIndex="2"
+          display={{base: 'none', md: 'block'}}
           bg="bg.surface/90"
           backdropFilter="blur(8px)"
           rounded="md"

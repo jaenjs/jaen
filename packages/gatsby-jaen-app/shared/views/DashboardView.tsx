@@ -20,7 +20,6 @@ import {
   HStack,
   IconButton,
   SimpleGrid,
-  Skeleton,
   Stack,
   Stat,
   Table,
@@ -55,6 +54,7 @@ import {
 import { useI18nCode } from '../i18n'
 import { getI18nDashboard } from '../locales/i18nDashboard'
 import { getI18nCommon } from '../locales/i18nCommon'
+import { fillWith, ListSkeleton, NumberSkeleton, TableSkeleton } from '../components/skeletons'
 
 const fill = (template: string, values: Record<string, string | number>) =>
   Object.entries(values).reduce(
@@ -86,17 +86,14 @@ function Kpi({
       <Stat.Label color="fg.muted" textStyle="sm">
         {label}
       </Stat.Label>
-      {loading ? (
-        <Skeleton h="8" w="16" mt="1" />
-      ) : (
-        <Stat.ValueText
-          textStyle="2xl"
-          fontWeight="bold"
-          fontVariantNumeric="tabular-nums"
-          color={tone ? 'colorPalette.fg' : 'fg.default'}>
-          {value}
-        </Stat.ValueText>
-      )}
+      <Stat.ValueText
+        textStyle="2xl"
+        fontWeight="bold"
+        fontVariantNumeric="tabular-nums"
+        color={tone ? 'colorPalette.fg' : 'fg.default'}>
+        {/* The number's own place and size, grey until it is there, never 0. */}
+        {loading ? <NumberSkeleton chars={4} /> : value}
+      </Stat.ValueText>
     </Stat.Root>
   )
 }
@@ -187,7 +184,7 @@ function DayList({
   onOpen,
   onViewAll,
 }: {
-  title: string
+  title: React.ReactNode
   transfers: TransferRow[]
   isLoading: boolean
   error: string | null
@@ -220,10 +217,7 @@ function DayList({
       </Flex>
       {error && <ErrorBanner message={error} onRetry={onRefetch} />}
       {isLoading && !error ? (
-        <Stack gap="3">
-          <Skeleton h="16" rounded="lg" />
-          <Skeleton h="16" rounded="lg" />
-        </Stack>
+        <ListSkeleton rows={2} />
       ) : !error && sorted.length === 0 ? (
         <EmptyState title={emptyLabel} size="sm" borderWidth="1px" borderColor="border.default" rounded="surface" bg="bg.surface" />
       ) : (
@@ -302,10 +296,15 @@ export function DashboardView() {
   }
 
   const d = dashboard.data
-  const loading = dashboard.isLoading
+  // Until the roles are known the page is its skeleton, the numbers grey.
+  const loading = dashboard.isLoading || caller.loading
   const busy = dashboard.isLoading || today.isLoading || tomorrow.isLoading
 
-  if (caller.loading || !caller.isAdmin) return null
+  if (!caller.loading && !caller.isAdmin) return null
+
+  // The count in a list's heading waits like every other number.
+  const listTitle = (template: string, list: {isLoading: boolean; pagination: {totalCount: number}}) =>
+    fillWith(template, {count: list.isLoading ? <NumberSkeleton chars={2} /> : list.pagination.totalCount})
 
   return (
     <Stack gap="8" p={{ base: '4', md: '6' }} maxW="full">
@@ -431,7 +430,19 @@ export function DashboardView() {
       <Stack gap="3">
         <Heading size="md">{t.SectionDrivers}</Heading>
         {loading ? (
-          <Skeleton h="24" rounded="lg" />
+          <TableSkeleton
+            columns={[
+              { id: 'driver', label: t.ColDriver, width: 240 },
+              { id: 'completed', label: t.ColCompleted, width: 120, align: 'end' },
+              { id: 'revenue', label: t.ColRevenue, width: 140, align: 'end' },
+              { id: 'cash', label: t.ColCash, width: 140, align: 'end' },
+              { id: 'payout', label: t.ColPayout, width: 140, align: 'end' }
+            ]}
+            rows={4}
+            avatar
+            dayHeader={false}
+            actionsWidth={0}
+          />
         ) : !d || d.drivers.length === 0 ? (
           <EmptyState title={t.NoDrivers} size="sm" borderWidth="1px" borderColor="border.default" rounded="surface" bg="bg.surface" />
         ) : (
@@ -481,7 +492,7 @@ export function DashboardView() {
 
       <SimpleGrid columns={{ base: 1, lg: 2 }} gap="8" alignItems="start">
         <DayList
-          title={fill(t.TodayList, { count: today.pagination.totalCount })}
+          title={listTitle(t.TodayList, today)}
           transfers={today.rows}
           isLoading={today.isLoading}
           error={today.error}
@@ -494,7 +505,7 @@ export function DashboardView() {
           onViewAll={() => navigate('/transfers')}
         />
         <DayList
-          title={fill(t.TomorrowList, { count: tomorrow.pagination.totalCount })}
+          title={listTitle(t.TomorrowList, tomorrow)}
           transfers={tomorrow.rows}
           isLoading={tomorrow.isLoading}
           error={tomorrow.error}

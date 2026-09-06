@@ -131,7 +131,7 @@ export function MeView() {
 
   const sendTest = async () => {
     try {
-      await push.showLocalNotification(t.PushTestTitle, t.PushTestBody)
+      await push.showLocalNotification(t.PushTestTitle, caller.isAdmin ? t.PushTestBodyAdmin : t.PushTestBody)
     } catch (err) {
       toaster.error({ title: t.PushTestFailed, description: err instanceof Error ? err.message : undefined })
     }
@@ -167,14 +167,74 @@ export function MeView() {
     </Card.Root>
   ) : null
 
+  /**
+   * The push card, for the driver and for the office alike: a dispatcher
+   * hears every new booking and every assignment, section 8 of
+   * notifications.md, so the card says so to an admin and the same switch
+   * subscribes the same browser. One card, drawn by both branches below.
+   */
+  const forOffice = caller.isAdmin
+  const pushCard = (
+    <Card.Root variant="outline" bg="bg.surface">
+      <Card.Header>
+        <Card.Title>{t.PushHeading}</Card.Title>
+        <Card.Description>{forOffice ? t.PushBodyAdmin : t.PushBody}</Card.Description>
+      </Card.Header>
+      <Card.Body gap="3">
+        <Switch.Root
+          size="lg"
+          colorPalette="brand"
+          checked={push.isSubscribed}
+          disabled={!push.isSupported || push.isBusy}
+          onCheckedChange={e => {
+            void togglePush(e.checked)
+          }}>
+          <Switch.HiddenInput />
+          <Switch.Control />
+          <Switch.Label>{t.PushSwitch}</Switch.Label>
+        </Switch.Root>
+        {!push.isSupported && (
+          <Text textStyle="sm" color="fg.muted">
+            {push.needsHomeScreen ? t.PushInstallHint : t.PushUnsupported}
+          </Text>
+        )}
+        {push.isSupported && push.permission === 'denied' && (
+          <Text textStyle="sm" color="fg.error">
+            {t.PushDenied}
+          </Text>
+        )}
+        {push.error && <ErrorBanner title={t.PushFailed} message={push.error} />}
+      </Card.Body>
+      <Card.Footer justifyContent="flex-end">
+        <Button
+          variant="outline"
+          onClick={sendTest}
+          disabled={typeof window === 'undefined' || !('Notification' in window) || push.permission === 'denied'}>
+          <FaBell /> {t.PushTest}
+        </Button>
+      </Card.Footer>
+    </Card.Root>
+  )
+
   if (caller.loading) return null
 
-  if (!caller.isDriver) {
+  if (!caller.isDriver && !caller.isAdmin) {
     return (
       <Stack gap="6" p={{ base: '4', md: '6' }} maxW="full">
         <PageHeader title={t.Heading} />
         {tabBarCard}
         <EmptyState title={t.Heading} description={t.NotADriver} />
+      </Stack>
+    )
+  }
+
+  if (!caller.isDriver) {
+    // The office without a car: no colour, no position, the notifications only.
+    return (
+      <Stack gap="6" p={{ base: '4', md: '6' }} maxW="full">
+        <PageHeader title={t.Heading} />
+        {pushCard}
+        {tabBarCard}
       </Stack>
     )
   }
@@ -296,45 +356,7 @@ export function MeView() {
       </Card.Root>
 
       {/* Push */}
-      <Card.Root variant="outline" bg="bg.surface">
-        <Card.Header>
-          <Card.Title>{t.PushHeading}</Card.Title>
-          <Card.Description>{t.PushBody}</Card.Description>
-        </Card.Header>
-        <Card.Body gap="3">
-          <Switch.Root
-            size="lg"
-            colorPalette="brand"
-            checked={push.isSubscribed}
-            disabled={!push.isSupported || push.isBusy}
-            onCheckedChange={e => {
-              void togglePush(e.checked)
-            }}>
-            <Switch.HiddenInput />
-            <Switch.Control />
-            <Switch.Label>{t.PushSwitch}</Switch.Label>
-          </Switch.Root>
-          {!push.isSupported && (
-            <Text textStyle="sm" color="fg.muted">
-              {push.needsHomeScreen ? t.PushInstallHint : t.PushUnsupported}
-            </Text>
-          )}
-          {push.isSupported && push.permission === 'denied' && (
-            <Text textStyle="sm" color="fg.error">
-              {t.PushDenied}
-            </Text>
-          )}
-          {push.error && <ErrorBanner title={t.PushFailed} message={push.error} />}
-        </Card.Body>
-        <Card.Footer justifyContent="flex-end">
-          <Button
-            variant="outline"
-            onClick={sendTest}
-            disabled={typeof window === 'undefined' || !('Notification' in window) || push.permission === 'denied'}>
-            <FaBell /> {t.PushTest}
-          </Button>
-        </Card.Footer>
-      </Card.Root>
+      {pushCard}
 
       {/* The bottom bar, app mode only */}
       {tabBarCard}

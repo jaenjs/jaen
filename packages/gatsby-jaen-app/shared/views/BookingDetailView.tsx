@@ -34,12 +34,12 @@ import {cancelBooking, isCancelable, useBooking, type Booking} from '../hooks/bo
 import {
   ConfirmDialog,
   ErrorBanner,
-  LoadingOverlay,
   MoneyText,
   StatusBadge,
   toaster,
   PageHeader
 } from '../components'
+import {DetailSkeleton} from '../components/skeletons'
 import {DriverTrackingCard} from '../components/locations'
 
 type Strings = ReturnType<typeof getI18nBookings>['strings']
@@ -123,7 +123,7 @@ export function BookingDetailView() {
     }
   }
 
-  if (isLoading) return <LoadingOverlay />
+  if (isLoading) return <DetailSkeleton cards={2} back />
 
   if (error) {
     return (

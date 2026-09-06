@@ -67,7 +67,7 @@ export const queryClient = new QueryClient({
   }
 })
 
-for (const domain of ['users', 'user', 'drivers', 'fleet', 'driverColor', 'bookingDriver', 'caller', 'schema']) {
+for (const domain of ['users', 'user', 'drivers', 'fleet', 'driverColor', 'driverColors', 'bookingDriver', 'caller', 'schema']) {
   queryClient.setQueryDefaults([domain], {staleTime: 5 * MINUTE})
 }
 queryClient.setQueryDefaults(['tracking'], {staleTime: 0})
@@ -89,6 +89,8 @@ export const keys = {
   user: (userId: string) => ['user', userId] as const,
   drivers: () => ['drivers'] as const,
   driverColor: (userId: string) => ['driverColor', userId] as const,
+  /** One batch per set of ids, sorted and distinct, see ./colors.ts. */
+  driverColors: (userIds: readonly string[]) => ['driverColors', userIds] as const,
   fleet: () => ['fleet'] as const,
   fleetPicker: () => ['fleet', 'picker'] as const,
   locations: (args: Record<string, unknown>) => ['locations', args] as const,

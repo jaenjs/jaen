@@ -14,7 +14,7 @@
  * read, so a driver looking at their own dot sees their id and no name.
  */
 import {useMemo} from 'react'
-import {Box, Flex} from '@chakra-ui/react'
+import {Box, Flex, Skeleton} from '@chakra-ui/react'
 import {useCaller} from '../auth'
 import {useDrivers, useLocations, type ResourceUser} from '../hooks'
 import {useDriverColors} from '../hooks/tracking'
@@ -32,8 +32,22 @@ const NOBODY: ResourceUser[] = []
 
 export function LocationsView() {
   const caller = useCaller()
-  if (caller.loading) return null
+  if (caller.loading) return <LocationsSkeleton />
   return caller.isAdmin ? <AdminLocations /> : <Locations drivers={NOBODY} />
+}
+
+/** The frame with its heading and the map's place in grey until the roles are known. */
+function LocationsSkeleton() {
+  const code = useI18nCode()
+  const tc = getI18nCommon(code).strings
+  return (
+    <Flex direction="column" h="calc(100dvh - 4rem)" minH="24rem" maxW="full" data-skeleton="map" aria-busy="true">
+      <Box px={{base: '4', md: '6'}} pt={{base: '4', md: '6'}} pb="4">
+        <PageHeader title={tc.NavLocations} />
+      </Box>
+      <Skeleton flex="1" minH="20rem" rounded="0" />
+    </Flex>
+  )
 }
 
 function AdminLocations() {

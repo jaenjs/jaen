@@ -12,3 +12,5 @@ export type {TrackingMapProps, TrackingMapPoint, TrackingMapDriver} from './Trac
 export {DriverTrackingCard} from './DriverTrackingCard'
 export type {DriverTrackingCardProps} from './DriverTrackingCard'
 export {mapboxToken, mapStyleFor, markerColorFor} from './mapbox-token'
+export {attachMapControls, MAP_CLASS, MD_QUERY} from './map-controls'
+export type {MapControlsOptions} from './map-controls'

@@ -84,13 +84,13 @@ import {
   DriverColorDot,
   EmptyState,
   ErrorBanner,
-  LoadingOverlay,
   MoneyText,
   StatusBadge,
   toaster,
   useStateLabel,
   PageHeader
 } from '../components'
+import {DetailSkeleton} from '../components/skeletons'
 import {DriverTrackingCard} from '../components/locations'
 import {useDriverPositionSender} from '../hooks/tracking'
 import {OfflineBanner} from '../components/OfflineBanner'
@@ -981,7 +981,8 @@ export function TransferDetailView() {
   const ownRide = !!transfer && caller.isDriver && !caller.isAdmin && transfer.driverId === caller.userId
   useDriverPositionSender({ride: ownRide && transfer ? {transferId: transfer.id, state: transfer.state} : undefined})
 
-  if (caller.loading || (isLoading && !transfer)) return <LoadingOverlay />
+  // The page's shape in grey until the ride is there, never a spinner.
+  if (caller.loading || (isLoading && !transfer)) return <DetailSkeleton cards={3} />
 
   if (error && !transfer) {
     return (

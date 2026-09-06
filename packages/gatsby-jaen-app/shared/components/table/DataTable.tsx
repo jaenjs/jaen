@@ -12,6 +12,22 @@
  * button as the last column, cards below `md`, the column popover with drag
  * order, visibility and reset remembered per table id, and the pager.
  *
+ * The stripes are painted on the cells, not on the row. Table.Root computes
+ * `border-collapse: separate` under jaen's system, and in separate mode
+ * Chromium draws no border on a `tr` at all, which is why both stripes were
+ * invisible on every desk from 1.1.2 to 1.2.0 while the cards, which are
+ * boxes, kept theirs. So the first cell of a row carries WHO as a 4px
+ * pseudo-element on its start edge and the last cell carries WHEN on its end
+ * edge, absolutely positioned inside the cell, which renders whatever the
+ * collapse mode is and moves no text. The day header row, one cell wide,
+ * carries both.
+ *
+ * Waiting is the skeleton (design-consistency.md, rule 3): while the data is
+ * loading and there is nothing to draw, the table is its own header row and
+ * eight grey rows with the two stripes, or grey cards below `md`. Rows that
+ * are there stay there: the next page and a background refetch draw a thin
+ * progress line at the top of the table and nothing else (rules 4 and 5).
+ *
  * The screen brings the columns (`DataColumn`, the header word already in
  * the account's language), the rows it filtered and sorted, and the rules:
  * which key groups a row into a day and what that day is called, which
@@ -21,7 +37,7 @@
  * order, into the screen's Stack, exactly where the board had them.
  */
 import React, {useEffect, useMemo, useState, type ReactNode} from 'react'
-import {Box, Button, HStack, Table, Text} from '@chakra-ui/react'
+import {Box, Button, HStack, Progress, Skeleton, Table, Text, type SystemStyleObject} from '@chakra-ui/react'
 import {
   getCoreRowModel,
   getExpandedRowModel,
@@ -32,7 +48,7 @@ import {
 import {useI18nCode} from '../../i18n'
 import {getI18nCommon} from '../../locales/i18nCommon'
 import {ErrorBanner} from '../ErrorBanner'
-import {LoadingOverlay} from '../LoadingOverlay'
+import {ListSkeleton, TableSkeleton} from '../skeletons'
 import {loadLayout, saveLayout, defaultLayout, type ColumnLayout, type DataColumn} from './columns'
 import {ColumnsPopover} from './ColumnsPopover'
 import {DataCards, DefaultCard, type CardApi, type DayTone, type Section} from './DataCards'
@@ -44,6 +60,21 @@ const GROUP = '__group'
 
 /** The Details column on the right, the same 72px on every table. */
 const ACTIONS_WIDTH = 72
+
+/**
+ * One stripe on one edge of a cell: 4px, the full height of the row, inside
+ * the cell so the text does not move. `bg` is the colour, a hex from the
+ * driver or the day's `colorPalette.solid`, which the pseudo-element reads
+ * from the row's palette variable.
+ */
+const edgeStripe = (edge: 'start' | 'end', bg: string): SystemStyleObject => ({
+  content: '""',
+  position: 'absolute',
+  insetY: '0',
+  w: '4px',
+  bg,
+  ...(edge === 'start' ? {insetStart: '0'} : {insetEnd: '0'})
+})
 
 export interface DataGroup<Row> {
   /** The key rows are grouped by, in the order the rows arrive. */
@@ -80,6 +111,8 @@ export interface DataTableProps<Row> {
   /** The word on the last column's button, `Details` unless the screen says. */
   actionLabel?: string
   isLoading?: boolean
+  /** The skeleton's rows carry an avatar circle, for people and cars. */
+  avatarSkeleton?: boolean
   error?: string | null
   onRetry?: () => void
   /** What is drawn instead of the table when there are no rows. */
@@ -103,6 +136,7 @@ export function DataTable<Row>({
   columnsControl = true,
   actionLabel,
   isLoading = false,
+  avatarSkeleton = false,
   error,
   onRetry,
   empty,
@@ -174,10 +208,16 @@ export function DataTable<Row>({
     sections.push({key: '', tone: undefined, rows: table.getRowModel().rows.map(r => r.original)})
   }
 
-  const showEmpty = !isLoading && rows.length === 0 && empty != null
+  // Skeleton with nothing to draw, a progress line over rows that are there.
+  const showSkeleton = isLoading && rows.length === 0
+  const showProgress = isLoading && rows.length > 0
+  // The error stands alone: the empty words under a failed read would say
+  // the list is empty when the truth is that it could not be read.
+  const showEmpty = !isLoading && !error && rows.length === 0 && empty != null
   const showControl = columnsControl && !mobile
   const showPager = !!pager && (pager.always || pager.hasNext || pager.page > 1)
   const details = actionLabel ?? tc.Details
+  const cards = mobile || cardsOnly
 
   const renderCard =
     card ??
@@ -189,11 +229,14 @@ export function DataTable<Row>({
     <>
       {(summary !== undefined || showControl) && (
         <HStack justify={summary !== undefined ? 'space-between' : 'flex-end'} flexWrap="wrap" gap="2">
-          {summary !== undefined && (
-            <Text textStyle="sm" color="fg.muted">
-              {summary}
-            </Text>
-          )}
+          {summary !== undefined &&
+            (showSkeleton ? (
+              <Skeleton h="4" w="40" rounded="sm" data-skeleton="summary" />
+            ) : (
+              <Text textStyle="sm" color="fg.muted">
+                {summary}
+              </Text>
+            ))}
           {showControl && <ColumnsPopover columns={columns} layout={layout} onChange={changeLayout} />}
         </HStack>
       )}
@@ -201,10 +244,31 @@ export function DataTable<Row>({
       {error && <ErrorBanner message={error} onRetry={onRetry} />}
 
       <Box position="relative" minH="40">
-        {isLoading && <LoadingOverlay overlay />}
-        {showEmpty ? (
+        {showProgress && (
+          <Progress.Root
+            value={null}
+            size="xs"
+            colorPalette="brand"
+            position="absolute"
+            top="0"
+            insetX="0"
+            zIndex="docked"
+            data-progress="refetch"
+            aria-label={tc.Refresh}>
+            <Progress.Track bg="transparent" rounded="0">
+              <Progress.Range />
+            </Progress.Track>
+          </Progress.Root>
+        )}
+        {showSkeleton ? (
+          cards ? (
+            <ListSkeleton rows={8} avatar={avatarSkeleton} />
+          ) : (
+            <TableSkeleton columns={visible} avatar={avatarSkeleton} dayHeader={!!group} actionsWidth={ACTIONS_WIDTH} />
+          )
+        ) : showEmpty ? (
           empty
-        ) : mobile || cardsOnly ? (
+        ) : cards ? (
           <DataCards sections={sections} rowId={rowId} label={group?.label} card={renderCard} />
         ) : (
           <Table.ScrollArea borderWidth="1px" rounded="lg" bg="bg.surface">
@@ -227,58 +291,67 @@ export function DataTable<Row>({
               <Table.Body>
                 {sections.map(section => {
                   const tone = section.tone
+                  const when = tone ? 'colorPalette.solid' : 'transparent'
                   return (
                     <React.Fragment key={section.key || 'none'}>
                       {group && (
                         <Table.Row
                           colorPalette={tone}
                           bg={tone ? 'colorPalette.subtle' : 'bg.subtle'}
-                          borderInlineStartWidth="4px"
-                          borderInlineStartColor="transparent"
-                          borderInlineEndWidth="4px"
-                          borderInlineEndColor={tone ? 'colorPalette.solid' : 'transparent'}>
-                          <Table.Cell colSpan={visible.length + 1} py="1.5">
+                          data-day-header={section.key}>
+                          <Table.Cell
+                            colSpan={visible.length + 1}
+                            py="1.5"
+                            position="relative"
+                            _before={edgeStripe('start', 'transparent')}
+                            _after={edgeStripe('end', when)}>
                             <Text textStyle="sm" fontWeight="semibold" color={tone ? 'colorPalette.fg' : 'fg.muted'}>
                               {group.label(section.key)}
                             </Text>
                           </Table.Cell>
                         </Table.Row>
                       )}
-                      {section.rows.map(row => (
-                        <Table.Row
-                          key={rowId(row)}
-                          cursor="pointer"
-                          opacity={muted?.(row) ? 0.7 : 1}
-                          colorPalette={tone}
-                          borderInlineStartWidth="4px"
-                          borderInlineStartColor={stripe?.(row) ?? 'transparent'}
-                          borderInlineEndWidth="4px"
-                          borderInlineEndColor={tone ? 'colorPalette.solid' : 'transparent'}
-                          _hover={{bg: 'bg.subtle'}}
-                          onClick={() => onOpen(row)}>
-                          {visible.map(c => (
+                      {section.rows.map(row => {
+                        const who = stripe?.(row) ?? 'transparent'
+                        return (
+                          <Table.Row
+                            key={rowId(row)}
+                            cursor="pointer"
+                            opacity={muted?.(row) ? 0.7 : 1}
+                            colorPalette={tone}
+                            _hover={{bg: 'bg.subtle'}}
+                            onClick={() => onOpen(row)}>
+                            {visible.map((c, i) => (
+                              <Table.Cell
+                                key={c.id}
+                                verticalAlign="middle"
+                                style={{width: c.width}}
+                                textAlign={c.align === 'end' ? 'end' : undefined}
+                                position={i === 0 ? 'relative' : undefined}
+                                _before={i === 0 ? edgeStripe('start', who) : undefined}>
+                                {c.cell(row)}
+                              </Table.Cell>
+                            ))}
                             <Table.Cell
-                              key={c.id}
                               verticalAlign="middle"
-                              style={{width: c.width}}
-                              textAlign={c.align === 'end' ? 'end' : undefined}>
-                              {c.cell(row)}
+                              style={{width: ACTIONS_WIDTH}}
+                              position="relative"
+                              _before={visible.length === 0 ? edgeStripe('start', who) : undefined}
+                              _after={edgeStripe('end', when)}>
+                              <Button
+                                size="xs"
+                                variant="plain"
+                                colorPalette="brand"
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  onOpen(row)
+                                }}>
+                                {details}
+                              </Button>
                             </Table.Cell>
-                          ))}
-                          <Table.Cell verticalAlign="middle" style={{width: ACTIONS_WIDTH}}>
-                            <Button
-                              size="xs"
-                              variant="plain"
-                              colorPalette="brand"
-                              onClick={e => {
-                                e.stopPropagation()
-                                onOpen(row)
-                              }}>
-                              {details}
-                            </Button>
-                          </Table.Cell>
-                        </Table.Row>
-                      ))}
+                          </Table.Row>
+                        )
+                      })}
                     </React.Fragment>
                   )
                 })}

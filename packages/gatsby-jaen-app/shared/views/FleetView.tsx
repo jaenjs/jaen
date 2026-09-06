@@ -52,6 +52,7 @@ import {
   PageHeader
 } from '../components'
 import {DataTable, type CardApi, type DataColumn} from '../components/table'
+import {NumberSkeleton} from '../components/skeletons'
 import {
   CAR_CLASSES,
   asCarClass,
@@ -185,6 +186,9 @@ export function FleetView() {
   }
 
   const assigned = cars.filter(c => c.driverId).length
+  // The three numbers wait as numbers, never as 0 (design-consistency.md, rule 3).
+  const pending = isLoading && cars.length === 0
+  const count = (n: number) => (pending ? <NumberSkeleton chars={2} /> : n)
 
   const driverSelect = (car: FleetCar) => (
     <NativeSelect.Root
@@ -275,11 +279,11 @@ export function FleetView() {
       />
 
       <SimpleGrid columns={3} gap="3">
-        <StatCard label={t.StatTotal} value={cars.length} />
-        <StatCard label={t.StatAssigned} value={assigned} palette="green" />
+        <StatCard label={t.StatTotal} value={count(cars.length)} />
+        <StatCard label={t.StatAssigned} value={count(assigned)} palette="green" />
         <StatCard
           label={t.StatUnassigned}
-          value={cars.length - assigned}
+          value={count(cars.length - assigned)}
           palette={cars.length - assigned > 0 ? 'orange' : undefined}
         />
       </SimpleGrid>
@@ -297,6 +301,7 @@ export function FleetView() {
         )}
         summary={fill(t.CountLabel, {count: cars.length})}
         isLoading={isLoading}
+        avatarSkeleton
         error={error}
         onRetry={refetch}
         empty={
@@ -331,7 +336,7 @@ function StatCard({
   palette
 }: {
   label: string
-  value: number
+  value: React.ReactNode
   palette?: string
 }) {
   return (

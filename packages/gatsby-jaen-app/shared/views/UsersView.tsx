@@ -56,6 +56,7 @@ import {
   PageHeader
 } from '../components'
 import {DataTable, type DataColumn} from '../components/table'
+import {NumberSkeleton} from '../components/skeletons'
 import {
   createDriverMutation,
   fullName,
@@ -299,6 +300,10 @@ export function UsersView() {
   }
 
   const activeOnPage = users.filter(u => u.isActive).length
+  // The three numbers wait as numbers while the first page is read, never
+  // as 0 (design-consistency.md, rule 3). A page turned keeps its numbers.
+  const pending = isLoading && users.length === 0
+  const count = (n: number, chars = 3) => (pending ? <NumberSkeleton chars={chars} /> : n)
 
   return (
     <Stack gap="6" p={{base: '4', md: '6'}} maxW="full">
@@ -318,15 +323,15 @@ export function UsersView() {
       />
 
       <SimpleGrid columns={{base: 3}} gap="3">
-        <StatCard label={t.StatTotalUsers} value={pagination.totalCount} />
+        <StatCard label={t.StatTotalUsers} value={count(pagination.totalCount)} />
         <StatCard
           label={t.StatActivePage}
-          value={activeOnPage}
+          value={count(activeOnPage, 2)}
           palette="green"
         />
         <StatCard
           label={t.StatInactivePage}
-          value={users.length - activeOnPage}
+          value={count(users.length - activeOnPage, 2)}
         />
       </SimpleGrid>
 
@@ -347,6 +352,7 @@ export function UsersView() {
         stripe={u => u.driverColor}
         summary={fill(t.CountLabel, {total: pagination.totalCount, count: filtered.length})}
         isLoading={isLoading}
+        avatarSkeleton
         error={error}
         onRetry={refetch}
         empty={<EmptyState title={t.EmptyMessage} />}
@@ -380,7 +386,7 @@ function StatCard({
   palette
 }: {
   label: string
-  value: number
+  value: React.ReactNode
   palette?: string
 }) {
   return (

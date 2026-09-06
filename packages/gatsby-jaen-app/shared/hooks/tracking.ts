@@ -27,15 +27,13 @@
  *
  * The reads are queries of the one client in ./query.ts: `['tracking',
  * transferId]`, polled by the client while the ride is live, `['geocode',
- * address]` and `['driverColor', userId]`. See okf/architecture/data-layer.md.
+ * address]` and `['driverColors', ids]` (colors.ts). See okf/architecture/data-layer.md.
  */
-import {useCallback, useEffect, useMemo, useState} from 'react'
-import {useQueries} from '@tanstack/react-query'
+import {useCallback, useEffect, useState} from 'react'
 import {useCaller} from '../auth'
 import {isOnline} from '../offline'
 import {gql} from './bookings'
-import {fetchDriverColor} from '../hooks'
-import {keys, queryClient, useAppQuery, useRestored} from './query'
+import {keys, useAppQuery} from './query'
 import {readPosition, readReason, type GeoPosition, type GeolocationReason} from './use-geolocation'
 
 // --------------- The live states ---------------
@@ -224,39 +222,14 @@ export function useGeocode(address: string | null | undefined, token: string) {
 
 // --------------- Driver colours for the dispatcher's map ---------------
 
-const NO_COLORS: Record<string, string | undefined> = {}
-
 /**
- * The colours of the drivers on the map, by user id, one query
- * `['driverColor', userId]` each. `fetchDriverColor` answers undefined for
- * the silver default and for any failure, and the map draws those grey: see
- * markerColorFor in components/locations/mapbox-token. The record is only
- * rebuilt when an answer changes.
+ * The colours of the drivers on the map, by user id, one query for the
+ * whole list (`['driverColors', ids]`, see ./colors.ts), no colour for the
+ * silver default and for any failure, and the map draws those grey: see
+ * markerColorFor in components/locations/mapbox-token. Lives in colors.ts
+ * with the other readers, re-exported here for the map's import.
  */
-export function useDriverColors(userIds: string[]): Record<string, string | undefined> {
-  const restored = useRestored()
-  const key = userIds.filter(Boolean).sort().join('|')
-  const ids = useMemo(() => (key ? key.split('|') : []), [key])
-
-  return useQueries(
-    {
-      queries: ids.map(id => ({
-        queryKey: keys.driverColor(id),
-        queryFn: () => fetchDriverColor(id),
-        enabled: restored
-      })),
-      combine: results => {
-        const out: Record<string, string | undefined> = {}
-        results.forEach((r, i) => {
-          const id = ids[i]
-          if (id && r.isSuccess) out[id] = r.data
-        })
-        return Object.keys(out).length ? out : NO_COLORS
-      }
-    },
-    queryClient
-  )
-}
+export {useDriverColors} from './colors'
 
 // --------------- The driver's sender ---------------
 

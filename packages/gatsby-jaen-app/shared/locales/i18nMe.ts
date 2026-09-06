@@ -40,6 +40,7 @@ export function getI18nMe(code: I18nCode) {
 
         PushHeading: 'Notifications',
         PushBody: 'You are told the moment a ride is assigned to you, even with the app closed.',
+        PushBodyAdmin: 'New bookings and assignments: you are told the moment they arrive, even with the app closed.',
         PushSwitch: 'Notify me',
         PushUnsupported: 'This browser cannot show push notifications.',
         PushInstallHint: 'On an iPhone, add the app to the home screen first.',
@@ -50,6 +51,7 @@ export function getI18nMe(code: I18nCode) {
         PushTest: 'Send a test',
         PushTestTitle: 'Test notification',
         PushTestBody: 'This is what an assigned ride looks like.',
+        PushTestBodyAdmin: 'This is what a new booking looks like.',
         PushTestFailed: 'The test could not be shown',
       },
     }
@@ -87,6 +89,7 @@ export function getI18nMe(code: I18nCode) {
 
         PushHeading: 'Bildirimler',
         PushBody: 'Sana bir yolculuk atandığı anda, uygulama kapalıyken bile haber alırsın.',
+        PushBodyAdmin: 'Yeni rezervasyonlar ve atamalar: uygulama kapalıyken bile anında haber alırsın.',
         PushSwitch: 'Beni bilgilendir',
         PushUnsupported: 'Bu tarayıcı anlık bildirim gösteremiyor.',
         PushInstallHint: 'iPhone kullanıyorsan uygulamayı önce ana ekrana ekle.',
@@ -97,6 +100,7 @@ export function getI18nMe(code: I18nCode) {
         PushTest: 'Test gönder',
         PushTestTitle: 'Test bildirimi',
         PushTestBody: 'Atanmış bir yolculuk böyle görünür.',
+        PushTestBodyAdmin: 'Yeni bir rezervasyon böyle görünür.',
         PushTestFailed: 'Test gösterilemedi',
       },
     }
@@ -134,6 +138,7 @@ export function getI18nMe(code: I18nCode) {
 
         PushHeading: 'الإشعارات',
         PushBody: 'تُخبَر فور تعيين رحلة لك، حتى والتطبيق مغلق.',
+        PushBodyAdmin: 'الحجوزات الجديدة والتعيينات: تُخبَر بها فور وصولها، حتى والتطبيق مغلق.',
         PushSwitch: 'أخبرني',
         PushUnsupported: 'هذا المتصفح لا يستطيع عرض إشعارات الدفع.',
         PushInstallHint: 'على iPhone أضف التطبيق إلى الشاشة الرئيسية أولًا.',
@@ -144,6 +149,7 @@ export function getI18nMe(code: I18nCode) {
         PushTest: 'إرسال اختبار',
         PushTestTitle: 'إشعار تجريبي',
         PushTestBody: 'هكذا تبدو الرحلة المعيّنة لك.',
+        PushTestBodyAdmin: 'هكذا يبدو الحجز الجديد.',
         PushTestFailed: 'تعذّر عرض الاختبار',
       },
     }
@@ -181,6 +187,7 @@ export function getI18nMe(code: I18nCode) {
 
       PushHeading: 'Benachrichtigungen',
       PushBody: 'Du erfährst sofort, wenn dir eine Fahrt zugewiesen wird, auch bei geschlossener App.',
+      PushBodyAdmin: 'Neue Buchungen und Zuweisungen: du erfährst sofort davon, auch bei geschlossener App.',
       PushSwitch: 'Benachrichtige mich',
       PushUnsupported: 'Dieser Browser kann keine Push-Benachrichtigungen anzeigen.',
       PushInstallHint: 'Am iPhone die App zuerst zum Home-Bildschirm hinzufügen.',
@@ -191,6 +198,7 @@ export function getI18nMe(code: I18nCode) {
       PushTest: 'Test senden',
       PushTestTitle: 'Testbenachrichtigung',
       PushTestBody: 'So sieht eine zugewiesene Fahrt aus.',
+      PushTestBodyAdmin: 'So sieht eine neue Buchung aus.',
       PushTestFailed: 'Der Test konnte nicht angezeigt werden',
     },
   }
