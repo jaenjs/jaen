@@ -2,6 +2,7 @@ import {PageConfig, takeReturnTo, useAuth} from 'jaen'
 import {PageProps} from 'gatsby'
 import React, {useEffect, useRef} from 'react'
 
+import {WaitingScreen} from '../components/WaitingScreen/WaitingScreen'
 import {intlText} from '../lib/intl'
 
 const LoginPage: React.FC<PageProps> = () => {
@@ -60,7 +61,13 @@ const LoginPage: React.FC<PageProps> = () => {
     auth.activeNavigator
   ])
 
-  return null
+  /*
+    Nothing of the page's own is worth drawing: the effect above sends the
+    browser away as soon as the runtime is there. Until then the person sees
+    the site's logo and a line that says so, not the layout's footer alone in
+    the middle of the phone, which is what `null` inside the form layout gave.
+  */
+  return <WaitingScreen />
 }
 
 export default LoginPage
@@ -70,7 +77,8 @@ export const pageConfig: PageConfig = {
   withoutJaenFrame: true,
   layout: {
     name: 'jaen',
-    type: 'form'
+    // bare: no footer under a page that is only ever a moment long.
+    type: 'bare'
   }
 }
 
