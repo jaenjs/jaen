@@ -27,6 +27,7 @@
  * on the main thread, which is slower for the page and otherwise the same.
  */
 import arabicBoldFont from './fonts/NotoSansArabic-Bold.ttf'
+import mathFont from './fonts/NotoSansMath-Regular.ttf'
 import arabicFont from './fonts/NotoSansArabic-Regular.ttf'
 import boldFont from './fonts/OpenSans-Bold.ttf'
 import regularFont from './fonts/OpenSans-Regular.ttf'
@@ -56,11 +57,20 @@ const WASM_URL = new URL(
 )
 
 /**
- * Open Sans regular and bold, the two faces the house layout uses, and
- * Noto Sans Arabic behind them for the letters Open Sans does not have,
- * the Arabic offer being left to right with Arabic text.
+ * Open Sans regular and bold, the two faces the house layout uses, Noto
+ * Sans Arabic behind them for the letters Open Sans does not have, the
+ * Arabic offer being left to right with Arabic text, and Noto Sans Math
+ * for the arrow of a route (U+2192), which neither of the others carries.
+ * The same five files the notebook compiles with (fonts/README.md), so a
+ * page renders the same in both.
  */
-const FONT_URLS: string[] = [regularFont, boldFont, arabicFont, arabicBoldFont]
+const FONT_URLS: string[] = [
+  regularFont,
+  boldFont,
+  arabicFont,
+  arabicBoldFont,
+  mathFont
+]
 
 /**
  * The template family, every file the templates may `#import`, `json()`,
