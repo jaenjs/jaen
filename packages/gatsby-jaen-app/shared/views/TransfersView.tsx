@@ -2502,7 +2502,7 @@ function TransfersSkeleton() {
   return (
     <Box p={{base: '4', md: '6'}} maxW="full">
       <Stack gap="5">
-        <Skeleton h="8" w="48" rounded="md" />
+        <Skeleton h="8" w="48" rounded="sm" />
         {mobile ? <ListSkeleton rows={8} /> : <TableSkeleton columns={columns.filter(c => c.defaultVisible !== false)} />}
       </Stack>
     </Box>

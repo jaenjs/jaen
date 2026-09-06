@@ -12,8 +12,21 @@
  *
  * Drawn by DataTable while its data is loading with nothing cached, and by a
  * screen that knows its columns before it knows its rows.
+ *
+ * It has to be cheap, because it is the first frame of a view and rule 4 of
+ * design-consistency.md gives that frame 100 ms from the route change.
+ * Measured on the live board at 1440: the hop from the Me page painted the
+ * skeleton 87 to 102 ms after the route changed, half of it Chakra's style
+ * engine resolving one style object per element. So the rows carry no style
+ * an element could vary in: the widths of the blocks are inline styles, not
+ * `w` and `maxW` props (every distinct pair was a cache miss and a CSS rule
+ * inserted, 72 of them on the board), the block sits in the cell without an
+ * HStack around it unless there is a circle beside it, and the first and
+ * last cells share one style object each, so every element after the first
+ * of its kind is a cache hit and no rule is inserted for it.
  */
-import {Box, HStack, Skeleton, SkeletonCircle, Table, type SystemStyleObject} from '@chakra-ui/react'
+import type {CSSProperties} from 'react'
+import {HStack, Skeleton, SkeletonCircle, Table, type SystemStyleObject} from '@chakra-ui/react'
 
 export interface SkeletonColumn {
   id: string
@@ -47,6 +60,21 @@ const stripe = (edge: 'start' | 'end'): SystemStyleObject => ({
   ...(edge === 'start' ? {insetStart: '0'} : {insetEnd: '0'})
 })
 
+// One object per kind of cell, shared by every row, so the style engine
+// resolves each once and finds it in its cache for every cell after that.
+const FIRST_CELL: SystemStyleObject = {verticalAlign: 'middle', position: 'relative', _before: stripe('start')}
+const CELL: SystemStyleObject = {verticalAlign: 'middle'}
+const LAST_CELL: SystemStyleObject = {verticalAlign: 'middle', position: 'relative', _after: stripe('end')}
+const ONLY_CELL: SystemStyleObject = {...LAST_CELL, _before: stripe('start')}
+const DAY_CELL: SystemStyleObject = {py: '1.5', position: 'relative', _before: stripe('start'), _after: stripe('end')}
+
+/** The block of one cell: its width from the row and the column, as an inline style. */
+const blockStyle = (row: number, col: number, column: SkeletonColumn): CSSProperties => ({
+  width: `${Math.round((WIDTHS[(row + col) % WIDTHS.length] ?? 0.6) * 100)}%`,
+  maxWidth: `${Math.round(column.width * 0.9)}px`,
+  ...(column.align === 'end' ? {marginInlineStart: 'auto'} : {})
+})
+
 export function TableSkeleton({
   columns,
   rows = 8,
@@ -56,7 +84,7 @@ export function TableSkeleton({
 }: TableSkeletonProps) {
   const minWidth = columns.reduce((sum, c) => sum + c.width, actionsWidth)
   return (
-    <Table.ScrollArea borderWidth="1px" rounded="lg" bg="bg.surface" data-skeleton="table" aria-busy="true">
+    <Table.ScrollArea borderWidth="1px" rounded="surface" bg="bg.surface" data-skeleton="table" aria-busy="true">
       <Table.Root size="sm" variant="line" tableLayout="fixed" style={{minWidth}}>
         <Table.Header>
           <Table.Row bg="bg.subtle">
@@ -76,40 +104,27 @@ export function TableSkeleton({
         <Table.Body>
           {dayHeader && (
             <Table.Row bg="bg.subtle">
-              <Table.Cell colSpan={columns.length + 1} py="1.5" position="relative" _before={stripe('start')} _after={stripe('end')}>
-                <Skeleton h="4" w="36" rounded="sm" />
+              <Table.Cell colSpan={columns.length + 1} css={DAY_CELL}>
+                <Skeleton h="4" rounded="sm" style={{width: 144}} />
               </Table.Cell>
             </Table.Row>
           )}
           {Array.from({length: rows}, (_, r) => (
             <Table.Row key={r}>
               {columns.map((c, i) => (
-                <Table.Cell
-                  key={c.id}
-                  verticalAlign="middle"
-                  style={{width: c.width}}
-                  position={i === 0 ? 'relative' : undefined}
-                  _before={i === 0 ? stripe('start') : undefined}>
-                  <HStack gap="3" justify={c.align === 'end' ? 'flex-end' : undefined}>
-                    {i === 0 && avatar && <SkeletonCircle size="8" flexShrink={0} />}
-                    <Skeleton
-                      h="4"
-                      rounded="sm"
-                      w={`${Math.round((WIDTHS[(r + i) % WIDTHS.length] ?? 0.6) * 100)}%`}
-                      maxW={`${Math.round(c.width * 0.9)}px`}
-                    />
-                  </HStack>
+                <Table.Cell key={c.id} style={{width: c.width}} css={i === 0 ? FIRST_CELL : CELL}>
+                  {i === 0 && avatar ? (
+                    <HStack gap="3">
+                      <SkeletonCircle size="8" flexShrink={0} />
+                      <Skeleton h="4" rounded="sm" style={blockStyle(r, i, c)} />
+                    </HStack>
+                  ) : (
+                    <Skeleton h="4" rounded="sm" style={blockStyle(r, i, c)} />
+                  )}
                 </Table.Cell>
               ))}
-              <Table.Cell
-                verticalAlign="middle"
-                style={{width: actionsWidth}}
-                position="relative"
-                _before={columns.length === 0 ? stripe('start') : undefined}
-                _after={stripe('end')}>
-                <Box>
-                  <Skeleton h="4" w="12" rounded="sm" />
-                </Box>
+              <Table.Cell style={{width: actionsWidth}} css={columns.length === 0 ? ONLY_CELL : LAST_CELL}>
+                <Skeleton h="4" rounded="sm" style={{width: 48}} />
               </Table.Cell>
             </Table.Row>
           ))}

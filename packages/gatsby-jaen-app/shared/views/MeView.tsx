@@ -254,7 +254,7 @@ export function MeView() {
         </Card.Header>
         <Card.Body>
           {colorLoading ? (
-            <Skeleton h="10" rounded="md" />
+            <Skeleton h="10" rounded="control" />
           ) : (
             <ColorPicker.Root
               value={colorValue}

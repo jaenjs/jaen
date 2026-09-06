@@ -237,7 +237,7 @@ export function TrackingMap({pickup, driver, height = '18rem', caption}: Trackin
       <Box
         position="relative"
         h={height}
-        rounded="md"
+        rounded="surface"
         overflow="hidden"
         borderWidth="1px"
         borderColor="border.default"

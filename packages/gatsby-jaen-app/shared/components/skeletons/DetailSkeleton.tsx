@@ -19,16 +19,16 @@ export interface DetailSkeletonProps {
 export function DetailSkeleton({cards = 3, avatar = false, back = false}: DetailSkeletonProps) {
   return (
     <Stack gap="6" p={{base: '4', md: '6'}} maxW="full" data-skeleton="detail" aria-busy="true">
-      {back && <Skeleton h="8" w="36" rounded="md" />}
+      {back && <Skeleton h="8" w="36" rounded="sm" />}
       <HStack gap="4" align="center">
         {avatar && <SkeletonCircle size="16" flexShrink={0} />}
         <Stack gap="2" flex="1">
-          <Skeleton h="7" w={{base: '60%', md: '64'}} rounded="md" />
+          <Skeleton h="7" w={{base: '60%', md: '64'}} rounded="sm" />
           <Skeleton h="4" w={{base: '40%', md: '40'}} rounded="sm" />
         </Stack>
       </HStack>
       {Array.from({length: cards}, (_, i) => (
-        <Box key={i} rounded="lg" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
+        <Box key={i} rounded="surface" borderWidth="1px" borderColor="border.default" bg="bg.surface" p="4">
           <Skeleton h="5" w="40" rounded="sm" mb="4" />
           <Stack gap="3">
             {[0, 1, 2].map(r => (

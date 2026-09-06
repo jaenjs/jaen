@@ -271,7 +271,7 @@ export function DataTable<Row>({
         ) : cards ? (
           <DataCards sections={sections} rowId={rowId} label={group?.label} card={renderCard} />
         ) : (
-          <Table.ScrollArea borderWidth="1px" rounded="lg" bg="bg.surface">
+          <Table.ScrollArea borderWidth="1px" rounded="surface" bg="bg.surface">
             <Table.Root size="sm" variant="line" tableLayout="fixed" style={{minWidth}}>
               <Table.Header>
                 <Table.Row bg="bg.subtle">

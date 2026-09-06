@@ -6,6 +6,11 @@
  * skeleton's grey, and inside it an avatar circle when the rows are people
  * and two lines of grey, one short and bold, one longer and muted, the shape
  * a card's title and its second line make.
+ *
+ * The widths of the lines are inline styles, not `w` props, for the reason
+ * TableSkeleton gives: a distinct style object per row is a cache miss and a
+ * CSS rule inserted in the first frame of a view, and the rows differ in
+ * nothing but that width.
  */
 import {Box, HStack, Skeleton, SkeletonCircle, Stack, type StackProps} from '@chakra-ui/react'
 
@@ -25,7 +30,7 @@ export function ListSkeleton({rows = 6, avatar = false, rowHeight = '16', ...res
         <Box
           key={i}
           h={rowHeight}
-          rounded="lg"
+          rounded="surface"
           borderWidth="1px"
           borderColor="border.default"
           borderInlineStartWidth="4px"
@@ -37,8 +42,8 @@ export function ListSkeleton({rows = 6, avatar = false, rowHeight = '16', ...res
           <HStack gap="3" w="full">
             {avatar && <SkeletonCircle size="10" flexShrink={0} />}
             <Stack gap="2" flex="1">
-              <Skeleton h="4" w={i % 2 ? '40%' : '32%'} rounded="sm" />
-              <Skeleton h="3" w={i % 3 ? '60%' : '72%'} rounded="sm" />
+              <Skeleton h="4" rounded="sm" style={{width: i % 2 ? '40%' : '32%'}} />
+              <Skeleton h="3" rounded="sm" style={{width: i % 3 ? '60%' : '72%'}} />
             </Stack>
           </HStack>
         </Box>
