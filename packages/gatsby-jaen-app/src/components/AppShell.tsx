@@ -66,6 +66,7 @@ import {
   GLASS_TAB_BAR_CLEARANCE,
   useGlassTabBarActive
 } from './GlassTabBar'
+import {Swipes} from './Swipes'
 
 export interface AppShellProps {
   children: React.ReactNode
@@ -272,8 +273,13 @@ export function AppShell({children}: AppShellProps) {
         ) : (
           // The view registers its query with the provider, the pull below
           // md and the header's RefreshButton both read it (rules 5a, 5b).
+          // The swipes below md sit inside the pull: between the bar's
+          // places on a bar view, the edge swipe back on a sub view, see
+          // Swipes.tsx.
           <ViewRefreshProvider>
-            <PullToRefresh>{children}</PullToRefresh>
+            <PullToRefresh>
+              <Swipes>{children}</Swipes>
+            </PullToRefresh>
           </ViewRefreshProvider>
         )}
       </Box>

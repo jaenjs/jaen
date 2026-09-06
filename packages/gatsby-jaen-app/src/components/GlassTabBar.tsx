@@ -19,7 +19,7 @@
  * scrolling up or reaching the top expands it, and it steps out of the way
  * while a dialog or a drawer is open. Reduced motion turns the spring into a
  * fade. Below `md` only, the drawers stay as they are, and the bar carries
- * the same role-filtered entries they do, see nav.ts.
+ * its own composition per role, the `bar` places of nav.ts.
  *
  * The styles are one inline slot recipe, `useSlotRecipe({recipe})`, so the
  * collapsed and the hidden state are variants and not a pile of ternaries,
@@ -29,14 +29,26 @@
  * What a browser cannot do is the refraction of real Liquid Glass. The owner's
  * thumb on the phone decides whether this stays, not a screenshot.
  */
-import {useCallback, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
-import {Box, chakra, defineSlotRecipe, useSlotRecipe, type SystemStyleObject} from '@chakra-ui/react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore
+} from 'react'
+import {
+  Box,
+  chakra,
+  defineSlotRecipe,
+  useSlotRecipe,
+  type SystemStyleObject
+} from '@chakra-ui/react'
 import {navigate} from 'gatsby'
 import {useCaller, type Caller} from '../../shared/auth'
 import {useI18nCode} from '../../shared/i18n'
 import {getI18nCommon} from '../../shared/locales/i18nCommon'
 import {getI18nTabBar} from '../../shared/locales/i18nTabBar'
-import {isActivePath, navFor, type NavItem} from './nav'
+import {barFor, isActivePath, type NavItem} from './nav'
 
 // --------------- The two gates ---------------
 
@@ -76,7 +88,8 @@ const never = () => false
  * so the markup agrees with what was rendered, and true from the first client
  * render after it.
  */
-export const useAppMode = (): boolean => useSyncExternalStore(subscribeAppMode, isAppModeNow, never)
+export const useAppMode = (): boolean =>
+  useSyncExternalStore(subscribeAppMode, isAppModeNow, never)
 
 const listeners = new Set<() => void>()
 
@@ -110,7 +123,8 @@ export const setGlassTabBarEnabled = (on: boolean) => {
 }
 
 /** The switch's own value, off by default and off on the server. */
-export const useGlassTabBarEnabled = (): boolean => useSyncExternalStore(subscribeEnabled, readEnabled, never)
+export const useGlassTabBarEnabled = (): boolean =>
+  useSyncExternalStore(subscribeEnabled, readEnabled, never)
 
 /**
  * The one answer the shell needs: app mode and the switch on. The breakpoint
@@ -125,25 +139,14 @@ export const useGlassTabBarActive = (): boolean => {
 
 // --------------- The entries ---------------
 
-/** iOS gives a tab bar five places. The app menu's first four by order, then Me. */
-const MAX_TABS = 5
-
 /**
- * The same table as the drawers, role filtered, both menus, hash entries
- * dropped (the notifications entry is a card on the Me page and would be a
- * second tab to the same screen), the app menu first and the person's page
- * last.
+ * iOS gives a tab bar five places. Which entry takes which place is the
+ * `bar` field of nav.ts per role, not the drawer's first four: the
+ * dispatcher's middle place is the billing screen and Standorte sits beside
+ * it, while Buchungen stays in the drawer (navigation.md, "The bar's five
+ * places, by role").
  */
-export const tabsFor = (caller: Caller): NavItem[] => {
-  const seen = new Set<string>()
-  const app = navFor(caller, 'app').filter(item => !item.path.includes('#'))
-  const me = navFor(caller, 'user').filter(item => !item.path.includes('#'))
-  return [...app.slice(0, MAX_TABS - Math.min(1, me.length)), ...me.slice(0, 1)].filter(item => {
-    if (seen.has(item.path)) return false
-    seen.add(item.path)
-    return true
-  })
-}
+export const tabsFor = (caller: Caller): NavItem[] => barFor(caller)
 
 // --------------- The recipe ---------------
 
@@ -156,7 +159,9 @@ const FROST = 'blur(24px) saturate(1.6)'
  * type knows the standard name only, so the prefixed one is passed through
  * untyped. The css function hands unknown properties on as they are.
  */
-const FROST_PREFIXED = {WebkitBackdropFilter: FROST} as unknown as SystemStyleObject
+const FROST_PREFIXED = {
+  WebkitBackdropFilter: FROST
+} as unknown as SystemStyleObject
 
 const tabBarRecipe = defineSlotRecipe({
   className: 'glass-tab-bar',
@@ -182,15 +187,21 @@ const tabBarRecipe = defineSlotRecipe({
       ...FROST_PREFIXED,
       bg: 'bg/70',
       // One 0.5px highlight along the top edge, and a soft lift off the page.
-      boxShadow: 'inset 0 0.5px 0 0 rgba(255, 255, 255, 0.65), 0 8px 32px rgba(0, 0, 0, 0.12)',
+      boxShadow:
+        'inset 0 0.5px 0 0 rgba(255, 255, 255, 0.65), 0 8px 32px rgba(0, 0, 0, 0.12)',
       _dark: {
         bg: 'bg/60',
-        boxShadow: 'inset 0 0.5px 0 0 rgba(255, 255, 255, 0.18), 0 8px 32px rgba(0, 0, 0, 0.45)'
+        boxShadow:
+          'inset 0 0.5px 0 0 rgba(255, 255, 255, 0.18), 0 8px 32px rgba(0, 0, 0, 0.45)'
       },
       transitionProperty: 'width, height, transform, opacity',
       transitionDuration: '320ms',
       transitionTimingFunction: SPRING,
-      _motionReduce: {transitionProperty: 'opacity', transitionDuration: '200ms', transitionTimingFunction: 'ease'}
+      _motionReduce: {
+        transitionProperty: 'opacity',
+        transitionDuration: '200ms',
+        transitionTimingFunction: 'ease'
+      }
     },
     list: {
       position: 'relative',
@@ -235,7 +246,11 @@ const tabBarRecipe = defineSlotRecipe({
       transitionProperty: 'color',
       transitionDuration: '200ms',
       '&[aria-current="page"]': {color: 'colorPalette.fg'},
-      _focusVisible: {outline: '2px solid', outlineColor: 'colorPalette.focusRing', outlineOffset: '-2px'}
+      _focusVisible: {
+        outline: '2px solid',
+        outlineColor: 'colorPalette.focusRing',
+        outlineOffset: '-2px'
+      }
     },
     icon: {
       display: 'inline-flex',
@@ -276,7 +291,8 @@ const tabBarRecipe = defineSlotRecipe({
       true: {
         // Out of the way under the home indicator while a dialog or drawer is open.
         root: {
-          transform: 'translateY(calc(100% + 32px + env(safe-area-inset-bottom, 0px)))',
+          transform:
+            'translateY(calc(100% + 32px + env(safe-area-inset-bottom, 0px)))',
           opacity: 0,
           pointerEvents: 'none'
         }
@@ -306,7 +322,8 @@ const subscribeReduced = (onChange: () => void) => {
     return () => {}
   }
 }
-const useReducedMotion = (): boolean => useSyncExternalStore(subscribeReduced, reducedNow, never)
+const useReducedMotion = (): boolean =>
+  useSyncExternalStore(subscribeReduced, reducedNow, never)
 
 /**
  * Collapse on the way down once past 24px, expand on the way up or at the
@@ -321,7 +338,8 @@ const useCollapsedOnScroll = (on: boolean): boolean => {
     const onScroll = (event: Event) => {
       const target = event.target
       if (!target) return
-      const y = target === document ? window.scrollY : (target as HTMLElement).scrollTop
+      const y =
+        target === document ? window.scrollY : (target as HTMLElement).scrollTop
       if (typeof y !== 'number' || Number.isNaN(y)) return
       // A box not seen before counts from the top, so one jump of 200px
       // (a programmatic scrollBy, a hash) reads as a move down and not as
@@ -332,8 +350,12 @@ const useCollapsedOnScroll = (on: boolean): boolean => {
       else if (y > before) setCollapsed(true)
       else if (y < before) setCollapsed(false)
     }
-    document.addEventListener('scroll', onScroll, {capture: true, passive: true})
-    return () => document.removeEventListener('scroll', onScroll, {capture: true})
+    document.addEventListener('scroll', onScroll, {
+      capture: true,
+      passive: true
+    })
+    return () =>
+      document.removeEventListener('scroll', onScroll, {capture: true})
   }, [on])
   return on && collapsed
 }
@@ -355,7 +377,12 @@ const useOverlayOpen = (on: boolean): boolean => {
       if (!frame) frame = window.requestAnimationFrame(look)
     }
     const observer = new MutationObserver(schedule)
-    observer.observe(document.body, {subtree: true, childList: true, attributes: true, attributeFilter: ['data-state']})
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['data-state']
+    })
     look()
     return () => {
       observer.disconnect()
@@ -375,7 +402,9 @@ const useOverlayOpen = (on: boolean): boolean => {
 let lastIndex = -1
 
 const usePillIndex = (index: number): number => {
-  const [shown, setShown] = useState(lastIndex >= 0 && index >= 0 ? lastIndex : index)
+  const [shown, setShown] = useState(
+    lastIndex >= 0 && index >= 0 ? lastIndex : index
+  )
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setShown(index))
     return () => window.cancelAnimationFrame(frame)
@@ -385,6 +414,59 @@ const usePillIndex = (index: number): number => {
   }, [index])
   return shown
 }
+
+// --------------- The pill under a swipe ---------------
+
+/**
+ * Two small stores for Swipes.tsx, the gesture layer around the page
+ * content, so a swipe moves the pill the way a tap does and the bar keeps
+ * owning the drawing. `pressed` is the entry a tap or a released swipe has
+ * chosen, it wins over the path until the route has moved. `drag` is the
+ * pill's offset from its place in places, -1 to 1, while a finger drags it,
+ * and 0 at rest. Stores and not props, because the layer sits inside the
+ * shell's main and the bar beside it.
+ */
+let pressed: string | null = null
+const pressedListeners = new Set<() => void>()
+const readPressed = () => pressed
+const nothing = () => null
+const subscribePressed = (onChange: () => void) => {
+  pressedListeners.add(onChange)
+  return () => {
+    pressedListeners.delete(onChange)
+  }
+}
+
+/** The entry the pill sets off to, before the route has moved. Null clears it. */
+export const pressPill = (path: string | null) => {
+  if (pressed === path) return
+  pressed = path
+  pressedListeners.forEach(fn => fn())
+}
+
+const usePressedPill = (): string | null =>
+  useSyncExternalStore(subscribePressed, readPressed, nothing)
+
+let drag = 0
+const dragListeners = new Set<() => void>()
+const readDrag = () => drag
+const zero = () => 0
+const subscribeDrag = (onChange: () => void) => {
+  dragListeners.add(onChange)
+  return () => {
+    dragListeners.delete(onChange)
+  }
+}
+
+/** The pill's offset from its place, in places, while a swipe drags it. 0 lets go. */
+export const dragPill = (places: number) => {
+  if (drag === places) return
+  drag = places
+  dragListeners.forEach(fn => fn())
+}
+
+const usePillDrag = (): number =>
+  useSyncExternalStore(subscribeDrag, readDrag, zero)
 
 /** The path of the page, read on mount and after every history move. */
 const usePathname = (): string => {
@@ -417,9 +499,11 @@ function Bar() {
   const reduced = useReducedMotion()
 
   // The tapped entry wins over the path until the route has moved, so the
-  // pill sets off with the tap and not with the page.
-  const [tapped, setTapped] = useState<string | null>(null)
-  useEffect(() => setTapped(null), [pathname])
+  // pill sets off with the tap and not with the page. A released swipe
+  // presses the same store, see Swipes.tsx.
+  const tapped = usePressedPill()
+  useEffect(() => pressPill(null), [pathname])
+  const drag = usePillDrag()
   const index = useMemo(() => {
     const byTap = tapped ? items.findIndex(item => item.path === tapped) : -1
     if (byTap >= 0) return byTap
@@ -434,13 +518,10 @@ function Bar() {
   const rtl = code === 'ar-EG'
   const count = Math.max(1, items.length)
 
-  const go = useCallback(
-    (item: NavItem) => {
-      setTapped(item.path)
-      void navigate(item.path)
-    },
-    []
-  )
+  const go = useCallback((item: NavItem) => {
+    pressPill(item.path)
+    void navigate(item.path)
+  }, [])
 
   if (items.length === 0) return null
 
@@ -463,9 +544,13 @@ function Bar() {
             // and the transform transition carries it across.
             key={reduced ? pillIndex : 'pill'}
             css={styles.pill}
+            // A swipe's drag is added in places and the transition is off
+            // while it lasts, so the pill sits under the finger and springs
+            // from there when the drag is let go.
             style={{
               width: `${100 / count}%`,
-              transform: `translateX(${(rtl ? -1 : 1) * pillIndex * 100}%)`
+              transform: `translateX(${(rtl ? -1 : 1) * (pillIndex + drag) * 100}%)`,
+              transition: drag !== 0 ? 'none' : undefined
             }}
           />
         )}

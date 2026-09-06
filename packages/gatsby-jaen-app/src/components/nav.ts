@@ -11,6 +11,13 @@
  * `user` is the TOP RIGHT menu, the person: their own page and what the
  * frame itself puts there (Einstellungen, Abmelden).
  *
+ * The glass tab bar (GlassTabBar.tsx) is a third place with a composition of
+ * its own: `bar` names the place, 1 to 5, an entry takes for a role. It is
+ * not "the first four of the drawer": the owner wants the billing screen in
+ * the middle of the dispatcher's bar and Standorte within reach of the thumb
+ * while Buchungen stays in the drawer, see navigation.md, "The bar's five
+ * places, by role". `barFor` composes the bar for a caller.
+ *
  * Paths are absolute and carry the trailing slash the sites build with
  * (`trailingSlash: 'always'`), because the frame marks the entry of the page
  * you are on by comparing `location.pathname` with the path verbatim.
@@ -25,7 +32,6 @@ import {FaRoute} from '@react-icons/all-files/fa/FaRoute'
 import {FaUserCircle} from '@react-icons/all-files/fa/FaUserCircle'
 import {FaCalendarCheck} from '@react-icons/all-files/fa/FaCalendarCheck'
 import {FaFileInvoice} from '@react-icons/all-files/fa/FaFileInvoice'
-import {FaFileContract} from '@react-icons/all-files/fa/FaFileContract'
 import {FaBell} from '@react-icons/all-files/fa/FaBell'
 import type {Caller} from '../../shared/auth'
 import type {getI18nCommon} from '../../shared/locales/i18nCommon'
@@ -49,6 +55,11 @@ export interface NavItem {
   roles: NavRole[]
   /** Sort key inside the group, ascending. */
   order: number
+  /**
+   * The place in the glass tab bar per role, 1 to 5, absent when the entry is
+   * not in that role's bar. Ordered by place, not by `order`.
+   */
+  bar?: Partial<Record<NavRole, number>>
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -60,7 +71,8 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'NavDashboard',
     icon: FaTachometerAlt,
     roles: ['admin'],
-    order: 10
+    order: 10,
+    bar: {admin: 1}
   },
   {
     id: 'transfers',
@@ -69,7 +81,8 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'NavTransfers',
     icon: FaExchangeAlt,
     roles: ['admin'],
-    order: 20
+    order: 20,
+    bar: {admin: 2}
   },
   // The driver's list is the transfers screen scoped to them by the backend,
   // so it is the same route under a different name. Deduped by path, first
@@ -81,7 +94,8 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'NavMyRides',
     icon: FaRoute,
     roles: ['driver'],
-    order: 20
+    order: 20,
+    bar: {driver: 1}
   },
   {
     id: 'booking',
@@ -90,17 +104,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'NavBookings',
     icon: FaCalendarCheck,
     roles: ['admin', 'customer'],
-    order: 30
-  },
-  // The offers screen, one row per offer document, admins only (offers-and-documents.md).
-  {
-    id: 'offers',
-    menu: 'app',
-    path: '/app/offers/',
-    label: 'NavOffers',
-    icon: FaFileContract,
-    roles: ['admin'],
-    order: 35
+    order: 30,
+    // The admin keeps Buchungen in the drawer and not in the bar, where the
+    // middle place is the billing screen's. The offers screen has no entry of
+    // its own any more: it is the customer half of the billing screen, and
+    // /app/offers/ redirects there (finance.md, "The billing screen").
+    bar: {customer: 1}
   },
   {
     id: 'locations',
@@ -111,7 +120,8 @@ export const NAV_ITEMS: NavItem[] = [
     // A customer sees the drivers of their own live rides on the same route,
     // scoped by the backend per booking (customer-experience.md, section 2).
     roles: ['admin', 'driver', 'customer'],
-    order: 40
+    order: 40,
+    bar: {admin: 4, driver: 2, customer: 2}
   },
   {
     id: 'fleet',
@@ -135,10 +145,12 @@ export const NAV_ITEMS: NavItem[] = [
     id: 'statements',
     menu: 'app',
     path: '/app/statements/',
+    // The billing screen, Abrechnungen: the dispatcher's middle place.
     label: 'NavStatements',
     icon: FaFileInvoice,
     roles: ['admin', 'driver', 'customer'],
-    order: 70
+    order: 70,
+    bar: {admin: 3, driver: 3, customer: 3}
   },
 
   // The person, top right. Einstellungen and Abmelden are the frame's own
@@ -152,7 +164,8 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'NavMe',
     icon: FaUserCircle,
     roles: ['admin', 'driver', 'customer'],
-    order: 10
+    order: 10,
+    bar: {admin: 5, driver: 4, customer: 4}
   },
   // The push switch is a card on the Me page, not a page of its own.
   {
@@ -185,6 +198,21 @@ export const navFor = (caller: Caller, menu?: NavMenu): NavItem[] => {
     seen.add(item.path)
     return true
   })
+}
+
+/**
+ * The glass tab bar's entries for this caller, by place. The composition is
+ * the one of the caller's first role in the order admin, driver, customer,
+ * the same precedence the drawers give a shared path, so an admin who also
+ * drives reads the dispatcher's bar. A caller without any of the three roles
+ * has no bar.
+ */
+export const barFor = (caller: Caller): NavItem[] => {
+  const role = rolesOf(caller)[0]
+  if (!role) return []
+  return NAV_ITEMS.filter(
+    item => item.roles.includes(role) && item.bar?.[role] !== undefined
+  ).sort((a, b) => (a.bar?.[role] ?? 0) - (b.bar?.[role] ?? 0))
 }
 
 const pathOf = (item: NavItem): string => item.path.split('#')[0] ?? item.path

@@ -22,7 +22,7 @@
  * asks once, one request with an alias per ride, rather than once per row.
  */
 import {gql} from './bookings'
-import {keys, useAppQuery} from './query'
+import {keys, queryClient, useAppQuery} from './query'
 import {mapDocument, type TransferDocument} from './documents'
 import {fetchGraphQL} from '../../client/limosen'
 
@@ -266,4 +266,178 @@ export function useRideDocuments(
     enabled: enabled && ids.length > 0
   })
   return {documents: q.data ?? EMPTY_DOCUMENTS, refetch}
+}
+
+// --------------- The Fahrer half: the payouts ---------------
+
+/**
+ * A driver's month marked as paid out, `DriverPayout` as the pylon answers
+ * it (finance.md, "The billing screen, both sides"). `revocable` is the
+ * pylon's word on whether "Zurücknehmen" is still offered: the same Vienna
+ * day as `paidAt`.
+ */
+export interface DriverPayout {
+  id: string
+  driverId: string
+  month: string
+  amount: number
+  paidAt: string
+  by: string
+  note: string | null
+  revocable: boolean
+}
+
+/** One row of the Fahrer table: a driver's month, its money and its payout status. */
+export interface DriverBillingRow {
+  driverId: string
+  /** The display name, empty when the caller may not read the directory (a driver reading their own). */
+  name: string
+  /** Hex, or undefined when the driver never chose one. */
+  color?: string
+  /** YYYY-MM */
+  month: string
+  rides: number
+  revenue: number
+  cash: number
+  share: number
+  expenses: number
+  /** share − cash − expenses, the Auszahlung. */
+  payoutDue: number
+  percent: number
+  /** Whether the DRV_ tab exists, so the file buttons are drawn only where the file is. */
+  statement: boolean
+  payout: DriverPayout | null
+}
+
+const PAYOUT_FIELDS = '{ id driverId month amount paidAt by note revocable }'
+const BILLING_FIELDS = `{ driverId name color month rides revenue cash share expenses payoutDue percent statement payout ${PAYOUT_FIELDS} }`
+
+const num = (v: unknown): number =>
+  typeof v === 'number' && Number.isFinite(v) ? v : 0
+
+/** The backend's silver default means nobody chose a colour, undefined here like the dashboard reads it. */
+const colourOf = (v: unknown): string | undefined =>
+  typeof v === 'string' && v && v.toUpperCase() !== '#C0C0C0' ? v : undefined
+
+const mapPayout = (raw: any): DriverPayout | null =>
+  raw && typeof raw === 'object'
+    ? {
+        id: String(raw.id ?? ''),
+        driverId: String(raw.driverId ?? ''),
+        month: String(raw.month ?? ''),
+        amount: num(raw.amount),
+        paidAt: String(raw.paidAt ?? ''),
+        by: String(raw.by ?? ''),
+        note: typeof raw.note === 'string' && raw.note ? raw.note : null,
+        revocable: raw.revocable === true
+      }
+    : null
+
+const mapBillingRow = (raw: any): DriverBillingRow => ({
+  driverId: String(raw?.driverId ?? ''),
+  name: typeof raw?.name === 'string' ? raw.name : '',
+  color: colourOf(raw?.color),
+  month: String(raw?.month ?? ''),
+  rides: num(raw?.rides),
+  revenue: num(raw?.revenue),
+  cash: num(raw?.cash),
+  share: num(raw?.share),
+  expenses: num(raw?.expenses),
+  payoutDue: num(raw?.payoutDue),
+  percent: num(raw?.percent),
+  statement: raw?.statement === true,
+  payout: mapPayout(raw?.payout)
+})
+
+export interface DriverPayoutsArgs {
+  /** YYYY-MM for one month, absent for the last twelve. */
+  month?: string
+  /** An admin narrows to one driver; a driver's own id or nothing for a driver caller. */
+  driverId?: string
+}
+
+/** `['driverPayouts', month, driverId]`, invalidated as a whole by the two writes. */
+export const driverPayoutsKey = (args: DriverPayoutsArgs) =>
+  ['driverPayouts', args.month ?? '', args.driverId ?? ''] as const
+
+/**
+ * `driverPayouts(args: {month?, driverId?})`: the rows of the Fahrer half,
+ * every driver for an admin, their own for a driver, the backend decides.
+ */
+export async function fetchDriverPayouts(
+  args: DriverPayoutsArgs
+): Promise<DriverBillingRow[]> {
+  const listArgs: Record<string, unknown> = {}
+  if (args.month) listArgs.month = args.month
+  if (args.driverId) listArgs.driverId = args.driverId
+  const rows = await gql('driverPayouts', {args: listArgs}, BILLING_FIELDS)
+  return (Array.isArray(rows) ? rows : [])
+    .map(mapBillingRow)
+    .filter((row: DriverBillingRow) => MONTH.test(row.month))
+}
+
+const EMPTY_BILLING: DriverBillingRow[] = []
+
+export function useDriverPayouts(args: DriverPayoutsArgs, enabled = true) {
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
+    queryKey: driverPayoutsKey(args),
+    queryFn: () => fetchDriverPayouts(args),
+    enabled
+  })
+  return {rows: q.data ?? EMPTY_BILLING, isLoading, error, isFetching, refetch}
+}
+
+/** Every payouts list and the dashboard, whose payout due reads the open months, after a mark or a revoke. */
+export const invalidateDriverPayouts = () =>
+  Promise.all([
+    queryClient.invalidateQueries({queryKey: ['driverPayouts']}),
+    queryClient.invalidateQueries({queryKey: ['dashboard']})
+  ]).then(() => undefined)
+
+/**
+ * `markDriverPayout(args: {driverId, month, note})`: the month is paid
+ * out, admin only, idempotent on the backend. Answers the payout row.
+ */
+export async function markDriverPayout(
+  driverId: string,
+  month: string,
+  note?: string
+): Promise<DriverPayout> {
+  if (!MONTH.test(month)) throw new Error('Invalid month')
+  const args: Record<string, unknown> = {driverId, month}
+  const trimmed = note?.trim()
+  if (trimmed) args.note = trimmed
+  const raw = await gql('markDriverPayout', {args}, PAYOUT_FIELDS, 'mutation')
+  const payout = mapPayout(raw)
+  if (!payout) throw new Error('no payout in the answer')
+  await invalidateDriverPayouts()
+  return payout
+}
+
+/**
+ * `revokeDriverPayout(args: {driverId, month})`: the mark is taken back,
+ * on the day it was written only. The backend answers PAYOUT_LOCKED for an
+ * earlier day and NOT_FOUND for a month that is not marked.
+ */
+export async function revokeDriverPayout(
+  driverId: string,
+  month: string
+): Promise<DriverPayout> {
+  if (!MONTH.test(month)) throw new Error('Invalid month')
+  const raw = await gql(
+    'revokeDriverPayout',
+    {args: {driverId, month}},
+    PAYOUT_FIELDS,
+    'mutation'
+  )
+  const payout = mapPayout(raw)
+  if (!payout) throw new Error('no payout in the answer')
+  await invalidateDriverPayouts()
+  return payout
 }

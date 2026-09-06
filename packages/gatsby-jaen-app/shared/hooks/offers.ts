@@ -367,6 +367,7 @@ export function useOffers(args: OfferListArgs = {}) {
     query: q,
     isLoading,
     error,
+    isFetching,
     refetch
   } = useAppQuery({
     queryKey: offersKey({...pageArgs}),
@@ -395,6 +396,145 @@ export function useOffers(args: OfferListArgs = {}) {
     rows,
     isLoading,
     error,
+    isFetching,
+    pagination,
+    nextPage,
+    prevPage: pager.prev,
+    firstPage: pager.first,
+    refetch
+  }
+}
+
+// --------------- The customer's own half ---------------
+
+/**
+ * One row of the customer's Kunden half on the billing screen: a ride of
+ * their own with the money side beside it, the customer status with its
+ * instant, when the invoice went out and when it was marked paid
+ * (okf/architecture/finance.md, "The billing screen, both sides"). Read
+ * through `transfers`, which the backend scopes to the caller's rides, so
+ * no argument here decides whose rides these are.
+ */
+export interface CustomerBillingRow {
+  /** `transfer:<uuid>`, for the documents. Never shown. */
+  id: string
+  /** BQ7Q4W-1, the link to the booking. */
+  code: string
+  pickupDateTime: string
+  pickup: string
+  dropoff: string
+  /** Null for a row without a price yet. */
+  total: number | null
+  state: string
+  language: string
+  customerStatus?: CustomerStatus
+  /** The instant of the current customer status, ISO. */
+  statusAt?: string
+  invoicedAt?: string
+  paidAt?: string
+}
+
+export interface CustomerBillingPage {
+  rows: CustomerBillingRow[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
+}
+
+const EMPTY_BILLING_ROWS: CustomerBillingRow[] = []
+
+export const customerBillingKey = (args: Record<string, unknown>) =>
+  ['bookings', 'billing', args] as const
+
+const mapCustomerBilling = (node: any): CustomerBillingRow => {
+  const id = String(node?.id ?? '')
+  const status = asCustomerStatus(node?.customerStatus)
+  const instants = readInstants(node)
+  return {
+    id,
+    code: str(node?.code) ?? transferCode(id),
+    pickupDateTime: str(node?.pickupDateTime) ?? '',
+    pickup: str(node?.pickupLocation) ?? '',
+    dropoff: str(node?.dropoffLocation) ?? '',
+    total: typeof node?.price === 'number' ? node.price : null,
+    state: str(node?.state) ?? 'PENDING',
+    language: str(node?.language) ?? 'de',
+    customerStatus: status,
+    statusAt:
+      status && status !== 'NEW' ? instants[INSTANT_OF[status]] : undefined,
+    invoicedAt: instants.invoicedAt,
+    paidAt: instants.paidAt
+  }
+}
+
+const readCustomerBillingPage = async (args: {
+  first: number
+  after?: string
+}): Promise<CustomerBillingPage> => {
+  const listArgs: Record<string, unknown> = {first: args.first}
+  if (args.after) listArgs.after = args.after
+  const code = (await hasTransferField('code')) ? 'code ' : ''
+  const status = (await hasTransferField('customerStatus'))
+    ? `customerStatus language ${await statusInstantSelection()} `
+    : ''
+  const result = await call(
+    'transfers',
+    {args: listArgs},
+    `{ totalCount pageInfo { endCursor hasNextPage } edges { node { id ${code}pickupDateTime pickupLocation dropoffLocation price state ${status}} } }`
+  )
+  return {
+    rows: (Array.isArray(result?.edges) ? result.edges : [])
+      .map((e: any) => e?.node)
+      .filter(Boolean)
+      .map(mapCustomerBilling),
+    endCursor: result?.pageInfo?.endCursor ?? null,
+    hasNextPage: !!result?.pageInfo?.hasNextPage,
+    totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
+  }
+}
+
+/**
+ * The caller's own rides with their money status, one page at a time in
+ * the backend's order (pickup descending), under the bookings domain so a
+ * write that moves a status refreshes it with the booking list.
+ */
+export function useCustomerBilling(pageSize = DEFAULT_PAGE_SIZE) {
+  const pager = usePager(JSON.stringify({billing: true, first: pageSize}))
+  const pageArgs = useMemo(
+    () => ({first: pageSize, after: pager.after}),
+    [pageSize, pager.after]
+  )
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
+    queryKey: customerBillingKey({...pageArgs}),
+    queryFn: () => readCustomerBillingPage(pageArgs),
+    placeholderData: keepPreviousData
+  })
+  const page = q.data
+  const rows = page?.rows ?? EMPTY_BILLING_ROWS
+  const pagination = useMemo<OfferPagination>(() => {
+    const totalCount = page?.totalCount ?? 0
+    return {
+      hasNextPage: !!page?.hasNextPage,
+      hasPreviousPage: pager.page > 1,
+      totalCount,
+      currentPage: pager.page,
+      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+    }
+  }, [page, pager.page, pageSize])
+  const nextPage = useCallback(() => {
+    if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
+  }, [page, pager])
+  return {
+    rows,
+    isLoading,
+    error,
+    isFetching,
     pagination,
     nextPage,
     prevPage: pager.prev,
