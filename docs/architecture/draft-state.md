@@ -194,7 +194,7 @@ type Query {
 type Mutation {
   save(
     site: String!
-    changes: [JaenChangeInput!]!
+    changes: [SaveChangesInput!]!
     baseSha: String
   ): SaveResult!
   publish(site: String!): PublishResult!
@@ -205,8 +205,8 @@ type Draft {
   headSha: String! # the branch HEAD commit the answer was read at
   blobSha: String! # jaen-data/live.json at that commit
   changed: Boolean! # false when sinceSha is still the head
-  data: JSON # null when changed is false
-  authors: JSON # fieldKey -> {sub, name, at}
+  data: JSONObject # null when changed is false
+  authors: JSONObject # fieldKey -> {sub, name, at}
   readAt: String!
 }
 
@@ -260,8 +260,8 @@ interface JaenChangeInput {
   section?: {path: Array<{fieldName: string; sectionId?: string}>; id: string}
   fieldType?: string
   fieldName?: string
-  value?: JSON
-  props?: JSON
+  value?: any // Any! in the schema, see below: always sent
+  props?: Record<string, any> // JSONObject, may be omitted
   at: string // the client's instant, advisory only
 }
 ```
@@ -272,6 +272,18 @@ the introspected token and ignores any author the client sends. It applies a
 change with the same reducer logic the client has, extracted into
 `packages/jaen/src/redux/apply-change.ts` and imported by both sides, so the
 browser and the agent can never disagree about what `sectionMove` means.
+
+Three names in that schema are pylon's and not this document's, because pylon
+derives the schema from the TypeScript rather than the other way round, and a
+client that guesses them wrong is refused before a resolver runs. The input
+type is **`SaveChangesInput`**, named after the field and the argument it
+belongs to and never after the TypeScript interface, with `SectionInput` and
+`PathInput` nested in it. `value` is **`Any!`**, non-null, because pylon
+renders a TypeScript `any` that way and offers no spelling that makes it
+nullable, so a kind that carries no value sends `{}` and every branch of the
+applier ignores it. `props` is `JSONObject` and may be omitted. The derived
+schema is `packages/jaen-agent/.pylon/schema.graphql` after a build and is the
+authority over this block.
 
 A call carries at most 200 changes and at most one megabyte, which the
 debounce below never approaches.

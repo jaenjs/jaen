@@ -297,6 +297,13 @@ scripts/deploy.sh            # build, deploy, read the stamp back
 scripts/deploy.sh --dry-run  # print the commands, deploy nothing
 ```
 
+The build is `npm run build`, which hands the pylon CLI to node rather than
+running it as a program. `npx pylon build` cannot work here: `pylon-dev` ships
+its CLI as an ESM file with no shebang line, so the shell reads the first line
+of JavaScript as shell syntax and dies on `import{program as G}from"commander"`.
+`scripts/deploy.sh` and the `build`, `dev` and `test` scripts all call it the
+same way.
+
 Bump the version in `package.json` first: the number is a decision and not a
 side effect. The script stamps `AGENT_VERSION`, `AGENT_COMMIT` and
 `AGENT_BUILT_AT` as vars and then asks the deployed Worker for
@@ -345,7 +352,22 @@ not offer the password grant (`unsupported_grant_type: password not supported`,
 measured 2026-09-07) and a human token therefore needs a browser. The three
 machine accounts are real accounts in the two organisations and carry exactly
 the three identities the refusals are about: booklimo's `jaen:admin`,
-booklimo's `krc:customer`, and limosen's `jaen:admin`.
+booklimo's `krc:customer`, and limosen's `jaen:admin`. The issuer's discovery
+document says the same thing in the positive: its `grant_types_supported` is
+`authorization_code`, `implicit`, `refresh_token`, `client_credentials`,
+`jwt-bearer` and `device_code`, and none of those mints a token from a login
+name and a password without a browser.
+
+There is one editor in the run rather than two, because the second identity a
+second editor needs is another account holding `jaen:admin` on booklimo, and
+the only other booklimo account in the set is the customer, whose refusal is
+one of the things the run proves. What a second editor would add over the
+stale save is the author line of a different account, and the author line is
+already asserted on the one save that is made.
+
+Measured 2026-09-07, all ten green in 22.7 s against a local `wrangler dev` on
+port 8977 and a throwaway branch of `netsnek/booklimo.at`, the branch deleted
+by the teardown and no `jaen-agent-test-*` branch left on the repository.
 
 ## Why this package is not in the workspace
 
