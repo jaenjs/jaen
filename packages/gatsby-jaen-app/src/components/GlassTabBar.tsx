@@ -4,10 +4,12 @@
  *
  * It exists in app mode only, that is when the PWA runs installed
  * (`display-mode: standalone`, or `navigator.standalone` on an iPhone), never
- * in a browser tab, and only while the switch "Untere Leiste" on the Me page
- * is on, per device, `localStorage limosen:glassTabBar`, default off. Both
- * gates live in this file as hooks, so the Me page's switch and the shell's
- * bottom padding read the very same two answers the bar reads.
+ * in a browser tab. Until 2026-09-07 a switch "Untere Leiste" on the Me page
+ * gated it per device (`localStorage limosen:glassTabBar`, default off); the
+ * owner switched it on for everyone and took the switch away ("vielleicht
+ * machen wir es irgendwann in Zukunft wieder switchable, momentan nicht"), so
+ * the stale key is ignored and cleared. The one gate lives in this file as a
+ * hook, so the shell's bottom padding reads the very answer the bar reads.
  *
  * The bar that was removed on 2026-09-05 is no model for it. This one is a
  * floating capsule 56px tall, 16px above the safe area with 12px side
@@ -93,13 +95,17 @@ export const useAppMode = (): boolean =>
 
 const listeners = new Set<() => void>()
 
+/**
+ * Always on since 2026-09-07. The key of the former switch is cleared once so
+ * a device that had turned the bar off carries nothing stale around.
+ */
 const readEnabled = (): boolean => {
   try {
-    return window.localStorage.getItem(GLASS_TAB_BAR_KEY) === '1'
+    window.localStorage.removeItem(GLASS_TAB_BAR_KEY)
   } catch {
-    // No storage, no bar: the default is off and that is what is returned.
-    return false
+    // No storage, nothing to clear.
   }
+  return true
 }
 
 const subscribeEnabled = (onChange: () => void) => {
@@ -112,22 +118,12 @@ const subscribeEnabled = (onChange: () => void) => {
   }
 }
 
-export const setGlassTabBarEnabled = (on: boolean) => {
-  try {
-    if (on) window.localStorage.setItem(GLASS_TAB_BAR_KEY, '1')
-    else window.localStorage.removeItem(GLASS_TAB_BAR_KEY)
-  } catch {
-    // Storage refused: the switch springs back, because the read below says off.
-  }
-  listeners.forEach(fn => fn())
-}
-
-/** The switch's own value, off by default and off on the server. */
+/** Always true in a browser, false on the server, the former switch's value. */
 export const useGlassTabBarEnabled = (): boolean =>
   useSyncExternalStore(subscribeEnabled, readEnabled, never)
 
 /**
- * The one answer the shell needs: app mode and the switch on. The breakpoint
+ * The one answer the shell needs: app mode. The breakpoint
  * is not part of it, the bar and the padding both hide themselves at `md`
  * in CSS so a rotation never has to re-render the page.
  */
