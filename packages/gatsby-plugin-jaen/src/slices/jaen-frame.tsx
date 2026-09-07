@@ -15,7 +15,10 @@ import {globalHistory} from '@reach/router'
 import {FaEdit} from '@react-icons/all-files/fa/FaEdit'
 import {FaFileDownload} from '@react-icons/all-files/fa/FaFileDownload'
 import {FaFileUpload} from '@react-icons/all-files/fa/FaFileUpload'
+import {FaCloudUploadAlt} from '@react-icons/all-files/fa/FaCloudUploadAlt'
+import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTriangle'
 import {FaGlobe} from '@react-icons/all-files/fa/FaGlobe'
+import {FaPlug} from '@react-icons/all-files/fa/FaPlug'
 import {FaImage} from '@react-icons/all-files/fa/FaImage'
 import {FaSitemap} from '@react-icons/all-files/fa/FaSitemap'
 import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
@@ -118,6 +121,70 @@ const Slice: React.FC<SliceProps> = props => {
       //   }
       // })
 
+      /**
+       * The shared draft's one entry, in the place the discard button had.
+       *
+       * Saving is committing, so there is nothing left to discard: a change is
+       * in the repository moments after it is typed and a button claiming to
+       * undo that would be worse than no button. Undo is git, and clicking the
+       * state opens the commit the last save made. The draft file export and
+       * import go with it, because both replace the whole local store and a
+       * store that no longer belongs to one browser cannot be replaced from a
+       * file without lying to every other editor about what the repository
+       * holds.
+       *
+       * See docs/architecture/draft-state.md, "The save state and the publish
+       * button".
+       */
+      const sharedDraft = manager.sharedDraft
+
+      const saveStateItem = {
+        label:
+          sharedDraft.saveState === 'saving'
+            ? intl.formatMessage({
+                id: 'CmsFrameSaveStateSaving',
+                defaultMessage: 'Saving'
+              })
+            : sharedDraft.saveState === 'offline'
+              ? intl.formatMessage(
+                  {
+                    id: 'CmsFrameSaveStateOffline',
+                    defaultMessage:
+                      'Offline, {count, plural, one {# change} other {# changes}} waiting'
+                  },
+                  {count: sharedDraft.pending}
+                )
+              : sharedDraft.saveState === 'error'
+                ? intl.formatMessage({
+                    id: 'CmsFrameSaveStateError',
+                    defaultMessage: 'Save failed, retrying'
+                  })
+                : intl.formatMessage(
+                    {
+                      id: 'CmsFrameSaveStateSaved',
+                      defaultMessage: 'Saved {at}'
+                    },
+                    {
+                      at: sharedDraft.lastSavedAt
+                        ? intl.formatTime(new Date(sharedDraft.lastSavedAt))
+                        : ''
+                    }
+                  ),
+        icon:
+          sharedDraft.saveState === 'offline'
+            ? FaPlug
+            : sharedDraft.saveState === 'error'
+              ? FaExclamationTriangle
+              : FaCloudUploadAlt,
+        isLoading: sharedDraft.saveState === 'saving',
+        onClick: () => {
+          if (sharedDraft.lastCommitUrl) {
+            window.open(sharedDraft.lastCommitUrl, '_blank', 'noreferrer')
+          }
+        },
+        order: 2
+      }
+
       // Add jaenCMS user menu
       extendMenu('user', {
         group: 'jaenCMS',
@@ -159,88 +226,92 @@ const Slice: React.FC<SliceProps> = props => {
             },
             order: 1
           },
-          save: {
-            label: intl.formatMessage({
-              id: 'CmsFrameSaveDraft',
-              defaultMessage: 'Save draft'
-            }),
-            icon: FaFileDownload,
-            onClick: () => {
-              manager.draft.save()
+          ...(sharedDraft.enabled
+            ? {saveState: saveStateItem}
+            : {
+                save: {
+                  label: intl.formatMessage({
+                    id: 'CmsFrameSaveDraft',
+                    defaultMessage: 'Save draft'
+                  }),
+                  icon: FaFileDownload,
+                  onClick: () => {
+                    manager.draft.save()
 
-              toast({
-                title: intl.formatMessage({
-                  id: 'CmsFrameNotificationsSaved',
-                  defaultMessage: 'Saved'
-                }),
-                description: intl.formatMessage({
-                  id: 'CmsFrameNotificationsSavedDescription',
-                  defaultMessage: 'Your changes have been saved'
-                }),
-                status: 'success'
-              })
-            },
-            order: 2
-          },
-          import: {
-            label: intl.formatMessage({
-              id: 'CmsFrameImportDraft',
-              defaultMessage: 'Import draft'
-            }),
-            icon: FaFileUpload,
-            onClick: async () => {
-              try {
-                await manager.draft.import()
+                    toast({
+                      title: intl.formatMessage({
+                        id: 'CmsFrameNotificationsSaved',
+                        defaultMessage: 'Saved'
+                      }),
+                      description: intl.formatMessage({
+                        id: 'CmsFrameNotificationsSavedDescription',
+                        defaultMessage: 'Your changes have been saved'
+                      }),
+                      status: 'success'
+                    })
+                  },
+                  order: 2
+                },
+                import: {
+                  label: intl.formatMessage({
+                    id: 'CmsFrameImportDraft',
+                    defaultMessage: 'Import draft'
+                  }),
+                  icon: FaFileUpload,
+                  onClick: async () => {
+                    try {
+                      await manager.draft.import()
 
-                toast({
-                  title: intl.formatMessage({
-                    id: 'CmsFrameNotificationsImported',
-                    defaultMessage: 'Imported'
+                      toast({
+                        title: intl.formatMessage({
+                          id: 'CmsFrameNotificationsImported',
+                          defaultMessage: 'Imported'
+                        }),
+                        description: intl.formatMessage({
+                          id: 'CmsFrameNotificationsImportedDescription',
+                          defaultMessage: 'Your changes have been imported'
+                        }),
+                        status: 'success'
+                      })
+                    } catch (e) {
+                      toast({
+                        title: intl.formatMessage({
+                          id: 'CmsFrameNotificationsImportFailed',
+                          defaultMessage: 'Failed to import'
+                        }),
+                        description: intl.formatMessage({
+                          id: 'CmsFrameNotificationsImportFailedDescription',
+                          defaultMessage: 'Your changes could not be imported'
+                        }),
+                        status: 'error'
+                      })
+                    }
+                  },
+                  order: 3
+                },
+                discard: {
+                  label: intl.formatMessage({
+                    id: 'CmsFrameDiscardChanges',
+                    defaultMessage: 'Discard changes'
                   }),
-                  description: intl.formatMessage({
-                    id: 'CmsFrameNotificationsImportedDescription',
-                    defaultMessage: 'Your changes have been imported'
-                  }),
-                  status: 'success'
-                })
-              } catch (e) {
-                toast({
-                  title: intl.formatMessage({
-                    id: 'CmsFrameNotificationsImportFailed',
-                    defaultMessage: 'Failed to import'
-                  }),
-                  description: intl.formatMessage({
-                    id: 'CmsFrameNotificationsImportFailedDescription',
-                    defaultMessage: 'Your changes could not be imported'
-                  }),
-                  status: 'error'
-                })
-              }
-            },
-            order: 3
-          },
-          discard: {
-            label: intl.formatMessage({
-              id: 'CmsFrameDiscardChanges',
-              defaultMessage: 'Discard changes'
-            }),
-            icon: FaTrash,
-            onClick: () => {
-              manager.draft.discard()
+                  icon: FaTrash,
+                  onClick: () => {
+                    manager.draft.discard()
 
-              toast({
-                title: intl.formatMessage({
-                  id: 'CmsFrameNotificationsDiscarded',
-                  defaultMessage: 'Discarded'
-                }),
-                description: intl.formatMessage({
-                  id: 'CmsFrameNotificationsDiscardedDescription',
-                  defaultMessage: 'Your changes have been discarded'
-                }),
-                status: 'info'
-              })
-            }
-          },
+                    toast({
+                      title: intl.formatMessage({
+                        id: 'CmsFrameNotificationsDiscarded',
+                        defaultMessage: 'Discarded'
+                      }),
+                      description: intl.formatMessage({
+                        id: 'CmsFrameNotificationsDiscardedDescription',
+                        defaultMessage: 'Your changes have been discarded'
+                      }),
+                      status: 'info'
+                    })
+                  }
+                }
+              }),
           publish: {
             label: intl.formatMessage(
               {

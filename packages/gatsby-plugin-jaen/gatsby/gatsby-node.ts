@@ -8,6 +8,36 @@ export interface JaenPluginOptions extends PluginOptions {
   }
   pylonUrl?: string
   /**
+   * The jaen agent, the one service that holds the shared draft.
+   *
+   * With it configured, every change an editor makes is committed to this
+   * site's own repository by the agent as it happens, and every other open CMS
+   * takes the new head from a poll. The repository is the store; there is no
+   * database and nothing is committed at publish time that was not committed
+   * at save time. See docs/architecture/draft-state.md.
+   *
+   * Unset, the CMS behaves exactly as it did before: the draft lives in one
+   * browser's localStorage until somebody publishes.
+   */
+  agent?: {
+    /** GraphQL endpoint, e.g. `https://agent.jaen.netsnek.com/graphql`. */
+    url: string
+    /**
+     * This site's key in the agent's SITES table, e.g. `booklimo.at`. The key
+     * names the repository; the caller's identity decides whether they may
+     * write it. It is not derived from the audience, because two sites can
+     * share one Zitadel project and then have the same one.
+     *
+     * `siteKey` is accepted as the same thing.
+     */
+    site?: string
+    siteKey?: string
+    /** Poll interval of the shared draft, ms. Default 5000. */
+    pollMs?: number
+    /** Quiet time before a batch is committed, ms. Default 800. */
+    debounceMs?: number
+  }
+  /**
    * Origin of the storage gateway holding CMS media, without a trailing path
    * -- `/graphql` and `/storage/<id>` are derived from it.
    *
@@ -73,6 +103,18 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
       cwd: Joi.string()
     }).required(),
     pylonUrl: Joi.string(),
+    agent: Joi.object({
+      url: Joi.string().uri().required(),
+      site: Joi.string(),
+      siteKey: Joi.string(),
+      pollMs: Joi.number().integer().min(1000),
+      debounceMs: Joi.number().integer().min(100)
+    })
+      .or('site', 'siteKey')
+      .description(
+        'The jaen agent that holds the shared draft. Every change is ' +
+          "committed to this site's repository as it happens."
+      ),
     storageUrl: Joi.string().uri(),
     zitadelGql: Joi.object({
       organizationId: Joi.string().required(),
@@ -199,6 +241,18 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] =
           __JAEN_REMOTE__: JSON.stringify(pluginOptions.remote),
           __JAEN_PYLON_URL__: JSON.stringify(pluginOptions.pylonUrl),
           __JAEN_STORAGE_URL__: JSON.stringify(pluginOptions.storageUrl),
+          // Normalised here rather than in the browser, so `site` and
+          // `siteKey` are one name by the time anything reads it.
+          __JAEN_AGENT__: JSON.stringify(
+            pluginOptions.agent
+              ? {
+                  url: pluginOptions.agent.url,
+                  site: pluginOptions.agent.site || pluginOptions.agent.siteKey,
+                  pollMs: pluginOptions.agent.pollMs,
+                  debounceMs: pluginOptions.agent.debounceMs
+                }
+              : undefined
+          ),
           __JAEN_ZITADEL_GQL__: JSON.stringify(pluginOptions.zitadelGql)
         })
       ]
