@@ -638,3 +638,141 @@ carrying `upload` alone and no `signedUrl`, and an anonymous
 `GET /storage/<a known Telegram id>` still 200. The gate ships when this
 branch does, and only then does a pylon that mints links get its
 `OSG_TOKEN`.
+
+## Built 2026-09-07, the gateway itself
+
+Branch `private-storage` of `jaenjs/open-storage-gateway`, local checkout
+`~/git/open-storage-gateway`, seven commits from `a24d325` to `7efc2ae`. Not
+deployed: `wrangler deploy` and the D1 database belong to the deploy phase, and
+the ownership store is the one thing in this design that cannot be rebuilt
+cheaply, so it is created once and never by a build run.
+
+### What the gate does, and where it sits
+
+All three places the design named, and for the reason it gave. A Hono
+middleware on `app.use('/storage/*')` decides every byte read before a driver is
+asked, so a refusal never confirms that an id exists. Every resolver that is not
+`/ping` calls the same check on its first line, because Pylon's `@requireAuth()`
+only asks whether `auth` is truthy and `useAuth` sets that on an anonymous
+request too, the defect of the memory note `pylon-v3-gotchas`. `/ping` is the
+one open route.
+
+`storedFile` is gated like a read, `gitStore` needs `storage:admin` (which
+`jaen:admin` is not), `upload` needs `jaen:admin`, `storage:write` or
+`storage:admin`, and the new mutation `signedUrl` needs `jaen:admin`,
+`storage:sign` or `storage:admin` for a file of its own organisation.
+
+### Identity, and the one difference from the other two services
+
+`src/auth/introspect.ts` posts to `${AUTH_ISSUER}/oauth/v2/introspect` with a
+`client_assertion` signed by the CMS application key, which is the request
+`zitadel-gql` and both taxi pylons make at the same issuer under the same key.
+The tenant is `urn:zitadel:iam:user:resourceowner:id`, the roles are the keys of
+the roles claim in either spelling, the scope string is deliberately not read
+(a personal access token's scope lists what was asked for, not what was
+granted), the cache is `AUTH_CACHE_TTL_MS` at sixty seconds keyed by the
+SHA-256 of the token and refreshed past half its life, and the errors are
+`AUTH_REQUIRED` 401 and `FORBIDDEN` 403. Same token, same introspection, same
+cache, same errors, same role names.
+
+The one difference is that the gateway makes that request itself rather than
+letting Pylon's `useAuth` make it, and it is not a scheme of its own but two
+things the other services do not have to care about. The byte route is not a
+resolver, so there is no Pylon context to read an auth state off, and Pylon's
+`useAuth` also accepts a token as `?token=` and as a `pylon-auth` cookie, which
+this gateway must refuse: a token in a URL lands in a log, in a `Referer` and in
+a shared link, which is the whole reason the signature scheme exists.
+
+An introspection that fails is a 500 `AUTH_UNAVAILABLE` and an ownership store
+that cannot be read a 503 `OWNER_STORE_UNAVAILABLE`, never a 401. A broken
+credential served as "you are not signed in" is the failure that hides longest,
+because every client simply shows a login screen.
+
+### The ownership store, and the column the design did not have
+
+On a Worker it is the D1 database of the design (`scripts/schema.sql`, binding
+`OWNERS`). In the container image it is a sidecar index, one JSON object per
+line at `OWNER_INDEX_PATH`, by default `$MEDIA_ROOT/.osg-owners.jsonl`, append
+only and beside the media, so the container needs no database beside its volume
+and survives a restart. Both are read through `src/owners.ts` with the same
+memoisation, and the first claim wins in both: a row is written once and never
+changed, so an owner a caller can change is not an owner.
+
+**The column the design did not have is `shared`**, a comma separated list of
+organisations that may read a file besides its owner. Measured 2026-09-07 over
+the two sites' jaen data and their published patches: booklimo.at names 193
+gateway ids, limosen.at names 186, and every one of limosen's 186 is among
+booklimo's. The two sites are one content lineage, so the same Telegram
+`file_id` really is the logo of two companies, and claiming those files for one
+organisation would have answered the other site's build with 403 on all 186 of
+them. A shared reader reads and nothing more: the owner is who uploaded it, and
+minting a signed link stays the owner's, because a signature hands the file to
+somebody with no token at all.
+
+`scripts/backfill-owners.py` claims what the sites' jaen data and the taxi
+brands' D1 rows name, confirms each id against the gateway's own `storedFile`,
+and writes either the sidecar index or the D1 statements. Its default is a dry
+run that prints the counts per organisation, which is the only census this store
+can be given. It has not been run against the live store.
+
+### Two things a caller has to know
+
+`expiresIn` on `signedUrl` is the scalar **`Number`, not `Int`**. Pylon derives
+the schema from the TypeScript and a `number` argument becomes `Number`, so a
+document declaring `$expiresIn: Int` is refused with
+`GRAPHQL_VALIDATION_FAILED` before the resolver is reached and no link is
+minted at all.
+
+The signature's message is `${id}\n${exp}` and the host is deliberately not part
+of it, because one Worker answers as `osg.netsnek.com` and as `osg.jaen.io` and
+a link minted through one name has to work on the other.
+
+### Measured 2026-09-07 on the container image
+
+`podman build` of the repository's own `Dockerfile`, which is the shape a host
+with a filesystem deploys, run with the git driver on a temporary volume, its
+own signing key, its own sidecar index and `ENFORCE_WRITES=1`, and with the real
+`AUTH_KEY` against `accounts.netsnek.com`. The tokens are the booklimo (krc)
+ones of `~/.config/taxi-app/tokens.env`, because every test of this estate runs
+on booklimo and never on limosen. Nothing was written to `osg.netsnek.com`,
+which has no delete.
+
+`npm test`, 40 of 40, the access table, the roles, the signature, the cache and
+the ownership store decided without a network. `npm run typecheck` clean.
+`python3 tests/live.py`, 22 of 22 over HTTP:
+
+| what                                                    | answer                                                      |
+| ------------------------------------------------------- | ----------------------------------------------------------- |
+| `/ping` with no token                                   | 200                                                         |
+| a preflight of `/storage/*`                             | 204 with `Access-Control-Allow-Headers: authorization`      |
+| an anonymous upload                                     | `AUTH_REQUIRED`                                             |
+| an upload by a `krc:driver`                             | `FORBIDDEN`, and not `AUTH_REQUIRED`                        |
+| an upload by the booklimo admin                         | 314 ms, stamped `356348844407002709`, source `upload`       |
+| that file read by its own organisation                  | 200, the same bytes, `Cache-Control: private, max-age=60`   |
+| the same read by a `krc:driver` holding no storage role | 200                                                         |
+| the same read anonymously                               | 401 `AUTH_REQUIRED`                                         |
+| a file of limosen read by the booklimo admin            | 403 `FORBIDDEN`, not 401 and not 404                        |
+| an id nothing ever stored                               | 404 from the driver, the gate having passed it              |
+| a link minted by a `krc:driver`                         | `FORBIDDEN`                                                 |
+| a link minted by the admin, 900 seconds                 | opens with no token at all, `public, max-age=900`           |
+| the last four characters of that signature changed      | 403                                                         |
+| a link minted for one second, read two seconds later    | 410 `LINK_EXPIRED`                                          |
+| `storedFile` anonymous, then with the token             | `AUTH_REQUIRED`, then the file                              |
+| `gitStore` with `jaen:admin`                            | `FORBIDDEN`, because it is `storage:admin` and nothing less |
+| a second read within the minute                         | 9 ms, so the remembered token costs no round trip           |
+
+And the credential the taxi Worker will actually carry, `osg-krc`, a machine
+user holding `storage:read`, `storage:write` and `storage:sign` and no
+`jaen:admin` at all: it uploads, it mints the thirty day mail link
+(`expiresAt` 2026-10-07), and that link opens with no token. The role table is
+therefore measured on the production credential and not only on an admin's.
+
+### What is still open
+
+The Worker is not deployed, the D1 database is not created and the backfill has
+not run, all three of which are the deploy phase's. `ENFORCE_WRITES` and
+`CLAIM_ALL` ship at `0`, which is step one of the order: nothing is refused, the
+anonymous reads and writes are logged, and the next steps are planned on counts
+rather than on guesses. And `osg.snek.at` still answers every id without a
+token, so until somebody who knows that netcup host closes it, all of this is a
+lock on one of two doors.
