@@ -741,25 +741,25 @@ which has no delete.
 the ownership store decided without a network. `npm run typecheck` clean.
 `python3 tests/live.py`, 22 of 22 over HTTP:
 
-| what | answer |
-| --- | --- |
-| `/ping` with no token | 200 |
-| a preflight of `/storage/*` | 204 with `Access-Control-Allow-Headers: authorization` |
-| an anonymous upload | `AUTH_REQUIRED` |
-| an upload by a `krc:driver` | `FORBIDDEN`, and not `AUTH_REQUIRED` |
-| an upload by the booklimo admin | 314 ms, stamped `356348844407002709`, source `upload` |
-| that file read by its own organisation | 200, the same bytes, `Cache-Control: private, max-age=60` |
-| the same read by a `krc:driver` holding no storage role | 200 |
-| the same read anonymously | 401 `AUTH_REQUIRED` |
-| a file of limosen read by the booklimo admin | 403 `FORBIDDEN`, not 401 and not 404 |
-| an id nothing ever stored | 404 from the driver, the gate having passed it |
-| a link minted by a `krc:driver` | `FORBIDDEN` |
-| a link minted by the admin, 900 seconds | opens with no token at all, `public, max-age=900` |
-| the last four characters of that signature changed | 403 |
-| a link minted for one second, read two seconds later | 410 `LINK_EXPIRED` |
-| `storedFile` anonymous, then with the token | `AUTH_REQUIRED`, then the file |
-| `gitStore` with `jaen:admin` | `FORBIDDEN`, because it is `storage:admin` and nothing less |
-| a second read within the minute | 9 ms, so the remembered token costs no round trip |
+| what                                                    | answer                                                      |
+| ------------------------------------------------------- | ----------------------------------------------------------- |
+| `/ping` with no token                                   | 200                                                         |
+| a preflight of `/storage/*`                             | 204 with `Access-Control-Allow-Headers: authorization`      |
+| an anonymous upload                                     | `AUTH_REQUIRED`                                             |
+| an upload by a `krc:driver`                             | `FORBIDDEN`, and not `AUTH_REQUIRED`                        |
+| an upload by the booklimo admin                         | 314 ms, stamped `356348844407002709`, source `upload`       |
+| that file read by its own organisation                  | 200, the same bytes, `Cache-Control: private, max-age=60`   |
+| the same read by a `krc:driver` holding no storage role | 200                                                         |
+| the same read anonymously                               | 401 `AUTH_REQUIRED`                                         |
+| a file of limosen read by the booklimo admin            | 403 `FORBIDDEN`, not 401 and not 404                        |
+| an id nothing ever stored                               | 404 from the driver, the gate having passed it              |
+| a link minted by a `krc:driver`                         | `FORBIDDEN`                                                 |
+| a link minted by the admin, 900 seconds                 | opens with no token at all, `public, max-age=900`           |
+| the last four characters of that signature changed      | 403                                                         |
+| a link minted for one second, read two seconds later    | 410 `LINK_EXPIRED`                                          |
+| `storedFile` anonymous, then with the token             | `AUTH_REQUIRED`, then the file                              |
+| `gitStore` with `jaen:admin`                            | `FORBIDDEN`, because it is `storage:admin` and nothing less |
+| a second read within the minute                         | 9 ms, so the remembered token costs no round trip           |
 
 And the credential the taxi Worker will actually carry, `osg-krc`, a machine
 user holding `storage:read`, `storage:write` and `storage:sign` and no
@@ -892,3 +892,164 @@ work did not touch (the Settings forms, `PasswordReset`, `WaitingScreen`,
 `gatsby-source-jaen` typechecks clean and so does the `jaen` package's build.
 The sites' `OSG_TOKEN` secrets carry a reference in the workflows and a value
 only in the deploy phase, and neither site is built by Actions today anyway.
+
+## Deployed 2026-09-07 at night, and the gate is live
+
+Everything above this heading was written before anything of it served. This
+section is what actually happened on the wire, in the order the design's
+migration section asks for, with every stamp.
+
+### The order, and why each step is only safe after the one before it
+
+1. **The gateway, refusing nothing.** D1 `osg-owners` created and bound, the
+   secrets `AUTH_KEY` and `SIGNING_KEY` set, `wrangler deploy` with
+   `ENFORCE_WRITES=0` and `CLAIM_ALL=0`. Worker version `4c549ec6` at 21:03
+   UTC. From this moment `signedUrl` exists, which is what everything after it
+   needs, and nothing is refused, which is why deploying it costs nothing.
+2. **The credentials.** The two site builds' machine users minted, the four
+   `OSG_TOKEN` values placed: two GitHub repository secrets and two Worker
+   secrets. Placing a credential refuses nobody either.
+3. **Both sites rebuilt and deployed.** This is the step that takes the
+   gateway out of a visitor's path, and it has to come before any read is
+   refused: 271 media files written into booklimo's `public/osg/` and 265 into
+   limosen's, the URLs rewritten onto each site's own origin.
+4. **Both Workers deployed**, pylon 1.8.0, each carrying its brand's
+   `OSG_TOKEN`, so `documentUrl`, the offer and invoice mail links and the
+   push payload's image became signed links rather than bare URLs.
+5. **`ENFORCE_WRITES=1`.** Worker version `d7c3548f` at 21:19 UTC. An
+   anonymous upload is 401 from here on and every new file carries its
+   caller's organisation.
+6. **The ownership rows**, 284 of them, which is the read gate: a file with a
+   row is private. It is last because it is the only step with no cheap way
+   back.
+
+### The stamps
+
+| piece           | value                                                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Worker          | `osg` on Cloudflare account `a4b0e1ba603b529a64d355679ff2911a`, versions `4c549ec6` (write gate off) and `d7c3548f` (write gate on)                                             |
+| names           | `osg.netsnek.com` and `osg.jaen.io`, both custom domains of the one Worker, unchanged                                                                                           |
+| ownership store | D1 `osg-owners`, `8bd4639d-a4c9-4cc4-a7fa-32679c3518de`, western Europe, `scripts/schema.sql` applied remotely                                                                  |
+| secrets         | `AUTH_KEY` (the CMS application key JSON), `SIGNING_KEY` (64 characters, kept at `~/.config/jaen/osg-signing-key.txt`), beside the two Telegram secrets that were already there |
+| branch          | `private-storage` of `jaenjs/open-storage-gateway`, nine commits from `a24d325` to `bc8eaf6`, `npm test` 40/40 and `npm run typecheck` clean before the deploy                  |
+
+**The D1 database was made twice, and the second time on purpose.**
+`wrangler d1 create` takes its primary region from where the command runs and
+chose APAC. Every owner lookup that misses the isolate's memo is a query
+against that primary, so a gateway in Europe would have put a Pacific round
+trip in front of a byte read. The empty database was deleted and made again
+with `--location weur`, beside the issuer the gate introspects at. Anybody
+recreating this store passes `--location`.
+
+### The credentials, and the one the design named that had not existed
+
+Four machine users, all on the CMS project `268283277977065078`, none of their
+tokens ever printed.
+
+| user                                       | organisation         | roles                                           | where it lives                                                                             |
+| ------------------------------------------ | -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `osg-limosen`                              | `339284789469124181` | `storage:read`, `storage:write`, `storage:sign` | `OSG_TOKEN` on the limosen Worker                                                          |
+| `osg-krc`                                  | `356348844407002709` | the same three                                  | `OSG_TOKEN` on the booklimo Worker                                                         |
+| `osg-build-limosen` (`389766322365404787`) | `339284789469124181` | `storage:read`                                  | `~/.config/jaen/osg-limosen.env` and the GitHub secret `OSG_TOKEN` of `netsnek/limosen.at` |
+| `osg-build-krc` (`389766313003718235`)     | `356348844407002709` | `storage:read`                                  | `~/.config/jaen/osg-booklimo.env` and the GitHub secret of `netsnek/booklimo.at`           |
+
+The two build users are new. The pass before this one had let the site builds
+carry the Workers' own tokens, which works and is one power too many: a build
+downloads what the site's data names and never uploads or mints, and its token
+sits in a repository secret. `scripts/osg-machine-user.py --brand <brand>
+--build` in the taxi platform mints them, because that script already holds
+the recipe for minting in these two organisations, and it writes them where
+each site's `scripts/deploy.sh` reads them.
+
+All four were introspected at `accounts.netsnek.com` before anything was set,
+and the answers are the gate's own reading: `active`, the organisation in
+`urn:zitadel:iam:user:resourceowner:id`, and the roles as the keys of the
+roles claim.
+
+### Who may upload, established before anonymous writes were refused
+
+The design asks for this pre-flight and it is the step that decides whether a
+write gate is a gate or an outage. Read off Zitadel's own grants rather than
+off a guess: fifteen accounts hold a role on the CMS project in the limosen
+organisation and twenty-one in the KRC one, of which five and six may upload,
+each set being the brand's storage machine user and its `jaen:admin` editors.
+Every other account holds a driver or a customer role only. On the code side
+there is no anonymous upload path left in either brand: every call goes
+through jaen's `uploadFile`, which needs a CMS or app session, or through the
+Worker's own `OSG_TOKEN`.
+
+The gate proved itself before anybody measured it. An 85 byte PNG was uploaded
+through the live gateway at 21:07:11 UTC by another run and carries an
+ownership row stamped `356348844407002709`, the organisation of the token that
+sent it.
+
+### The backfill, which is the read gate
+
+`scripts/backfill-owners.py` over both site checkouts and both brands' D1,
+confirmed against the gateway so every row says what it holds.
+
+| source         | named | claimed | shared |
+| -------------- | ----- | ------- | ------ |
+| limosen.at     | 370   | 266     | 0      |
+| booklimo.at    | 447   | 7       | 266    |
+| `limosen-mock` | 0     | 0       | 0      |
+| `booklimo`     | 11    | 11      | 0      |
+
+284 rows: limosen owns 266 and KRC owns 18, and every one of limosen's 266 is
+shared with KRC, which is the `shared` column earning its existence. The two
+sites are one content lineage and the same Telegram file_id is the logo of two
+companies; without that column the second site's build would have answered 403
+on every one of them.
+
+**`limosen-mock` really holds no media rows**, checked rather than read as a
+failure: 15,352 transfers, zero `CarImage` and zero `TransferDocument`. All of
+the platform's own files are booklimo's four car pictures and seven documents.
+
+**No other jaen site was claimed.** The 284 ids were compared against the jaen
+data of adlerhorst, netsnek.com, photonq, nadine-hauswirth, barbara-mauz,
+fhkit and emailwerk.com and share nothing with any of them, so those sites are
+still unclaimed and still public, which is exactly what the per organisation
+move is for. Each follows when its own site has been rebuilt on the new
+`gatsby-source-jaen`.
+
+### The acceptance, on the systems that serve
+
+`tests/46-private-storage-live.ipynb` of the taxi platform, 11 / 0 / 0 / 0
+against `osg.netsnek.com`, `api.booklimo.at`, `booklimo.at` and `limosen.at`.
+It is the sibling of `44-private-storage.ipynb`, which measures the same chain
+against a gateway image the notebook starts itself: an image of a branch is
+the right thing to read while the gate is being built and the wrong thing once
+it ships.
+
+| the design's acceptance                                                                                                   | what the live systems answered                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| anonymous read 401, another organisation 403, a fitting token 200                                                         | 401 `AUTH_REQUIRED`, 403 `FORBIDDEN`, 200 with `Cache-Control: private, max-age=60`. The organisation the row shares the file with reads it too, the same 13,951 bytes, and the read-only build credential reads it with `storage:read` alone  |
+| a build with `OSG_TOKEN` fetches every media node and the site serves them, a build without it fails with a clear message | 271 files in booklimo's `/osg/`, a site-served picture byte for byte what the gateway holds, and a build with the variable taken away stops with "OSG_TOKEN is required to fetch media from the storage gateway"                               |
+| the CMS and the app render for a signed-in admin with no gateway request lacking a bearer                                 | on the live booklimo.at, 9 of 9: the media library draws 143 pictures, none a bare gateway source, its twelve gateway reads all carry a bearer, none is refused, and four tiles are object URLs                                                |
+| the offer mail's link and the ride page's document links are signed, 200 until they expire and 410 after                  | `documentUrl` a 900 second link opening with no `Authorization` header onto a 590,178 byte PDF, the offer mail's 2,591,999 seconds and opening the same way, a valid signature with an expiry in the past 410 `LINK_EXPIRED`, a forged one 403 |
+| the files that already exist keep their ids and need no re-upload                                                         | all seven of booklimo's documents answer under the id `TransferDocument` has always held, and nothing was re-uploaded                                                                                                                          |
+
+One thing the wire cannot say and a browser can: a page of either site,
+loaded signed in as the CMS admin, makes no request to any `osg.` host at all.
+
+### What is still open after the deploy
+
+**`osg.snek.at` is still open.** It answers `GET /storage/<id>` for every
+Telegram id without a token, from the netcup host `89.58.34.70`, and both
+sites' `patches.txt` still name it. Every one of the 284 files now refused on
+`osg.netsnek.com` is readable there. This deploy locks one of two doors and
+nobody here knows who operates the other, which is why it stays the first of
+the design's two unestablished facts and not a footnote.
+
+**`CLAIM_ALL` is still `0`**, deliberately. A file with no ownership row is
+still public, which is what lets the other jaen sites go on serving while they
+are rebuilt one at a time. It is also why the owner's sentence, nothing behind
+a gateway link is public, is true today for the taxi brands and their two
+sites and not yet for everything the gateway has ever served.
+
+**Rolling the read gate back means deleting rows and redeploying.** There is
+no `ENFORCE_READS` flag: a row is the gate. A positive owner lookup is
+memoised for the isolate's life, so deleting rows alone leaves running
+isolates serving the old answer, and a `wrangler deploy` is what recycles
+them. The rows themselves can be rebuilt from the same four sources, which is
+the one reason deleting them is recoverable at all.
