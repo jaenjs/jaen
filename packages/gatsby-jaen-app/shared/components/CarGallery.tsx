@@ -14,10 +14,16 @@
  * The strip is the only place in the app that scrolls sideways on purpose,
  * so it keeps its own container and never lets the page scroll with it
  * (`overscrollBehaviorX: contain`).
+ *
+ * Every picture is drawn by `StorageImage`, because the gateway is private:
+ * with a session the bytes come with the reader's own token, and on the
+ * public ride page, where nobody is signed in, the pylon's signed link is
+ * drawn as it stands.
  */
 import {useCallback, useRef, useState} from 'react'
-import {Box, HStack, Image} from '@chakra-ui/react'
+import {Box, HStack} from '@chakra-ui/react'
 import {CarImage, type CarPicture, type CarPictureImage} from './CarImage'
+import {StorageImage} from './StorageImage'
 
 export interface CarGalleryProps {
   car: CarPicture | null | undefined
@@ -28,7 +34,9 @@ export interface CarGalleryProps {
 }
 
 const pictures = (car: CarPicture | null | undefined): CarPictureImage[] => {
-  const list = (car?.images ?? []).filter(image => image?.url || image?.thumbUrl)
+  const list = (car?.images ?? []).filter(
+    image => image?.url || image?.thumbUrl
+  )
   if (list.length > 0) return list
   // A read that answered the cover's two URLs only, which is every screen
   // built before the gallery. One picture is still a gallery of one.
@@ -47,7 +55,9 @@ export function CarGallery({car, alt, ratio = 16 / 9}: CarGalleryProps) {
     const el = strip.current
     if (!el) return
     const width = el.clientWidth || 1
-    setAt(Math.max(0, Math.min(list.length - 1, Math.round(el.scrollLeft / width))))
+    setAt(
+      Math.max(0, Math.min(list.length - 1, Math.round(el.scrollLeft / width)))
+    )
   }, [list.length])
 
   // Nothing photographed: the silhouette, in the box the strip would fill.
@@ -79,7 +89,7 @@ export function CarGallery({car, alt, ratio = 16 / 9}: CarGalleryProps) {
             scrollSnapAlign="start"
             aspectRatio={ratio}
             position="relative">
-            <Image
+            <StorageImage
               src={image.url ?? image.thumbUrl ?? undefined}
               alt={alt ?? ''}
               w="full"
@@ -95,7 +105,12 @@ export function CarGallery({car, alt, ratio = 16 / 9}: CarGalleryProps) {
       </Box>
 
       {list.length > 1 && (
-        <HStack gap="2" justify="center" mt="2" aria-hidden data-testid="car-gallery-dots">
+        <HStack
+          gap="2"
+          justify="center"
+          mt="2"
+          aria-hidden
+          data-testid="car-gallery-dots">
           {list.map((image, index) => (
             <Box
               key={image.id ?? `dot-${index}`}

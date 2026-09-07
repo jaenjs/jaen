@@ -9,7 +9,9 @@
  *
  * Every file goes through jaen's own `uploadFile`, the same path the CMS
  * media library uses, so the pictures land in the one library and the app
- * stores nothing but what the gateway answered. The control is
+ * stores nothing but what the gateway answered. It carries the dispatcher's
+ * own token since the gateway went private, and the tiles read the bytes
+ * back with it through `StorageImage`. The control is
  * `MediaDropzone` from gatsby-plugin-jaen, the one upload control of the
  * estate, here with `maxFiles` above one so a phone can hand over a whole
  * roll in one gesture.
@@ -24,12 +26,22 @@
  * what a touch screen has, and they are also what a keyboard has.
  */
 import {useCallback, useRef, useState} from 'react'
-import {Badge, Box, Grid, HStack, IconButton, Image, Stack, Text} from '@chakra-ui/react'
+import {
+  Badge,
+  Box,
+  Grid,
+  HStack,
+  IconButton,
+  Stack,
+  Text
+} from '@chakra-ui/react'
 import {FaArrowLeft} from '@react-icons/all-files/fa/FaArrowLeft'
 import {FaArrowRight} from '@react-icons/all-files/fa/FaArrowRight'
 import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
 import {uploadFile} from 'jaen'
 import {MediaDropzone} from 'gatsby-plugin-jaen'
+
+import {StorageImage} from './StorageImage'
 
 /**
  * One picture of the draft. `id` is the row on the backend, absent while the
@@ -175,13 +187,18 @@ export function CarImagesField({
   }
 
   return (
-    <Stack gap="3" data-testid="car-images-field" data-car-pictures={value.length}>
+    <Stack
+      gap="3"
+      data-testid="car-images-field"
+      data-car-pictures={value.length}>
       {value.length === 0 ? (
         <Text textStyle="sm" color="fg.muted">
           {s.GalleryEmpty}
         </Text>
       ) : (
-        <Grid templateColumns={{base: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)'}} gap="3">
+        <Grid
+          templateColumns={{base: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)'}}
+          gap="3">
           {value.map((image, index) => (
             <Box
               key={image.id ?? image.fileId}
@@ -211,7 +228,7 @@ export function CarImagesField({
               borderColor={over === index ? 'brand.solid' : 'border.default'}
               bg="bg.muted">
               <Box aspectRatio={4 / 3}>
-                <Image
+                <StorageImage
                   src={image.thumbUrl || image.url}
                   alt=""
                   w="full"

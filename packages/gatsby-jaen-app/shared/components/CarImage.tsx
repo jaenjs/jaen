@@ -11,10 +11,18 @@
  *
  * The thumbnail is what a list, a picker and a card show; the full file is
  * asked for only where the picture is the point, which today is the vehicle
- * form's preview. Both are public URLs on the gateway, so the browser caches
- * them across screens.
+ * form's preview.
+ *
+ * Neither is a public URL any more. The gateway is private
+ * (okf/architecture/media.md, "Private storage") and the bytes are drawn
+ * through `StorageImage` beside this, with the signed-in person's token where
+ * there is one and as the pylon's signed link where there is not. Until the
+ * bytes arrive the silhouette stands in, which is the same fallback a car
+ * with no picture gets, so a card never holds a broken image.
  */
 import {Box, Icon, Image} from '@chakra-ui/react'
+
+import {useStorageSrc} from './StorageImage'
 import {FaCar} from '@react-icons/all-files/fa/FaCar'
 import {FaCarAlt} from '@react-icons/all-files/fa/FaCarAlt'
 import {FaCarSide} from '@react-icons/all-files/fa/FaCarSide'
@@ -49,7 +57,9 @@ export interface CarPicture {
  * the gallery, or the cover fields a narrower read answered. Both are the
  * same picture, so a screen that has either draws it.
  */
-export const carCover = (car: CarPicture | null | undefined): CarPictureImage | null => {
+export const carCover = (
+  car: CarPicture | null | undefined
+): CarPictureImage | null => {
   const first = car?.images?.[0]
   if (first?.url || first?.thumbUrl) return first
   if (car?.imageUrl || car?.imageThumbUrl) {
@@ -91,9 +101,10 @@ export interface CarImageProps {
 
 export function CarImage({car, size = 40, full = false, alt}: CarImageProps) {
   const cover = carCover(car)
-  const src = full
+  const wanted = full
     ? (cover?.url ?? cover?.thumbUrl ?? undefined)
     : (cover?.thumbUrl ?? cover?.url ?? undefined)
+  const src = useStorageSrc(wanted)
   const banner = size === 'banner'
   const Fallback = silhouette(car?.carClass)
 
