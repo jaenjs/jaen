@@ -28,7 +28,7 @@
  * board hands it the columns, the day grouping, the stripes and its card.
  * The dialogs are exported: TransferDetailView opens the same ones.
  */
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {
   Badge,
   Box,
@@ -55,37 +55,39 @@ import {
   Switch,
   Text,
   Textarea,
-  chakra,
-} from "@chakra-ui/react";
-import { FaSearch } from "@react-icons/all-files/fa/FaSearch";
-import { FaPlus } from "@react-icons/all-files/fa/FaPlus";
-import { FaFilter } from "@react-icons/all-files/fa/FaFilter";
-import { FaSortAmountDown } from "@react-icons/all-files/fa/FaSortAmountDown";
-import { FaSortAmountUp } from "@react-icons/all-files/fa/FaSortAmountUp";
-import { FaChevronDown } from "@react-icons/all-files/fa/FaChevronDown";
-import { FaChevronUp } from "@react-icons/all-files/fa/FaChevronUp";
-import { FaUsers } from "@react-icons/all-files/fa/FaUsers";
-import { FaSuitcase } from "@react-icons/all-files/fa/FaSuitcase";
-import { FaPlane } from "@react-icons/all-files/fa/FaPlane";
-import { FaMapMarkerAlt } from "@react-icons/all-files/fa/FaMapMarkerAlt";
-import { FaCalendarAlt } from "@react-icons/all-files/fa/FaCalendarAlt";
-import { FaCar } from "@react-icons/all-files/fa/FaCar";
-import { FaTimes } from "@react-icons/all-files/fa/FaTimes";
-import type { BadgeProps } from "@chakra-ui/react";
-import { useCaller } from "../auth";
-import { useI18nCode, type I18nCode } from "../i18n";
-import { useAppNavigate } from "../navigation";
+  chakra
+} from '@chakra-ui/react'
+import {FaSearch} from '@react-icons/all-files/fa/FaSearch'
+import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
+import {FaFilter} from '@react-icons/all-files/fa/FaFilter'
+import {FaSortAmountDown} from '@react-icons/all-files/fa/FaSortAmountDown'
+import {FaSortAmountUp} from '@react-icons/all-files/fa/FaSortAmountUp'
+import {FaChevronDown} from '@react-icons/all-files/fa/FaChevronDown'
+import {FaChevronUp} from '@react-icons/all-files/fa/FaChevronUp'
+import {FaUsers} from '@react-icons/all-files/fa/FaUsers'
+import {FaSuitcase} from '@react-icons/all-files/fa/FaSuitcase'
+import {FaPlane} from '@react-icons/all-files/fa/FaPlane'
+import {FaMapMarkerAlt} from '@react-icons/all-files/fa/FaMapMarkerAlt'
+import {FaCalendarAlt} from '@react-icons/all-files/fa/FaCalendarAlt'
+import {FaCar} from '@react-icons/all-files/fa/FaCar'
+import {FaTimes} from '@react-icons/all-files/fa/FaTimes'
+import type {BadgeProps, StackProps} from '@chakra-ui/react'
+import {useCaller} from '../auth'
+import {useI18nCode, type I18nCode} from '../i18n'
+import {useAppNavigate} from '../navigation'
 import {
   useCars,
   useDrivers,
   useUsers,
   type ResourceCar,
-  type ResourceUser,
-} from "../hooks";
+  type ResourceUser
+} from '../hooks'
 import {
+  acceptAssignment,
   assignCar,
   assignDriver,
   createTransfer,
+  declineAssignment,
   fetchTransfer,
   isClosed,
   setPrice,
@@ -105,8 +107,10 @@ import {
   type PaymentMethod,
   type TransferCategory,
   type TransferRow,
-  type AssignmentAttempt,
-} from "../hooks/transfers";
+  type AssignmentAttempt
+} from '../hooks/transfers'
+// The one past rule of the two forms, dispatch.md section 12.
+import {isPickupInPast} from '../hooks/bookings'
 import {
   AmountInput,
   CarImage,
@@ -120,38 +124,42 @@ import {
   useStateLabel,
   PageHeader,
   formatAmount,
-  parseAmount,
-} from "../components";
-import { RefreshButton } from "../components/RefreshButton";
-import { useViewRefresh } from "../hooks/view-refresh";
-import { OfflineBanner } from "../components/OfflineBanner";
-import { CustomerStatusBadge } from "../components/CustomerStatusBadge";
-import { ConfirmDialog } from "../components/ConfirmDialog";
-import { canConfirmBooking, needsConfirmation } from "../hooks/offers";
-import { confirmBooking, useConfirmationRecipient } from "../hooks/documents";
+  parseAmount
+} from '../components'
+import {RefreshButton} from '../components/RefreshButton'
+import {useViewRefresh} from '../hooks/view-refresh'
+import {OfflineBanner} from '../components/OfflineBanner'
+import {CustomerStatusBadge} from '../components/CustomerStatusBadge'
+import {ConfirmDialog} from '../components/ConfirmDialog'
+import {
+  canConfirmBooking,
+  canSendOffer,
+  needsConfirmation
+} from '../hooks/offers'
+import {confirmBooking, useConfirmationRecipient} from '../hooks/documents'
 import {
   DataTable,
   useIsMobile,
   type DataColumn,
   type DataGroup,
-  type DayTone,
-} from "../components/table";
-import { ListSkeleton, TableSkeleton } from "../components/skeletons";
-import { useRefetchOnReconnect } from "../offline";
-import { getI18nCommon } from "../locales/i18nCommon";
+  type DayTone
+} from '../components/table'
+import {ListSkeleton, TableSkeleton} from '../components/skeletons'
+import {useRefetchOnReconnect} from '../offline'
+import {getI18nCommon} from '../locales/i18nCommon'
 import {
   fill,
   getI18nTransfers,
-  type TransfersStrings,
-} from "../locales/i18nTransfers";
+  type TransfersStrings
+} from '../locales/i18nTransfers'
 
 // TransferDetailView reads the breakpoint from here since before the table module existed.
-export { useIsMobile };
+export {useIsMobile}
 import {
   asTransferState,
   TRANSFER_STATES,
-  type TransferState,
-} from "../locales/i18nStates";
+  type TransferState
+} from '../locales/i18nStates'
 
 // ============================================================
 // Small shared helpers
@@ -163,89 +171,89 @@ import {
  * between renders.
  */
 export function useTransferStrings() {
-  const code = useI18nCode();
-  const t = useMemo(() => getI18nTransfers(code).strings, [code]);
-  const tc = useMemo(() => getI18nCommon(code).strings, [code]);
-  return { code, t, tc };
+  const code = useI18nCode()
+  const t = useMemo(() => getI18nTransfers(code).strings, [code])
+  const tc = useMemo(() => getI18nCommon(code).strings, [code])
+  return {code, t, tc}
 }
 
-const pad2 = (n: number) => String(n).padStart(2, "0");
+const pad2 = (n: number) => String(n).padStart(2, '0')
 
 /** Local YYYY-MM-DD of a Date. */
 export const localDay = (d: Date) =>
-  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 
 /** "Fr., 4. Sep. 2026" in the account's language. */
 export const formatDay = (iso: string, code: I18nCode): string => {
-  if (!iso) return "";
+  if (!iso) return ''
   try {
     return new Intl.DateTimeFormat(code, {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(`${iso}T00:00:00`));
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).format(new Date(`${iso}T00:00:00`))
   } catch {
-    return iso;
+    return iso
   }
-};
+}
 
 /** A full timestamp in the account's language, for requestedAt and the ride's actuals. */
 export const formatDateTime = (
   iso: string | undefined,
-  code: I18nCode,
+  code: I18nCode
 ): string => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
   try {
     return new Intl.DateTimeFormat(code, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(d);
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(d)
   } catch {
-    return d.toLocaleString();
+    return d.toLocaleString()
   }
-};
+}
 
-type EnumPrefix = "Pay_" | "Party_" | "Class_" | "Cat_" | "Type_" | "Extra_";
+type EnumPrefix = 'Pay_' | 'Party_' | 'Class_' | 'Cat_' | 'Type_' | 'Extra_'
 
 /** The catalogue word for an enum member, the raw member when the catalogue has none. */
 export const enumLabel = (
   t: TransfersStrings,
   prefix: EnumPrefix,
-  value: string | null | undefined,
+  value: string | null | undefined
 ): string => {
-  if (!value) return "";
-  const key = `${prefix}${value}` as keyof TransfersStrings;
-  return (t[key] as string | undefined) ?? value.replace(/_/g, " ");
-};
+  if (!value) return ''
+  const key = `${prefix}${value}` as keyof TransfersStrings
+  return (t[key] as string | undefined) ?? value.replace(/_/g, ' ')
+}
 
 export const driverDisplayName = (u: ResourceUser): string => {
   const full =
-    `${u.details?.firstName ?? ""} ${u.details?.lastName ?? ""}`.trim();
-  return full || u.username || u.primaryEmailAddress;
-};
+    `${u.details?.firstName ?? ''} ${u.details?.lastName ?? ''}`.trim()
+  return full || u.username || u.primaryEmailAddress
+}
 
 export const carDisplayName = (c: ResourceCar): string =>
-  c.carName || c.licensePlate;
+  c.carName || c.licensePlate
 
 const errorMessage = (err: unknown, fallback: string): string =>
-  err instanceof Error && err.message ? err.message : fallback;
+  err instanceof Error && err.message ? err.message : fallback
 
 // ============================================================
 // A dialog that is a bottom drawer on a phone
 // ============================================================
 
 interface SheetProps {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl";
+  open: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+  footer?: React.ReactNode
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   /** Blocks closing while a mutation is out. */
-  busy?: boolean;
+  busy?: boolean
 }
 
 /**
@@ -259,13 +267,13 @@ export function Sheet({
   title,
   children,
   footer,
-  size = "md",
-  busy = false,
+  size = 'md',
+  busy = false
 }: SheetProps) {
-  const mobile = useIsMobile();
-  const onOpenChange = (e: { open: boolean }) => {
-    if (!e.open && !busy) onClose();
-  };
+  const mobile = useIsMobile()
+  const onOpenChange = (e: {open: boolean}) => {
+    if (!e.open && !busy) onClose()
+  }
 
   if (mobile) {
     return (
@@ -274,8 +282,7 @@ export function Sheet({
         onOpenChange={onOpenChange}
         placement="bottom"
         lazyMount
-        unmountOnExit
-      >
+        unmountOnExit>
         <Portal>
           <Drawer.Backdrop />
           <Drawer.Positioner>
@@ -296,7 +303,7 @@ export function Sheet({
           </Drawer.Positioner>
         </Portal>
       </Drawer.Root>
-    );
+    )
   }
 
   return (
@@ -307,8 +314,7 @@ export function Sheet({
       placement="center"
       scrollBehavior="inside"
       lazyMount
-      unmountOnExit
-    >
+      unmountOnExit>
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
@@ -325,7 +331,7 @@ export function Sheet({
         </Dialog.Positioner>
       </Portal>
     </Dialog.Root>
-  );
+  )
 }
 
 // ============================================================
@@ -333,13 +339,13 @@ export function Sheet({
 // ============================================================
 
 interface PickerListProps<T> {
-  items: T[];
-  selectedId?: string;
-  currentId?: string;
-  onSelect: (id: string) => void;
-  keyOf: (item: T) => string;
-  renderItem: (item: T) => React.ReactNode;
-  emptyLabel: string;
+  items: T[]
+  selectedId?: string
+  currentId?: string
+  onSelect: (id: string) => void
+  keyOf: (item: T) => string
+  renderItem: (item: T) => React.ReactNode
+  emptyLabel: string
 }
 
 /** A list of choices, one highlighted, one marked as the current one. */
@@ -350,21 +356,21 @@ function PickerList<T>({
   onSelect,
   keyOf,
   renderItem,
-  emptyLabel,
+  emptyLabel
 }: PickerListProps<T>) {
-  const { t } = useTransferStrings();
+  const {t} = useTransferStrings()
   if (items.length === 0) {
     return (
       <Text textStyle="sm" color="fg.muted" textAlign="center" py="4">
         {emptyLabel}
       </Text>
-    );
+    )
   }
   return (
     <Stack gap="1" role="listbox">
-      {items.map((item) => {
-        const id = keyOf(item);
-        const selected = id === selectedId;
+      {items.map(item => {
+        const id = keyOf(item)
+        const selected = id === selectedId
         return (
           <chakra.button
             key={id}
@@ -377,13 +383,12 @@ function PickerList<T>({
             py="2"
             rounded="control"
             borderWidth="1px"
-            borderColor={selected ? "colorPalette.solid" : "border.default"}
-            bg={selected ? "colorPalette.subtle" : "bg.surface"}
+            borderColor={selected ? 'colorPalette.solid' : 'border.default'}
+            bg={selected ? 'colorPalette.subtle' : 'bg.surface'}
             colorPalette="brand"
             cursor="pointer"
-            _hover={{ bg: selected ? "colorPalette.subtle" : "bg.subtle" }}
-            onClick={() => onSelect(id)}
-          >
+            _hover={{bg: selected ? 'colorPalette.subtle' : 'bg.subtle'}}
+            onClick={() => onSelect(id)}>
             <HStack justify="space-between" gap="2">
               <Box minW="0" flex="1">
                 {renderItem(item)}
@@ -395,20 +400,20 @@ function PickerList<T>({
               )}
             </HStack>
           </chakra.button>
-        );
+        )
       })}
     </Stack>
-  );
+  )
 }
 
 export interface AssignDialogProps {
-  open: boolean;
-  onClose: () => void;
-  transfer: TransferRow | null;
-  drivers: ResourceUser[];
-  cars: ResourceCar[];
+  open: boolean
+  onClose: () => void
+  transfer: TransferRow | null
+  drivers: ResourceUser[]
+  cars: ResourceCar[]
   /** Called with the new row after both writes. */
-  onAssigned: (row: TransferRow) => void;
+  onAssigned: (row: TransferRow) => void
 }
 
 /**
@@ -425,109 +430,109 @@ export function AssignDialog({
   transfer,
   drivers,
   cars,
-  onAssigned,
+  onAssigned
 }: AssignDialogProps) {
-  const { t, code } = useTransferStrings();
-  const [driverId, setDriverId] = useState<string | undefined>(undefined);
-  const [carId, setCarId] = useState<string>("");
-  const [driverSearch, setDriverSearch] = useState("");
-  const [carSearch, setCarSearch] = useState("");
-  const [push, setPush] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {t, code} = useTransferStrings()
+  const [driverId, setDriverId] = useState<string | undefined>(undefined)
+  const [carId, setCarId] = useState<string>('')
+  const [driverSearch, setDriverSearch] = useState('')
+  const [carSearch, setCarSearch] = useState('')
+  const [push, setPush] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   // The ride's request history, for the marks on the rows. A row from the
   // board carries none, so the ride is read once when the dialog opens;
   // the detail page's row already has it.
-  const [attempts, setAttempts] = useState<AssignmentAttempt[]>([]);
+  const [attempts, setAttempts] = useState<AssignmentAttempt[]>([])
 
   useEffect(() => {
     if (open) {
       // The open request is the preselected row, that is transfer.driverId
       // while REQUESTED; a declined ride carries no driver and starts empty.
-      setDriverId(transfer?.driverId);
-      setCarId(transfer?.carId ?? "");
-      setDriverSearch("");
-      setCarSearch("");
-      setPush(true);
-      setError(null);
-      setAttempts(transfer?.attempts ?? []);
+      setDriverId(transfer?.driverId)
+      setCarId(transfer?.carId ?? '')
+      setDriverSearch('')
+      setCarSearch('')
+      setPush(true)
+      setError(null)
+      setAttempts(transfer?.attempts ?? [])
       if (transfer && !transfer.attempts) {
-        let live = true;
+        let live = true
         fetchTransfer(transfer.id)
-          .then((row) => {
-            if (live && row?.attempts) setAttempts(row.attempts);
+          .then(row => {
+            if (live && row?.attempts) setAttempts(row.attempts)
           })
           .catch(() => {
             // The marks are a courtesy: without them every row is unmarked,
             // which is what a schema without attempts shows anyway.
-          });
+          })
         return () => {
-          live = false;
-        };
+          live = false
+        }
       }
     }
-    return undefined;
+    return undefined
   }, [
     open,
     transfer?.id,
     transfer?.driverId,
     transfer?.carId,
     transfer?.attempts,
-    transfer,
-  ]);
+    transfer
+  ])
 
   // The newest request per driver: the list arrives newest first.
   const history = useMemo(() => {
-    const byDriver = new Map<string, AssignmentAttempt>();
+    const byDriver = new Map<string, AssignmentAttempt>()
     for (const a of attempts)
-      if (!byDriver.has(a.driverId)) byDriver.set(a.driverId, a);
-    return byDriver;
-  }, [attempts]);
+      if (!byDriver.has(a.driverId)) byDriver.set(a.driverId, a)
+    return byDriver
+  }, [attempts])
 
   // The car assigned to each driver from the fleet the dialog already has,
   // Car.driverId. The first one when a driver has several.
   const carByDriver = useMemo(() => {
-    const byDriver = new Map<string, ResourceCar>();
+    const byDriver = new Map<string, ResourceCar>()
     for (const c of cars)
-      if (c.driverId && !byDriver.has(c.driverId)) byDriver.set(c.driverId, c);
-    return byDriver;
-  }, [cars]);
+      if (c.driverId && !byDriver.has(c.driverId)) byDriver.set(c.driverId, c)
+    return byDriver
+  }, [cars])
 
   /** What a driver's row says about their history with this ride, or nothing. */
   const markOf = (
-    d: ResourceUser,
-  ): { text: string; tone: "orange" | "red" | "gray" } | undefined => {
-    const a = history.get(d.id);
-    if (!a) return undefined;
-    const time = formatDateTime(a.answeredAt ?? a.requestedAt, code);
+    d: ResourceUser
+  ): {text: string; tone: 'orange' | 'red' | 'gray'} | undefined => {
+    const a = history.get(d.id)
+    if (!a) return undefined
+    const time = formatDateTime(a.answeredAt ?? a.requestedAt, code)
     if (!a.answer)
       return {
         text: fill(t.PickerRequestedNoAnswer, {
-          time: formatDateTime(a.requestedAt, code),
+          time: formatDateTime(a.requestedAt, code)
         }),
-        tone: "orange",
-      };
-    if (a.answer === "DECLINED") {
-      const base = fill(t.PickerDeclined, { time });
-      return { text: a.reason ? `${base} · ${a.reason}` : base, tone: "red" };
+        tone: 'orange'
+      }
+    if (a.answer === 'DECLINED') {
+      const base = fill(t.PickerDeclined, {time})
+      return {text: a.reason ? `${base} · ${a.reason}` : base, tone: 'red'}
     }
-    if (a.answer === "WITHDRAWN")
-      return { text: fill(t.PickerAskedBefore, { time }), tone: "gray" };
-    return undefined;
-  };
+    if (a.answer === 'WITHDRAWN')
+      return {text: fill(t.PickerAskedBefore, {time}), tone: 'gray'}
+    return undefined
+  }
 
   const chooseDriver = (id: string) => {
-    setDriverId(id);
+    setDriverId(id)
     // Choosing a driver preselects their car below; a driver without one
     // leaves the automatic choice.
-    setCarId(carByDriver.get(id)?.id ?? "");
-  };
+    setCarId(carByDriver.get(id)?.id ?? '')
+  }
 
   const filteredDrivers = useMemo(() => {
-    const q = driverSearch.trim().toLowerCase();
-    if (!q) return drivers;
-    return drivers.filter((d) => {
-      const car = carByDriver.get(d.id);
+    const q = driverSearch.trim().toLowerCase()
+    if (!q) return drivers
+    return drivers.filter(d => {
+      const car = carByDriver.get(d.id)
       return (
         driverDisplayName(d).toLowerCase().includes(q) ||
         (car
@@ -535,47 +540,47 @@ export function AssignDialog({
               .toLowerCase()
               .includes(q)
           : false)
-      );
-    });
-  }, [drivers, driverSearch, carByDriver]);
+      )
+    })
+  }, [drivers, driverSearch, carByDriver])
 
   const filteredCars = useMemo(() => {
-    const q = carSearch.trim().toLowerCase();
+    const q = carSearch.trim().toLowerCase()
     const list = q
       ? cars.filter(
-          (c) =>
+          c =>
             carDisplayName(c).toLowerCase().includes(q) ||
-            c.licensePlate.toLowerCase().includes(q),
+            c.licensePlate.toLowerCase().includes(q)
         )
-      : cars;
+      : cars
     // The chosen driver's own cars first, that is the usual answer.
     return [...list].sort(
       (a, b) =>
-        Number(b.driverId === driverId) - Number(a.driverId === driverId),
-    );
-  }, [cars, carSearch, driverId]);
+        Number(b.driverId === driverId) - Number(a.driverId === driverId)
+    )
+  }, [cars, carSearch, driverId])
 
   const submit = async () => {
-    if (!transfer || !driverId) return;
-    setBusy(true);
-    setError(null);
+    if (!transfer || !driverId) return
+    setBusy(true)
+    setError(null)
     try {
-      let row = transfer;
+      let row = transfer
       if (driverId !== transfer.driverId) {
-        row = await assignDriver(transfer.id, driverId, { notifyDriver: push });
+        row = await assignDriver(transfer.id, driverId, {notifyDriver: push})
       }
       if (carId && carId !== row.carId) {
-        row = await assignCar(transfer.id, carId);
+        row = await assignCar(transfer.id, carId)
       }
-      toaster.success({ title: t.ToastDriverAssigned });
-      onAssigned(row);
-      onClose();
+      toaster.success({title: t.ToastDriverAssigned})
+      onAssigned(row)
+      onClose()
     } catch (err) {
-      setError(errorMessage(err, t.ToastFailed));
+      setError(errorMessage(err, t.ToastFailed))
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
   return (
     <Sheet
@@ -592,8 +597,7 @@ export function AssignDialog({
           loading={busy}
           confirmDisabled={!driverId}
         />
-      }
-    >
+      }>
       <Stack gap="5">
         {error && <ErrorBanner message={error} />}
         <Stack gap="2">
@@ -605,7 +609,7 @@ export function AssignDialog({
               size="sm"
               placeholder={t.SearchDrivers}
               value={driverSearch}
-              onChange={(e) => setDriverSearch(e.target.value)}
+              onChange={e => setDriverSearch(e.target.value)}
             />
           </InputGroup>
           <Box maxH="40vh" overflowY="auto" pe="1">
@@ -614,13 +618,13 @@ export function AssignDialog({
               selectedId={driverId}
               currentId={transfer?.driverId}
               onSelect={chooseDriver}
-              keyOf={(d) => d.id}
+              keyOf={d => d.id}
               emptyLabel={t.NoDriversFound}
-              renderItem={(d) => {
+              renderItem={d => {
                 // The second line is the driver's car, never the login name:
                 // a plate tells a dispatcher something, an address does not.
-                const car = carByDriver.get(d.id);
-                const mark = markOf(d);
+                const car = carByDriver.get(d.id)
+                const mark = markOf(d)
                 return (
                   <HStack gap="2" minW="0">
                     <DriverColorDot color={d.driverColor} />
@@ -648,14 +652,13 @@ export function AssignDialog({
                           mt="1"
                           maxW="full"
                           whiteSpace="normal"
-                          textAlign="start"
-                        >
+                          textAlign="start">
                           {mark.text}
                         </Badge>
                       )}
                     </Box>
                   </HStack>
-                );
+                )
               }}
             />
           </Box>
@@ -670,7 +673,7 @@ export function AssignDialog({
               size="sm"
               placeholder={t.SearchVehicles}
               value={carSearch}
-              onChange={(e) => setCarSearch(e.target.value)}
+              onChange={e => setCarSearch(e.target.value)}
             />
           </InputGroup>
           <Box maxH="30vh" overflowY="auto" pe="1">
@@ -685,12 +688,11 @@ export function AssignDialog({
                 borderWidth="1px"
                 colorPalette="brand"
                 borderColor={
-                  carId === "" ? "colorPalette.solid" : "border.default"
+                  carId === '' ? 'colorPalette.solid' : 'border.default'
                 }
-                bg={carId === "" ? "colorPalette.subtle" : "bg.surface"}
+                bg={carId === '' ? 'colorPalette.subtle' : 'bg.surface'}
                 cursor="pointer"
-                onClick={() => setCarId("")}
-              >
+                onClick={() => setCarId('')}>
                 <Text textStyle="sm" color="fg.muted">
                   {t.AssignCarKeep}
                 </Text>
@@ -700,9 +702,9 @@ export function AssignDialog({
                 selectedId={carId}
                 currentId={transfer?.carId}
                 onSelect={setCarId}
-                keyOf={(c) => c.id}
+                keyOf={c => c.id}
                 emptyLabel={t.NoVehiclesFound}
-                renderItem={(c) => (
+                renderItem={c => (
                   <HStack gap="2" minW="0">
                     <DriverColorDot color={c.color} />
                     <CarImage car={c} size={36} alt={c.licensePlate} />
@@ -713,8 +715,8 @@ export function AssignDialog({
                       <Text textStyle="xs" color="fg.muted" truncate>
                         {c.licensePlate}
                         {c.carClass
-                          ? ` · ${enumLabel(t, "Class_", c.carClass)}`
-                          : ""}
+                          ? ` · ${enumLabel(t, 'Class_', c.carClass)}`
+                          : ''}
                       </Text>
                     </Box>
                   </HStack>
@@ -729,9 +731,8 @@ export function AssignDialog({
         <Stack gap="3">
           <Switch.Root
             checked={push}
-            onCheckedChange={(e) => setPush(e.checked)}
-            colorPalette="brand"
-          >
+            onCheckedChange={e => setPush(e.checked)}
+            colorPalette="brand">
             <Switch.HiddenInput />
             <Switch.Control />
             <Switch.Label>
@@ -756,78 +757,111 @@ export function AssignDialog({
         </Stack>
       </Stack>
     </Sheet>
-  );
+  )
 }
 
 export interface PriceDialogProps {
-  open: boolean;
-  onClose: () => void;
-  transfer: TransferRow | null;
-  onSaved: (row: TransferRow) => void;
+  open: boolean
+  onClose: () => void
+  transfer: TransferRow | null
+  onSaved: (row: TransferRow) => void
 }
 
+/**
+ * "Preis festlegen und Angebot senden", the one press that prices a ride
+ * and offers it (okf/architecture/offers-and-documents.md, "The price is
+ * the offer"). The dialog names the two things the dispatcher is deciding
+ * about, the amount the customer will read and the address it goes to, and
+ * the pylon does the rest: it draws the number, compiles the offer with the
+ * Typst engine in the Worker, uploads it to the storage gateway, stores the
+ * OFFER document, mails it with the office copy and moves the ride to
+ * OFFERED. No compiler is loaded in this browser for it; the browser's own
+ * stays for the preview alone.
+ *
+ * A ride that is confirmed already is not offered again. There the dialog
+ * is the plain "Preis festlegen" it always was, and the pylon makes the
+ * confirmation's paper again with the new price behind it.
+ */
 export function PriceDialog({
   open,
   onClose,
   transfer,
-  onSaved,
+  onSaved
 }: PriceDialogProps) {
-  const { t } = useTransferStrings();
-  const code = useI18nCode();
-  const [value, setValue] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {t} = useTransferStrings()
+  const code = useI18nCode()
+  const [value, setValue] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // An offer goes out on a NEW or an OFFERED ride and on no other.
+  const offers = canSendOffer(transfer?.customerStatus)
+
+  // The address the pylon will really use, passenger or account, the same
+  // query the confirm dialog reads. Only asked while an offer would go out.
+  const recipientQuery = useConfirmationRecipient(transfer?.id, open && offers)
+  const answered = recipientQuery.query.data
+  const recipient = answered
+    ? answered.email.trim()
+    : confirmationRecipient(transfer)
+  const recipientPending = offers && recipientQuery.isLoading
 
   useEffect(() => {
     if (open) {
       // The stored price is shown the way the field shows any amount at rest,
       // `12,50 €`, and a focus turns it back into the bare number.
       setValue(
-        transfer?.price != null ? formatAmount(code, transfer.price) : "",
-      );
-      setError(null);
+        transfer?.price != null ? formatAmount(code, transfer.price) : ''
+      )
+      setError(null)
     }
-  }, [open, transfer?.id, transfer?.price, code]);
+  }, [open, transfer?.id, transfer?.price, code])
+
+  // What the offer will say, as it is typed, so the dispatcher reads the
+  // number the customer will read and not the one that was stored.
+  const typed = parseAmount(value)
+  const amount = typed !== null && typed >= 0 ? formatAmount(code, typed) : null
 
   const submit = async () => {
-    if (!transfer) return;
+    if (!transfer) return
     // parseAmount reads `12,5`, `12.5` and `12,50 €` alike and rounds to two
     // decimals, so the backend gets 12.5 for all three.
-    const n = parseAmount(value);
+    const n = parseAmount(value)
     if (n === null || n < 0) {
-      setError(t.PriceInvalid);
-      return;
+      setError(t.PriceInvalid)
+      return
     }
-    setBusy(true);
-    setError(null);
+    setBusy(true)
+    setError(null)
     try {
-      const row = await setPrice(transfer.id, n);
-      toaster.success({ title: t.ToastPriceSet });
-      onSaved(row);
-      onClose();
+      const row = await setPrice(transfer.id, n)
+      toaster.success({
+        title: offers ? t.ToastOfferSent : t.ToastPriceSet
+      })
+      onSaved(row)
+      onClose()
     } catch (err) {
-      setError(errorMessage(err, t.ToastFailed));
+      setError(errorMessage(err, t.ToastFailed))
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title={t.PriceTitle}
+      title={offers ? t.PriceOfferTitle : t.PriceTitle}
       size="sm"
       busy={busy}
       footer={
         <DialogActions
           onCancel={onClose}
-          confirmLabel={t.PriceSubmit}
+          confirmLabel={offers ? t.PriceOfferSubmit : t.PriceSubmit}
           onConfirm={submit}
           loading={busy}
         />
-      }
-    >
+      }>
       <Stack gap="3">
         {error && <ErrorBanner message={error} />}
         <Field.Root invalid={!!error}>
@@ -838,14 +872,36 @@ export function PriceDialog({
             placeholder={t.PricePlaceholder}
             value={value}
             onChange={setValue}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void submit();
+            onKeyDown={e => {
+              if (e.key === 'Enter') void submit()
             }}
           />
         </Field.Root>
+        {offers && (
+          <Stack gap="1" data-testid="price-offer-hint">
+            <Text textStyle="sm" color="fg.muted">
+              {t.PriceOfferBody}
+            </Text>
+            <Text textStyle="sm" fontWeight="medium">
+              {amount
+                ? fill(t.PriceOfferAmount, {price: amount})
+                : t.PriceOfferNoAmount}
+            </Text>
+            <Text
+              textStyle="sm"
+              color={recipient || recipientPending ? 'fg.muted' : 'fg.error'}
+              data-testid="price-offer-recipient">
+              {recipient
+                ? fill(t.PriceOfferRecipient, {recipient})
+                : recipientPending
+                  ? t.ConfirmBookingRecipientPending
+                  : t.PriceOfferNoRecipient}
+            </Text>
+          </Stack>
+        )}
       </Stack>
     </Sheet>
-  );
+  )
 }
 
 /**
@@ -856,10 +912,10 @@ export function PriceDialog({
  * CONFIRMED: from there on a driver may be asked.
  */
 export interface ConfirmBookingDialogProps {
-  open: boolean;
-  onClose: () => void;
-  transfer: TransferRow | null;
-  onSaved: (row: TransferRow) => void;
+  open: boolean
+  onClose: () => void
+  transfer: TransferRow | null
+  onSaved: (row: TransferRow) => void
 }
 
 /**
@@ -871,52 +927,52 @@ export interface ConfirmBookingDialogProps {
  * `confirmationRecipient` and never the dialog's first source.
  */
 export function confirmationRecipient(
-  transfer: TransferRow | null | undefined,
+  transfer: TransferRow | null | undefined
 ): string {
   const passenger = (transfer?.passengers ?? []).find(
-    (p) => typeof p.email === "string" && p.email.includes("@"),
-  );
-  return passenger?.email?.trim() ?? "";
+    p => typeof p.email === 'string' && p.email.includes('@')
+  )
+  return passenger?.email?.trim() ?? ''
 }
 
 export function ConfirmBookingDialog({
   open,
   onClose,
   transfer,
-  onSaved,
+  onSaved
 }: ConfirmBookingDialogProps) {
-  const { t } = useTransferStrings();
-  const code = useI18nCode();
-  const [busy, setBusy] = useState(false);
+  const {t} = useTransferStrings()
+  const code = useI18nCode()
+  const [busy, setBusy] = useState(false)
 
   // The pylon names the address it will really use, passenger or account.
   // Only when it does not answer at all does the dialog read the
   // passengers by itself, and then it can still say "no address" where a
   // mail goes out, which is exactly what the query is here to stop.
-  const recipientQuery = useConfirmationRecipient(transfer?.id, open);
-  const answered = recipientQuery.query.data;
+  const recipientQuery = useConfirmationRecipient(transfer?.id, open)
+  const answered = recipientQuery.query.data
   const recipient = answered
     ? answered.email.trim()
-    : confirmationRecipient(transfer);
-  const pending = recipientQuery.isLoading;
+    : confirmationRecipient(transfer)
+  const pending = recipientQuery.isLoading
 
   const submit = async () => {
-    if (!transfer) return;
-    setBusy(true);
+    if (!transfer) return
+    setBusy(true)
     try {
-      const row = await confirmBooking(transfer.id);
-      toaster.success({ title: t.ToastConfirmed });
-      if (row) onSaved(row);
-      onClose();
+      const row = await confirmBooking(transfer.id)
+      toaster.success({title: t.ToastConfirmed})
+      if (row) onSaved(row)
+      onClose()
     } catch (err) {
       toaster.error({
         title: t.ToastFailed,
-        description: errorMessage(err, ""),
-      });
+        description: errorMessage(err, '')
+      })
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
   return (
     <ConfirmDialog
@@ -932,17 +988,16 @@ export function ConfirmBookingDialog({
           <Text textStyle="sm" fontWeight="medium">
             {transfer?.price != null
               ? fill(t.ConfirmBookingPrice, {
-                  price: formatAmount(code, transfer.price),
+                  price: formatAmount(code, transfer.price)
                 })
               : t.ConfirmBookingNoPrice}
           </Text>
           <Text
             textStyle="sm"
-            color={recipient || pending ? "fg.muted" : "fg.error"}
-            data-testid="confirm-recipient"
-          >
+            color={recipient || pending ? 'fg.muted' : 'fg.error'}
+            data-testid="confirm-recipient">
             {recipient
-              ? fill(t.ConfirmBookingRecipient, { recipient })
+              ? fill(t.ConfirmBookingRecipient, {recipient})
               : pending
                 ? t.ConfirmBookingRecipientPending
                 : t.ConfirmBookingNoRecipient}
@@ -950,14 +1005,14 @@ export function ConfirmBookingDialog({
         </Stack>
       }
     />
-  );
+  )
 }
 
 export interface StateDialogProps {
-  open: boolean;
-  onClose: () => void;
-  transfer: TransferRow | null;
-  onSaved: (row: TransferRow) => void;
+  open: boolean
+  onClose: () => void
+  transfer: TransferRow | null
+  onSaved: (row: TransferRow) => void
 }
 
 /** The dispatcher's state modal: the real twelve, any of them. */
@@ -965,37 +1020,37 @@ export function StateDialog({
   open,
   onClose,
   transfer,
-  onSaved,
+  onSaved
 }: StateDialogProps) {
-  const { t } = useTransferStrings();
-  const label = useStateLabel();
-  const current = asTransferState(transfer?.state);
-  const [value, setValue] = useState<TransferState | undefined>(current);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {t} = useTransferStrings()
+  const label = useStateLabel()
+  const current = asTransferState(transfer?.state)
+  const [value, setValue] = useState<TransferState | undefined>(current)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
-      setValue(asTransferState(transfer?.state));
-      setError(null);
+      setValue(asTransferState(transfer?.state))
+      setError(null)
     }
-  }, [open, transfer?.id, transfer?.state]);
+  }, [open, transfer?.id, transfer?.state])
 
   const submit = async () => {
-    if (!transfer || !value) return;
-    setBusy(true);
-    setError(null);
+    if (!transfer || !value) return
+    setBusy(true)
+    setError(null)
     try {
-      const row = await updateTransferState(transfer.id, value);
-      toaster.success({ title: t.ToastStateUpdated });
-      onSaved(row);
-      onClose();
+      const row = await updateTransferState(transfer.id, value)
+      toaster.success({title: t.ToastStateUpdated})
+      onSaved(row)
+      onClose()
     } catch (err) {
-      setError(errorMessage(err, t.ToastFailed));
+      setError(errorMessage(err, t.ToastFailed))
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
   return (
     <Sheet
@@ -1012,16 +1067,15 @@ export function StateDialog({
           loading={busy}
           confirmDisabled={!value || value === current}
         />
-      }
-    >
+      }>
       <Stack gap="3">
         {error && <ErrorBanner message={error} />}
         <Text textStyle="xs" color="fg.muted">
           {t.StateHint}
         </Text>
         <Stack gap="1" role="radiogroup" aria-label={t.StateLabel}>
-          {TRANSFER_STATES.map((s) => {
-            const selected = s === value;
+          {TRANSFER_STATES.map(s => {
+            const selected = s === value
             return (
               <chakra.button
                 key={s}
@@ -1035,12 +1089,11 @@ export function StateDialog({
                 rounded="control"
                 borderWidth="1px"
                 colorPalette="brand"
-                borderColor={selected ? "colorPalette.solid" : "border.default"}
-                bg={selected ? "colorPalette.subtle" : "bg.surface"}
+                borderColor={selected ? 'colorPalette.solid' : 'border.default'}
+                bg={selected ? 'colorPalette.subtle' : 'bg.surface'}
                 cursor="pointer"
-                _hover={{ bg: selected ? "colorPalette.subtle" : "bg.subtle" }}
-                onClick={() => setValue(s)}
-              >
+                _hover={{bg: selected ? 'colorPalette.subtle' : 'bg.subtle'}}
+                onClick={() => setValue(s)}>
                 <HStack justify="space-between">
                   <HStack gap="3">
                     <StatusBadge state={s} />
@@ -1053,12 +1106,12 @@ export function StateDialog({
                   )}
                 </HStack>
               </chakra.button>
-            );
+            )
           })}
         </Stack>
       </Stack>
     </Sheet>
-  );
+  )
 }
 
 // ============================================================
@@ -1066,17 +1119,17 @@ export function StateDialog({
 // ============================================================
 
 export interface CreateTransferDialogProps {
-  open: boolean;
-  onClose: () => void;
-  customers: ResourceUser[];
-  cars: ResourceCar[];
-  onCreated: (row: TransferRow) => void;
+  open: boolean
+  onClose: () => void
+  customers: ResourceUser[]
+  cars: ResourceCar[]
+  onCreated: (row: TransferRow) => void
   /**
    * What the form opens with. The detail page's "Rückfahrt anlegen" hands in
    * the origin's addresses swapped, its customer, passengers and extras, and
    * the origin's id as referenceId, see returnTripPrefill.
    */
-  prefill?: Partial<CreateForm>;
+  prefill?: Partial<CreateForm>
 }
 
 export interface CreateForm {
@@ -1085,66 +1138,73 @@ export interface CreateForm {
    * field on the form: the pylon mints the code from it, `-2` under the
    * origin's stem, and the dialog only says which ride it returns from.
    */
-  referenceId: string;
+  referenceId: string
   /** The origin's code, for the title. */
-  originCode: string;
-  customerId: string;
-  pickupLocation: string;
-  dropoffLocation: string;
-  pickupDate: string;
-  pickupTime: string;
-  subject: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email: string;
-  language: string;
-  flightNumber: string;
-  luggage: string;
-  childSeats: string;
-  extraTime: string;
-  preferredCarClass: CarClass | "";
-  preferredCarName: string;
-  transferCategory: TransferCategory;
-  price: string;
-  paymentMethode: PaymentMethod | "";
-  payingParty: PayingParty | "";
-  carId: string;
-  message: string;
-  extras: Record<string, number>;
+  originCode: string
+  customerId: string
+  pickupLocation: string
+  dropoffLocation: string
+  pickupDate: string
+  pickupTime: string
+  /**
+   * "Vergangene Fahrt nachtragen", dispatch.md section 12. Off by default:
+   * the office enters rides that are still to come, and a backdated one is a
+   * deliberate act that the pylon otherwise refuses with PICKUP_IN_PAST.
+   */
+  allowPast: boolean
+  subject: string
+  firstName: string
+  lastName: string
+  phone: string
+  email: string
+  language: string
+  flightNumber: string
+  luggage: string
+  childSeats: string
+  extraTime: string
+  preferredCarClass: CarClass | ''
+  preferredCarName: string
+  transferCategory: TransferCategory
+  price: string
+  paymentMethode: PaymentMethod | ''
+  payingParty: PayingParty | ''
+  carId: string
+  message: string
+  extras: Record<string, number>
 }
 
 const emptyForm = (): CreateForm => ({
-  referenceId: "",
-  originCode: "",
-  customerId: "",
-  pickupLocation: "",
-  dropoffLocation: "",
+  referenceId: '',
+  originCode: '',
+  customerId: '',
+  pickupLocation: '',
+  dropoffLocation: '',
   pickupDate: localDay(new Date()),
-  pickupTime: "",
-  subject: "",
-  firstName: "",
-  lastName: "",
-  phone: "",
-  email: "",
-  language: "",
-  flightNumber: "",
-  luggage: "",
-  childSeats: "",
-  extraTime: "",
-  preferredCarClass: "",
-  preferredCarName: "",
-  transferCategory: "DISTANCE",
-  price: "",
-  paymentMethode: "",
-  payingParty: "CUSTOMER",
-  carId: "",
-  message: "",
-  extras: {},
-});
+  pickupTime: '',
+  allowPast: false,
+  subject: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
+  email: '',
+  language: '',
+  flightNumber: '',
+  luggage: '',
+  childSeats: '',
+  extraTime: '',
+  preferredCarClass: '',
+  preferredCarName: '',
+  transferCategory: 'DISTANCE',
+  price: '',
+  paymentMethode: '',
+  payingParty: 'CUSTOMER',
+  carId: '',
+  message: '',
+  extras: {}
+})
 
 const clean = (s: string): string | undefined =>
-  s.trim() ? s.trim() : undefined;
+  s.trim() ? s.trim() : undefined
 
 /**
  * The return trip of a ride, as the brief has the dialog open it: addresses
@@ -1155,48 +1215,46 @@ const clean = (s: string): string | undefined =>
  * types when it knows.
  */
 export const returnTripPrefill = (origin: TransferRow): Partial<CreateForm> => {
-  const p = origin.passengers[0];
-  const extras: Record<string, number> = {};
-  origin.extras.forEach((x) => {
-    extras[x.type] = x.amount;
-  });
-  const category = TRANSFER_CATEGORIES.find(
-    (c) => c === origin.transferCategory,
-  );
-  const payment = PAYMENT_METHODS.find((m) => m === origin.paymentMethode);
-  const party = PAYING_PARTIES.find((m) => m === origin.payingParty);
+  const p = origin.passengers[0]
+  const extras: Record<string, number> = {}
+  origin.extras.forEach(x => {
+    extras[x.type] = x.amount
+  })
+  const category = TRANSFER_CATEGORIES.find(c => c === origin.transferCategory)
+  const payment = PAYMENT_METHODS.find(m => m === origin.paymentMethode)
+  const party = PAYING_PARTIES.find(m => m === origin.payingParty)
   return {
     referenceId: origin.id,
     originCode: origin.code,
     customerId: origin.customerId,
     pickupLocation: origin.dropoff,
     dropoffLocation: origin.pickup,
-    pickupDate: "",
-    pickupTime: "",
-    subject: origin.subject ?? "",
-    firstName: p?.firstName ?? "",
-    lastName: p?.lastName ?? "",
-    phone: p?.phone ?? "",
-    email: p?.email ?? "",
-    language: p?.language ?? "",
-    childSeats: origin.details?.childSeats ?? "",
+    pickupDate: '',
+    pickupTime: '',
+    subject: origin.subject ?? '',
+    firstName: p?.firstName ?? '',
+    lastName: p?.lastName ?? '',
+    phone: p?.phone ?? '',
+    email: p?.email ?? '',
+    language: p?.language ?? '',
+    childSeats: origin.details?.childSeats ?? '',
     preferredCarClass:
-      CAR_CLASSES.find((c) => c === origin.details?.preferredCarClass) ?? "",
-    preferredCarName: origin.details?.preferredCarName ?? "",
-    transferCategory: category ?? "DISTANCE",
-    paymentMethode: payment ?? "",
-    payingParty: party ?? "CUSTOMER",
-    message: origin.details?.message ?? "",
-    extras,
-  };
-};
+      CAR_CLASSES.find(c => c === origin.details?.preferredCarClass) ?? '',
+    preferredCarName: origin.details?.preferredCarName ?? '',
+    transferCategory: category ?? 'DISTANCE',
+    paymentMethode: payment ?? '',
+    payingParty: party ?? 'CUSTOMER',
+    message: origin.details?.message ?? '',
+    extras
+  }
+}
 
 function FormSection({
   title,
-  children,
+  children
 }: {
-  title: string;
-  children: React.ReactNode;
+  title: string
+  children: React.ReactNode
 }) {
   return (
     <Stack gap="3">
@@ -1205,13 +1263,12 @@ function FormSection({
         fontWeight="semibold"
         color="fg.muted"
         textTransform="uppercase"
-        letterSpacing="wider"
-      >
+        letterSpacing="wider">
         {title}
       </Text>
       {children}
     </Stack>
-  );
+  )
 }
 
 /**
@@ -1230,54 +1287,59 @@ export function CreateTransferDialog({
   customers,
   cars,
   onCreated,
-  prefill,
+  prefill
 }: CreateTransferDialogProps) {
-  const { t } = useTransferStrings();
-  const [form, setForm] = useState<CreateForm>(emptyForm);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [touched, setTouched] = useState(false);
+  const {t} = useTransferStrings()
+  const [form, setForm] = useState<CreateForm>(emptyForm)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [touched, setTouched] = useState(false)
 
   useEffect(() => {
     if (open) {
-      setForm({ ...emptyForm(), ...prefill });
-      setError(null);
-      setTouched(false);
+      setForm({...emptyForm(), ...prefill})
+      setError(null)
+      setTouched(false)
     }
     // The prefill is read when the dialog opens, a new one arrives with a new open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open])
 
   const set = <K extends keyof CreateForm>(key: K, value: CreateForm[K]) =>
-    setForm((f) => ({ ...f, [key]: value }));
+    setForm(f => ({...f, [key]: value}))
 
   const missing = {
     customerId: !form.customerId,
     pickupLocation: !form.pickupLocation.trim(),
     dropoffLocation: !form.dropoffLocation.trim(),
-    pickupDateTime: !form.pickupDate || !form.pickupTime,
-  };
-  const invalid = Object.values(missing).some(Boolean);
+    pickupDateTime: !form.pickupDate || !form.pickupTime
+  }
+  // No ride in the past, dispatch.md section 12. The office may still write
+  // one, but only with the tick: the same rule the pylon holds, asked here so
+  // the dispatcher sees why the button does nothing.
+  const pickupInPast =
+    !form.allowPast && isPickupInPast(form.pickupDate, form.pickupTime)
+  const invalid = Object.values(missing).some(Boolean) || pickupInPast
 
   const submit = async () => {
-    setTouched(true);
-    if (invalid) return;
-    const when = new Date(`${form.pickupDate}T${form.pickupTime}`);
+    setTouched(true)
+    if (invalid) return
+    const when = new Date(`${form.pickupDate}T${form.pickupTime}`)
     if (Number.isNaN(when.getTime())) {
-      setError(t.DateInvalid);
-      return;
+      setError(t.DateInvalid)
+      return
     }
     // The same reading as PriceDialog: `12,5`, `12.5` and `12,50 €` all become
     // 12.5, an empty field means no price yet.
     const priceNumber = form.price.trim()
       ? (parseAmount(form.price) ?? NaN)
-      : undefined;
+      : undefined
     if (
       priceNumber !== undefined &&
       (!Number.isFinite(priceNumber) || priceNumber < 0)
     ) {
-      setError(t.PriceInvalid);
-      return;
+      setError(t.PriceInvalid)
+      return
     }
 
     const passenger = {
@@ -1285,19 +1347,20 @@ export function CreateTransferDialog({
       lastName: clean(form.lastName),
       phone: clean(form.phone),
       email: clean(form.email),
-      language: clean(form.language),
-    };
-    const hasPassenger = Object.values(passenger).some(Boolean);
+      language: clean(form.language)
+    }
+    const hasPassenger = Object.values(passenger).some(Boolean)
 
     const extras = Object.entries(form.extras)
       .filter(([, amount]) => amount > 0)
-      .map(([type, amount]) => ({ type: type as ExtraType, amount }));
+      .map(([type, amount]) => ({type: type as ExtraType, amount}))
 
     const input: CreateTransferInput = {
       customerId: form.customerId,
       pickupLocation: form.pickupLocation.trim(),
       dropoffLocation: form.dropoffLocation.trim(),
       pickupDateTime: when.toISOString(),
+      allowPast: form.allowPast || undefined,
       subject: clean(form.subject),
       price: priceNumber,
       paymentMethode: form.paymentMethode || undefined,
@@ -1317,30 +1380,30 @@ export function CreateTransferDialog({
         transferCategory: form.transferCategory,
         // Derived, never chosen: the pylon writes the same and a build from
         // before the derivation would otherwise store ONE_WAY for a return.
-        transferType: form.referenceId ? "RETURN_TRIP" : "ONE_WAY",
-      },
-    };
-
-    setBusy(true);
-    setError(null);
-    try {
-      const row = await createTransfer(input);
-      toaster.success({ title: t.TransferCreated });
-      onCreated(row);
-      onClose();
-    } catch (err) {
-      setError(errorMessage(err, t.TransferCreateFailed));
-    } finally {
-      setBusy(false);
+        transferType: form.referenceId ? 'RETURN_TRIP' : 'ONE_WAY'
+      }
     }
-  };
+
+    setBusy(true)
+    setError(null)
+    try {
+      const row = await createTransfer(input)
+      toaster.success({title: t.TransferCreated})
+      onCreated(row)
+      onClose()
+    } catch (err) {
+      setError(errorMessage(err, t.TransferCreateFailed))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const customerLabel = (u: ResourceUser) => {
-    const name = driverDisplayName(u);
+    const name = driverDisplayName(u)
     return name === u.primaryEmailAddress
       ? name
-      : `${name} (${u.primaryEmailAddress})`;
-  };
+      : `${name} (${u.primaryEmailAddress})`
+  }
 
   return (
     <Sheet
@@ -1348,7 +1411,7 @@ export function CreateTransferDialog({
       onClose={onClose}
       title={
         form.referenceId
-          ? fill(t.CreateReturnTitle, { code: form.originCode })
+          ? fill(t.CreateReturnTitle, {code: form.originCode})
           : t.CreateTitle
       }
       size="xl"
@@ -1361,8 +1424,7 @@ export function CreateTransferDialog({
           loading={busy}
           loadingText={t.CreateSubmitting}
         />
-      }
-    >
+      }>
       <Stack gap="6">
         {error && <ErrorBanner message={error} />}
 
@@ -1373,10 +1435,9 @@ export function CreateTransferDialog({
             borderColor="border.default"
             bg="bg.subtle"
             px="3"
-            py="2"
-          >
+            py="2">
             <Text textStyle="sm" fontWeight="medium">
-              {t.LabelReturnOf}{" "}
+              {t.LabelReturnOf}{' '}
               <chakra.span fontFamily="mono">{form.originCode}</chakra.span>
             </Text>
             <Text textStyle="xs" color="fg.muted">
@@ -1393,10 +1454,9 @@ export function CreateTransferDialog({
             <NativeSelect.Root size="sm">
               <NativeSelect.Field
                 value={form.customerId}
-                onChange={(e) => set("customerId", e.target.value)}
-                placeholder={t.PlaceholderCustomer}
-              >
-                {customers.map((u) => (
+                onChange={e => set('customerId', e.target.value)}
+                placeholder={t.PlaceholderCustomer}>
+                {customers.map(u => (
                   <option key={u.id} value={u.id}>
                     {customerLabel(u)}
                   </option>
@@ -1406,7 +1466,7 @@ export function CreateTransferDialog({
             </NativeSelect.Root>
             <Field.ErrorText>{t.RequiredHint}</Field.ErrorText>
           </Field.Root>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root required invalid={touched && missing.pickupLocation}>
               <Field.Label>
                 {t.LabelPickup} <Field.RequiredIndicator />
@@ -1415,7 +1475,7 @@ export function CreateTransferDialog({
                 size="sm"
                 placeholder={t.PlaceholderPickup}
                 value={form.pickupLocation}
-                onChange={(e) => set("pickupLocation", e.target.value)}
+                onChange={e => set('pickupLocation', e.target.value)}
               />
               <Field.ErrorText>{t.RequiredHint}</Field.ErrorText>
             </Field.Root>
@@ -1427,13 +1487,15 @@ export function CreateTransferDialog({
                 size="sm"
                 placeholder={t.PlaceholderDropoff}
                 value={form.dropoffLocation}
-                onChange={(e) => set("dropoffLocation", e.target.value)}
+                onChange={e => set('dropoffLocation', e.target.value)}
               />
               <Field.ErrorText>{t.RequiredHint}</Field.ErrorText>
             </Field.Root>
           </Stack>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
-            <Field.Root required invalid={touched && missing.pickupDateTime}>
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
+            <Field.Root
+              required
+              invalid={touched && (missing.pickupDateTime || pickupInPast)}>
               <Field.Label>
                 {t.LabelDateTime} <Field.RequiredIndicator />
               </Field.Label>
@@ -1442,16 +1504,28 @@ export function CreateTransferDialog({
                   size="sm"
                   type="date"
                   value={form.pickupDate}
-                  onChange={(e) => set("pickupDate", e.target.value)}
+                  onChange={e => set('pickupDate', e.target.value)}
                 />
                 <Input
                   size="sm"
                   type="time"
                   value={form.pickupTime}
-                  onChange={(e) => set("pickupTime", e.target.value)}
+                  onChange={e => set('pickupTime', e.target.value)}
                 />
               </HStack>
-              <Field.ErrorText>{t.DateInvalid}</Field.ErrorText>
+              <Field.ErrorText>
+                {missing.pickupDateTime ? t.DateInvalid : t.DatePast}
+              </Field.ErrorText>
+              <Switch.Root
+                mt="2"
+                size="sm"
+                checked={form.allowPast}
+                onCheckedChange={e => set('allowPast', e.checked)}>
+                <Switch.HiddenInput />
+                <Switch.Control />
+                <Switch.Label textStyle="sm">{t.LabelBackdate}</Switch.Label>
+              </Switch.Root>
+              <Field.HelperText>{t.BackdateHint}</Field.HelperText>
             </Field.Root>
             <Field.Root>
               <Field.Label>{t.LabelSubject}</Field.Label>
@@ -1459,20 +1533,20 @@ export function CreateTransferDialog({
                 size="sm"
                 placeholder={t.PlaceholderSubject}
                 value={form.subject}
-                onChange={(e) => set("subject", e.target.value)}
+                onChange={e => set('subject', e.target.value)}
               />
             </Field.Root>
           </Stack>
         </FormSection>
 
         <FormSection title={t.SecPassenger}>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root>
               <Field.Label>{t.LabelFirstName}</Field.Label>
               <Input
                 size="sm"
                 value={form.firstName}
-                onChange={(e) => set("firstName", e.target.value)}
+                onChange={e => set('firstName', e.target.value)}
               />
             </Field.Root>
             <Field.Root>
@@ -1480,18 +1554,18 @@ export function CreateTransferDialog({
               <Input
                 size="sm"
                 value={form.lastName}
-                onChange={(e) => set("lastName", e.target.value)}
+                onChange={e => set('lastName', e.target.value)}
               />
             </Field.Root>
           </Stack>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root>
               <Field.Label>{t.LabelPhone}</Field.Label>
               <Input
                 size="sm"
                 type="tel"
                 value={form.phone}
-                onChange={(e) => set("phone", e.target.value)}
+                onChange={e => set('phone', e.target.value)}
               />
             </Field.Root>
             <Field.Root>
@@ -1500,30 +1574,30 @@ export function CreateTransferDialog({
                 size="sm"
                 type="email"
                 value={form.email}
-                onChange={(e) => set("email", e.target.value)}
+                onChange={e => set('email', e.target.value)}
               />
             </Field.Root>
-            <Field.Root maxW={{ md: "32" }}>
+            <Field.Root maxW={{md: '32'}}>
               <Field.Label>{t.LabelLanguage}</Field.Label>
               <Input
                 size="sm"
                 placeholder="de"
                 value={form.language}
-                onChange={(e) => set("language", e.target.value)}
+                onChange={e => set('language', e.target.value)}
               />
             </Field.Root>
           </Stack>
         </FormSection>
 
         <FormSection title={t.SecRide}>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root>
               <Field.Label>{t.LabelFlight}</Field.Label>
               <Input
                 size="sm"
                 placeholder={t.PlaceholderFlight}
                 value={form.flightNumber}
-                onChange={(e) => set("flightNumber", e.target.value)}
+                onChange={e => set('flightNumber', e.target.value)}
               />
             </Field.Root>
             <Field.Root>
@@ -1532,18 +1606,18 @@ export function CreateTransferDialog({
                 size="sm"
                 placeholder={t.PlaceholderLuggage}
                 value={form.luggage}
-                onChange={(e) => set("luggage", e.target.value)}
+                onChange={e => set('luggage', e.target.value)}
               />
             </Field.Root>
           </Stack>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root>
               <Field.Label>{t.LabelChildSeats}</Field.Label>
               <Input
                 size="sm"
                 placeholder={t.PlaceholderChildSeats}
                 value={form.childSeats}
-                onChange={(e) => set("childSeats", e.target.value)}
+                onChange={e => set('childSeats', e.target.value)}
               />
             </Field.Root>
             <Field.Root>
@@ -1552,24 +1626,23 @@ export function CreateTransferDialog({
                 size="sm"
                 placeholder={t.PlaceholderExtraTime}
                 value={form.extraTime}
-                onChange={(e) => set("extraTime", e.target.value)}
+                onChange={e => set('extraTime', e.target.value)}
               />
             </Field.Root>
           </Stack>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root>
               <Field.Label>{t.LabelCarClass}</Field.Label>
               <NativeSelect.Root size="sm">
                 <NativeSelect.Field
                   value={form.preferredCarClass}
-                  onChange={(e) =>
-                    set("preferredCarClass", e.target.value as CarClass | "")
-                  }
-                >
+                  onChange={e =>
+                    set('preferredCarClass', e.target.value as CarClass | '')
+                  }>
                   <option value="">{t.NoneOption}</option>
-                  {CAR_CLASSES.map((c) => (
+                  {CAR_CLASSES.map(c => (
                     <option key={c} value={c}>
-                      {enumLabel(t, "Class_", c)}
+                      {enumLabel(t, 'Class_', c)}
                     </option>
                   ))}
                 </NativeSelect.Field>
@@ -1581,7 +1654,7 @@ export function CreateTransferDialog({
               <Input
                 size="sm"
                 value={form.preferredCarName}
-                onChange={(e) => set("preferredCarName", e.target.value)}
+                onChange={e => set('preferredCarName', e.target.value)}
               />
             </Field.Root>
             <Field.Root>
@@ -1589,10 +1662,9 @@ export function CreateTransferDialog({
               <NativeSelect.Root size="sm">
                 <NativeSelect.Field
                   value={form.carId}
-                  onChange={(e) => set("carId", e.target.value)}
-                >
+                  onChange={e => set('carId', e.target.value)}>
                   <option value="">{t.NoneOption}</option>
-                  {cars.map((c) => (
+                  {cars.map(c => (
                     <option key={c.id} value={c.id}>
                       {carDisplayName(c)} · {c.licensePlate}
                     </option>
@@ -1602,19 +1674,18 @@ export function CreateTransferDialog({
               </NativeSelect.Root>
             </Field.Root>
           </Stack>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root>
               <Field.Label>{t.LabelCategory}</Field.Label>
               <NativeSelect.Root size="sm">
                 <NativeSelect.Field
                   value={form.transferCategory}
-                  onChange={(e) =>
-                    set("transferCategory", e.target.value as TransferCategory)
-                  }
-                >
-                  {TRANSFER_CATEGORIES.map((c) => (
+                  onChange={e =>
+                    set('transferCategory', e.target.value as TransferCategory)
+                  }>
+                  {TRANSFER_CATEGORIES.map(c => (
                     <option key={c} value={c}>
-                      {enumLabel(t, "Cat_", c)}
+                      {enumLabel(t, 'Cat_', c)}
                     </option>
                   ))}
                 </NativeSelect.Field>
@@ -1625,7 +1696,7 @@ export function CreateTransferDialog({
         </FormSection>
 
         <FormSection title={t.SecMoney}>
-          <Stack direction={{ base: "column", md: "row" }} gap="3">
+          <Stack direction={{base: 'column', md: 'row'}} gap="3">
             <Field.Root>
               <Field.Label>{t.LabelPrice}</Field.Label>
               <AmountInput
@@ -1633,7 +1704,7 @@ export function CreateTransferDialog({
                 data-testid="create-price-input"
                 placeholder={t.PricePlaceholder}
                 value={form.price}
-                onChange={(v) => set("price", v)}
+                onChange={v => set('price', v)}
               />
             </Field.Root>
             <Field.Root>
@@ -1641,14 +1712,13 @@ export function CreateTransferDialog({
               <NativeSelect.Root size="sm">
                 <NativeSelect.Field
                   value={form.paymentMethode}
-                  onChange={(e) =>
-                    set("paymentMethode", e.target.value as PaymentMethod | "")
-                  }
-                >
+                  onChange={e =>
+                    set('paymentMethode', e.target.value as PaymentMethod | '')
+                  }>
                   <option value="">{t.NoneOption}</option>
-                  {PAYMENT_METHODS.map((m) => (
+                  {PAYMENT_METHODS.map(m => (
                     <option key={m} value={m}>
-                      {enumLabel(t, "Pay_", m)}
+                      {enumLabel(t, 'Pay_', m)}
                     </option>
                   ))}
                 </NativeSelect.Field>
@@ -1660,13 +1730,12 @@ export function CreateTransferDialog({
               <NativeSelect.Root size="sm">
                 <NativeSelect.Field
                   value={form.payingParty}
-                  onChange={(e) =>
-                    set("payingParty", e.target.value as PayingParty | "")
-                  }
-                >
-                  {PAYING_PARTIES.map((p) => (
+                  onChange={e =>
+                    set('payingParty', e.target.value as PayingParty | '')
+                  }>
+                  {PAYING_PARTIES.map(p => (
                     <option key={p} value={p}>
-                      {enumLabel(t, "Party_", p)}
+                      {enumLabel(t, 'Party_', p)}
                     </option>
                   ))}
                 </NativeSelect.Field>
@@ -1678,24 +1747,23 @@ export function CreateTransferDialog({
 
         <FormSection title={t.SecExtras}>
           <Stack gap="2">
-            {EXTRA_TYPES.map((type) => {
-              const amount = form.extras[type] ?? 0;
+            {EXTRA_TYPES.map(type => {
+              const amount = form.extras[type] ?? 0
               return (
                 <HStack key={type} justify="space-between" gap="3">
                   <Checkbox.Root
                     checked={amount > 0}
                     colorPalette="brand"
-                    onCheckedChange={(e) =>
-                      set("extras", {
+                    onCheckedChange={e =>
+                      set('extras', {
                         ...form.extras,
-                        [type]: e.checked ? 1 : 0,
+                        [type]: e.checked ? 1 : 0
                       })
-                    }
-                  >
+                    }>
                     <Checkbox.HiddenInput />
                     <Checkbox.Control />
                     <Checkbox.Label>
-                      {enumLabel(t, "Extra_", type)}
+                      {enumLabel(t, 'Extra_', type)}
                     </Checkbox.Label>
                   </Checkbox.Root>
                   <NumberInput.Root
@@ -1705,18 +1773,17 @@ export function CreateTransferDialog({
                     max={20}
                     value={String(amount)}
                     aria-label={t.ExtrasQuantity}
-                    onValueChange={(e) =>
-                      set("extras", {
+                    onValueChange={e =>
+                      set('extras', {
                         ...form.extras,
-                        [type]: Math.max(0, e.valueAsNumber || 0),
+                        [type]: Math.max(0, e.valueAsNumber || 0)
                       })
-                    }
-                  >
+                    }>
                     <NumberInput.Control />
                     <NumberInput.Input />
                   </NumberInput.Root>
                 </HStack>
-              );
+              )
             })}
           </Stack>
         </FormSection>
@@ -1729,60 +1796,59 @@ export function CreateTransferDialog({
               rows={3}
               placeholder={t.PlaceholderMessage}
               value={form.message}
-              onChange={(e) => set("message", e.target.value)}
+              onChange={e => set('message', e.target.value)}
             />
           </Field.Root>
         </FormSection>
       </Stack>
     </Sheet>
-  );
+  )
 }
 
 // ============================================================
 // Filters
 // ============================================================
 
-export type DateChip = "today" | "tomorrow" | "all" | "custom";
-export type SortOrder = "earliest" | "latest";
+export type DateChip = 'today' | 'tomorrow' | 'all' | 'custom'
+export type SortOrder = 'earliest' | 'latest'
 
 interface DateFilterProps {
-  value: DateChip;
-  onChange: (v: DateChip) => void;
-  range: { start: string; end: string };
-  onRangeChange: (r: { start: string; end: string }) => void;
+  value: DateChip
+  onChange: (v: DateChip) => void
+  range: {start: string; end: string}
+  onRangeChange: (r: {start: string; end: string}) => void
 }
 
 export function DateFilter({
   value,
   onChange,
   range,
-  onRangeChange,
+  onRangeChange
 }: DateFilterProps) {
-  const { t, tc } = useTransferStrings();
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState(range);
+  const {t, tc} = useTransferStrings()
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState(range)
 
   useEffect(() => {
-    if (open) setDraft(range);
-  }, [open, range]);
+    if (open) setDraft(range)
+  }, [open, range])
 
-  const items: Array<{ value: DateChip; label: string }> = [
-    { value: "today", label: tc.DateToday },
-    { value: "tomorrow", label: tc.DateTomorrow },
-    { value: "all", label: tc.DateAll },
-  ];
+  const items: Array<{value: DateChip; label: string}> = [
+    {value: 'today', label: tc.DateToday},
+    {value: 'tomorrow', label: tc.DateTomorrow},
+    {value: 'all', label: tc.DateAll}
+  ]
 
   return (
     <HStack gap="2" flexWrap="wrap">
       <SegmentGroup.Root
         size="sm"
-        value={value === "custom" ? null : value}
-        onValueChange={(e) => {
-          if (e.value) onChange(e.value as DateChip);
-        }}
-      >
+        value={value === 'custom' ? null : value}
+        onValueChange={e => {
+          if (e.value) onChange(e.value as DateChip)
+        }}>
         <SegmentGroup.Indicator />
-        {items.map((item) => (
+        {items.map(item => (
           <SegmentGroup.Item key={item.value} value={item.value}>
             <SegmentGroup.ItemText>{item.label}</SegmentGroup.ItemText>
             <SegmentGroup.ItemHiddenInput />
@@ -1791,19 +1857,17 @@ export function DateFilter({
       </SegmentGroup.Root>
       <Popover.Root
         open={open}
-        onOpenChange={(e) => setOpen(e.open)}
-        positioning={{ placement: "bottom-start" }}
+        onOpenChange={e => setOpen(e.open)}
+        positioning={{placement: 'bottom-start'}}
         lazyMount
-        unmountOnExit
-      >
+        unmountOnExit>
         <Popover.Trigger asChild>
           <Button
             size="sm"
-            variant={value === "custom" ? "solid" : "outline"}
-            colorPalette={value === "custom" ? "brand" : "gray"}
-          >
+            variant={value === 'custom' ? 'solid' : 'outline'}
+            colorPalette={value === 'custom' ? 'brand' : 'gray'}>
             <FaCalendarAlt />
-            {value === "custom" && range.start && range.end
+            {value === 'custom' && range.start && range.end
               ? `${range.start} – ${range.end}`
               : tc.DateCustom}
           </Button>
@@ -1820,8 +1884,8 @@ export function DateFilter({
                       size="sm"
                       type="date"
                       value={draft.start}
-                      onChange={(e) =>
-                        setDraft((d) => ({ ...d, start: e.target.value }))
+                      onChange={e =>
+                        setDraft(d => ({...d, start: e.target.value}))
                       }
                     />
                   </Field.Root>
@@ -1831,8 +1895,8 @@ export function DateFilter({
                       size="sm"
                       type="date"
                       value={draft.end}
-                      onChange={(e) =>
-                        setDraft((d) => ({ ...d, end: e.target.value }))
+                      onChange={e =>
+                        setDraft(d => ({...d, end: e.target.value}))
                       }
                     />
                   </Field.Root>
@@ -1843,11 +1907,10 @@ export function DateFilter({
                       !draft.start || !draft.end || draft.end < draft.start
                     }
                     onClick={() => {
-                      onRangeChange(draft);
-                      onChange("custom");
-                      setOpen(false);
-                    }}
-                  >
+                      onRangeChange(draft)
+                      onChange('custom')
+                      setOpen(false)
+                    }}>
                     {t.CustomRangeApply}
                   </Button>
                 </Stack>
@@ -1857,26 +1920,25 @@ export function DateFilter({
         </Portal>
       </Popover.Root>
     </HStack>
-  );
+  )
 }
 
 interface StatusFilterProps {
-  selected: Set<TransferState>;
-  onChange: (next: Set<TransferState>) => void;
+  selected: Set<TransferState>
+  onChange: (next: Set<TransferState>) => void
 }
 
-export function StatusFilter({ selected, onChange }: StatusFilterProps) {
-  const { t } = useTransferStrings();
-  const label = useStateLabel();
-  const all = selected.size === TRANSFER_STATES.length;
+export function StatusFilter({selected, onChange}: StatusFilterProps) {
+  const {t} = useTransferStrings()
+  const label = useStateLabel()
+  const all = selected.size === TRANSFER_STATES.length
   const openOnly = () =>
-    onChange(new Set(TRANSFER_STATES.filter((s) => !isClosed(s))));
+    onChange(new Set(TRANSFER_STATES.filter(s => !isClosed(s))))
   return (
     <Popover.Root
-      positioning={{ placement: "bottom-start" }}
+      positioning={{placement: 'bottom-start'}}
       lazyMount
-      unmountOnExit
-    >
+      unmountOnExit>
       <Popover.Trigger asChild>
         <Button size="sm" variant="outline" colorPalette="gray">
           <FaFilter />
@@ -1897,15 +1959,14 @@ export function StatusFilter({ selected, onChange }: StatusFilterProps) {
                 <Text textStyle="sm" fontWeight="medium">
                   {fill(t.FilterStatusCount, {
                     count: selected.size,
-                    total: TRANSFER_STATES.length,
+                    total: TRANSFER_STATES.length
                   })}
                 </Text>
                 <HStack gap="2">
                   <Button
                     size="2xs"
                     variant="ghost"
-                    onClick={() => onChange(new Set(TRANSFER_STATES))}
-                  >
+                    onClick={() => onChange(new Set(TRANSFER_STATES))}>
                     {t.FilterStatusAll}
                   </Button>
                   <Button size="2xs" variant="ghost" onClick={openOnly}>
@@ -1914,8 +1975,7 @@ export function StatusFilter({ selected, onChange }: StatusFilterProps) {
                   <Button
                     size="2xs"
                     variant="ghost"
-                    onClick={() => onChange(new Set())}
-                  >
+                    onClick={() => onChange(new Set())}>
                     {t.FilterStatusNone}
                   </Button>
                 </HStack>
@@ -1923,19 +1983,18 @@ export function StatusFilter({ selected, onChange }: StatusFilterProps) {
             </Popover.Header>
             <Popover.Body maxH="60vh" overflowY="auto">
               <Stack gap="1">
-                {TRANSFER_STATES.map((s) => (
+                {TRANSFER_STATES.map(s => (
                   <Checkbox.Root
                     key={s}
                     size="sm"
                     colorPalette="brand"
                     checked={selected.has(s)}
-                    onCheckedChange={(e) => {
-                      const next = new Set(selected);
-                      if (e.checked) next.add(s);
-                      else next.delete(s);
-                      onChange(next);
-                    }}
-                  >
+                    onCheckedChange={e => {
+                      const next = new Set(selected)
+                      if (e.checked) next.add(s)
+                      else next.delete(s)
+                      onChange(next)
+                    }}>
                     <Checkbox.HiddenInput />
                     <Checkbox.Control />
                     <Checkbox.Label>
@@ -1952,24 +2011,24 @@ export function StatusFilter({ selected, onChange }: StatusFilterProps) {
         </Popover.Positioner>
       </Portal>
     </Popover.Root>
-  );
+  )
 }
 
 export function SortMenu({
   value,
-  onChange,
+  onChange
 }: {
-  value: SortOrder;
-  onChange: (v: SortOrder) => void;
+  value: SortOrder
+  onChange: (v: SortOrder) => void
 }) {
-  const { tc } = useTransferStrings();
+  const {tc} = useTransferStrings()
   return (
     <Menu.Root lazyMount unmountOnExit>
       <Menu.Trigger asChild>
         <Button size="sm" variant="outline" colorPalette="gray">
-          {value === "earliest" ? <FaSortAmountUp /> : <FaSortAmountDown />}
-          <chakra.span display={{ base: "none", sm: "inline" }}>
-            {value === "earliest" ? tc.SortEarliest : tc.SortLatest}
+          {value === 'earliest' ? <FaSortAmountUp /> : <FaSortAmountDown />}
+          <chakra.span display={{base: 'none', sm: 'inline'}}>
+            {value === 'earliest' ? tc.SortEarliest : tc.SortLatest}
           </chakra.span>
         </Button>
       </Menu.Trigger>
@@ -1978,8 +2037,7 @@ export function SortMenu({
           <Menu.Content>
             <Menu.RadioItemGroup
               value={value}
-              onValueChange={(e) => onChange(e.value as SortOrder)}
-            >
+              onValueChange={e => onChange(e.value as SortOrder)}>
               <Menu.RadioItem value="earliest">
                 <Menu.ItemIndicator />
                 <Menu.ItemText>{tc.SortEarliest}</Menu.ItemText>
@@ -1993,7 +2051,7 @@ export function SortMenu({
         </Menu.Positioner>
       </Portal>
     </Menu.Root>
-  );
+  )
 }
 
 // ============================================================
@@ -2001,21 +2059,21 @@ export function SortMenu({
 // ============================================================
 
 export type ColumnId =
-  | "code"
-  | "status"
-  | "route"
-  | "pickup"
-  | "passenger"
-  | "capacity"
-  | "flight"
-  | "driver"
-  | "vehicle"
-  | "price"
-  | "customer"
-  | "category"
-  | "payment"
-  | "extras"
-  | "notes";
+  | 'code'
+  | 'status'
+  | 'route'
+  | 'pickup'
+  | 'passenger'
+  | 'capacity'
+  | 'flight'
+  | 'driver'
+  | 'vehicle'
+  | 'price'
+  | 'customer'
+  | 'category'
+  | 'payment'
+  | 'extras'
+  | 'notes'
 
 const COLUMN_WIDTHS: Record<ColumnId, number> = {
   code: 96,
@@ -2038,31 +2096,31 @@ const COLUMN_WIDTHS: Record<ColumnId, number> = {
   category: 110,
   payment: 110,
   extras: 160,
-  notes: 180,
-};
+  notes: 180
+}
 
 /**
  * The board's order, and which columns a fresh browser shows. The layout a
  * dispatcher makes of it is DataTable's business, remembered under the
  * table id `transfers`, the key the board always used.
  */
-const BOARD_COLUMNS: Array<{ id: ColumnId; visible: boolean }> = [
-  { id: "code", visible: true },
-  { id: "status", visible: true },
-  { id: "route", visible: true },
-  { id: "pickup", visible: true },
-  { id: "passenger", visible: true },
-  { id: "capacity", visible: true },
-  { id: "flight", visible: false },
-  { id: "driver", visible: true },
-  { id: "vehicle", visible: true },
-  { id: "price", visible: true },
-  { id: "customer", visible: false },
-  { id: "category", visible: false },
-  { id: "payment", visible: false },
-  { id: "extras", visible: false },
-  { id: "notes", visible: false },
-];
+const BOARD_COLUMNS: Array<{id: ColumnId; visible: boolean}> = [
+  {id: 'code', visible: true},
+  {id: 'status', visible: true},
+  {id: 'route', visible: true},
+  {id: 'pickup', visible: true},
+  {id: 'passenger', visible: true},
+  {id: 'capacity', visible: true},
+  {id: 'flight', visible: false},
+  {id: 'driver', visible: true},
+  {id: 'vehicle', visible: true},
+  {id: 'price', visible: true},
+  {id: 'customer', visible: false},
+  {id: 'category', visible: false},
+  {id: 'payment', visible: false},
+  {id: 'extras', visible: false},
+  {id: 'notes', visible: false}
+]
 
 const columnLabel = (t: TransfersStrings, id: ColumnId): string => {
   const map: Record<ColumnId, string> = {
@@ -2080,47 +2138,47 @@ const columnLabel = (t: TransfersStrings, id: ColumnId): string => {
     category: t.ColCategory,
     payment: t.ColPayment,
     extras: t.ColExtras,
-    notes: t.ColNotes,
-  };
-  return map[id];
-};
+    notes: t.ColNotes
+  }
+  return map[id]
+}
 
 // ============================================================
 // Rows, enriched with the driver's name and colour
 // ============================================================
 
 export interface BoardRow extends TransferRow {
-  driverName?: string;
-  driverColor?: string;
-  driverPhone?: string;
+  driverName?: string
+  driverColor?: string
+  driverPhone?: string
   /** The driver who declined, from the newest attempt, while DECLINED. Their name, not on the row any more. */
-  declinedDriverName?: string;
-  declinedDriverColor?: string;
-  customerName?: string;
-  carName?: string;
-  carPlate?: string;
+  declinedDriverName?: string
+  declinedDriverColor?: string
+  customerName?: string
+  carName?: string
+  carPlate?: string
 }
 
 const enrich = (
   rows: TransferRow[],
   drivers: ResourceUser[],
   users: ResourceUser[],
-  cars: ResourceCar[],
+  cars: ResourceCar[]
 ): BoardRow[] => {
-  const driverMap = new Map(drivers.map((d) => [d.id, d]));
-  const userMap = new Map(users.map((u) => [u.id, u]));
-  const carMap = new Map(cars.map((c) => [c.id, c]));
-  return rows.map((r) => {
+  const driverMap = new Map(drivers.map(d => [d.id, d]))
+  const userMap = new Map(users.map(u => [u.id, u]))
+  const carMap = new Map(cars.map(c => [c.id, c]))
+  return rows.map(r => {
     const driver = r.driverId
       ? (driverMap.get(r.driverId) ?? userMap.get(r.driverId))
-      : undefined;
-    const customer = userMap.get(r.customerId);
-    const car = r.carId ? carMap.get(r.carId) : undefined;
+      : undefined
+    const customer = userMap.get(r.customerId)
+    const car = r.carId ? carMap.get(r.carId) : undefined
     const declinedId =
-      r.driverStatus === "DECLINED" ? r.lastAttempt?.driverId : undefined;
+      r.driverStatus === 'DECLINED' ? r.lastAttempt?.driverId : undefined
     const declined = declinedId
       ? (driverMap.get(declinedId) ?? userMap.get(declinedId))
-      : undefined;
+      : undefined
     return {
       ...r,
       driverName: driver
@@ -2136,10 +2194,10 @@ const enrich = (
         r.car?.carName ??
         car?.carName ??
         (r.car?.licensePlate || car?.licensePlate),
-      carPlate: r.car?.licensePlate ?? car?.licensePlate,
-    };
-  });
-};
+      carPlate: r.car?.licensePlate ?? car?.licensePlate
+    }
+  })
+}
 
 /** The date header's stripe: green for today, yellow for tomorrow, nothing otherwise. */
 /**
@@ -2161,49 +2219,54 @@ const enrich = (
 export const dayPalette = (
   day: string,
   today: string,
-  tomorrow: string,
+  tomorrow: string
 ): DayTone =>
-  day === today ? "green" : day === tomorrow ? "yellow" : undefined;
+  day === today ? 'green' : day === tomorrow ? 'yellow' : undefined
 
 /** Today and tomorrow as local days, read once per screen. */
 export const useTodayTomorrow = () => {
-  const today = useMemo(() => localDay(new Date()), []);
+  const today = useMemo(() => localDay(new Date()), [])
   const tomorrow = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return localDay(d);
-  }, []);
-  return { today, tomorrow };
-};
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return localDay(d)
+  }, [])
+  return {today, tomorrow}
+}
 
 /** The board's grouping for DataTable: one section per ride day, named and toned by dayPalette. */
 export const useDayGroup = (
   today: string,
-  tomorrow: string,
+  tomorrow: string
 ): DataGroup<BoardRow> => {
-  const { code } = useTransferStrings();
+  const {code} = useTransferStrings()
   return useMemo(
     () => ({
-      key: (row: BoardRow) => row.rideDateISO || "",
+      key: (row: BoardRow) => row.rideDateISO || '',
       label: (day: string) => formatDay(day, code),
-      tone: (day: string) => dayPalette(day, today, tomorrow),
+      tone: (day: string) => dayPalette(day, today, tomorrow)
     }),
-    [code, today, tomorrow],
-  );
-};
-
-export interface RowActions {
-  onOpen: (row: BoardRow) => void;
-  onAssign?: (row: BoardRow) => void;
-  onPrice?: (row: BoardRow) => void;
-  onState?: (row: BoardRow) => void;
-  /** "Buchung bestätigen" beside the state, on a NEW ride only. */
-  onConfirm?: (row: BoardRow) => void;
+    [code, today, tomorrow]
+  )
 }
 
-function CapacityText({ row }: { row: BoardRow }) {
-  const { t } = useTransferStrings();
-  const pax = row.passengers.length;
+export interface RowActions {
+  onOpen: (row: BoardRow) => void
+  onAssign?: (row: BoardRow) => void
+  onPrice?: (row: BoardRow) => void
+  onState?: (row: BoardRow) => void
+  /** "Buchung bestätigen" beside the state, on a NEW ride only. */
+  onConfirm?: (row: BoardRow) => void
+  /**
+   * The row after the signed-in person answered a request from the card
+   * (dispatch.md section 9a). Without it the card draws no answer buttons.
+   */
+  onAnswered?: (row: TransferRow) => void
+}
+
+function CapacityText({row}: {row: BoardRow}) {
+  const {t} = useTransferStrings()
+  const pax = row.passengers.length
   return (
     <Stack gap="0.5" textStyle="sm" whiteSpace="nowrap">
       <HStack gap="1">
@@ -2211,7 +2274,7 @@ function CapacityText({ row }: { row: BoardRow }) {
           <FaUsers size={12} />
         </Box>
         <span>
-          {pax || "–"} {t.Pax}
+          {pax || '–'} {t.Pax}
         </span>
       </HStack>
       {row.details?.luggage && (
@@ -2223,7 +2286,7 @@ function CapacityText({ row }: { row: BoardRow }) {
         </HStack>
       )}
     </Stack>
-  );
+  )
 }
 
 /**
@@ -2238,58 +2301,172 @@ export function DriverAnswerBadge({
   status,
   reason,
   ...rest
-}: { status: string | undefined; reason?: string } & Omit<
+}: {status: string | undefined; reason?: string} & Omit<
   BadgeProps,
-  "children"
+  'children'
 >) {
-  const { t } = useTransferStrings();
-  if (status === "REQUESTED") {
+  const {t} = useTransferStrings()
+  if (status === 'REQUESTED') {
     return (
       <Badge
         size="sm"
         variant="subtle"
         colorPalette="orange"
         whiteSpace="nowrap"
-        {...rest}
-      >
+        {...rest}>
         {t.DriverRequested}
       </Badge>
-    );
+    )
   }
-  if (status === "DECLINED") {
+  if (status === 'DECLINED') {
     return (
       <Badge
         size="sm"
         variant="subtle"
         colorPalette="red"
         whiteSpace="nowrap"
-        title={reason ? fill(t.DeclineReason, { reason }) : undefined}
-        cursor={reason ? "help" : undefined}
-        {...rest}
-      >
+        title={reason ? fill(t.DeclineReason, {reason}) : undefined}
+        cursor={reason ? 'help' : undefined}
+        {...rest}>
         {t.DriverDeclined}
       </Badge>
-    );
+    )
   }
-  if (status === "ACCEPTED") {
+  if (status === 'ACCEPTED') {
     return (
       <Badge
         size="sm"
         variant="subtle"
         colorPalette="green"
         whiteSpace="nowrap"
-        {...rest}
-      >
+        {...rest}>
         {t.DriverAccepted}
       </Badge>
-    );
+    )
   }
-  return null;
+  return null
 }
 
-function DriverCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
-  const { t } = useTransferStrings();
-  const stop = (e: React.MouseEvent) => e.stopPropagation();
+/**
+ * The answer, wherever the person who has to give it stands (dispatch.md
+ * section 9a). Until now the yes and the no lived on the driver's own ride
+ * screen alone, so a person whose first role is admin saw the dispatcher's
+ * screens and could not answer a request meant for them.
+ *
+ * Two cases, and the component draws whichever applies:
+ *
+ *   the requested driver, whatever their other roles, gets "Anfrage annehmen"
+ *   and "Ablehnen";
+ *   an admin who is not the requested driver gets "Fuer den Fahrer annehmen"
+ *   on any open request, the yes taken on the phone. The pylon records them
+ *   as the attempt's answeredBy.
+ *
+ * A ride with no open request draws nothing. `reason` is offered where there
+ * is room for a field (the detail page); the card declines without one, the
+ * reason belongs to a conversation and the ride page is one tap away.
+ */
+export function DriverAnswerActions({
+  transfer,
+  onAnswered,
+  withReason = false,
+  ...rest
+}: {
+  transfer: {
+    id: string
+    driverId?: string
+    driverStatus?: string
+  }
+  onAnswered: (row: TransferRow) => void
+  /** Draw the reason field above the buttons, for a screen with the room. */
+  withReason?: boolean
+} & StackProps) {
+  const {t} = useTransferStrings()
+  const caller = useCaller()
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState<'accept' | 'decline' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const open = transfer.driverStatus === 'REQUESTED'
+  const mine = open && !!caller.userId && transfer.driverId === caller.userId
+  const onBehalf = open && !mine && caller.isAdmin
+  if (!mine && !onBehalf) return null
+
+  const answer = async (kind: 'accept' | 'decline') => {
+    setBusy(kind)
+    setError(null)
+    try {
+      const row =
+        kind === 'accept'
+          ? await acceptAssignment(transfer.id)
+          : await declineAssignment(transfer.id, reason || undefined)
+      onAnswered(row)
+      toaster.success({
+        title: kind === 'accept' ? t.ToastAccepted : t.ToastDeclined
+      })
+    } catch (err) {
+      setError(errorMessage(err, t.AnswerFailed))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Stack gap="3" data-testid="driver-answer" {...rest}>
+      <Text textStyle="sm" fontWeight="medium">
+        {mine ? t.AnswerYoursTitle : t.AnswerForDriverHint}
+      </Text>
+      {error && <ErrorBanner message={error} />}
+      {mine && withReason && (
+        <Stack gap="1">
+          <Text textStyle="xs" color="fg.muted">
+            {t.DeclineReasonLabel}
+          </Text>
+          <Textarea
+            size="sm"
+            rows={2}
+            bg="bg.surface"
+            placeholder={t.DeclineReasonPlaceholder}
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+          />
+        </Stack>
+      )}
+      {/* Two controls in a row are never closer than a thumb, and never
+          smaller than 44 px where a thumb is what taps them. */}
+      <Stack direction={{base: 'column', sm: 'row'}} gap="3">
+        <Button
+          size="sm"
+          colorPalette="green"
+          flex="1"
+          minH={{base: '44px', md: '8'}}
+          data-testid="answer-accept"
+          loading={busy === 'accept'}
+          disabled={busy === 'decline'}
+          onClick={() => void answer('accept')}>
+          {mine ? t.AnswerAccept : t.AnswerForDriver}
+        </Button>
+        {mine && (
+          <Button
+            size="sm"
+            variant="outline"
+            colorPalette="red"
+            flex="1"
+            minH={{base: '44px', md: '8'}}
+            data-testid="answer-decline"
+            loading={busy === 'decline'}
+            disabled={busy === 'accept'}
+            onClick={() => void answer('decline')}>
+            {t.Reject}
+          </Button>
+        )}
+      </Stack>
+    </Stack>
+  )
+}
+
+function DriverCell({row, actions}: {row: BoardRow; actions: RowActions}) {
+  const {t} = useTransferStrings()
+  const stop = (e: React.MouseEvent) => e.stopPropagation()
   // No driver before the confirmation (dispatch.md section 11). The picker
   // is drawn disabled with the hint rather than opening into a refusal,
   // and a ride that already carries a driver keeps reading as it does.
@@ -2304,11 +2481,10 @@ function DriverCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
         variant="outline"
         opacity="0.7"
         data-testid="confirm-first"
-        title={t.ConfirmFirst}
-      >
+        title={t.ConfirmFirst}>
         {t.ConfirmFirst}
       </Badge>
-    );
+    )
   }
   if (row.driverId) {
     return (
@@ -2319,9 +2495,9 @@ function DriverCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
         </Text>
         <DriverAnswerBadge status={row.driverStatus} />
       </HStack>
-    );
+    )
   }
-  if (row.driverStatus === "DECLINED" && row.declinedDriverName) {
+  if (row.driverStatus === 'DECLINED' && row.declinedDriverName) {
     // The declined driver stays on the row until the next request, and the
     // badge is the way to ask again.
     return (
@@ -2332,29 +2508,28 @@ function DriverCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
           fontWeight="medium"
           truncate
           color="fg.muted"
-          textDecoration="line-through"
-        >
+          textDecoration="line-through">
           {row.declinedDriverName}
         </Text>
         <DriverAnswerBadge
           status="DECLINED"
           reason={row.lastAttempt?.reason}
-          as={!isClosed(row.state) && actions.onAssign ? "button" : undefined}
-          onClick={(e) => {
-            if (!actions.onAssign || isClosed(row.state)) return;
-            stop(e);
-            actions.onAssign(row);
+          as={!isClosed(row.state) && actions.onAssign ? 'button' : undefined}
+          onClick={e => {
+            if (!actions.onAssign || isClosed(row.state)) return
+            stop(e)
+            actions.onAssign(row)
           }}
         />
       </HStack>
-    );
+    )
   }
   if (isClosed(row.state) || !actions.onAssign) {
     return (
       <Text textStyle="sm" color="fg.muted">
         –
       </Text>
-    );
+    )
   }
   return (
     <Badge
@@ -2362,18 +2537,17 @@ function DriverCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
       colorPalette="red"
       variant="subtle"
       cursor="pointer"
-      onClick={(e) => {
-        stop(e);
-        actions.onAssign?.(row);
-      }}
-    >
+      onClick={e => {
+        stop(e)
+        actions.onAssign?.(row)
+      }}>
       {t.NotAssigned}
     </Badge>
-  );
+  )
 }
 
-function VehicleCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
-  const { t } = useTransferStrings();
+function VehicleCell({row, actions}: {row: BoardRow; actions: RowActions}) {
+  const {t} = useTransferStrings()
   if (row.carId) {
     return (
       <Box textStyle="sm" minW="0">
@@ -2386,21 +2560,21 @@ function VehicleCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
           </Text>
         )}
       </Box>
-    );
+    )
   }
   if (isClosed(row.state) || !actions.onAssign) {
     return (
       <Text textStyle="sm" color="fg.muted">
         –
       </Text>
-    );
+    )
   }
   if (!row.driverId) {
     return (
       <Badge colorPalette="gray" variant="outline">
         {t.AssignDriverFirst}
       </Badge>
-    );
+    )
   }
   return (
     <Badge
@@ -2408,38 +2582,37 @@ function VehicleCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
       colorPalette="orange"
       variant="subtle"
       cursor="pointer"
-      onClick={(e) => {
-        e.stopPropagation();
-        actions.onAssign?.(row);
-      }}
-    >
+      onClick={e => {
+        e.stopPropagation()
+        actions.onAssign?.(row)
+      }}>
       {t.AssignVehicle}
     </Badge>
-  );
+  )
 }
 
-function PriceCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
-  const { t } = useTransferStrings();
+function PriceCell({row, actions}: {row: BoardRow; actions: RowActions}) {
+  const {t} = useTransferStrings()
   if (row.price != null) {
     return (
       <MoneyText
         value={row.price}
         fontWeight="semibold"
-        cursor={actions.onPrice ? "pointer" : undefined}
-        onClick={(e) => {
-          if (!actions.onPrice) return;
-          e.stopPropagation();
-          actions.onPrice(row);
+        cursor={actions.onPrice ? 'pointer' : undefined}
+        onClick={e => {
+          if (!actions.onPrice) return
+          e.stopPropagation()
+          actions.onPrice(row)
         }}
       />
-    );
+    )
   }
   if (isClosed(row.state) || !actions.onPrice) {
     return (
       <Text textStyle="sm" color="fg.muted">
         –
       </Text>
-    );
+    )
   }
   return (
     <Badge
@@ -2447,14 +2620,13 @@ function PriceCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
       colorPalette="orange"
       variant="subtle"
       cursor="pointer"
-      onClick={(e) => {
-        e.stopPropagation();
-        actions.onPrice?.(row);
-      }}
-    >
+      onClick={e => {
+        e.stopPropagation()
+        actions.onPrice?.(row)
+      }}>
       {t.SetPrice}
     </Badge>
-  );
+  )
 }
 
 /**
@@ -2464,14 +2636,14 @@ function PriceCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
  */
 function ConfirmBookingCell({
   row,
-  actions,
+  actions
 }: {
-  row: BoardRow;
-  actions: RowActions;
+  row: BoardRow
+  actions: RowActions
 }) {
-  const { t } = useTransferStrings();
-  if (!actions.onConfirm || isClosed(row.state)) return null;
-  if (!canConfirmBooking(row.customerStatus)) return null;
+  const {t} = useTransferStrings()
+  if (!actions.onConfirm || isClosed(row.state)) return null
+  if (!canConfirmBooking(row.customerStatus)) return null
   return (
     <Badge
       as="button"
@@ -2479,39 +2651,38 @@ function ConfirmBookingCell({
       variant="subtle"
       cursor="pointer"
       data-testid="confirm-booking"
-      onClick={(e) => {
-        e.stopPropagation();
-        actions.onConfirm?.(row);
-      }}
-    >
+      onClick={e => {
+        e.stopPropagation()
+        actions.onConfirm?.(row)
+      }}>
       {t.ActionConfirmBooking}
     </Badge>
-  );
+  )
 }
 
-function StatusCell({ row, actions }: { row: BoardRow; actions: RowActions }) {
-  if (!actions.onState) return <StatusBadge state={row.state} />;
+function StatusCell({row, actions}: {row: BoardRow; actions: RowActions}) {
+  if (!actions.onState) return <StatusBadge state={row.state} />
   return (
     <StatusBadge
       state={row.state}
       as="button"
       cursor="pointer"
-      onClick={(e) => {
-        e.stopPropagation();
-        actions.onState?.(row);
+      onClick={e => {
+        e.stopPropagation()
+        actions.onState?.(row)
       }}
     />
-  );
+  )
 }
 
-function ExtrasText({ row }: { row: BoardRow }) {
-  const { t } = useTransferStrings();
+function ExtrasText({row}: {row: BoardRow}) {
+  const {t} = useTransferStrings()
   if (!row.extras.length) {
     return (
       <Text textStyle="sm" color="fg.muted">
         –
       </Text>
-    );
+    )
   }
   return (
     <Stack gap="0.5">
@@ -2521,14 +2692,13 @@ function ExtrasText({ row }: { row: BoardRow }) {
           justify="space-between"
           textStyle="xs"
           color="fg.muted"
-          gap="2"
-        >
-          <Text truncate>{enumLabel(t, "Extra_", x.type)}</Text>
+          gap="2">
+          <Text truncate>{enumLabel(t, 'Extra_', x.type)}</Text>
           <span>× {x.amount}</span>
         </HStack>
       ))}
     </Stack>
-  );
+  )
 }
 
 // ============================================================
@@ -2541,21 +2711,20 @@ function transferCell(
   id: ColumnId,
   actions: RowActions,
   t: TransfersStrings,
-  code: I18nCode,
+  code: I18nCode
 ): React.ReactNode {
   switch (id) {
-    case "code":
+    case 'code':
       return (
         <Text
           fontWeight="medium"
           whiteSpace="nowrap"
           fontFamily="mono"
-          textStyle="sm"
-        >
+          textStyle="sm">
           {row.code}
         </Text>
-      );
-    case "status":
+      )
+    case 'status':
       // The ride state and, beside it, the customer's status (offers-and-documents.md).
       return (
         <HStack gap="1" flexWrap="wrap">
@@ -2563,8 +2732,8 @@ function transferCell(
           <CustomerStatusBadge status={row.customerStatus} size="sm" />
           <ConfirmBookingCell row={row} actions={actions} />
         </HStack>
-      );
-    case "route":
+      )
+    case 'route':
       return (
         <Box minW="0">
           <Text textStyle="sm" fontWeight="medium" truncate>
@@ -2574,8 +2743,8 @@ function transferCell(
             {row.dropoff}
           </Text>
         </Box>
-      );
-    case "pickup":
+      )
+    case 'pickup':
       return (
         <Box whiteSpace="nowrap">
           <Text textStyle="sm" fontWeight="medium">
@@ -2585,14 +2754,14 @@ function transferCell(
             {row.rideTime}
           </Text>
         </Box>
-      );
-    case "passenger": {
-      const name = passengerName(row);
-      const phone = row.passengers[0]?.phone;
+      )
+    case 'passenger': {
+      const name = passengerName(row)
+      const phone = row.passengers[0]?.phone
       return (
         <Box minW="0">
           <Text textStyle="sm" fontWeight="medium" truncate>
-            {name || "–"}
+            {name || '–'}
           </Text>
           {phone && (
             <Text textStyle="xs" color="fg.muted" truncate>
@@ -2600,72 +2769,69 @@ function transferCell(
             </Text>
           )}
         </Box>
-      );
+      )
     }
-    case "capacity":
-      return <CapacityText row={row} />;
-    case "flight":
+    case 'capacity':
+      return <CapacityText row={row} />
+    case 'flight':
       return (
         <Text
           textStyle="sm"
-          color={row.details?.flightNumber ? undefined : "fg.muted"}
-        >
-          {row.details?.flightNumber || "–"}
+          color={row.details?.flightNumber ? undefined : 'fg.muted'}>
+          {row.details?.flightNumber || '–'}
         </Text>
-      );
-    case "driver":
-      return <DriverCell row={row} actions={actions} />;
-    case "vehicle":
-      return <VehicleCell row={row} actions={actions} />;
-    case "price":
-      return <PriceCell row={row} actions={actions} />;
-    case "customer":
+      )
+    case 'driver':
+      return <DriverCell row={row} actions={actions} />
+    case 'vehicle':
+      return <VehicleCell row={row} actions={actions} />
+    case 'price':
+      return <PriceCell row={row} actions={actions} />
+    case 'customer':
       return (
         <Box minW="0">
           <Text textStyle="sm" fontWeight="medium" truncate>
-            {row.customerName || "–"}
+            {row.customerName || '–'}
           </Text>
           <Text textStyle="xs" color="fg.muted" truncate>
             {row.customerId}
           </Text>
         </Box>
-      );
-    case "category":
+      )
+    case 'category':
       return (
         <Text textStyle="sm">
-          {enumLabel(t, "Cat_", row.transferCategory)}
+          {enumLabel(t, 'Cat_', row.transferCategory)}
           {row.transferType
-            ? ` · ${enumLabel(t, "Type_", row.transferType)}`
-            : ""}
+            ? ` · ${enumLabel(t, 'Type_', row.transferType)}`
+            : ''}
         </Text>
-      );
-    case "payment":
+      )
+    case 'payment':
       return (
         <Text
           textStyle="sm"
-          color={row.paymentMethode ? undefined : "fg.muted"}
-        >
-          {row.paymentMethode ? enumLabel(t, "Pay_", row.paymentMethode) : "–"}
+          color={row.paymentMethode ? undefined : 'fg.muted'}>
+          {row.paymentMethode ? enumLabel(t, 'Pay_', row.paymentMethode) : '–'}
           {row.payingParty
-            ? ` · ${enumLabel(t, "Party_", row.payingParty)}`
-            : ""}
+            ? ` · ${enumLabel(t, 'Party_', row.payingParty)}`
+            : ''}
         </Text>
-      );
-    case "extras":
-      return <ExtrasText row={row} />;
-    case "notes":
+      )
+    case 'extras':
+      return <ExtrasText row={row} />
+    case 'notes':
       return (
         <Text
           textStyle="sm"
           color="fg.muted"
           truncate
-          title={row.details?.message}
-        >
-          {row.details?.message || "–"}
+          title={row.details?.message}>
+          {row.details?.message || '–'}
         </Text>
-      );
+      )
     default:
-      return null;
+      return null
   }
 }
 
@@ -2678,20 +2844,20 @@ function transferCell(
  * every cell is written once.
  */
 export function useTransferColumns(
-  actions: RowActions,
+  actions: RowActions
 ): DataColumn<BoardRow>[] {
-  const { t, code } = useTransferStrings();
+  const {t, code} = useTransferStrings()
   return useMemo(
     () =>
-      BOARD_COLUMNS.map(({ id, visible }) => ({
+      BOARD_COLUMNS.map(({id, visible}) => ({
         id,
         label: columnLabel(t, id),
         width: COLUMN_WIDTHS[id],
         defaultVisible: visible,
-        cell: (row: BoardRow) => transferCell(row, id, actions, t, code),
+        cell: (row: BoardRow) => transferCell(row, id, actions, t, code)
       })),
-    [t, code, actions],
-  );
+    [t, code, actions]
+  )
 }
 
 // ============================================================
@@ -2699,16 +2865,16 @@ export function useTransferColumns(
 // ============================================================
 
 interface TransferCardProps {
-  row: BoardRow;
-  expanded: boolean;
-  onToggle: () => void;
-  actions: RowActions;
+  row: BoardRow
+  expanded: boolean
+  onToggle: () => void
+  actions: RowActions
   /** The driver's own list hides the dispatcher's cells. */
-  compact?: boolean;
+  compact?: boolean
   /** WHEN, on the right edge: green today, yellow tomorrow. See dayPalette. */
-  dayTone?: DayTone;
+  dayTone?: DayTone
   /** Whose words on the customer status chip: the dispatcher's, or the customer's on their own list. */
-  customerAudience?: "dispatcher" | "customer";
+  customerAudience?: 'dispatcher' | 'customer'
 }
 
 export function TransferCard({
@@ -2718,10 +2884,10 @@ export function TransferCard({
   actions,
   compact = false,
   dayTone,
-  customerAudience = "dispatcher",
+  customerAudience = 'dispatcher'
 }: TransferCardProps) {
-  const { t, tc, code } = useTransferStrings();
-  const name = passengerName(row);
+  const {t, tc, code} = useTransferStrings()
+  const name = passengerName(row)
   return (
     <Box
       rounded="surface"
@@ -2733,12 +2899,11 @@ export function TransferCard({
       minW="0"
       colorPalette={dayTone}
       borderInlineStartWidth="4px"
-      borderInlineStartColor={row.driverColor ?? "border.emphasized"}
-      borderInlineEndWidth={dayTone ? "4px" : "1px"}
-      borderInlineEndColor={dayTone ? "colorPalette.solid" : "border.default"}
+      borderInlineStartColor={row.driverColor ?? 'border.emphasized'}
+      borderInlineEndWidth={dayTone ? '4px' : '1px'}
+      borderInlineEndColor={dayTone ? 'colorPalette.solid' : 'border.default'}
       onClick={() => actions.onOpen(row)}
-      cursor="pointer"
-    >
+      cursor="pointer">
       <HStack justify="space-between" gap="2" minW="0" align="flex-start">
         {/*
           The card's head carries what the desk row's status column carries,
@@ -2761,7 +2926,7 @@ export function TransferCard({
             />
           )}
           {!compact && (
-            <Box onClick={(e) => e.stopPropagation()}>
+            <Box onClick={e => e.stopPropagation()}>
               <ConfirmBookingCell row={row} actions={actions} />
             </Box>
           )}
@@ -2774,11 +2939,10 @@ export function TransferCard({
             size="xs"
             variant="ghost"
             aria-label={expanded ? t.ShowLess : t.ShowMore}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggle();
-            }}
-          >
+            onClick={e => {
+              e.stopPropagation()
+              onToggle()
+            }}>
             {expanded ? <FaChevronUp /> : <FaChevronDown />}
           </IconButton>
         </HStack>
@@ -2794,21 +2958,32 @@ export function TransferCard({
         </Box>
       </HStack>
 
+      {/*
+        The answer on the card (dispatch.md section 9a): the requested driver
+        says yes or no from the board without opening the ride, and an admin
+        takes the yes on the driver's behalf. Drawn on the driver's own list
+        as well, which is the same card with the dispatcher's cells hidden.
+      */}
+      {actions.onAnswered && (
+        <Box mt="3" onClick={e => e.stopPropagation()}>
+          <DriverAnswerActions transfer={row} onAnswered={actions.onAnswered} />
+        </Box>
+      )}
+
       {/* The dispatcher's eye needs the driver on the closed card, that is the whole board on a phone. */}
       {!compact && !expanded && (
         <HStack
           justify="space-between"
           mt="2"
           gap="2"
-          onClick={(e) => e.stopPropagation()}
-        >
+          onClick={e => e.stopPropagation()}>
           <DriverCell row={row} actions={actions} />
           <PriceCell row={row} actions={actions} />
         </HStack>
       )}
 
       {expanded && (
-        <Stack gap="2" mt="3" onClick={(e) => e.stopPropagation()}>
+        <Stack gap="2" mt="3" onClick={e => e.stopPropagation()}>
           <HStack gap="2" textStyle="sm" color="fg.muted">
             <FaCalendarAlt />
             <span>
@@ -2820,7 +2995,7 @@ export function TransferCard({
               <Box color="fg.muted">
                 <FaUsers />
               </Box>
-              <span>{row.passengers.length || "–"}</span>
+              <span>{row.passengers.length || '–'}</span>
             </HStack>
             {row.details?.luggage && (
               <HStack gap="1.5">
@@ -2845,7 +3020,7 @@ export function TransferCard({
               <Text color="fg.muted" w="24" flexShrink={0}>
                 {t.Passenger}
               </Text>
-              <Text truncate>{name || "–"}</Text>
+              <Text truncate>{name || '–'}</Text>
             </HStack>
             {!compact && (
               <HStack gap="2">
@@ -2861,7 +3036,7 @@ export function TransferCard({
               </Text>
               <VehicleCell
                 row={row}
-                actions={compact ? { onOpen: actions.onOpen } : actions}
+                actions={compact ? {onOpen: actions.onOpen} : actions}
               />
             </HStack>
             {(!compact || row.price != null) && (
@@ -2871,7 +3046,7 @@ export function TransferCard({
                 </Text>
                 <PriceCell
                   row={row}
-                  actions={compact ? { onOpen: actions.onOpen } : actions}
+                  actions={compact ? {onOpen: actions.onOpen} : actions}
                 />
               </HStack>
             )}
@@ -2894,14 +3069,13 @@ export function TransferCard({
             size="sm"
             variant="outline"
             colorPalette="brand"
-            onClick={() => actions.onOpen(row)}
-          >
+            onClick={() => actions.onOpen(row)}>
             {tc.Details}
           </Button>
         </Stack>
       )}
     </Box>
-  );
+  )
 }
 
 // ============================================================
@@ -2909,36 +3083,36 @@ export function TransferCard({
 // ============================================================
 
 export interface ListState {
-  dateChip: DateChip;
-  setDateChip: (v: DateChip) => void;
-  range: { start: string; end: string };
-  setRange: (r: { start: string; end: string }) => void;
-  statuses: Set<TransferState>;
-  setStatuses: (s: Set<TransferState>) => void;
-  search: string;
-  setSearch: (s: string) => void;
-  sort: SortOrder;
-  setSort: (s: SortOrder) => void;
-  unassignedOnly: boolean;
-  setUnassignedOnly: (v: boolean) => void;
+  dateChip: DateChip
+  setDateChip: (v: DateChip) => void
+  range: {start: string; end: string}
+  setRange: (r: {start: string; end: string}) => void
+  statuses: Set<TransferState>
+  setStatuses: (s: Set<TransferState>) => void
+  search: string
+  setSearch: (s: string) => void
+  sort: SortOrder
+  setSort: (s: SortOrder) => void
+  unassignedOnly: boolean
+  setUnassignedOnly: (v: boolean) => void
 }
 
 const OPEN_STATES = new Set<TransferState>(
-  TRANSFER_STATES.filter((s) => !isClosed(s)),
-);
+  TRANSFER_STATES.filter(s => !isClosed(s))
+)
 
 export function useListState(
   initialChip: DateChip,
-  initialStatuses: ReadonlySet<TransferState>,
+  initialStatuses: ReadonlySet<TransferState>
 ): ListState {
-  const [dateChip, setDateChip] = useState<DateChip>(initialChip);
-  const [range, setRange] = useState({ start: "", end: "" });
+  const [dateChip, setDateChip] = useState<DateChip>(initialChip)
+  const [range, setRange] = useState({start: '', end: ''})
   const [statuses, setStatuses] = useState<Set<TransferState>>(
-    () => new Set(initialStatuses),
-  );
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortOrder>("earliest");
-  const [unassignedOnly, setUnassignedOnly] = useState(false);
+    () => new Set(initialStatuses)
+  )
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<SortOrder>('earliest')
+  const [unassignedOnly, setUnassignedOnly] = useState(false)
   return {
     dateChip,
     setDateChip,
@@ -2951,8 +3125,8 @@ export function useListState(
     sort,
     setSort,
     unassignedOnly,
-    setUnassignedOnly,
-  };
+    setUnassignedOnly
+  }
 }
 
 /**
@@ -2965,20 +3139,20 @@ export const useServerArgs = (
   state: ListState,
   today: string,
   tomorrow: string,
-  pageSize: number,
+  pageSize: number
 ) => {
   const oneState =
-    state.statuses.size === 1 ? [...state.statuses][0] : undefined;
+    state.statuses.size === 1 ? [...state.statuses][0] : undefined
   return useMemo(() => {
-    const base = { pageSize, state: oneState };
-    if (state.dateChip === "today")
-      return { ...base, fromISO: today, toISO: today };
-    if (state.dateChip === "tomorrow")
-      return { ...base, fromISO: tomorrow, toISO: tomorrow };
-    if (state.dateChip === "custom" && state.range.start && state.range.end) {
-      return { ...base, fromISO: state.range.start, toISO: state.range.end };
+    const base = {pageSize, state: oneState}
+    if (state.dateChip === 'today')
+      return {...base, fromISO: today, toISO: today}
+    if (state.dateChip === 'tomorrow')
+      return {...base, fromISO: tomorrow, toISO: tomorrow}
+    if (state.dateChip === 'custom' && state.range.start && state.range.end) {
+      return {...base, fromISO: state.range.start, toISO: state.range.end}
     }
-    return base;
+    return base
   }, [
     state.dateChip,
     state.range.start,
@@ -2986,25 +3160,23 @@ export const useServerArgs = (
     oneState,
     today,
     tomorrow,
-    pageSize,
-  ]);
-};
+    pageSize
+  ])
+}
 
 export const applyClientFilters = (
   rows: BoardRow[],
-  state: ListState,
+  state: ListState
 ): BoardRow[] => {
-  let result = rows.filter((r) => {
-    const s = asTransferState(r.state);
-    return s ? state.statuses.has(s) : true;
-  });
+  let result = rows.filter(r => {
+    const s = asTransferState(r.state)
+    return s ? state.statuses.has(s) : true
+  })
   if (state.unassignedOnly)
-    result = result.filter(
-      (r) => !isClosed(r.state) && (!r.driverId || !r.carId),
-    );
-  const q = state.search.trim().toLowerCase();
+    result = result.filter(r => !isClosed(r.state) && (!r.driverId || !r.carId))
+  const q = state.search.trim().toLowerCase()
   if (q) {
-    result = result.filter((r) =>
+    result = result.filter(r =>
       [
         r.code,
         r.id,
@@ -3017,36 +3189,36 @@ export const applyClientFilters = (
         passengerName(r),
         r.passengers[0]?.phone,
         r.details?.flightNumber,
-        r.subject,
-      ].some((v) => v?.toLowerCase().includes(q)),
-    );
+        r.subject
+      ].some(v => v?.toLowerCase().includes(q))
+    )
   }
   return [...result].sort((a, b) => {
-    const ka = `${a.rideDateISO} ${a.rideTime}`;
-    const kb = `${b.rideDateISO} ${b.rideTime}`;
-    return state.sort === "earliest"
+    const ka = `${a.rideDateISO} ${a.rideTime}`
+    const kb = `${b.rideDateISO} ${b.rideTime}`
+    return state.sort === 'earliest'
       ? ka.localeCompare(kb)
-      : kb.localeCompare(ka);
-  });
-};
+      : kb.localeCompare(ka)
+  })
+}
 
 // ============================================================
 // The dispatcher's board
 // ============================================================
 
-const BOARD_PAGE_SIZE = 25;
+const BOARD_PAGE_SIZE = 25
 
 function DispatchBoard() {
-  const { t, tc } = useTransferStrings();
-  const navigate = useAppNavigate();
-  const { drivers } = useDrivers();
-  const { cars, refetch: refetchCars } = useCars();
-  const { users } = useUsers(100);
+  const {t, tc} = useTransferStrings()
+  const navigate = useAppNavigate()
+  const {drivers} = useDrivers()
+  const {cars, refetch: refetchCars} = useCars()
+  const {users} = useUsers(100)
 
-  const { today, tomorrow } = useTodayTomorrow();
+  const {today, tomorrow} = useTodayTomorrow()
 
-  const list = useListState("today", new Set(TRANSFER_STATES));
-  const args = useServerArgs(list, today, tomorrow, BOARD_PAGE_SIZE);
+  const list = useListState('today', new Set(TRANSFER_STATES))
+  const args = useServerArgs(list, today, tomorrow, BOARD_PAGE_SIZE)
   const {
     rows,
     isLoading,
@@ -3059,47 +3231,48 @@ function DispatchBoard() {
     prevPage,
     firstPage,
     refetch,
-    replaceRow,
-  } = useTransferList(args);
-  useViewRefresh(refetch, isFetching);
+    replaceRow
+  } = useTransferList(args)
+  useViewRefresh(refetch, isFetching)
 
-  const [assignFor, setAssignFor] = useState<TransferRow | null>(null);
-  const [priceFor, setPriceFor] = useState<TransferRow | null>(null);
-  const [stateFor, setStateFor] = useState<TransferRow | null>(null);
-  const [confirmFor, setConfirmFor] = useState<TransferRow | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [assignFor, setAssignFor] = useState<TransferRow | null>(null)
+  const [priceFor, setPriceFor] = useState<TransferRow | null>(null)
+  const [stateFor, setStateFor] = useState<TransferRow | null>(null)
+  const [confirmFor, setConfirmFor] = useState<TransferRow | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
 
   const enriched = useMemo(
     () => enrich(rows, drivers, users, cars),
-    [rows, drivers, users, cars],
-  );
+    [rows, drivers, users, cars]
+  )
   const filtered = useMemo(
     () => applyClientFilters(enriched, list),
-    [enriched, list],
-  );
+    [enriched, list]
+  )
 
   const actions = useMemo<RowActions>(
     () => ({
-      onOpen: (row) => navigate(transferPath(row)),
+      onOpen: row => navigate(transferPath(row)),
       onAssign: setAssignFor,
       onPrice: setPriceFor,
       onState: setStateFor,
       onConfirm: setConfirmFor,
+      onAnswered: replaceRow
     }),
-    [navigate],
-  );
-  const columns = useTransferColumns(actions);
-  const group = useDayGroup(today, tomorrow);
+    [navigate, replaceRow]
+  )
+  const columns = useTransferColumns(actions)
+  const group = useDayGroup(today, tomorrow)
 
   const onSaved = useCallback(
     (row: TransferRow) => {
-      replaceRow(row);
+      replaceRow(row)
     },
-    [replaceRow],
-  );
+    [replaceRow]
+  )
 
   return (
-    <Box p={{ base: "4", md: "6" }} maxW="full">
+    <Box p={{base: '4', md: '6'}} maxW="full">
       <Stack gap="5">
         <PageHeader
           title={t.Heading}
@@ -3109,8 +3282,7 @@ function DispatchBoard() {
               <Button
                 size="sm"
                 colorPalette="brand"
-                onClick={() => setCreateOpen(true)}
-              >
+                onClick={() => setCreateOpen(true)}>
                 <FaPlus />
                 {t.AddTransfer}
               </Button>
@@ -3126,13 +3298,13 @@ function DispatchBoard() {
             range={list.range}
             onRangeChange={list.setRange}
           />
-          <Box w={{ base: "full", md: "52" }}>
+          <Box w={{base: 'full', md: '52'}}>
             <InputGroup startElement={<FaSearch />}>
               <Input
                 size="sm"
                 placeholder={tc.Search}
                 value={list.search}
-                onChange={(e) => list.setSearch(e.target.value)}
+                onChange={e => list.setSearch(e.target.value)}
               />
             </InputGroup>
           </Box>
@@ -3142,8 +3314,7 @@ function DispatchBoard() {
             size="sm"
             colorPalette="brand"
             checked={list.unassignedOnly}
-            onCheckedChange={(e) => list.setUnassignedOnly(e.checked)}
-          >
+            onCheckedChange={e => list.setUnassignedOnly(e.checked)}>
             <Switch.HiddenInput />
             <Switch.Control />
             <Switch.Label textStyle="sm">{t.UnassignedOnly}</Switch.Label>
@@ -3157,8 +3328,7 @@ function DispatchBoard() {
               <chakra.button
                 type="button"
                 display="inline-flex"
-                onClick={() => list.setUnassignedOnly(false)}
-              >
+                onClick={() => list.setUnassignedOnly(false)}>
                 <FaTimes size={10} />
               </chakra.button>
             </Badge>
@@ -3169,11 +3339,11 @@ function DispatchBoard() {
           tableId="transfers"
           columns={columns}
           rows={filtered}
-          rowId={(row) => row.id}
+          rowId={row => row.id}
           onOpen={actions.onOpen}
           group={group}
-          stripe={(row) => row.driverColor}
-          muted={(row) => asTransferState(row.state) === "COMPLETED"}
+          stripe={row => row.driverColor}
+          muted={row => asTransferState(row.state) === 'COMPLETED'}
           card={(row, api) => (
             <TransferCard
               row={row}
@@ -3185,7 +3355,7 @@ function DispatchBoard() {
           )}
           summary={fill(t.CountLabel, {
             total: pagination.totalCount,
-            count: filtered.length,
+            count: filtered.length
           })}
           isLoading={isLoading}
           error={error}
@@ -3202,7 +3372,7 @@ function DispatchBoard() {
             onNext: nextPage,
             pageSize,
             onPageSize: setPageSize,
-            always: true,
+            always: true
           }}
         />
       </Stack>
@@ -3213,10 +3383,10 @@ function DispatchBoard() {
         transfer={assignFor}
         drivers={drivers}
         cars={cars}
-        onAssigned={(row) => {
-          onSaved(row);
+        onAssigned={row => {
+          onSaved(row)
           // A driver's latest car may have been created on the way, keep the plates fresh.
-          refetchCars();
+          refetchCars()
         }}
       />
       <PriceDialog
@@ -3243,34 +3413,28 @@ function DispatchBoard() {
         customers={users}
         cars={cars}
         onCreated={() => {
-          list.setDateChip("all");
-          firstPage();
+          list.setDateChip('all')
+          firstPage()
         }}
       />
     </Box>
-  );
+  )
 }
 
 // ============================================================
 // My rides: the driver's list, and a customer's bookings
 // ============================================================
 
-function MyRides({
-  heading,
-  subtitle,
-}: {
-  heading: string;
-  subtitle?: string;
-}) {
-  const { t } = useTransferStrings();
-  const navigate = useAppNavigate();
+function MyRides({heading, subtitle}: {heading: string; subtitle?: string}) {
+  const {t} = useTransferStrings()
+  const navigate = useAppNavigate()
 
-  const { today, tomorrow } = useTodayTomorrow();
+  const {today, tomorrow} = useTodayTomorrow()
 
   // A driver wants what is still to do. The chips and the status filter can widen it.
-  const list = useListState("today", OPEN_STATES);
+  const list = useListState('today', OPEN_STATES)
 
-  const args = useServerArgs(list, today, tomorrow, 50);
+  const args = useServerArgs(list, today, tomorrow, 50)
   // No driverId is sent: the backend confines the list to the caller.
   const {
     rows,
@@ -3283,28 +3447,33 @@ function MyRides({
     nextPage,
     prevPage,
     firstPage,
-    refetch,
-  } = useTransferList({ ...args, tableId: "my-rides" });
-  useViewRefresh(refetch, isFetching);
+    refetch
+  } = useTransferList({...args, tableId: 'my-rides'})
+  useViewRefresh(refetch, isFetching)
   // Offline the list is the stored answer, see shared/offline.ts. When the
   // connection returns it is read again and the banner above it goes.
-  useRefetchOnReconnect(refetch);
+  useRefetchOnReconnect(refetch)
 
-  const enriched = useMemo(() => enrich(rows, [], [], []), [rows]);
+  const enriched = useMemo(() => enrich(rows, [], [], []), [rows])
   const filtered = useMemo(
     () => applyClientFilters(enriched, list),
-    [enriched, list],
-  );
+    [enriched, list]
+  )
 
   const actions = useMemo<RowActions>(
-    () => ({ onOpen: (row) => navigate(transferPath(row)) }),
-    [navigate],
-  );
-  const columns = useTransferColumns(actions);
-  const group = useDayGroup(today, tomorrow);
+    () => ({
+      onOpen: row => navigate(transferPath(row)),
+      // The driver answers from their own list too, and the list is read
+      // again afterwards: it has no row replacement of its own.
+      onAnswered: () => void refetch()
+    }),
+    [navigate, refetch]
+  )
+  const columns = useTransferColumns(actions)
+  const group = useDayGroup(today, tomorrow)
 
   return (
-    <Box p={{ base: "4", md: "6" }} maxW="full">
+    <Box p={{base: '4', md: '6'}} maxW="full">
       <Stack gap="5">
         <PageHeader
           title={heading}
@@ -3330,10 +3499,10 @@ function MyRides({
           tableId="my-rides"
           columns={columns}
           rows={filtered}
-          rowId={(row) => row.id}
+          rowId={row => row.id}
           onOpen={actions.onOpen}
           group={group}
-          stripe={(row) => row.driverColor}
+          stripe={row => row.driverColor}
           cardsOnly
           columnsControl={false}
           card={(row, api) => (
@@ -3364,12 +3533,12 @@ function MyRides({
             onPrev: prevPage,
             onNext: nextPage,
             pageSize,
-            onPageSize: setPageSize,
+            onPageSize: setPageSize
           }}
         />
       </Stack>
     </Box>
-  );
+  )
 }
 
 // ============================================================
@@ -3377,7 +3546,7 @@ function MyRides({
 // ============================================================
 
 /** The columns' words while nobody opens a row yet. */
-const NO_ACTIONS: RowActions = { onOpen: () => undefined };
+const NO_ACTIONS: RowActions = {onOpen: () => undefined}
 
 /**
  * The list before the roles are known: the heading as a grey line and the
@@ -3386,31 +3555,31 @@ const NO_ACTIONS: RowActions = { onOpen: () => undefined };
  * rides, so whichever lands, the skeleton had its shape.
  */
 function TransfersSkeleton() {
-  const columns = useTransferColumns(NO_ACTIONS);
-  const mobile = useIsMobile();
+  const columns = useTransferColumns(NO_ACTIONS)
+  const mobile = useIsMobile()
   return (
-    <Box p={{ base: "4", md: "6" }} maxW="full">
+    <Box p={{base: '4', md: '6'}} maxW="full">
       <Stack gap="5">
         <Skeleton h="8" w="48" rounded="sm" />
         {mobile ? (
           <ListSkeleton rows={8} />
         ) : (
           <TableSkeleton
-            columns={columns.filter((c) => c.defaultVisible !== false)}
+            columns={columns.filter(c => c.defaultVisible !== false)}
           />
         )}
       </Stack>
     </Box>
-  );
+  )
 }
 
 export function TransfersView() {
-  const caller = useCaller();
-  const { t } = useTransferStrings();
+  const caller = useCaller()
+  const {t} = useTransferStrings()
 
-  if (caller.loading) return <TransfersSkeleton />;
-  if (caller.isAdmin) return <DispatchBoard />;
+  if (caller.loading) return <TransfersSkeleton />
+  if (caller.isAdmin) return <DispatchBoard />
   if (caller.isDriver)
-    return <MyRides heading={t.MyRidesHeading} subtitle={t.MyRidesSubtitle} />;
-  return <MyRides heading={t.BookingsHeading} />;
+    return <MyRides heading={t.MyRidesHeading} subtitle={t.MyRidesSubtitle} />
+  return <MyRides heading={t.BookingsHeading} />
 }

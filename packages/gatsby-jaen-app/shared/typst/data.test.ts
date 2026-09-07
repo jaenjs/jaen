@@ -174,7 +174,7 @@ const de = buildOfferData(origin, 'booklimo', 'de', {
   files
 })
 assert.equal(de.sender.company, 'KRC Limousinenservice KG')
-assert.equal(de.sender.address[1], 'Margaretengürtel 42/3/16')
+assert.equal(de.sender.address[1], 'Bürgerspitalwiese 10/18')
 assert.deepEqual(
   de.recipient,
   ['Hotel Sacher Empfang', 'empfang@sacher.example', '+43 1 514 56'],

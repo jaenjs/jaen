@@ -165,3 +165,235 @@ self.addEventListener('message', event => {
     })
   )
 })
+
+// ------------------------------------------------------------
+// A deploy never leaves the installed app white.
+//
+// okf/architecture/offline.md, "The installed app never goes white after a
+// deploy". gatsby-plugin-offline appends this file to the worker it
+// generates, after its own sw-append.js and in the same script scope, so
+// `navigationRoute`, `workbox` and `caches` below are the very objects that
+// file created. That is the only reason this can be written here at all.
+//
+// Three things happen:
+//
+//   1. /app navigations are network first. The plugin's navigation route
+//      answers every /app URL out of the precached app shell as soon as the
+//      shell and the page's resources are cached, and that shell names the
+//      chunks of the build it was installed with. After a deploy those chunks
+//      are gone from the server and the document stays white. Network first
+//      means a reload lands on the document the site serves today; the shell
+//      is the answer when, and only when, there is no connection.
+//   2. The previous build's chunks are kept. skipWaiting and clientsClaim are
+//      on, so the new worker activates while the old page is still on the
+//      screen, and workbox empties the outdated precache at that moment. The
+//      install below copies every script and stylesheet of the build that is
+//      running into a cache of its own first, so a page that asks for one of
+//      them after the swap is served rather than answered 404.
+//   3. A build asset the deploy really has taken away answers from that cache
+//      if it is there, and only then reaches the page as the 404 it is, where
+//      src/update-guard.ts shows "Neue Version wird geladen" and reloads once.
+// ------------------------------------------------------------
+
+/** The same shape gatsby-plugin-offline's own CacheFirst route used. */
+const TAXI_BUILD_ASSET = /(\.js$|\.css$|static\/)/
+/** Only the app. The public pages keep the plugin's behaviour unchanged. */
+const TAXI_APP_NAVIGATION = /^\/app(\/|$)/
+/**
+ * The shell's URL. Written out rather than taken from sw-append.js, which
+ * spells it with the plugin's `%pathPrefix%` placeholder: that placeholder is
+ * substituted in the plugin's own appended file and NOT in this one, which is
+ * copied in verbatim. Neither site sets a pathPrefix, and one that did would
+ * have to say so here.
+ */
+const TAXI_APP_SHELL = `/offline-plugin-app-shell-fallback/index.html`
+/** One generation, replaced at every install. */
+const TAXI_PREVIOUS_BUILD = `taxi-app-previous-build`
+/**
+ * How long a navigation waits for the network before it falls back to the
+ * shell. A driver in a lift is not made to stare at a spinner, and six
+ * seconds is longer than any answer this origin gives when it answers at all.
+ */
+const TAXI_NAVIGATION_TIMEOUT_MS = 6000
+
+/**
+ * The runtime cache workbox writes into, by the name it uses, so what this
+ * file stores is cleared by the same `clearPathResources` message the plugin
+ * already sends on a compilation hash mismatch (it deletes every cache whose
+ * name contains "runtime").
+ */
+const taxiRuntimeCacheName = () => {
+  try {
+    if (
+      workbox.core &&
+      workbox.core.cacheNames &&
+      workbox.core.cacheNames.runtime
+    ) {
+      return workbox.core.cacheNames.runtime
+    }
+  } catch (e) {
+    // Swallowed on purpose: an older workbox without core.cacheNames means a
+    // cache of our own name, which the message above still clears because the
+    // name carries "runtime".
+  }
+  return `gatsby-plugin-offline-runtime`
+}
+
+const taxiWithTimeout = (promise, ms) =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`timeout`)), ms)
+    promise.then(
+      value => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      error => {
+        clearTimeout(timer)
+        reject(error)
+      }
+    )
+  })
+
+const taxiFromPreviousBuild = async request => {
+  try {
+    const cache = await caches.open(TAXI_PREVIOUS_BUILD)
+    return await cache.match(request)
+  } catch (e) {
+    // Swallowed on purpose: no snapshot means the page reloads itself on the
+    // 404 instead of carrying on, which is the guard's job and visible.
+    return undefined
+  }
+}
+
+// ---- 2. the previous build's chunks, kept across the swap ----
+
+self.addEventListener(`install`, event => {
+  event.waitUntil(
+    (async () => {
+      try {
+        // One generation only: the build before this one. Anything older is
+        // dead weight on a phone's storage budget.
+        await caches.delete(TAXI_PREVIOUS_BUILD)
+        const previous = await caches.open(TAXI_PREVIOUS_BUILD)
+        const names = (await caches.keys()).filter(
+          name =>
+            name.includes(`gatsby-plugin-offline`) &&
+            name !== TAXI_PREVIOUS_BUILD
+        )
+        for (const name of names) {
+          const cache = await caches.open(name)
+          for (const request of await cache.keys()) {
+            const {pathname} = new URL(request.url)
+            if (!TAXI_BUILD_ASSET.test(pathname)) continue
+            const response = await cache.match(request)
+            if (response) await previous.put(request, response.clone())
+          }
+        }
+      } catch (e) {
+        // Swallowed on purpose: storage can be full or refused, and then the
+        // page that asks for a removed chunk reloads itself rather than
+        // continuing. That is the guard, not a white screen.
+      }
+    })()
+  )
+})
+
+// ---- 3. build assets, with the kept copy behind them ----
+//
+// The plugin's own two routes for scripts and stylesheets are neutralised in
+// the plugin options (app/gatsby/gatsby-config.ts), because a route
+// registered here can only ever run after them and they would answer first.
+
+workbox.routing.registerRoute(TAXI_BUILD_ASSET, async ({event, request}) => {
+  const req = request || event.request
+  const hit = await caches.match(req)
+  if (hit) return hit
+
+  let response
+  try {
+    response = await fetch(req)
+  } catch (e) {
+    const kept = await taxiFromPreviousBuild(req)
+    if (kept) return kept
+    throw e
+  }
+
+  if (response && response.ok) {
+    try {
+      const cache = await caches.open(taxiRuntimeCacheName())
+      await cache.put(req, response.clone())
+    } catch (e) {
+      // Swallowed on purpose: a full quota costs the next visit a fetch, and
+      // nothing else.
+    }
+    return response
+  }
+
+  // The deploy took this file away. The copy from the build before keeps the
+  // open page running until it reloads onto the new one.
+  const kept = await taxiFromPreviousBuild(req)
+  return kept || response
+})
+
+// ---- 1. /app navigations, network first, the shell as the fallback ----
+
+const taxiAppShellResponse = async () => {
+  try {
+    const key = workbox.precaching.getCacheKeyForURL(TAXI_APP_SHELL)
+    if (key) {
+      const hit = await caches.match(key)
+      if (hit) return hit
+    }
+  } catch (e) {
+    // Swallowed on purpose: an app shell that is not precached is an app that
+    // has no offline mode, which is what the plain fetch below answers.
+  }
+  return await caches.match(TAXI_APP_SHELL)
+}
+
+const taxiAppNavigation = async ({event}) => {
+  try {
+    const response = await taxiWithTimeout(
+      fetch(event.request),
+      TAXI_NAVIGATION_TIMEOUT_MS
+    )
+    // A 404 or a 500 is the site's own answer and is shown as such. Only a
+    // dead connection, or one too slow to answer at all, reaches the shell.
+    if (response) return response
+  } catch (e) {
+    // No connection, or slower than the timeout.
+  }
+  const shell = await taxiAppShellResponse()
+  if (shell) return shell
+  return await fetch(event.request)
+}
+
+// The plugin's navigation route answers every navigation out of the app
+// shell, and its handler is the only thing that has to change: workbox 4.3.1,
+// which gatsby-plugin-offline pins, exports registerRoute but NOT
+// unregisterRoute (that arrived in workbox 5), so a route cannot be taken out
+// of the router and a route added here can only ever run after it. What can
+// be done is what is done: the route object itself is in scope, because this
+// file is appended to the same script, and its handler is replaced by one
+// that answers /app itself and hands everything else to the handler that was
+// there. The public pages keep the plugin's behaviour to the letter.
+const taxiPluginNavigation =
+  navigationRoute && navigationRoute.handler ? navigationRoute.handler : null
+
+if (taxiPluginNavigation) {
+  navigationRoute.handler = {
+    handle: args => {
+      const request = args && args.event ? args.event.request : null
+      let pathname = ``
+      try {
+        pathname = new URL(request.url).pathname
+      } catch (e) {
+        // Not a URL we can read, which is the plugin's business and not ours.
+      }
+      if (pathname && TAXI_APP_NAVIGATION.test(pathname)) {
+        return taxiAppNavigation(args)
+      }
+      return taxiPluginNavigation.handle(args)
+    }
+  }
+}

@@ -54,7 +54,7 @@ import {
   bookRide,
   bookingPath,
   PAYMENT_METHODS,
-  toPickupInstant,
+  isPickupInPast,
   useBookingDrivers,
   type Booking,
   type BookRideInput,
@@ -157,11 +157,13 @@ function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(prev => ({...prev, [key]: value}))
 
-  const pickupInPast = useMemo(() => {
-    if (!form.date || !form.time) return false
-    const instant = toPickupInstant(form.date, form.time)
-    return instant ? new Date(instant).getTime() < Date.now() - 60_000 : false
-  }, [form.date, form.time])
+  // No ride in the past, dispatch.md section 12. The rule is the pylon's,
+  // fifteen minutes of lead, and it is asked here so the visitor reads the
+  // sentence under the date rather than a PICKUP_IN_PAST from the mutation.
+  const pickupInPast = useMemo(
+    () => isPickupInPast(form.date, form.time),
+    [form.date, form.time]
+  )
 
   const missing = {
     date: !form.date,
@@ -265,7 +267,9 @@ function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
                         <Field.ErrorText>{t.ModalErrorPast}</Field.ErrorText>
                       )}
                     </Field.Root>
-                    <Field.Root required invalid={touched && missing.time}>
+                    <Field.Root
+                      required
+                      invalid={touched && (missing.time || pickupInPast)}>
                       <Field.Label>
                         {t.ModalLabelTime}
                         <Field.RequiredIndicator />

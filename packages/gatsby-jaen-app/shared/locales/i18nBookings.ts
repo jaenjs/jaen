@@ -64,7 +64,7 @@ export function getI18nBookings(code: I18nCode) {
         ModalPlaceholderWishes: 'Anything the driver should know',
         ModalHintPrice: 'The office sets the fare and confirms the ride.',
         ModalErrorRequired: 'Required',
-        ModalErrorPast: 'The pickup is in the past',
+        ModalErrorPast: 'The pickup time is in the past',
 
         PaymentCASH: 'Cash',
         PaymentCARD: 'Card',
@@ -201,7 +201,7 @@ export function getI18nBookings(code: I18nCode) {
         ModalPlaceholderWishes: 'Sürücünün bilmesi gerekenler',
         ModalHintPrice: 'Ücreti ofis belirler ve yolculuğu onaylar.',
         ModalErrorRequired: 'Zorunlu',
-        ModalErrorPast: 'Alış zamanı geçmişte',
+        ModalErrorPast: 'Alış saati geçmişte kaldı',
 
         PaymentCASH: 'Nakit',
         PaymentCARD: 'Kart',
@@ -338,7 +338,7 @@ export function getI18nBookings(code: I18nCode) {
         ModalPlaceholderWishes: 'كل ما ينبغي أن يعرفه السائق',
         ModalHintPrice: 'يحدد المكتب الأجرة ويؤكد الرحلة.',
         ModalErrorRequired: 'مطلوب',
-        ModalErrorPast: 'موعد الاستلام في الماضي',
+        ModalErrorPast: 'وقت الاستلام في الماضي',
 
         PaymentCASH: 'نقدًا',
         PaymentCARD: 'بطاقة',
@@ -475,7 +475,7 @@ export function getI18nBookings(code: I18nCode) {
       ModalHintPrice:
         'Die Zentrale legt den Preis fest und bestätigt die Fahrt.',
       ModalErrorRequired: 'Pflichtfeld',
-      ModalErrorPast: 'Die Abholung liegt in der Vergangenheit',
+      ModalErrorPast: 'Die Abholzeit liegt in der Vergangenheit',
 
       PaymentCASH: 'Bar',
       PaymentCARD: 'Karte',

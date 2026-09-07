@@ -523,6 +523,26 @@ export const toPickupInstant = (date: string, time: string): string | null => {
   return Number.isNaN(at.getTime()) ? null : at.toISOString()
 }
 
+/**
+ * No ride in the past, okf/architecture/dispatch.md section 12. The pylon
+ * refuses a pickup earlier than fifteen minutes from now with
+ * `PICKUP_IN_PAST`, and every form asks the same question before it sends,
+ * so the visitor reads the sentence under the field instead of a failed
+ * mutation. One constant for both forms, the same number the pylon carries.
+ */
+export const PICKUP_MIN_LEAD_MS = 15 * 60 * 1000
+
+/**
+ * Whether a typed date and time are already gone. An incomplete pair is not
+ * in the past, it is unfinished, and the required hint speaks for it.
+ */
+export const isPickupInPast = (date: string, time: string): boolean => {
+  if (!date || !time) return false
+  const instant = toPickupInstant(date, time)
+  if (!instant) return false
+  return new Date(instant).getTime() < Date.now() + PICKUP_MIN_LEAD_MS
+}
+
 const count = (n: number | undefined): string | undefined =>
   typeof n === 'number' && Number.isFinite(n) && n > 0
     ? String(Math.floor(n))

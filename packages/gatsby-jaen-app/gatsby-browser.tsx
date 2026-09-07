@@ -3,12 +3,38 @@ import React from 'react'
 import {I18nProvider} from './shared/i18n'
 import {AppFrameMenu} from './src/components/AppFrameMenu'
 import {OfflineSession} from './shared/offline'
+import {updateGuardSource} from './src/update-guard'
 
 // Gatsby resolves a plugin's gatsby-browser.tsx ahead of the gatsby-browser.js
 // stub beside it (measured in the sites' .cache/api-runner-browser-plugins.js),
 // so what gatsby/gatsby-browser.ts exports has to be exported from here too or
 // it never runs. The service worker reload lived there, unreachable.
 export {onServiceWorkerUpdateReady} from './gatsby/gatsby-browser'
+
+/**
+ * The stale build guard, for a document that did not carry it.
+ *
+ * gatsby-ssr.tsx writes the inline script into the /app documents and into the
+ * worker's app shell. A person who signs in lands on /loading, a public page
+ * without it, and walks into /app on a client-side route change, where a route
+ * chunk of a build that has just been replaced fails exactly as it does
+ * anywhere else. So the same source runs once here when the head script is
+ * missing. See src/update-guard.ts and okf/architecture/offline.md.
+ */
+export const onClientEntry = () => {
+  if (typeof window === 'undefined') return
+  const w = window as unknown as {__taxiAppUpdateNotice?: unknown}
+  if (typeof w.__taxiAppUpdateNotice === 'function') return
+  try {
+    // eslint-disable-next-line no-new-func
+    new Function(updateGuardSource())()
+  } catch (e) {
+    // Swallowed on purpose: without the guard a chunk the deploy removed
+    // shows the page's own failure rather than reloading itself, which is the
+    // behaviour this app had before the guard. Throwing here would take it down
+    // on every page, which is worse than the thing being guarded against.
+  }
+}
 
 export const wrapRootElement = ({element}: {element: React.ReactNode}) => (
   <I18nProvider code="de-AT">{element}</I18nProvider>

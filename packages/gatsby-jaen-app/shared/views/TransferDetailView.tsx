@@ -120,6 +120,7 @@ import {
   AssignDialog,
   ConfirmBookingDialog,
   CreateTransferDialog,
+  DriverAnswerActions,
   DriverAnswerBadge,
   PriceDialog,
   StateDialog,
@@ -1124,6 +1125,26 @@ function DetailScreen({
           }
         />
 
+        {/*
+          The answer above everything else (dispatch.md section 9a). The ride
+          page is the same page for everybody who is not the assigned driver
+          on a phone, so this is where a driver who is also an admin answers a
+          request meant for them, and where an admin says yes for a driver who
+          answered on the phone. The component draws nothing on a ride with no
+          open request.
+        */}
+        <DriverAnswerActions
+          transfer={transfer}
+          onAnswered={onChanged}
+          withReason
+          rounded="surface"
+          borderWidth="1px"
+          colorPalette="orange"
+          borderColor="colorPalette.solid"
+          bg="colorPalette.subtle"
+          p="4"
+        />
+
         <Box
           display="grid"
           gridTemplateColumns={{base: '1fr', md: '1fr 1fr'}}
@@ -1403,6 +1424,10 @@ function DetailScreen({
                               : ''}
                             {a.by
                               ? ` · ${fill(t.AttemptBy, {name: nameOf(a.by) ?? ''})}`
+                              : ''}
+                            {/* Who wrote the answer when the driver did not: the admin's yes on the phone. */}
+                            {a.answeredBy
+                              ? ` · ${fill(t.AttemptAnsweredBy, {name: nameOf(a.answeredBy) ?? ''})}`
                               : ''}
                           </Text>
                           {a.reason && (

@@ -3,6 +3,7 @@ import React from 'react'
 import {I18nProvider} from './shared/i18n'
 import {AppFrameMenu} from './src/components/AppFrameMenu'
 import {OfflineSession} from './shared/offline'
+import {isGuardedPath, updateGuardSource} from './src/update-guard'
 import type {GatsbySSR} from 'gatsby'
 
 export const wrapRootElement = ({element}: {element: React.ReactNode}) => (
@@ -56,5 +57,28 @@ export const onPreRenderHTML: GatsbySSR['onPreRenderHTML'] = ({
   replaceHeadComponents([
     <meta key="viewport" name="viewport" content={APP_VIEWPORT} />,
     ...head
+  ])
+}
+
+/**
+ * The guard that keeps a deploy from leaving an installed app white.
+ *
+ * It goes into the head of the app's own documents and of the worker's app
+ * shell, as an inline script, because the thing it catches is the app bundle
+ * failing to load: a component could not run, there would be no React. See
+ * src/update-guard.ts for what it does and okf/architecture/offline.md for
+ * why. The public pages never get it, they have no service worker shell of
+ * their own to go stale on.
+ */
+export const onRenderBody: GatsbySSR['onRenderBody'] = ({
+  pathname,
+  setHeadComponents
+}) => {
+  if (!isGuardedPath(pathname)) return
+  setHeadComponents([
+    <script
+      key="taxi-app-update-guard"
+      dangerouslySetInnerHTML={{__html: updateGuardSource()}}
+    />
   ])
 }

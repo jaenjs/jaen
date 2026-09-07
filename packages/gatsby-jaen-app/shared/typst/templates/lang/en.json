@@ -10,6 +10,11 @@
     "title": "Offer no. {id}",
     "validUntil": "Valid until"
   },
+  "confirmation": {
+    "number": "Booking code",
+    "date": "Confirmed on",
+    "title": "Booking confirmation {id}"
+  },
   "meta": {
     "deliveryDate": "Delivery date",
     "reference": "Reference",
@@ -37,12 +42,24 @@
     "confirm": "Confirm offer",
     "decline": "Decline offer"
   },
+  "ride": {
+    "open": "Open your ride",
+    "title": "Your vehicle",
+    "driver": "Driver: {driver}",
+    "pending": "Your driver will be assigned in good time."
+  },
   "defaults": {
     "offer": {
       "greeting": "Dear Sir or Madam,",
       "text": "thank you for your enquiry. We are pleased to make you the following offer for your ride:",
       "terms": "The ride is booked once you have confirmed. Prices include VAT, waiting times and detours are charged as incurred.",
       "status": "This offer is valid until {validUntil}."
+    },
+    "confirmation": {
+      "greeting": "Dear Sir or Madam,",
+      "text": "thank you for your booking. We hereby confirm your ride:",
+      "terms": "Your driver will pick you up at the time and place named above. Please keep this confirmation to hand.\n\nPrices include VAT; waiting time and detours are charged as incurred.",
+      "status": ""
     },
     "invoice": {
       "greeting": "Dear Sir or Madam,",

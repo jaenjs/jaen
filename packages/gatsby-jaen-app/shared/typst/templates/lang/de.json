@@ -10,6 +10,11 @@
     "title": "Angebot Nr. {id}",
     "validUntil": "Gültig bis"
   },
+  "confirmation": {
+    "number": "Buchungscode",
+    "date": "Bestätigt am",
+    "title": "Buchungsbestätigung {id}"
+  },
   "meta": {
     "deliveryDate": "Lieferdatum",
     "reference": "Referenz",
@@ -37,12 +42,24 @@
     "confirm": "Angebot bestätigen",
     "decline": "Angebot ablehnen"
   },
+  "ride": {
+    "open": "Ihre Fahrt öffnen",
+    "title": "Ihr Fahrzeug",
+    "driver": "Fahrer: {driver}",
+    "pending": "Ihr Fahrer wird rechtzeitig zugeteilt."
+  },
   "defaults": {
     "offer": {
       "greeting": "Sehr geehrte Damen und Herren,",
       "text": "vielen Dank für Ihre Anfrage. Gerne unterbreiten wir Ihnen das folgende Angebot für Ihre Fahrt:",
       "terms": "Die Fahrt ist erst mit Ihrer Bestätigung gebucht. Die Preise verstehen sich inklusive Umsatzsteuer, Wartezeiten und Umwege werden nach Aufwand berechnet.",
       "status": "Dieses Angebot ist gültig bis {validUntil}."
+    },
+    "confirmation": {
+      "greeting": "Sehr geehrte Damen und Herren,",
+      "text": "vielen Dank für Ihre Buchung. Hiermit bestätigen wir Ihre Fahrt:",
+      "terms": "Ihr Fahrer holt Sie zur genannten Zeit am genannten Ort ab. Bitte halten Sie diese Bestätigung bereit.\n\nDie Preise verstehen sich inklusive Umsatzsteuer, Wartezeiten und Umwege werden nach Aufwand berechnet.",
+      "status": ""
     },
     "invoice": {
       "greeting": "Sehr geehrte Damen und Herren,",

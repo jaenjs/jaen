@@ -16,6 +16,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {Box, Center, HStack, Spinner, Text} from '@chakra-ui/react'
 import {useColorMode} from 'jaen'
+import type {I18nCode} from '../../i18n'
 import {useI18nCode} from '../../i18n'
 import {getI18nTracking} from '../../locales/i18nTracking'
 import {
@@ -47,9 +48,15 @@ export interface TrackingMapMarker extends TrackingMapDriver {
   label?: string | null
 }
 
-/** A pickup on a map of several, keyed by its ride. */
+/** A pin on a map of several, keyed by its ride. */
 export interface TrackingMapPin extends TrackingMapPoint {
   id: string
+  /**
+   * What the pin marks. A pickup is the dark ink of the letterhead, a
+   * destination the brand's gold, and the kind is also the data attribute a
+   * test reads off the DOM: data-pickup-pin or data-destination-pin.
+   */
+  kind?: 'pickup' | 'destination'
 }
 
 export interface TrackingMapProps {
@@ -59,6 +66,19 @@ export interface TrackingMapProps {
   pickups?: TrackingMapPin[]
   /** Several drivers, for the customer's map. Wins over `driver` when given. */
   drivers?: TrackingMapMarker[]
+  /**
+   * Where the ride ends, drawn as a second pin in the brand's gold. The
+   * public ride page shows it beside the pickup so a person sees the whole
+   * route and not only the door they are waiting at (section 7 of
+   * okf/architecture/customer-experience.md).
+   */
+  destination?: TrackingMapPoint | null
+  /**
+   * The language of the map's own words. The app leaves it out and the
+   * account's language decides; the public ride page passes the booking's,
+   * which is not the visitor's.
+   */
+  code?: I18nCode
   /** The frame's height, a token or a length. Default 18rem. */
   height?: string
   /** Under the map, right aligned: the position's age, say. */
@@ -113,6 +133,12 @@ const stampPosition = (marker: any, p: TrackingMapPoint) => {
   el.dataset.lat = String(p.lat)
 }
 
+/** The pins: the letterhead's ink for a pickup, the brand's gold for a destination. */
+const PIN_COLORS: Record<'pickup' | 'destination', string> = {
+  pickup: '#111827',
+  destination: '#D4AF37'
+}
+
 const PULSE_KEYFRAMES =
   '@keyframes limosen-pulse{0%{transform:scale(.6);opacity:.5}100%{transform:scale(1.6);opacity:0}}'
 
@@ -146,10 +172,13 @@ export function TrackingMap({
   driver,
   pickups,
   drivers,
+  destination,
+  code: given,
   height = '18rem',
   caption
 }: TrackingMapProps) {
-  const code = useI18nCode()
+  const context = useI18nCode()
+  const code = given ?? context
   const {strings: t} = getI18nTracking(code)
   const {colorMode} = useColorMode()
   const token = mapboxToken()
@@ -168,10 +197,30 @@ export function TrackingMap({
 
   // The single props are the lists of one, so the effects below know one shape.
   const pinList = useMemo<TrackingMapPin[]>(
-    () =>
-      pickups ??
-      (pickup ? [{id: 'pickup', lng: pickup.lng, lat: pickup.lat}] : []),
-    [pickups, pickup?.lng, pickup?.lat] // eslint-disable-line react-hooks/exhaustive-deps
+    () => [
+      ...(pickups ??
+        (pickup
+          ? [
+              {
+                id: 'pickup',
+                kind: 'pickup' as const,
+                lng: pickup.lng,
+                lat: pickup.lat
+              }
+            ]
+          : [])),
+      ...(destination
+        ? [
+            {
+              id: 'destination',
+              kind: 'destination' as const,
+              lng: destination.lng,
+              lat: destination.lat
+            }
+          ]
+        : [])
+    ],
+    [pickups, pickup?.lng, pickup?.lat, destination?.lng, destination?.lat] // eslint-disable-line react-hooks/exhaustive-deps
   )
   const markerList = useMemo<TrackingMapMarker[]>(
     () => drivers ?? (driver ? [{id: 'driver', ...driver}] : []),
@@ -179,7 +228,9 @@ export function TrackingMap({
   )
   // What the effects depend on, as one string each: a list rebuilt with the
   // same values must not redraw anything.
-  const pinsKey = pinList.map(p => `${p.id}:${p.lng}:${p.lat}`).join('|')
+  const pinsKey = pinList
+    .map(p => `${p.id}:${p.kind ?? 'pickup'}:${p.lng}:${p.lat}`)
+    .join('|')
   const markersKey = markerList
     .map(
       m =>
@@ -272,11 +323,15 @@ export function TrackingMap({
       if (held) {
         held.setLngLat([p.lng, p.lat])
       } else {
-        const marker = new mapboxgl.Marker({color: '#111827'})
+        const kind = p.kind ?? 'pickup'
+        const marker = new mapboxgl.Marker({color: PIN_COLORS[kind]})
           .setLngLat([p.lng, p.lat])
           .addTo(m)
         const el: HTMLElement | undefined = marker.getElement?.()
-        if (el) el.dataset.pickupPin = p.id
+        if (el) {
+          if (kind === 'destination') el.dataset.destinationPin = p.id
+          else el.dataset.pickupPin = p.id
+        }
         pinMarkers.current.set(p.id, marker)
       }
       stampPosition(pinMarkers.current.get(p.id), p)

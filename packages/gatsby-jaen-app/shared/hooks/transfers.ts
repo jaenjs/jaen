@@ -205,6 +205,12 @@ export interface AssignmentAttempt {
   reason?: string
   /** The dispatcher who asked, undefined on a migrated row. */
   by?: string
+  /**
+   * Who wrote the answer when that was not the driver: the admin who took the
+   * yes on the phone (dispatch.md section 9a). Undefined when the driver
+   * answered for themselves and on every row older than the column.
+   */
+  answeredBy?: string
 }
 
 /** The index of a state on the slider, or -1 when the driver cannot move it. */
@@ -382,7 +388,8 @@ const mapAttempt = (node: any): AssignmentAttempt | undefined => {
     answeredAt: str(node?.answeredAt),
     answer: asDriverStatus(node?.answer),
     reason: str(node?.reason),
-    by: str(node?.by)
+    by: str(node?.by),
+    answeredBy: str(node?.answeredBy)
   }
 }
 
@@ -517,6 +524,7 @@ interface SchemaFieldNames {
   transfer: string[]
   query: string[]
   car: string[]
+  attempt: string[]
 }
 
 const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
@@ -525,6 +533,7 @@ const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
       query:
         'query { transfer: __type(name: "Transfer") { fields { name } } ' +
         'car: __type(name: "Car") { fields { name } } ' +
+        'attempt: __type(name: "AssignmentAttempt") { fields { name } } ' +
         'root: __type(name: "Query") { fields { name } } }',
       variables: undefined,
       operationName: undefined
@@ -538,7 +547,8 @@ const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
   return {
     transfer: names(result?.data?.transfer),
     query: names(result?.data?.root),
-    car: names(result?.data?.car)
+    car: names(result?.data?.car),
+    attempt: names(result?.data?.attempt)
   }
 }
 
@@ -554,6 +564,7 @@ const schemaFields = async (): Promise<{
   transfer: Set<string>
   query: Set<string>
   car: Set<string>
+  attempt: Set<string>
 }> => {
   try {
     const names = await cachedRead(
@@ -563,13 +574,15 @@ const schemaFields = async (): Promise<{
     return {
       transfer: new Set(names.transfer),
       query: new Set(names.query),
-      car: new Set(names.car)
+      car: new Set(names.car),
+      attempt: new Set(names.attempt)
     }
   } catch {
     return {
       transfer: new Set<string>(),
       query: new Set<string>(),
-      car: new Set<string>()
+      car: new Set<string>(),
+      attempt: new Set<string>()
     }
   }
 }
@@ -598,8 +611,10 @@ export const hasCarField = async (name: string): Promise<boolean> => {
 const transferSelection = async (
   options: {relations?: boolean} = {}
 ): Promise<string> => {
-  const {transfer} = await schemaFields()
+  const {transfer, attempt: attemptType} = await schemaFields()
   const has = (name: string) => transfer.size === 0 || transfer.has(name)
+  const hasAttempt = (name: string) =>
+    attemptType.size === 0 || attemptType.has(name)
 
   const scalars = [
     'id',
@@ -634,7 +649,21 @@ const transferSelection = async (
   ].filter(has)
 
   // What the board's driver cell and the picker read of the driver's answer.
-  const attempt = '{ id driverId requestedAt answeredAt answer reason by }'
+  // answeredBy arrived with dispatch.md section 9a, so it is asked for only
+  // where the deployed schema carries it: a site built ahead of its pylon
+  // reads the history without it rather than failing the whole query.
+  const attemptFields = [
+    'id',
+    'driverId',
+    'requestedAt',
+    'answeredAt',
+    'answer',
+    'reason',
+    'by'
+  ]
+    .concat(hasAttempt('answeredBy') ? ['answeredBy'] : [])
+    .join(' ')
+  const attempt = `{ ${attemptFields} }`
 
   // What a link to the other leg needs, and the fallback's input when the code is not there yet.
   const link = ['id', 'code', 'referenceId'].filter(has).join(' ')
@@ -1057,6 +1086,13 @@ export interface CreateTransferInput {
   dropoffLocation: string
   /** ISO 8601. */
   pickupDateTime: string
+  /**
+   * The dispatcher's "Vergangene Fahrt nachtragen". Without it the pylon
+   * refuses a pickup before now with PICKUP_IN_PAST
+   * (okf/architecture/dispatch.md section 12), and with it the office enters
+   * a ride that has already happened.
+   */
+  allowPast?: boolean
   subject?: string
   price?: number
   paymentMethode?: PaymentMethod
@@ -1102,6 +1138,8 @@ export const createTransfer = (input: CreateTransferInput) => {
     pickupLocation: input.pickupLocation,
     dropoffLocation: input.dropoffLocation,
     pickupDateTime: input.pickupDateTime,
+    // Sent only when it is on, so an ordinary create carries no backdate flag.
+    allowPast: input.allowPast ? true : undefined,
     subject: input.subject,
     price: input.price,
     paymentMethode: input.paymentMethode,

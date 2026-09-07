@@ -10,6 +10,11 @@
     "title": "Teklif No. {id}",
     "validUntil": "Geçerlilik tarihi"
   },
+  "confirmation": {
+    "number": "Rezervasyon kodu",
+    "date": "Onay tarihi",
+    "title": "Rezervasyon onayı {id}"
+  },
   "meta": {
     "deliveryDate": "Teslim tarihi",
     "reference": "Referans",
@@ -37,12 +42,24 @@
     "confirm": "Teklifi onayla",
     "decline": "Teklifi reddet"
   },
+  "ride": {
+    "open": "Yolculuğunuzu açın",
+    "title": "Aracınız",
+    "driver": "Şoför: {driver}",
+    "pending": "Şoförünüz zamanında atanacaktır."
+  },
   "defaults": {
     "offer": {
       "greeting": "Sayın Yetkili,",
       "text": "talebiniz için teşekkür ederiz. Yolculuğunuz için size aşağıdaki teklifi sunmaktan memnuniyet duyarız:",
       "terms": "Yolculuk ancak onayınızla rezerve edilmiş sayılır. Fiyatlara KDV dahildir, bekleme süreleri ve ek güzergâhlar ayrıca ücretlendirilir.",
       "status": "Bu teklif {validUntil} tarihine kadar geçerlidir."
+    },
+    "confirmation": {
+      "greeting": "Sayın Yetkili,",
+      "text": "rezervasyonunuz için teşekkür ederiz. Yolculuğunuzu onaylıyoruz:",
+      "terms": "Şoförünüz sizi belirtilen saatte ve yerde alacaktır. Lütfen bu onayı yanınızda bulundurun.\n\nFiyatlara KDV dahildir; bekleme süreleri ve güzergâh değişiklikleri ayrıca hesaplanır.",
+      "status": ""
     },
     "invoice": {
       "greeting": "Sayın Yetkili,",

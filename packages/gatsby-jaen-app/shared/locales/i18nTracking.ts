@@ -36,6 +36,16 @@ const de = {
   Updating: 'Wird aktualisiert',
   Pickup: 'Abholung',
 
+  // The public ride page, /fahrt/<token>, section 7 of
+  // okf/architecture/customer-experience.md
+  RideWhereTitle: 'Wo die Limousine ist',
+  RideDestination: 'Ziel',
+  RideNotUnderway:
+    'Sobald der Fahrer losfährt, sehen Sie hier, wo die Limousine ist.',
+  RideWaitingForPosition:
+    'Der Fahrer ist unterwegs, die Position wird gleich übertragen.',
+  RideLive: 'Live',
+
   // Every map
   MapNoToken:
     'Karte nicht verfügbar: kein Mapbox-Token konfiguriert (GATSBY_MAPBOX_TOKEN).',
@@ -98,6 +108,14 @@ const en: TrackingStrings = {
   Updating: 'Updating',
   Pickup: 'Pickup',
 
+  RideWhereTitle: 'Where the limousine is',
+  RideDestination: 'Destination',
+  RideNotUnderway:
+    'Once the driver sets off you will see here where the limousine is.',
+  RideWaitingForPosition:
+    'The driver is on the way, the position follows in a moment.',
+  RideLive: 'Live',
+
   MapNoToken:
     'Map unavailable: no Mapbox token configured (GATSBY_MAPBOX_TOKEN).',
   MapLoadFailed: 'The map could not be loaded',
@@ -154,6 +172,12 @@ const tr: TrackingStrings = {
   Updating: 'Güncelleniyor',
   Pickup: 'Alış',
 
+  RideWhereTitle: 'Limuzin nerede',
+  RideDestination: 'Varış',
+  RideNotUnderway: 'Sürücü yola çıktığında limuzinin yerini burada görürsünüz.',
+  RideWaitingForPosition: 'Sürücü yolda, konum birazdan iletilecek.',
+  RideLive: 'Canlı',
+
   MapNoToken:
     'Harita kullanılamıyor: Mapbox anahtarı yapılandırılmamış (GATSBY_MAPBOX_TOKEN).',
   MapLoadFailed: 'Harita yüklenemedi',
@@ -209,6 +233,12 @@ const ar: TrackingStrings = {
   TrackingUnavailable: 'تعذّر قراءة الموقع الآن',
   Updating: 'جارٍ التحديث',
   Pickup: 'الاستلام',
+
+  RideWhereTitle: 'أين تكون الليموزين',
+  RideDestination: 'الوجهة',
+  RideNotUnderway: 'عندما ينطلق السائق سترى هنا أين تكون الليموزين.',
+  RideWaitingForPosition: 'السائق في الطريق، سيصل الموقع بعد لحظات.',
+  RideLive: 'مباشر',
 
   MapNoToken: 'الخريطة غير متاحة: لم يُضبط رمز Mapbox ‏(GATSBY_MAPBOX_TOKEN).',
   MapLoadFailed: 'تعذّر تحميل الخريطة',
