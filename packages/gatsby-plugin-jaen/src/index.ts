@@ -1,4 +1,21 @@
 export {useJaenFrameMenuContext} from './contexts/jaen-frame-menu'
+// The Media tab's sources: an app registers one with registerMediaSource and
+// it becomes a tab beside the page images, see okf/architecture/media.md in
+// the taxi-app repository.
+export type {
+  MediaSource,
+  MediaSourceListProps
+} from './contexts/jaen-frame-menu'
+// The one upload control of the estate: the Media gallery, the fleet's
+// vehicle picture and the app's invoice all render this.
+export {
+  MediaDropzone,
+  MEDIA_DROPZONE_TESTID
+} from './components/shared/MediaDropzone'
+export type {
+  MediaDropzoneProps,
+  MediaDropzoneControl
+} from './components/shared/MediaDropzone'
 export {CMSManagement} from './connectors/cms-management'
 export {useJaenPagePaths} from './gatsby/jaen-page-paths'
 // v2 exported a theme object here. v3's equivalent is the composed system, so
