@@ -9,8 +9,10 @@
  * same tree as the pages with its nodes in the same grid as the page
  * images. The app registers two:
  *
- * - "Fahrzeuge", one subfolder per car of the fleet, its nodes the car's
- *   pictures, delete removing one picture from the car.
+ * - "Fahrzeuge", one subfolder per car that has pictures, its nodes the
+ *   car's pictures, delete removing one picture from the car. A car nobody
+ *   has photographed draws no folder, because an empty one can neither be
+ *   opened onto anything nor uploaded into.
  * - "Dokumente", one subfolder per month, its nodes the brand's offers and
  *   invoices as PDF nodes opening the gateway's url, delete deleting the
  *   document row.
@@ -126,13 +128,21 @@ export function useMediaFolders(caller: Caller) {
   const vehicles = useMemo(() => {
     const {strings} = getI18nMediaFolders(code)
 
-    const tree: MediaFolderTreeNode[] = cars.map(car => ({
+    // Only a car that owns a picture. A fleet is mostly cars nobody has
+    // photographed yet, and drawing one folder per car turned the tree into
+    // seven empty entries around the two that hold something. A picture is
+    // uploaded on the car in the fleet, never here, so an empty folder
+    // offers nothing to open and nothing to drop into. The car appears the
+    // moment its first picture is saved.
+    const photographed = cars.filter(car => car.images.length > 0)
+
+    const tree: MediaFolderTreeNode[] = photographed.map(car => ({
       id: carFolderId(car.id),
       label: carLabel(car),
       children: []
     }))
 
-    const nodes: MediaFolderNode[] = cars.flatMap(car =>
+    const nodes: MediaFolderNode[] = photographed.flatMap(car =>
       car.images.map((image, index) => ({
         id: image.id,
         fileUniqueId: image.fileId,
