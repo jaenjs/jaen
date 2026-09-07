@@ -14,7 +14,9 @@
  * - `bookedBy`, the decision about who the booker is, so the two cards can
  *   never disagree about it,
  * - `BookedByLine`, the quieter line itself, `fg.muted` at `sm`, or the even
- *   quieter sentence when the two are one person.
+ *   quieter sentence when the two are one person, with the same
+ *   "Landesvorwahl prüfen" mark the passenger's number carries when the
+ *   booker's does not carry its country.
  *
  * The actions are links rather than buttons on purpose. The line is the
  * quiet half of the card, and a mailto and a tel are the same action a
@@ -23,6 +25,7 @@
  * closer than a thumb").
  */
 import {Flex, Link, Text} from '@chakra-ui/react'
+import {needsCountryCode} from '../phone'
 import {Selectable} from './Selectable'
 
 /** A person as a screen reaches them: what to call them, where to write, what to dial. */
@@ -118,6 +121,14 @@ export interface BookedByLineProps {
   /** What the two actions are called, for the tooltip of the two links. */
   mailLabel: string
   callLabel: string
+  /**
+   * "Landesvorwahl prüfen", beside a number that does not carry its country.
+   * The passenger's row has drawn this since the phone half of section 13 and
+   * the booker's draws it by the same rule: a number the normalisation could
+   * not decide is shown as it stands and marked, because guessing a country
+   * onto somebody else's number is worse than a dispatcher checking one.
+   */
+  checkCountryLabel: string
 }
 
 /**
@@ -135,7 +146,8 @@ export function BookedByLine({
   telHref,
   formatPhone,
   mailLabel,
-  callLabel
+  callLabel,
+  checkCountryLabel
 }: BookedByLineProps) {
   if (result.kind === 'none') return null
 
@@ -156,6 +168,7 @@ export function BookedByLine({
   const number = person.phone
     ? (formatPhone ?? ((value: string) => value))(person.phone)
     : undefined
+  const checkCountry = needsCountryCode(person.phone)
 
   return (
     <Flex
@@ -204,6 +217,15 @@ export function BookedByLine({
             {number}
           </Selectable>
         ))}
+      {checkCountry && (
+        <Text
+          flexShrink="0"
+          textStyle="xs"
+          color="fg.warning"
+          data-testid="booked-by-check-country">
+          {checkCountryLabel}
+        </Text>
+      )}
     </Flex>
   )
 }

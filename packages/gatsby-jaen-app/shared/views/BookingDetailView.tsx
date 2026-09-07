@@ -461,6 +461,7 @@ export function BookingDetailView() {
                     sameLabel={pw.PassengerIsCustomer}
                     mailLabel={pw.ActionMail}
                     callLabel={pw.ActionCall}
+                    checkCountryLabel={pw.CheckCountry}
                     mailHref={mailHref}
                     telHref={telHref}
                     formatPhone={formatPhone}

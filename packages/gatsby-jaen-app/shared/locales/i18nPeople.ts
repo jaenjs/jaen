@@ -20,7 +20,14 @@ const de = {
   PassengerIsCustomer: 'Fahrgast ist Kunde',
   /** The two actions of a contact value. */
   ActionMail: 'E-Mail schreiben',
-  ActionCall: 'Anrufen'
+  ActionCall: 'Anrufen',
+  /**
+   * Beside a number that does not carry its country. The passenger's number
+   * has carried this mark since the phone half of section 13; the booker's
+   * carries it too, because a hotel's account can hold a number nobody
+   * normalised and a dispatcher who dials it reaches nobody.
+   */
+  CheckCountry: 'Landesvorwahl prüfen'
 }
 
 export type PeopleStrings = typeof de
@@ -29,21 +36,24 @@ const en: PeopleStrings = {
   BookedBy: 'Booked by',
   PassengerIsCustomer: 'The passenger is the customer',
   ActionMail: 'Write an e-mail',
-  ActionCall: 'Call'
+  ActionCall: 'Call',
+  CheckCountry: 'Check the country code'
 }
 
 const tr: PeopleStrings = {
   BookedBy: 'Rezervasyonu yapan',
   PassengerIsCustomer: 'Yolcu müşterinin kendisi',
   ActionMail: 'E-posta yaz',
-  ActionCall: 'Ara'
+  ActionCall: 'Ara',
+  CheckCountry: 'Ülke kodunu kontrol edin'
 }
 
 const ar: PeopleStrings = {
   BookedBy: 'حجز بواسطة',
   PassengerIsCustomer: 'الراكب هو العميل',
   ActionMail: 'كتابة بريد إلكتروني',
-  ActionCall: 'اتصال'
+  ActionCall: 'اتصال',
+  CheckCountry: 'تحقق من رمز الدولة'
 }
 
 export function getI18nPeople(code: I18nCode): {
