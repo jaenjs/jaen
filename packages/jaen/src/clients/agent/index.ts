@@ -145,7 +145,7 @@ const DRAFT = `query JaenAgentDraft($site: String!, $sinceSha: String) {
   }
 }`
 
-const SAVE = `mutation JaenAgentSave($site: String!, $changes: [JaenChangeInput!]!, $baseSha: String) {
+const SAVE = `mutation JaenAgentSave($site: String!, $changes: [SaveChangesInput!]!, $baseSha: String) {
   save(site: $site, changes: $changes, baseSha: $baseSha) {
     headSha
     blobSha
@@ -181,6 +181,26 @@ export const fetchDraft = async (
   return data.draft
 }
 
+/**
+ * The agent's `value` argument is the non-null scalar `Any!`.
+ *
+ * Pylon derives its schema from the agent's TypeScript and renders an `any` as
+ * non-null, with no spelling that makes it nullable, so a change that carries
+ * no value at all (`pageDelete`, and the three section kinds, which carry
+ * theirs in `props`) has to send something rather than leave the field out. It
+ * sends `{}`, which every branch of the agent's applier ignores. `props` is an
+ * object in every kind and is nullable, so that one is left as it is.
+ *
+ * The input type is `SaveChangesInput` above for the same reason: pylon names
+ * a generated input after the field and the argument it belongs to and never
+ * after the interface, so `save(changes:)` is `SaveChangesInput`, and an
+ * operation declaring `JaenChangeInput` is refused with "Unknown type".
+ */
+const forTheWire = (changes: JaenChange[]): JaenChange[] =>
+  changes.map(change =>
+    change.value === undefined ? {...change, value: {}} : change
+  )
+
 export const saveChanges = async (
   config: AgentConfig,
   changes: JaenChange[],
@@ -188,7 +208,7 @@ export const saveChanges = async (
 ): Promise<SaveAnswer> => {
   const data = await request<{save: SaveAnswer}>(config, SAVE, {
     site: config.site,
-    changes,
+    changes: forTheWire(changes),
     baseSha: baseSha || null
   })
 
