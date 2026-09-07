@@ -120,12 +120,11 @@ is the flaw the target names.
    `migrations-<epoch>.json` through `utils/open-storage-gateway`, which is
    `storageUrl` of the plugin options, `https://osg.netsnek.com` on both
    sites.
-3. It calls the `publish` mutation with that URL and
-   `config: {repository: __JAEN_REMOTE__.repository, repositoryCwd:
-__JAEN_REMOTE__.cwd}` through `sqJaen`, which posts to
-   `__JAEN_PYLON_URL__`. Both `gatsby-config.ts` files set that to
-   `https://services.netsnek.com/jaen/graphql`, and the OIDC access token out
-   of `sessionStorage` is the bearer.
+3. It calls the `publish` mutation with that URL and a config of
+   `__JAEN_REMOTE__.repository` and `__JAEN_REMOTE__.cwd` through `sqJaen`,
+   which posts to `__JAEN_PYLON_URL__`. Both `gatsby-config.ts` files set
+   that to `https://services.netsnek.com/jaen/graphql`, and the OIDC access
+   token out of `sessionStorage` is the bearer.
 4. On success it sets `isPublishing` and leaves the draft in the store.
 
 The service behind that URL has no source in the estate's checkouts, and
