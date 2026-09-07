@@ -10,6 +10,7 @@ import {useMediaModal} from '../../contexts/media-modal'
 import {useNotificationsContext} from '../../contexts/notifications'
 import {PageProvider, usePageContext} from '../../contexts/page'
 import {HighlightTooltip} from '../components/HighlightTooltip'
+import {useFileObjectUrl} from '../../utils/open-storage-gateway'
 import {useImage} from './hooks/use-image'
 
 export interface ImageProps {
@@ -206,6 +207,18 @@ const ImageComponent = forwardRef<
   ) => {
     const image = useImage(mediaId || '')
 
+    /**
+     * The unoptimised branch draws whatever address the field carries, and
+     * since the gateway went private that address may be one only a signed-in
+     * person may read. In the CMS the file is therefore fetched with that
+     * person's token and drawn through an object URL; on a public page the
+     * hook hands back the address it was given, because the build has already
+     * rewritten every gateway URL onto this site's own origin.
+     *
+     * Called before the early return: a hook may not be conditional.
+     */
+    const defaultSrc = useFileObjectUrl(defaultValue)
+
     if (!image && !defaultValue) {
       return (
         <Center
@@ -261,13 +274,13 @@ const ImageComponent = forwardRef<
           <Image
             {...imageProps}
             sizes={sizes}
-            src={defaultValue}
+            src={defaultSrc}
             boxSize={autoScale ? 'full' : undefined}
             style={imageProps?.style}
             asChild={intrinsicWidth && intrinsicHeight ? true : undefined}>
             {intrinsicWidth && intrinsicHeight ? (
               <img
-                src={defaultValue}
+                src={defaultSrc}
                 width={intrinsicWidth}
                 height={intrinsicHeight}
                 alt={imageProps?.alt}
@@ -281,7 +294,7 @@ const ImageComponent = forwardRef<
     )
 
     if (lightbox) {
-      const src = image ? getSrc(image.image) : defaultValue
+      const src = image ? getSrc(image.image) : defaultSrc
 
       element = <PhotoView src={src}>{element}</PhotoView>
 

@@ -1,4 +1,12 @@
-import {osg, storageOrigin} from '../clients/osg'
+import {useEffect, useState} from 'react'
+
+import {
+  osg,
+  storageBearer,
+  storageFileId,
+  storageFileUrl,
+  storageOrigin
+} from '../clients/osg'
 
 /**
  * Uploads to the storage gateway, through the client Pylon generates for it.
@@ -143,5 +151,105 @@ export const uploadFileFromNode = async (options: {
     {driver: options.driver}
   )
 
-export {storageOrigin}
+/**
+ * Reads a stored file back, with the signed-in person's token.
+ *
+ * The gateway is private: `GET /storage/<id>` answers 401 without a bearer
+ * and 403 with a token of another organisation, so a picture can no longer be
+ * a bare `<img src="https://osg...">`. Callers take the bytes and draw them
+ * through an object URL instead (`useFileObjectUrl` below).
+ *
+ * Accepts an id or any spelling of its URL, including the historical
+ * osg.snek.at one that published patches carry. A value that is not a gateway
+ * file (a site-relative `/osg/<id>.<ext>` the build wrote, or a foreign
+ * origin) is fetched as it stands, without a credential, because sending this
+ * person's token to somebody else's host would be the worse bug.
+ */
+export const fetchFile = async (idOrUrl: string): Promise<Blob> => {
+  const fileId = storageFileId(idOrUrl)
+  const url = fileId ? storageFileUrl(fileId) : idOrUrl
+  const token = fileId ? storageBearer() : undefined
+
+  const response = await fetch(url, {
+    ...(token ? {headers: {Authorization: `Bearer ${token}`}} : {}),
+    mode: 'cors'
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `storage gateway answered ${response.status} for ${fileId ?? url}`
+    )
+  }
+
+  return await response.blob()
+}
+
+/**
+ * The same file as an object URL, revoked when the component goes away.
+ *
+ * Undefined while it is loading and after a failure, so a caller can draw a
+ * skeleton and then a placeholder rather than a broken image.
+ *
+ * Two values pass straight through instead of being fetched: a source that is
+ * not a gateway file at all (the build rewrites every media URL onto the
+ * site's own origin, and those are plain paths a visitor loads without a
+ * token) and a gateway file while nobody is signed in, which is still the
+ * right request for a file the gateway has not claimed yet and becomes a
+ * broken image once it has. Passing them through keeps a public page working
+ * with no session and no round trip through this hook.
+ */
+export const useFileObjectUrl = (
+  idOrUrl?: string | null
+): string | undefined => {
+  const source = idOrUrl ?? undefined
+  const fileId = source ? storageFileId(source) : null
+
+  // Only a gateway file with a session is fetched, and only in a browser:
+  // during the HTML build there is a machine token in the environment but no
+  // object URL to make, and the built markup has to be the anonymous one.
+  // Everything else is drawn from its own address, so the hook is inert on a
+  // public page.
+  const shouldFetch =
+    typeof window !== 'undefined' && Boolean(fileId) && Boolean(storageBearer())
+
+  const [objectUrl, setObjectUrl] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (!shouldFetch || !fileId) {
+      setObjectUrl(undefined)
+      return
+    }
+
+    let cancelled = false
+    let created: string | undefined
+
+    void fetchFile(fileId)
+      .then(blob => {
+        if (cancelled) return
+
+        created = URL.createObjectURL(blob)
+        setObjectUrl(created)
+      })
+      .catch(error => {
+        // A refused or missing file is a placeholder, not a crash. The
+        // console line is the only way to tell 401 from 404 from a tile that
+        // simply has no picture.
+        console.error('jaen: storage gateway read failed', error)
+
+        if (!cancelled) setObjectUrl(undefined)
+      })
+
+    return () => {
+      cancelled = true
+
+      if (created) URL.revokeObjectURL(created)
+    }
+  }, [fileId, shouldFetch])
+
+  if (!shouldFetch) return source
+
+  return objectUrl
+}
+
+export {storageOrigin, storageBearer, storageFileId}
 export {storageFileUrl} from '../clients/osg'
