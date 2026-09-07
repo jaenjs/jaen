@@ -44,22 +44,29 @@ const MAX_BATCH = 20
 /** The agent refuses more than this in one call. */
 const CALL_LIMIT = 200
 
-/** A field type whose value a person types letter by letter. */
-const TYPED_FIELD = /text|mdx|rich/i
+/**
+ * The field types that write on every keystroke rather than on a settled
+ * value. The MDX editor is the one family jaen has: its CodeMirror state
+ * change runs `onUpdateValue` on every character.
+ */
+const STREAMING_FIELD = /mdx|rich|editor/i
 
 /**
  * Whether a recorded change is one keystroke of a stream.
  *
  * The quiet time exists for exactly that case and no other: it turns a typed
- * sentence into one commit instead of one commit per letter. Every other
- * change is a single gesture that cannot repeat faster than a person can
- * click, an uploaded picture, an added or moved section, a deleted page, and
- * waiting 800 ms before even starting a save that then takes seconds spends
- * a twelfth of the ten second budget on nothing. Those go at once.
+ * paragraph into one commit instead of one commit per letter and one contents
+ * API round trip with it.
+ *
+ * Nothing else in jaen writes that way. `Field.Text` writes on blur and has
+ * already waited out its own 500 ms debounce by the time the change is
+ * recorded, an image is picked once, a media node is uploaded once, a section
+ * is added, moved or removed by a click. For all of those the 800 ms is not a
+ * batching window, it is 800 ms of a ten second budget spent waiting for a
+ * second change that cannot arrive, so they go at once.
  */
 const isKeystroke = (change: JaenChange): boolean =>
-  change.kind === 'fieldWrite' &&
-  (typeof change.value === 'string' || TYPED_FIELD.test(change.fieldType || ''))
+  change.kind === 'fieldWrite' && STREAMING_FIELD.test(change.fieldType || '')
 
 /**
  * The recorder: the eight draft-bearing actions of the `page`, `site` and
