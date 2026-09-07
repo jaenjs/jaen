@@ -71,6 +71,7 @@ import {
   updateTransferState,
   driverStopIndex,
   isClosed,
+  mailHref,
   mapHref,
   passengerName,
   telHref,
@@ -84,6 +85,7 @@ import {
   type ExtraType,
   type TransferRow
 } from '../hooks/transfers'
+import {formatPhone, needsCountryCode} from '../phone'
 import {
   ConfirmDialog,
   DetailRow,
@@ -111,6 +113,8 @@ import {
   canSendOffer,
   needsConfirmation
 } from '../hooks/offers'
+import {BookedBy, BookedByLine, bookedBy} from '../components/BookedBy'
+import {getI18nPeople} from '../locales/i18nPeople'
 import {getI18nOffers} from '../locales/i18nOffers'
 import {getI18nOffline} from '../locales/i18nOffline'
 import {useOnline, useRefetchOnReconnect} from '../offline'
@@ -636,8 +640,13 @@ function DriverRideScreen({
               </Selectable>
               {phone && (
                 <Selectable textStyle="sm" color="fg.muted">
-                  {phone}
+                  {formatPhone(phone)}
                 </Selectable>
+              )}
+              {needsCountryCode(phone) && (
+                <Text textStyle="xs" color="fg.warning">
+                  {t.PhoneCheckCountry}
+                </Text>
               )}
             </Box>
             {tel && (
@@ -912,6 +921,7 @@ function DetailScreen({
   const [offerOpen, setOfferOpen] = useState(false)
   const [documentsVersion, setDocumentsVersion] = useState(0)
   const {strings: so} = getI18nOffers(code)
+  const {strings: pw} = getI18nPeople(code)
   const offerable =
     editable && transfer.price != null && canSendOffer(transfer.customerStatus)
   const [unassignOpen, setUnassignOpen] = useState(false)
@@ -1010,6 +1020,23 @@ function DetailScreen({
   )
   const passenger = transfer.passengers[0]
   const closed = isClosed(transfer.state)
+  /**
+   * Who booked, for the quieter line of the people card. The passenger is the
+   * one on the row or, when the row names none, the "Zimmer / Name" the
+   * booking carried, which is how a hotel's guest is named.
+   */
+  const booked: BookedBy = useMemo(
+    () =>
+      bookedBy(
+        {
+          name: passengerName(transfer),
+          email: passenger?.email,
+          phone: passenger?.phone
+        },
+        transfer.customer
+      ),
+    [transfer, passenger]
+  )
 
   const cancel = async () => {
     setCancelling(true)
@@ -1216,49 +1243,95 @@ function DetailScreen({
             </DataList.Root>
           </Section>
 
+          {/*
+            The people card, dispatch.md section 13: the passenger with its
+            actions, and under it the booker as one quieter line. Who the
+            booker is, is decided in one place for this screen and for the
+            customer's own booking detail, see components/BookedBy.
+          */}
           <Section title={t.SectionPassenger}>
-            {passenger || transfer.subject ? (
-              <DataList.Root orientation="horizontal" size="sm">
-                <Item label={t.Passenger} value={passengerName(transfer)} />
-                {passenger?.phone && (
+            {passenger || transfer.subject || booked.kind !== 'none' ? (
+              <>
+                <DataList.Root orientation="horizontal" size="sm">
+                  <Item label={t.Passenger} value={passengerName(transfer)} />
+                  {passenger?.phone && (
+                    <Item
+                      label={t.LabelPhone}
+                      value={
+                        // Read with its groups, dialled as the stored E.164,
+                        // dispatch.md section 13. A row the normalisation
+                        // could not decide keeps what it has and says so:
+                        // guessing a country onto somebody else's number is
+                        // worse than a dispatcher checking one.
+                        <HStack gap="2" flexWrap="wrap">
+                          {telHref(passenger.phone) ? (
+                            <Link
+                              href={telHref(passenger.phone)}
+                              colorPalette="brand">
+                              {formatPhone(passenger.phone)}
+                            </Link>
+                          ) : (
+                            formatPhone(passenger.phone)
+                          )}
+                          {needsCountryCode(passenger.phone) && (
+                            <Text textStyle="xs" color="fg.warning">
+                              {t.PhoneCheckCountry}
+                            </Text>
+                          )}
+                        </HStack>
+                      }
+                    />
+                  )}
+                  {passenger?.email && (
+                    <Item
+                      label={t.LabelEmail}
+                      value={
+                        // The address is data and stays selectable, and the
+                        // action on it is the mail a dispatcher writes.
+                        mailHref(passenger.email) ? (
+                          <Link
+                            href={mailHref(passenger.email)}
+                            title={pw.ActionMail}
+                            colorPalette="brand">
+                            {passenger.email}
+                          </Link>
+                        ) : (
+                          passenger.email
+                        )
+                      }
+                    />
+                  )}
+                  {passenger?.language && (
+                    <Item label={t.LabelLanguage} value={passenger.language} />
+                  )}
                   <Item
-                    label={t.LabelPhone}
-                    value={
-                      telHref(passenger.phone) ? (
-                        <Link
-                          href={telHref(passenger.phone)}
-                          colorPalette="brand">
-                          {passenger.phone}
-                        </Link>
-                      ) : (
-                        passenger.phone
-                      )
-                    }
+                    label={t.LabelPassengers}
+                    value={String(transfer.passengers.length)}
                   />
-                )}
-                {passenger?.email && (
-                  <Item label={t.LabelEmail} value={passenger.email} />
-                )}
-                {passenger?.language && (
-                  <Item label={t.LabelLanguage} value={passenger.language} />
-                )}
-                <Item
-                  label={t.LabelPassengers}
-                  value={String(transfer.passengers.length)}
+                  {transfer.passengers.length > 1 && (
+                    <Item
+                      label=""
+                      value={transfer.passengers
+                        .slice(1)
+                        .map(p =>
+                          `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim()
+                        )
+                        .filter(Boolean)
+                        .join(', ')}
+                    />
+                  )}
+                </DataList.Root>
+                <BookedByLine
+                  result={booked}
+                  label={pw.BookedBy}
+                  sameLabel={pw.PassengerIsCustomer}
+                  mailLabel={pw.ActionMail}
+                  callLabel={pw.ActionCall}
+                  mailHref={mailHref}
+                  telHref={telHref}
+                  formatPhone={formatPhone}
                 />
-                {transfer.passengers.length > 1 && (
-                  <Item
-                    label=""
-                    value={transfer.passengers
-                      .slice(1)
-                      .map(p =>
-                        `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim()
-                      )
-                      .filter(Boolean)
-                      .join(', ')}
-                  />
-                )}
-              </DataList.Root>
+              </>
             ) : (
               <Text textStyle="sm" color="fg.muted">
                 {t.NoPassenger}

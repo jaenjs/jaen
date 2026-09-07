@@ -21,6 +21,7 @@ import {
   DataList,
   Flex,
   Heading,
+  Link,
   Separator,
   Stack,
   Text
@@ -31,6 +32,10 @@ import {FaFilePdf} from '@react-icons/all-files/fa/FaFilePdf'
 import {useAppNavigate, useAppParams} from '../navigation'
 import {useI18nCode} from '../i18n'
 import {getI18nBookings} from '../locales/i18nBookings'
+import {getI18nPeople} from '../locales/i18nPeople'
+import {BookedByLine, bookedBy} from '../components/BookedBy'
+import {mailHref, telHref} from '../hooks/transfers'
+import {formatPhone} from '../phone'
 import {
   cancelBooking,
   isCancelable,
@@ -218,6 +223,7 @@ export function BookingDetailView() {
   const navigate = useAppNavigate()
   const code = useI18nCode()
   const {strings: t} = getI18nBookings(code)
+  const {strings: pw} = getI18nPeople(code)
 
   const {booking, isLoading, error, isFetching, refetch, setBooking} =
     useBooking(bookingId)
@@ -305,6 +311,17 @@ export function BookingDetailView() {
 
   const b = booking
   const cancelable = isCancelable(b.state)
+  // Who rides: the passenger on the row or, when the row names none, the
+  // "Zimmer / Name" the booking carried, which is how a hotel names its guest.
+  const person = {
+    name:
+      [b.passenger?.firstName, b.passenger?.lastName]
+        .filter(Boolean)
+        .join(' ') || b.subject,
+    email: b.passenger?.email,
+    phone: b.passenger?.phone
+  }
+  const booked = bookedBy(person, b.customer)
 
   return (
     <Box p={{base: '4', md: '6'}} maxW="full">
@@ -384,6 +401,73 @@ export function BookingDetailView() {
                 />
               </DataList.Root>
             </Section>
+
+            {/*
+              The people card, dispatch.md section 13: who rides, with the
+              mail and the call on the two values that carry one, and under it
+              the account that booked as one quieter line. The customer reads
+              their own booking here, so the booker is usually themselves or,
+              for a hotel, the front desk that typed the guest into
+              "Zimmer / Name".
+            */}
+            {(person.name ||
+              person.email ||
+              person.phone ||
+              booked.kind !== 'none') && (
+              <>
+                <Separator />
+                <Section title={t.DetailSectionPassenger}>
+                  <DataList.Root orientation="horizontal" size="md">
+                    <Item
+                      label={t.DetailLabelPassengerName}
+                      value={[b.passenger?.firstName, b.passenger?.lastName]
+                        .filter(Boolean)
+                        .join(' ')}
+                    />
+                    <Item
+                      label={t.DetailLabelEmail}
+                      value={
+                        person.email && mailHref(person.email) ? (
+                          <Link
+                            href={mailHref(person.email)}
+                            title={pw.ActionMail}
+                            colorPalette="brand">
+                            {person.email}
+                          </Link>
+                        ) : (
+                          person.email
+                        )
+                      }
+                    />
+                    <Item
+                      label={t.DetailLabelPhone}
+                      value={
+                        person.phone && telHref(person.phone) ? (
+                          <Link
+                            href={telHref(person.phone)}
+                            title={pw.ActionCall}
+                            colorPalette="brand">
+                            {formatPhone(person.phone)}
+                          </Link>
+                        ) : (
+                          person.phone && formatPhone(person.phone)
+                        )
+                      }
+                    />
+                  </DataList.Root>
+                  <BookedByLine
+                    result={booked}
+                    label={pw.BookedBy}
+                    sameLabel={pw.PassengerIsCustomer}
+                    mailLabel={pw.ActionMail}
+                    callLabel={pw.ActionCall}
+                    mailHref={mailHref}
+                    telHref={telHref}
+                    formatPhone={formatPhone}
+                  />
+                </Section>
+              </>
+            )}
 
             <Separator />
 

@@ -27,6 +27,7 @@
  */
 import {getI18nTransfers} from '../locales/i18nTransfers'
 import type {I18nCode} from '../i18n'
+import {formatPhone} from '../phone'
 
 // --------------- The contract ---------------
 
@@ -275,9 +276,13 @@ export const recipientLines = (
   passenger: RecipientSource | undefined
 ): string[] => {
   const chosen = nameOf(customer) ? customer : passenger
-  return [nameOf(chosen), clean(chosen?.email), clean(chosen?.phone)].filter(
-    Boolean
-  )
+  // The paper is read by a person, so the number carries its groups
+  // (dispatch.md section 13). What is stored is E.164.
+  return [
+    nameOf(chosen),
+    clean(chosen?.email),
+    formatPhone(clean(chosen?.phone))
+  ].filter(Boolean)
 }
 
 /** The mail address the offer goes to, the same choice as the addressee. */

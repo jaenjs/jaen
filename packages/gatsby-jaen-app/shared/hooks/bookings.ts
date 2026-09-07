@@ -171,6 +171,30 @@ export interface Booking {
     childSeats?: string
   }
   passengerCount?: number
+  /**
+   * The first passenger's contact, for the people card (dispatch.md section
+   * 13). A booking made in the app writes one nameless row per seat, so all
+   * three are undefined on most of them and the card says the passenger is
+   * the customer.
+   */
+  passenger?: {
+    firstName?: string
+    lastName?: string
+    email?: string
+    phone?: string
+  }
+  /**
+   * The account the booking belongs to, the booker of the people card. The
+   * pylon answers `customer` to the ride's own customer and to an admin, and
+   * null to anybody else, see Transfer.customer.
+   */
+  customer?: {
+    id: string
+    isMachine: boolean
+    name?: string
+    email?: string
+    phone?: string
+  }
   extras: Array<{type: string; amount: number}>
 }
 
@@ -200,6 +224,50 @@ const nameOf = (user: any): string | undefined => {
     .join(' ')
     .trim()
   return full || text(profile?.displayName) || undefined
+}
+
+/** An address, as opposed to a login name that only looks like one. */
+const ADDRESS = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/** The first passenger of a ride, the one the people card names. */
+const firstPassenger = (connection: any): Booking['passenger'] => {
+  const node = connection?.edges?.[0]?.node
+  if (!node) return undefined
+  const person = {
+    firstName: text(node.firstName),
+    lastName: text(node.lastName),
+    email: text(node.email),
+    phone: text(node.phone)
+  }
+  return Object.values(person).some(Boolean) ? person : undefined
+}
+
+/**
+ * The account behind the booking. A human account carries a profile and that
+ * is where the name, the address and the number are; a machine account
+ * carries none and its login name is read as an address only when it is one,
+ * so the card never offers a mailto that goes nowhere.
+ */
+const bookingCustomer = (node: any): Booking['customer'] => {
+  const id = text(node?.id)
+  if (!id) return undefined
+  const profile = node?.profiles?.edges?.[0]?.node
+  const login = text(node?.preferredLoginName) ?? text(node?.userName)
+  const name =
+    [text(profile?.firstName), text(profile?.lastName)]
+      .filter(Boolean)
+      .join(' ') ||
+    text(profile?.displayName) ||
+    login
+  return {
+    id,
+    isMachine: text(node?.__typename) === 'MachineUser',
+    name,
+    email:
+      text(profile?.email) ??
+      (login && ADDRESS.test(login) ? login : undefined),
+    phone: text(profile?.phone)
+  }
 }
 
 export const mapBooking = (t: any): Booking => {
@@ -273,6 +341,8 @@ export const mapBooking = (t: any): Booking => {
       t.passengers.totalCount > 0
         ? t.passengers.totalCount
         : undefined,
+    passenger: firstPassenger(t?.passengers),
+    customer: bookingCustomer(t?.customer),
     extras: Array.isArray(t?.extras?.edges)
       ? t.extras.edges
           .map((e: any) => e?.node)
@@ -290,13 +360,20 @@ export const mapBooking = (t: any): Booking => {
  * detail and the two writes. `code` is asked for when the deployed schema
  * carries it, so a site built ahead of its pylon still lists the bookings.
  */
-const bookingSelection = async (): Promise<string> =>
+const bookingSelection = async (
+  options: {people?: boolean} = {}
+): Promise<string> =>
   `{ id ${(await hasTransferField('code')) ? 'code ' : ''}${(await hasTransferField('customerStatus')) ? 'customerStatus language ' : ''}customerId driverId pickupDateTime pickupLocation dropoffLocation subject state requestedAt ` +
   `referenceId price paymentMethode payingParty transferCategory transferType ` +
   `${(await hasTransferField('driverStatus')) ? 'driverStatus ' : ''}` +
   `car { carName licensePlate carClass color${(await hasCarField('carImages')) ? ' carImages { id url thumbUrl }' : ''}${(await hasCarField('imageThumbUrl')) ? ' imageUrl imageThumbUrl' : ''} } ` +
   `details { flightNumber message luggage childSeats } ` +
-  `passengers { totalCount } ` +
+  // The people card of the detail (dispatch.md section 13). The passenger's
+  // contact and the account that booked are the detail's alone: `customer` is
+  // one call into the directory per row on the pylon's side, and a page of
+  // fifteen bookings is not the place for fifteen of them.
+  `passengers { totalCount${options.people ? ' edges { node { id firstName lastName email phone } }' : ''} } ` +
+  `${options.people && (await hasTransferField('customer')) ? 'customer { __typename id userName preferredLoginName ... on HumanUser { profiles { edges { node { firstName lastName displayName email phone } } } } } ' : ''}` +
   `extras { edges { node { type amount } } } ` +
   `driver { ... on HumanUser { profiles { edges { node { firstName lastName displayName } } } } } }`
 
@@ -416,7 +493,7 @@ export function useBookings(pageSize = DEFAULT_PAGE_SIZE) {
 export async function fetchBooking(
   transferId: string
 ): Promise<Booking | null> {
-  const selection = await bookingSelection()
+  const selection = await bookingSelection({people: true})
   try {
     const node = await gql('transfer', {transferId}, selection)
     if (node) return mapBooking(node)
@@ -609,7 +686,10 @@ export async function cancelBooking(transferId: string): Promise<Booking> {
   const result = await gql(
     'updateTransferState',
     {transferId, state: new EnumValue('CANCELED')},
-    await bookingSelection(),
+    // The people half too: the answer replaces the booking on the detail
+    // screen, and a card that lost its booker to a cancellation would read
+    // as a ride nobody booked.
+    await bookingSelection({people: true}),
     'mutation'
   )
   const booking = mapBooking(result)

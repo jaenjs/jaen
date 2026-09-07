@@ -111,6 +111,7 @@ import {
 } from '../hooks/transfers'
 // The one past rule of the two forms, dispatch.md section 12.
 import {isPickupInPast} from '../hooks/bookings'
+import {countryForLanguage, formatPhone, parsePhone} from '../phone'
 import {
   AmountInput,
   CarImage,
@@ -1234,7 +1235,8 @@ export const returnTripPrefill = (origin: TransferRow): Partial<CreateForm> => {
     subject: origin.subject ?? '',
     firstName: p?.firstName ?? '',
     lastName: p?.lastName ?? '',
-    phone: p?.phone ?? '',
+    // Readable in the field the office edits; the pylon reads it back as E.164.
+    phone: formatPhone(p?.phone) || '',
     email: p?.email ?? '',
     language: p?.language ?? '',
     childSeats: origin.details?.childSeats ?? '',
@@ -1319,7 +1321,14 @@ export function CreateTransferDialog({
   // the dispatcher sees why the button does nothing.
   const pickupInPast =
     !form.allowPast && isPickupInPast(form.pickupDate, form.pickupTime)
-  const invalid = Object.values(missing).some(Boolean) || pickupInPast
+  // The number is optional, but a number that is there says which country
+  // it belongs to (dispatch.md section 13). Marked while it is typed, so
+  // the field is red before the button is pressed rather than after.
+  const phoneInvalid =
+    Boolean(form.phone.trim()) &&
+    !parsePhone(form.phone, countryForLanguage(form.language)).e164
+  const invalid =
+    Object.values(missing).some(Boolean) || pickupInPast || phoneInvalid
 
   const submit = async () => {
     setTouched(true)
@@ -1342,10 +1351,25 @@ export function CreateTransferDialog({
       return
     }
 
+    // Every number the platform stores carries its country, dispatch.md
+    // section 13. The office types `0660 876 06 06` and the row gets
+    // `+436608760606`; the country is the one the ride's language books in,
+    // so a Turkish booking's `0532…` is Turkish and not Austrian. The pylon
+    // refuses the same input, this is the sentence the dispatcher reads
+    // before the call goes out.
+    const typedPhone = clean(form.phone)
+    const parsedPhone = typedPhone
+      ? parsePhone(typedPhone, countryForLanguage(form.language))
+      : undefined
+    if (parsedPhone && !parsedPhone.e164) {
+      setError(t.PhoneNeedsCountry)
+      return
+    }
+
     const passenger = {
       firstName: clean(form.firstName),
       lastName: clean(form.lastName),
-      phone: clean(form.phone),
+      phone: parsedPhone?.e164,
       email: clean(form.email),
       language: clean(form.language)
     }
@@ -1559,14 +1583,16 @@ export function CreateTransferDialog({
             </Field.Root>
           </Stack>
           <Stack direction={{base: 'column', md: 'row'}} gap="3">
-            <Field.Root>
+            <Field.Root invalid={touched && phoneInvalid}>
               <Field.Label>{t.LabelPhone}</Field.Label>
               <Input
                 size="sm"
                 type="tel"
+                placeholder="+43 660 876 06 06"
                 value={form.phone}
                 onChange={e => set('phone', e.target.value)}
               />
+              <Field.ErrorText>{t.PhoneNeedsCountry}</Field.ErrorText>
             </Field.Root>
             <Field.Root>
               <Field.Label>{t.LabelEmail}</Field.Label>
@@ -2765,7 +2791,7 @@ function transferCell(
           </Text>
           {phone && (
             <Text textStyle="xs" color="fg.muted" truncate>
-              {phone}
+              {formatPhone(phone)}
             </Text>
           )}
         </Box>
@@ -3187,7 +3213,11 @@ export const applyClientFilters = (
         r.carPlate,
         r.carName,
         passengerName(r),
+        // Both spellings of the number, so a dispatcher who types the
+        // stored `+436608760606` and one who types the `+43 660 876 0606`
+        // the board shows both find the row.
         r.passengers[0]?.phone,
+        formatPhone(r.passengers[0]?.phone),
         r.details?.flightNumber,
         r.subject
       ].some(v => v?.toLowerCase().includes(q))

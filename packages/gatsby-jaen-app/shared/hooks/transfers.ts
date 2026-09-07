@@ -246,6 +246,31 @@ export interface TransferPassenger {
   language?: string
 }
 
+/**
+ * The account a ride belongs to, as the detail read resolves it through the
+ * pylon's `customer` field, dispatch.md section 13. It is the booker of the
+ * people card: a hotel front desk, a company, a person who booked for
+ * themselves, or the brand's own website account.
+ *
+ * The pylon answers it to an admin for any ride and to a customer for their
+ * own (`Transfer.customer`), and answers null when the directory does not
+ * hold the id, which is what every booklimo website booking written before
+ * 2026-09-06 looks like. So undefined here is "not asked for or not
+ * answered", never "there is no customer".
+ */
+export interface TransferCustomer {
+  id: string
+  /**
+   * A machine account, which is what the brand's website books on. Nobody is
+   * reachable there, see components/BookedBy.tsx for what the card does with
+   * it.
+   */
+  isMachine: boolean
+  name?: string
+  email?: string
+  phone?: string
+}
+
 export interface TransferExtra {
   type: string
   amount: number
@@ -318,6 +343,13 @@ export interface TransferRow {
   passengers: TransferPassenger[]
   extras: TransferExtra[]
   car?: TransferCar
+  /**
+   * The account that booked, when the read asked for it. The detail read
+   * does, a page of the list does not: `customer` is one call into the
+   * directory per row and a board of twenty five rows is not the place for
+   * twenty five of them.
+   */
+  customer?: TransferCustomer
   /**
    * The money side beside the ride state: NEW, OFFERED, CONFIRMED,
    * INVOICED, PAID, DECLINED, written only by the pylon. Undefined on a
@@ -397,6 +429,39 @@ const ref = (node: any): TransferRef | undefined => {
   const id = str(node?.id)
   if (!id) return undefined
   return {id, code: str(node?.code) ?? transferCode(id, str(node?.referenceId))}
+}
+
+/** An address, as opposed to a login name that only looks like one. */
+const ADDRESS = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * The account behind a ride, from the `customer` node of the detail read.
+ *
+ * A human account carries a profile and that is where the name, the address
+ * and the number are. A machine account carries none: its `preferredLoginName`
+ * is a login name, `website` on booklimo, and it is read as an address only
+ * when it is one, so the card never offers a mailto that goes nowhere.
+ */
+const mapCustomer = (node: any): TransferCustomer | undefined => {
+  const id = str(node?.id)
+  if (!id) return undefined
+  const profile = node?.profiles?.edges?.[0]?.node
+  const login = str(node?.preferredLoginName) ?? str(node?.userName)
+  const name =
+    [str(profile?.firstName), str(profile?.lastName)]
+      .filter(Boolean)
+      .join(' ') ||
+    str(profile?.displayName) ||
+    login
+  const email =
+    str(profile?.email) ?? (login && ADDRESS.test(login) ? login : undefined)
+  return {
+    id,
+    isMachine: str(node?.__typename) === 'MachineUser',
+    name,
+    email,
+    phone: str(profile?.phone)
+  }
 }
 
 export const mapTransfer = (node: any): TransferRow => {
@@ -482,6 +547,7 @@ export const mapTransfer = (node: any): TransferRow => {
           carClass: str(node.car.carClass)
         }
       : undefined,
+    customer: mapCustomer(node?.customer),
     customerStatus: str(node?.customerStatus),
     language: str(node?.language),
     offeredAt: str(node?.offeredAt),
@@ -510,6 +576,18 @@ export const telHref = (phone: string | undefined): string | undefined => {
   if (!phone) return undefined
   const digits = phone.replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '')
   return digits.length >= 3 ? `tel:${digits}` : undefined
+}
+
+/**
+ * A mailto link for an address, and nothing for a value that is not one: a
+ * machine account's login name reads like a name, not like a mailbox, and an
+ * action that opens an empty mail is worse than no action.
+ */
+export const mailHref = (email: string | undefined): string | undefined => {
+  const value = (email ?? '').trim()
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    ? `mailto:${value}`
+    : undefined
 }
 
 /** A map link for an address, opened by whatever map app the phone has. */
@@ -678,6 +756,13 @@ const transferSelection = async (
     has('extras') ? 'extras { edges { node { type amount } } }' : '',
     has('car') ? 'car { id carName licensePlate color carClass }' : '',
     has('lastAttempt') ? `lastAttempt ${attempt}` : '',
+    // Who booked, for the people card (dispatch.md section 13). One call
+    // into the directory on the pylon's side, so the detail read asks for it
+    // and a page of the list never does.
+    options.relations && has('customer')
+      ? 'customer { __typename id userName preferredLoginName ' +
+        '... on HumanUser { profiles { edges { node { firstName lastName displayName email phone } } } } }'
+      : '',
     options.relations && has('attempts') ? `attempts ${attempt}` : '',
     options.relations && has('reference') ? `reference { ${link} }` : '',
     options.relations && has('referencedBy')
@@ -731,7 +816,8 @@ export const rememberTransfer = (row: TransferRow) => {
     ...row,
     reference: row.reference ?? before.reference,
     returns: row.returns ?? before.returns,
-    attempts: row.attempts ?? before.attempts
+    attempts: row.attempts ?? before.attempts,
+    customer: row.customer ?? before.customer
   })
   queryClient.setQueriesData<TransferPage>({queryKey: ['transfers']}, page =>
     page && page.rows.some(r => r.id === row.id)
@@ -989,6 +1075,9 @@ const mutate = async (
     row.reference = row.reference ?? before.reference
     row.returns = row.returns ?? before.returns
     row.attempts = row.attempts ?? before.attempts
+    // A price or a state does not change who booked, and the mutation's
+    // answer carries no customer node, so what the detail read brought stays.
+    row.customer = row.customer ?? before.customer
   }
   rememberTransfer(row)
   void invalidateTransfers()

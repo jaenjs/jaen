@@ -48,7 +48,7 @@ const origin: OfferLeg = {
       firstName: 'Erika',
       lastName: 'Musterfrau',
       email: 'erika@example.com',
-      phone: '+43 660 123 45 67',
+      phone: '+436601234567',
       language: 'en-US'
     },
     {firstName: '', lastName: ''}
@@ -110,7 +110,7 @@ assert.equal(en.meta.contactPerson, 'Limosen Office')
 assert.equal(en.meta.validUntil, '17.09.2026', '24 hours before the pickup')
 assert.deepEqual(
   en.recipient,
-  ['Erika Musterfrau', 'erika@example.com', '+43 660 123 45 67'],
+  ['Erika Musterfrau', 'erika@example.com', '+43 660 123 4567'],
   'the passenger with the mail address'
 )
 assert.equal(en.intro.greeting, 'Dear Sir or Madam,')
@@ -168,7 +168,7 @@ const de = buildOfferData(origin, 'booklimo', 'de', {
     firstName: 'Hotel',
     lastName: 'Sacher Empfang',
     email: 'empfang@sacher.example',
-    phone: '+43 1 514 56'
+    phone: '+43151456'
   },
   now,
   files
@@ -177,7 +177,7 @@ assert.equal(de.sender.company, 'KRC Limousinenservice KG')
 assert.equal(de.sender.address[1], 'Bürgerspitalwiese 10/18')
 assert.deepEqual(
   de.recipient,
-  ['Hotel Sacher Empfang', 'empfang@sacher.example', '+43 1 514 56'],
+  ['Hotel Sacher Empfang', 'empfang@sacher.example', '+43 151 456'],
   'the profile wins when it names a person'
 )
 assert.equal(
