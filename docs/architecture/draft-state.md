@@ -74,9 +74,16 @@ fine-grained token per repository, held as a Worker secret), the editor's
 identity goes into the commit's author line.
 
 **Where it runs.** A Cloudflare Worker beside the taxi pylons in the same
-account, deployed with the same script family, one instance
-`agent.jaen.netsnek.com` for every site of the estate, limosen.at and
-booklimo.at first. A KV namespace for the read cache and the in-flight
+account, deployed with the same script family, one instance for every site of
+the estate, limosen.at and booklimo.at first. `agent.jaen.netsnek.com` is not
+the name it could take: a Worker custom domain needs its zone in the Worker's
+own Cloudflare account, `netsnek.com` is a zone of the account
+`a4b0e1ba603b529a64d355679ff2911a`, and the taxi pylons live in
+`92920a0740087f4d54d9201675220d43`, whose zones are booklimo.at, limosen.at,
+colorpedia.org, psylon.dev and whiss.org. The account was the requirement and
+the name gave way: one Worker under one custom domain per site,
+`jaen-agent.booklimo.at` and `jaen-agent.limosen.at`, each on the site's own
+zone, which also keeps the two brands off each other's hostnames. A KV namespace for the read cache and the in-flight
 queue is allowed, D1 or any other database is not.
 
 ## Design
@@ -462,7 +469,7 @@ One option in `JaenPluginOptions`
 
 ```ts
 agent?: {
-  /** GraphQL endpoint, https://agent.jaen.netsnek.com/graphql */
+  /** GraphQL endpoint, https://jaen-agent.<site>/graphql */
   url: string
   /** The key of this site in the agent's SITES table, e.g. "booklimo.at" */
   site: string
@@ -509,7 +516,9 @@ GitHub answered and does not pretend a build started.
 
 `packages/jaen-agent` in this repository, a Cloudflare Worker beside the
 taxi pylons in account `92920a0740087f4d54d9201675220d43`, one instance for
-the whole estate on `agent.jaen.netsnek.com`.
+the whole estate, under one custom domain per site,
+`jaen-agent.booklimo.at` and `jaen-agent.limosen.at`. See "Where it runs" for
+why the name is not `agent.jaen.netsnek.com`.
 
 `wrangler.toml`:
 
@@ -521,7 +530,13 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 send_metrics = false
 
-routes = [{ pattern = "agent.jaen.netsnek.com", custom_domain = true }]
+[[routes]]
+pattern = "jaen-agent.booklimo.at"
+custom_domain = true
+
+[[routes]]
+pattern = "jaen-agent.limosen.at"
+custom_domain = true
 
 # Pylon derives its schema with ts-morph at build time and the import survives
 # into the bundle, and hono/compress gzips a body whose Content-Encoding the
@@ -539,7 +554,7 @@ SITES = "{...}"
 
 [[kv_namespaces]]
 binding = "CACHE"
-id = "<jaen-agent-cache>"
+id = "6e75d473808c48e7ac39c4391cce02fb"
 ```
 
 No `[[d1_databases]]`, no prisma, no migrations directory. The KV holds two
@@ -549,8 +564,16 @@ a fifteen second TTL. A cold or lost KV is a slower read and never a lost
 change, because every write re-reads GitHub under the lock before it applies
 anything.
 
-Secrets, `wrangler secret put`: `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`
-(or `GITHUB_TOKEN` in the interim) and `ORG_USER_MANAGER_TOKEN`.
+Secrets, `wrangler secret put`: `AUTH_KEY`, the JSON key of an API
+application of the CMS project the introspection's `client_assertion` is
+signed with, the same application key the storage gateway and the identity
+facade hold; `GITHUB_APP_ID` and `GITHUB_APP_PRIVATE_KEY`, or `GITHUB_TOKEN`
+in the interim; and one organisation manager token per site, named by the site
+entry's `orgManagerTokenVar`, the way the taxi pylons hold theirs. The facade
+answers for the organisation of the token it is sent, so one estate wide
+manager token would answer for one brand and fail for the other:
+`ORG_USER_MANAGER_TOKEN_BOOKLIMO` and `ORG_USER_MANAGER_TOKEN_LIMOSEN`, with
+`ORG_USER_MANAGER_TOKEN` left as the fallback for a site that names none.
 
 `scripts/deploy.sh`, the taxi pylon's script with the database parts removed:
 the version out of `package.json`, the commit with a `-dirty` marker when the
@@ -599,7 +622,7 @@ wrangler is node.
 10. **Where the agent lives.** `packages/jaen-agent` in this repository, jaen
     native as the owner asked. `~/git/jaen-agent-v2` contributes its
     `src/hosts` and `src/stubs` and is retired once
-    `agent.jaen.netsnek.com` serves.
+    the agent serves.
 11. **The conflict rule.** Field level, later commit wins, a stale save is
     rebased on the current HEAD and never rejected, and the answer names
     every field it overwrote and who had written it.
@@ -621,6 +644,87 @@ with the organisation's role keys). That module is copied, not
 reinvented: the same token, the same introspection, the same cache, the
 same errors, the same role names, no scheme of a service's own and no
 use of Pylon's authentication plugin in a way the others do not share.
+
+## Deployed, 2026-09-07
+
+The estate runs it. One Worker, `jaen-agent` 3.0.0 (`c4ec838`, built
+`2026-09-07T21:18:30Z`), in the Cloudflare account
+`92920a0740087f4d54d9201675220d43` beside the taxi pylons, answering
+`https://jaen-agent.booklimo.at/graphql` and
+`https://jaen-agent.limosen.at/graphql`. Deployed with
+`packages/jaen-agent/scripts/deploy.sh`, which reads the stamp back off both
+hosts.
+
+**What was created.** The KV namespace `jaen-agent-CACHE`,
+`6e75d473808c48e7ac39c4391cce02fb`, bound as `CACHE`, holding only
+`head:<site>:<branch>` and `lock:<site>`. Two Worker custom domains, one on
+each site's own zone. Four secrets, none of them in any file of this
+repository: `AUTH_KEY` (the CMS project's application key
+`346283756287432310`, the same the storage gateway and the identity facade
+introspect with), `GITHUB_TOKEN`, `ORG_USER_MANAGER_TOKEN_BOOKLIMO` and
+`ORG_USER_MANAGER_TOKEN_LIMOSEN`.
+
+**The GitHub credential is the interim one and has to be replaced.** GitHub
+offers no API that mints a fine grained personal access token, and a GitHub
+App is created through a browser manifest flow, so neither could be minted
+from here. `GITHUB_TOKEN` is therefore the estate's existing classic token,
+which carries far more than `contents:write` on two repositories. The agent
+is the only thing that holds it and it never leaves the Worker, but the blast
+radius of a mistake in the site scoping is the whole organisation rather than
+two repositories. Replace it with the `jaen-agent` App, or with a fine
+grained token limited to `netsnek/booklimo.at` and `netsnek/limosen.at`, and
+`wrangler secret put GITHUB_TOKEN` is the whole of the change.
+
+**Both sites are configured and deployed.** `booklimo.at` (`d3197db`, the
+Pages deployment `fc939ea9`) and `limosen.at` (`69c5cae`, `7f72e742`), each
+naming its own agent host in its `gatsby-config.ts` and each polling every
+2500 ms rather than the design's 5000. The two push workflows of
+`booklimo.at` ignore `jaen-data/**`, because the agent commits
+`jaen-data/live.json` on every saved change and a save must never start a
+build. `limosen.at` has no push triggered workflow and needed nothing.
+
+**Measured on the live sites, not on a local build.** Two browser contexts
+signed in as two real admins of booklimo.at, the second being the brand's
+test customer given `jaen:admin` on booklimo alone for the run and revoked
+afterwards.
+
+- A text change in the first reached the second in **9.5 s** with no publish,
+  and the first's toolbar went "Saving" then "Saved 12:04 AM".
+- A picture uploaded in the first's media library reached the second's
+  library in **8.9 s**, and the first's own library in 0.5 s.
+- Every saved change is one commit of `jaen-data/live.json` in the editor's
+  name, `author Taxi Test Admin <office+taxi-test-admin-krc@netsnek.com>`,
+  `committer jaen-agent <noreply.snek.at@gmail.com>`, and **no Actions run
+  started on any of them**.
+- The browser taken offline kept editing, said "Offline, 1 change waiting",
+  drained to "Saved 12:15 AM" when the network came back, and the edit was
+  then readable from the repository through the agent.
+- `publish(site: "booklimo.at")` answered `queued: false`, "This site names
+  no publish workflow. Everything is committed already; the build is run by
+  the operator.", and the head sha was the same before and after.
+- An anonymous call is `AUTH_REQUIRED`, limosen's admin on booklimo and
+  booklimo's admin on limosen are `FORBIDDEN`, and an unlisted site key is
+  `UNKNOWN_SITE`.
+
+**Why the poll is 2500 ms.** At the design's 5000 the same two measurements
+were 9.0 s and 12.1 s, and the picture missed the ten second acceptance. The
+save is already committed by then, so the interval only decides how long the
+other CMS waits before it asks, and a poll whose `sinceSha` is still the head
+answers `changed: false` with no body out of the agent's KV. The remaining
+tail is the save itself: the toolbar reads "Saving" for four to six seconds,
+which is the lock, the fresh read of the head and the `PUT` of a
+`live.json` that carries a hundred and forty media nodes. Ten seconds holds,
+but not with much room, and shortening the save is where the next second
+comes from, not shortening the poll again.
+
+**The identity server fell over in the middle of the run.**
+`accounts.netsnek.com` answered `Errors.Internal` and then 503 on
+`/oauth/v2/authorize` for about four minutes around 22:08 UTC, which took the
+CMS login of both sites and every introspection with it, the agent included.
+It recovered by itself at 22:12 UTC and the measurements above are from after
+it. Nothing in this deployment caused it and nothing in this deployment
+survives it: the agent is exactly as available as the identity server it
+introspects against.
 
 ## Acceptance
 

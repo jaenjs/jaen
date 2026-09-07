@@ -7,7 +7,10 @@ every saved change back as a git commit.
 the site's own jaen data in its own repository, in the structure it has today
 (`jaen-data/`, the patches, the media nodes), and what editors share is the
 repository's HEAD. A Cloudflare Worker, a Pylon v3, one instance for the whole
-estate on `agent.jaen.netsnek.com`.
+estate, under one custom domain per site: `jaen-agent.booklimo.at` and
+`jaen-agent.limosen.at`. Not `agent.jaen.netsnek.com`, because a Worker custom
+domain needs its zone in the Worker's own Cloudflare account and `netsnek.com`
+is a zone of another one.
 
 The design is `docs/architecture/draft-state.md` in this repository. This file
 is how the thing is run.
@@ -282,13 +285,13 @@ every write re-reads GitHub under the lock before it applies anything.
 
 **Secrets**, `wrangler secret put <name>`, never in a file:
 
-| name                     | what                                                                                                                                                                                                                            |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AUTH_KEY`               | the JSON key of an API app **in `AUTH_PROJECT_ID`**, which pylon introspects with. Zitadel puts the introspecting application's project into the audience it demands, so an API app of another project refuses every CMS token. |
-| `GITHUB_TOKEN`           | the interim repository credential, `contents:write` on both site repositories                                                                                                                                                   |
-| `GITHUB_APP_ID`          | the `jaen-agent` App, once it exists                                                                                                                                                                                            |
-| `GITHUB_APP_PRIVATE_KEY` | its private key, PKCS#8                                                                                                                                                                                                         |
-| `ORG_USER_MANAGER_TOKEN` | the bearer the grant lookup through `idm.<brand>` is made with                                                                                                                                                                  |
+| name                            | what                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_KEY`                      | the JSON key of an API app **in `AUTH_PROJECT_ID`**, which pylon introspects with. Zitadel puts the introspecting application's project into the audience it demands, so an API app of another project refuses every CMS token.                                                                                                                                                                                                         |
+| `GITHUB_TOKEN`                  | the interim repository credential, `contents:write` on both site repositories                                                                                                                                                                                                                                                                                                                                                           |
+| `GITHUB_APP_ID`                 | the `jaen-agent` App, once it exists                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `GITHUB_APP_PRIVATE_KEY`        | its private key, PKCS#8                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `ORG_USER_MANAGER_TOKEN_<SITE>` | the bearer the grant lookup through `idm.<brand>` is made with, one per site, named by the site entry's `orgManagerTokenVar`. The facade answers for the organisation of the token it is sent, so an estate wide token would answer for one brand and fail for the other. Deployed as `ORG_USER_MANAGER_TOKEN_BOOKLIMO` and `ORG_USER_MANAGER_TOKEN_LIMOSEN`; bare `ORG_USER_MANAGER_TOKEN` is the fallback for a site that names none. |
 
 ## Deploying
 
@@ -387,3 +390,18 @@ told are plain JSON. Both are aliased in `wrangler.toml`. Its `src/hosts` is
 not: a publish there was one text file and one appended line, and this reads
 and writes a document, resolves a branch head, dispatches a workflow and mints
 an App token, which is `src/github.ts`.
+
+## Deployed
+
+`jaen-agent` 3.0.0 (`c4ec838`) in the Cloudflare account
+`92920a0740087f4d54d9201675220d43`, on `jaen-agent.booklimo.at` and
+`jaen-agent.limosen.at` since 2026-09-07. The KV namespace is
+`jaen-agent-CACHE`, `6e75d473808c48e7ac39c4391cce02fb`. Four secrets are set,
+`AUTH_KEY`, `GITHUB_TOKEN`, `ORG_USER_MANAGER_TOKEN_BOOKLIMO` and
+`ORG_USER_MANAGER_TOKEN_LIMOSEN`.
+
+`GITHUB_TOKEN` is the estate's existing classic token and not a fine grained
+one: GitHub mints neither a fine grained token nor an App installation through
+an API, both are browser flows. It is the one thing about this deployment that
+should not stay as it is. See `docs/architecture/draft-state.md`, "Deployed,
+2026-09-07", for what the live sites measured.
