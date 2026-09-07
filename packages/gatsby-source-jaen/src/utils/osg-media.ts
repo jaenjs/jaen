@@ -282,7 +282,8 @@ export const MISSING_TOKEN_MESSAGE =
   "personal access token of this organisation's storage machine user.\n" +
   '\n' +
   '  GitHub Actions: the repository secret OSG_TOKEN, passed into the build.\n' +
-  '  Locally:        ~/.config/jaen/osg.env, which scripts/deploy.sh sources.\n' +
+  '  Locally:        ~/.config/jaen/osg-<brand>.env, or osg.env, which\n' +
+  '                  scripts/deploy.sh sources.\n' +
   '\n' +
   'See jaen docs/architecture/private-storage.md, "The build".'
 
