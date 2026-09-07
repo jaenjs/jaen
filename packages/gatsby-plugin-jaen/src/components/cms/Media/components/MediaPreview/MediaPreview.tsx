@@ -11,7 +11,7 @@ import {
   Dialog,
   Portal
 } from '@chakra-ui/react'
-import {MediaNode} from 'jaen'
+import {MediaNode, useFileObjectUrl} from 'jaen'
 import {useEffect} from 'react'
 import FilerobotImageEditor, {TABS} from 'react-filerobot-image-editor'
 
@@ -26,6 +26,31 @@ import {FaCheck} from '@react-icons/all-files/fa/FaCheck'
 import {TransformComponent, TransformWrapper} from 'react-zoom-pan-pinch'
 
 import {MediaPreviewState} from '../../types'
+
+/**
+ * One thumbnail of the strip under the preview.
+ *
+ * Its own component because the strip is a `.map` and every tile now needs
+ * its own `useFileObjectUrl`: the gateway is private, so a thumbnail is
+ * fetched with the signed-in person's token and drawn as an object URL rather
+ * than pointed at with a bare src.
+ */
+const MediaStripImage: React.FC<{
+  node: MediaNode
+  isLast: boolean
+}> = ({node, isLast}) => {
+  const src = useFileObjectUrl(node.preview?.url ?? node.url)
+
+  return (
+    <Image
+      id={isLast ? 'last-media-item' : undefined}
+      w="100%"
+      h="100%"
+      src={src}
+      alt={node.description}
+    />
+  )
+}
 
 export interface MediaPreviewProps {
   selectedMediaNode: MediaNode | null
@@ -62,6 +87,15 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
   onClone,
   onDownload
 }) => {
+  /**
+   * The file behind the preview, fetched with the signed-in person's token.
+   *
+   * The image editor reads its canvas from the same object URL, which also
+   * removes the cross-origin dance the gateway's `Access-Control-Allow-Origin:
+   * *` used to be there for: a blob: source never taints a canvas.
+   */
+  const selectedUrl = useFileObjectUrl(selectedMediaNode?.url)
+
   const handleDownload = () => {
     if (selectedMediaNode) {
       // call onDownload callback
@@ -264,7 +298,7 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                         w="100%"
                         h="100%"
                         objectFit="contain"
-                        src={selectedMediaNode?.url}
+                        src={selectedUrl}
                         alt={selectedMediaNode?.description}
                       />
                     </TransformComponent>
@@ -272,13 +306,20 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                 }}
               </TransformWrapper>
 
-              {selectedMediaNode && isPreview === 'EDIT' && (
+              {/*
+                selectedUrl and not the node's own url: the editor loads its
+                source itself, with no way to put a header on that request, so
+                it is given the object URL the token already fetched. It waits
+                for that, which is why the guard is on the URL rather than on
+                the node.
+              */}
+              {selectedMediaNode && selectedUrl && isPreview === 'EDIT' && (
                 // previewPixelRatio is declared required but has a default of
                 // window.devicePixelRatio in the editor's own defaultConfig, and
                 // passing it explicitly would override that default.
                 // @ts-expect-error - upstream types the prop as required
                 <FilerobotImageEditor
-                  source={selectedMediaNode?.url}
+                  source={selectedUrl}
                   closeAfterSave
                   onSave={async editedImageObject => {
                     editedImageObject.imageCanvas?.toBlob(blob => {
@@ -388,13 +429,10 @@ export const MediaPreview: React.FC<MediaPreviewProps> = ({
                         onClick={() => {
                           onSelectMediaNode(node)
                         }}>
-                        <Image
+                        <MediaStripImage
                           key={node.id}
-                          id={index === 8 ? 'last-media-item' : undefined}
-                          w="100%"
-                          h="100%"
-                          src={node.preview?.url ?? node.url}
-                          alt={node.description}
+                          node={node}
+                          isLast={index === 8}
                         />
                       </AspectRatio>
                     )

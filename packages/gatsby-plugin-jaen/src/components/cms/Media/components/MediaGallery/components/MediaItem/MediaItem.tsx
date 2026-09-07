@@ -13,6 +13,7 @@ import {
 import {MouseEventHandler, useEffect, useRef, useState} from 'react'
 
 import {FaFilePdf} from '@react-icons/all-files/fa/FaFilePdf'
+import {useFileObjectUrl} from 'jaen'
 
 import {MediaFolderNode} from '../../../../types'
 
@@ -41,6 +42,30 @@ export const MediaItem: React.FC<MediaItemProps> = ({
   const imageRef = useRef<HTMLImageElement>(null)
   const [isLoaded, setIsLoaded] = useState(false)
 
+  /**
+   * The tile has always drawn the thumbnail first and swapped in the full
+   * file once it had been in view for half a second. That swap used to be a
+   * `setAttribute('src', node.url)` straight onto the element, which the
+   * private gateway makes impossible: an `<img>` sends no Authorization
+   * header and the gateway answers 401. The observer now only says "this one
+   * is in view", and both addresses are fetched with the signed-in person's
+   * token and drawn as object URLs.
+   */
+  const [isInView, setIsInView] = useState(false)
+
+  const previewUrl = useFileObjectUrl(node.preview?.url)
+  const fullUrl = useFileObjectUrl(isInView ? node.url : undefined)
+
+  /**
+   * A document has no preview to draw, so its bytes are fetched up front and
+   * the link points at the object URL. A blob: href opens in a new tab
+   * without a popup being blocked, which a `window.open` after an await
+   * would be.
+   */
+  const documentUrl = useFileObjectUrl(
+    node.mimeType === DOCUMENT_MIME_TYPE ? node.url : undefined
+  )
+
   useEffect(() => {
     let timeoutId: NodeJS.Timeout
 
@@ -50,11 +75,7 @@ export const MediaItem: React.FC<MediaItemProps> = ({
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             timeoutId = setTimeout(() => {
-              imageRef.current?.setAttribute('src', node.url)
-              // set loading state to false when image is loaded
-              imageRef.current?.addEventListener('load', () => {
-                setIsLoaded(true)
-              })
+              setIsInView(true)
             }, 500)
           } else {
             clearTimeout(timeoutId)
@@ -85,7 +106,9 @@ export const MediaItem: React.FC<MediaItemProps> = ({
    */
   if (node.mimeType === DOCUMENT_MIME_TYPE) {
     const openDocument = () => {
-      window.open(node.url, '_blank', 'noopener,noreferrer')
+      if (documentUrl) {
+        window.open(documentUrl, '_blank', 'noopener,noreferrer')
+      }
     }
 
     return (
@@ -117,7 +140,7 @@ export const MediaItem: React.FC<MediaItemProps> = ({
         </AspectRatio>
 
         <Link
-          href={node.url}
+          href={documentUrl}
           target="_blank"
           rel="noopener noreferrer"
           fontSize="xs"
@@ -155,7 +178,10 @@ export const MediaItem: React.FC<MediaItemProps> = ({
         })}>
         <Image
           ref={imageRef}
-          src={node.preview?.url}
+          src={fullUrl ?? previewUrl}
+          onLoad={() => {
+            setIsLoaded(true)
+          }}
           alt={node.description}
           id={isLast ? 'last-media-item' : undefined}
         />

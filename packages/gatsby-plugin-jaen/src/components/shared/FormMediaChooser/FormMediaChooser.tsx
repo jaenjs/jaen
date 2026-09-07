@@ -9,6 +9,7 @@ import {
   Skeleton
 } from '@chakra-ui/react'
 import {useState} from 'react'
+import {useFileObjectUrl} from 'jaen'
 import {FaCloudUploadAlt} from '@react-icons/all-files/fa/FaCloudUploadAlt'
 
 export interface FormMediaChooserProps {
@@ -30,7 +31,13 @@ export const FormMediaChooser: React.FC<FormMediaChooserProps> = props => {
    */
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null)
 
-  const src = props.value
+  /**
+   * The chooser draws a gateway file, and the gateway is private: the bytes
+   * are fetched with the signed-in person's token and drawn as an object URL.
+   * A value that is not a gateway file (a site-relative path the build wrote)
+   * comes back unchanged, so nothing outside the CMS changes.
+   */
+  const src = useFileObjectUrl(props.value)
 
   const onChoose = async () => {
     setIsLoading(true)
@@ -45,7 +52,9 @@ export const FormMediaChooser: React.FC<FormMediaChooserProps> = props => {
       <Box boxSize={36} minW="36" borderRadius="surface" bg="bg.subtle">
         {src ? (
           <>
-            {loadedSrc !== src && <Skeleton borderRadius="surface" boxSize="100%" />}
+            {loadedSrc !== src && (
+              <Skeleton borderRadius="surface" boxSize="100%" />
+            )}
             <Image
               borderRadius="surface"
               boxSize="100%"
