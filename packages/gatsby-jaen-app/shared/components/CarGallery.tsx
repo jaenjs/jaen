@@ -34,7 +34,9 @@ export interface CarGalleryProps {
 }
 
 const pictures = (car: CarPicture | null | undefined): CarPictureImage[] => {
-  const list = (car?.images ?? []).filter(image => image?.url || image?.thumbUrl)
+  const list = (car?.images ?? []).filter(
+    image => image?.url || image?.thumbUrl
+  )
   if (list.length > 0) return list
   // A read that answered the cover's two URLs only, which is every screen
   // built before the gallery. One picture is still a gallery of one.
@@ -53,7 +55,9 @@ export function CarGallery({car, alt, ratio = 16 / 9}: CarGalleryProps) {
     const el = strip.current
     if (!el) return
     const width = el.clientWidth || 1
-    setAt(Math.max(0, Math.min(list.length - 1, Math.round(el.scrollLeft / width))))
+    setAt(
+      Math.max(0, Math.min(list.length - 1, Math.round(el.scrollLeft / width)))
+    )
   }, [list.length])
 
   // Nothing photographed: the silhouette, in the box the strip would fill.
@@ -101,7 +105,12 @@ export function CarGallery({car, alt, ratio = 16 / 9}: CarGalleryProps) {
       </Box>
 
       {list.length > 1 && (
-        <HStack gap="2" justify="center" mt="2" aria-hidden data-testid="car-gallery-dots">
+        <HStack
+          gap="2"
+          justify="center"
+          mt="2"
+          aria-hidden
+          data-testid="car-gallery-dots">
           {list.map((image, index) => (
             <Box
               key={image.id ?? `dot-${index}`}

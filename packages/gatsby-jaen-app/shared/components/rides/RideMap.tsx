@@ -22,8 +22,10 @@
  *   - It polls itself rather than through a TanStack query. The app's hooks
  *     need the QueryClientProvider that `AppWrapper` mounts under /app, and
  *     the ride page is a site page outside it. The behaviour is the hooks':
- *     every ten seconds, only while the ride is under way, paused while the
- *     tab is hidden and read at once when it comes back.
+ *     every ten seconds from the ride's assignment until it is over, paused
+ *     while the tab is hidden and read at once when it comes back, so a page
+ *     that was already open when the driver set off draws the car without a
+ *     reload.
  *   - Its words come from the booking's language, which the summary carries,
  *     not from the visitor's: the same catalogue the app's tracking uses
  *     (shared/locales/i18nTracking.ts), picked by the `language` prop.
@@ -50,8 +52,30 @@ declare const __JAEN_APP_PYLON_URL__: string | undefined
 /** The three states in which the pylon answers a position at all. */
 export const RIDE_UNDERWAY_STATES = ['ON_THE_WAY', 'AT_PICKUP', 'ONGOING']
 
+/**
+ * The states a ride passes through before the driver sets off. A page opened
+ * in one of them must poll all the same: the promise of section 7 is that the
+ * customer sees the limousine set off on the page they already have open, and
+ * the ride's state is read from `rideByToken` once, at load, so a gate on that
+ * state alone leaves such a page following nobody until it is reloaded. That
+ * was the one measured gap of the live reading on 2026-09-07.
+ */
+export const RIDE_PENDING_STATES = ['PENDING', 'ASSIGNED']
+
+const upper = (state: string | null | undefined): string =>
+  String(state ?? '').toUpperCase()
+
 export const isRideUnderway = (state: string | null | undefined): boolean =>
-  RIDE_UNDERWAY_STATES.includes(String(state ?? '').toUpperCase())
+  RIDE_UNDERWAY_STATES.includes(upper(state))
+
+/**
+ * Whether the position is still worth asking for. True while the ride is under
+ * way and while it may yet become so; false for the seven states a ride never
+ * leaves again (REJECTED, ABORTED, NO_SHOW, FAILED, CANCELED, TERMINATED,
+ * COMPLETED), so a page left open on a finished ride stops asking.
+ */
+export const isRideFollowable = (state: string | null | undefined): boolean =>
+  isRideUnderway(state) || RIDE_PENDING_STATES.includes(upper(state))
 
 /** The booking's language as the app's catalogues name it. */
 const CODES: Record<string, I18nCode> = {
@@ -242,11 +266,21 @@ export function RideMap({
 
   const underway = isRideUnderway(tracking?.state ?? state)
 
-  // The poll: every `pollMs` while the ride is under way and the tab is
-  // visible, one read at once when the tab comes back, and nothing at all
-  // once the ride is over, when the pylon answers null anyway.
+  /**
+   * Set once the ride has been seen under way and then answered null again:
+   * the pylon answers the whole tracking null outside ON_THE_WAY, AT_PICKUP
+   * and ONGOING, so a non-null answer followed by a null one is the ride
+   * ending under the open page, and there is nothing left to ask for.
+   */
+  const [over, setOver] = useState(false)
+
+  // The poll: every `pollMs` while the ride may still be followed and the tab
+  // is visible, one read at once when the tab comes back. It runs from the
+  // ride's assignment on rather than from its departure, so a page that was
+  // already open when the driver set off draws the car without a reload, and
+  // it stops once the ride is over or was over when the page loaded.
   useEffect(() => {
-    if (!token || !isRideUnderway(state)) {
+    if (!token || over || !isRideFollowable(state)) {
       setTracking(null)
       held.current = null
       return
@@ -257,6 +291,9 @@ export function RideMap({
       void readTracking(token, url)
         .then(answer => {
           if (!alive) return
+          // The ride ended while this page was open: the last answer carried a
+          // state, this one carries nothing at all.
+          if (!answer && held.current) setOver(true)
           held.current = answer
           setTracking(answer)
         })
@@ -288,7 +325,7 @@ export function RideMap({
       window.clearInterval(id)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [token, state, url, pollMs])
+  }, [token, state, url, pollMs, over])
 
   const position = underway ? (tracking?.location ?? null) : null
   const recordedAtMs = useMemo(() => {

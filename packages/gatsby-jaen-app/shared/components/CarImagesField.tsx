@@ -26,7 +26,15 @@
  * what a touch screen has, and they are also what a keyboard has.
  */
 import {useCallback, useRef, useState} from 'react'
-import {Badge, Box, Grid, HStack, IconButton, Stack, Text} from '@chakra-ui/react'
+import {
+  Badge,
+  Box,
+  Grid,
+  HStack,
+  IconButton,
+  Stack,
+  Text
+} from '@chakra-ui/react'
 import {FaArrowLeft} from '@react-icons/all-files/fa/FaArrowLeft'
 import {FaArrowRight} from '@react-icons/all-files/fa/FaArrowRight'
 import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
@@ -179,13 +187,18 @@ export function CarImagesField({
   }
 
   return (
-    <Stack gap="3" data-testid="car-images-field" data-car-pictures={value.length}>
+    <Stack
+      gap="3"
+      data-testid="car-images-field"
+      data-car-pictures={value.length}>
       {value.length === 0 ? (
         <Text textStyle="sm" color="fg.muted">
           {s.GalleryEmpty}
         </Text>
       ) : (
-        <Grid templateColumns={{base: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)'}} gap="3">
+        <Grid
+          templateColumns={{base: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)'}}
+          gap="3">
           {value.map((image, index) => (
             <Box
               key={image.id ?? image.fileId}

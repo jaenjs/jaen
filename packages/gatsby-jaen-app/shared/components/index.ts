@@ -12,7 +12,11 @@ export {CarImage, carCover} from './CarImage'
 export type {CarImageProps, CarPicture, CarPictureImage} from './CarImage'
 export {CarGallery} from './CarGallery'
 export type {CarGalleryProps} from './CarGallery'
-export {CarImagesField, MAX_CAR_IMAGE_BYTES, MAX_CAR_IMAGES} from './CarImagesField'
+export {
+  CarImagesField,
+  MAX_CAR_IMAGE_BYTES,
+  MAX_CAR_IMAGES
+} from './CarImagesField'
 export type {CarImagesFieldProps, CarGalleryItem} from './CarImagesField'
 export {StorageImage, useStorageSrc} from './StorageImage'
 export type {StorageImageProps} from './StorageImage'

@@ -57,7 +57,9 @@ export interface CarPicture {
  * the gallery, or the cover fields a narrower read answered. Both are the
  * same picture, so a screen that has either draws it.
  */
-export const carCover = (car: CarPicture | null | undefined): CarPictureImage | null => {
+export const carCover = (
+  car: CarPicture | null | undefined
+): CarPictureImage | null => {
   const first = car?.images?.[0]
   if (first?.url || first?.thumbUrl) return first
   if (car?.imageUrl || car?.imageThumbUrl) {
