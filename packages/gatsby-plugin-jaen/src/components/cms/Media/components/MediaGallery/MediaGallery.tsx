@@ -178,26 +178,46 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
     }
   }
 
+  /**
+   * "Load more" used to be a scroll listener on `window` that measured
+   * `#last-media-item` against `window.innerHeight`. The grid scrolls inside
+   * its own container since the folder tree became an overlay, so `window`
+   * never scrolls, the listener never ran, and nothing past the first thirty
+   * nodes was reachable at all. `#last-media-item` was ambiguous besides:
+   * the preview puts the same id on its own last item, and
+   * `getElementById` answers whichever came first in the document.
+   *
+   * An IntersectionObserver on a sentinel at the end of the grid answers
+   * whichever ancestor scrolls, the window included, because a null root
+   * means the viewport and an element's visibility in it already accounts
+   * for every clipping ancestor on the way up.
+   */
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+  const hasMore = limitedMediaNodes.length < filteredMediaNodes.length
+
   useEffect(() => {
-    const handleScroll = () => {
-      const lastMediaItem = document.getElementById('last-media-item') // Add an ID to the last media item in the list
+    const sentinel = loadMoreRef.current
 
-      if (lastMediaItem) {
-        const rect = lastMediaItem.getBoundingClientRect()
-        const isAtBottom = rect.bottom <= window.innerHeight
+    if (!sentinel || !hasMore) return
+    if (typeof IntersectionObserver === 'undefined') return
 
-        if (isAtBottom) {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
           onLoadMore()
         }
-      }
-    }
+      },
+      // The next page is asked for shortly before the end is reached rather
+      // than at it, so the grid grows under the scroll instead of stopping.
+      {rootMargin: '300px'}
+    )
 
-    window.addEventListener('scroll', handleScroll)
+    observer.observe(sentinel)
 
     return () => {
-      window.removeEventListener('scroll', handleScroll)
+      observer.disconnect()
     }
-  }, [onLoadMore])
+  }, [hasMore, onLoadMore])
 
   useEffect(() => {
     // scroll to selected media item
@@ -482,6 +502,14 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
             onUpdateDescription={description => {
               handleUpdate({description})
             }}
+          />
+
+          {/* What the observer above watches, see "Load more". */}
+          <Box
+            ref={loadMoreRef}
+            h="1px"
+            w="full"
+            data-testid="media-load-more"
           />
         </Box>
       </MediaDropzone>
