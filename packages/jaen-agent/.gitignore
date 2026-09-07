@@ -7,3 +7,6 @@
 .dev.vars
 
 node_modules
+
+# wrangler dev keeps its simulated KV and its build cache here.
+.wrangler
