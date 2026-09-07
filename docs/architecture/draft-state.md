@@ -79,6 +79,522 @@ account, deployed with the same script family, one instance
 booklimo.at first. A KV namespace for the read cache and the in-flight
 queue is allowed, D1 or any other database is not.
 
+## Design
+
+### The draft in redux today
+
+`packages/jaen/src/redux/index.tsx` builds one store out of five reducers
+and preloads it from `localStorage` under the key `jaenjs-state`. Three of
+the five carry the draft, two do not.
+
+| slice    | holds                                                                                                                                                                                      | part of the draft            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
+| `page`   | `pages.nodes`, a `Record<pageId, Partial<JaenPage>>` with `jaenFields`, `sections`, `childPages`, `deleted`, `modifiedAt`, plus the session's `registeredPageFields` and `lastAddedNodeId` | yes, `nodes` only            |
+| `site`   | `siteMetadata`                                                                                                                                                                             | yes                          |
+| `widget` | `nodes`, an array of widgets with `createdAt` and `modifiedAt`                                                                                                                             | yes                          |
+| `status` | `isEditing`, `isPublishing`                                                                                                                                                                | no, one browser tab's mode   |
+| `popup`  | `nodes` and `advanced.<id>.pageViews`                                                                                                                                                      | no, a visitor's own counters |
+
+The media library is not a slice. `containers/media.tsx` reads and writes
+one jaen field, `useField('media_nodes', 'IMA:MEDIA_NODES')`, which lands
+in `page.pages.nodes[<media page>].jaenFields['IMA:MEDIA_NODES'].media_nodes.value`,
+so a media node is a page field like any other and needs no path of its
+own in what follows.
+
+`persist-state.ts` is the whole persistence layer. `PersistState(persistKey)`
+returns `loadState`, `saveState`, `persistState` and `persistMiddleware`.
+`persistState` subscribes to the store and writes the entire state to
+`localStorage` after every action, stripping `isLoading` and `error`
+recursively on the way out. `persistMiddleware` is `onErrorResetAndRery`,
+which drops the key and dispatches `RESET_STATE` when a reducer throws.
+There is no other writer and no reader but the browser that wrote it, which
+is the flaw the target names.
+
+### Where the publish action commits today
+
+`packages/jaen/src/contexts/cms-management.tsx`, `publishDraft` at line 557:
+
+1. It prompts for a commit message.
+2. It builds `{message, createdAt, data: {pages, site, widgets}}` out of the
+   three draft slices and uploads it to the storage gateway as
+   `migrations-<epoch>.json` through `utils/open-storage-gateway`, which is
+   `storageUrl` of the plugin options, `https://osg.netsnek.com` on both
+   sites.
+3. It calls `sqJaen.mutate(m => m.publish({migrationURL, config: {repository:
+__JAEN_REMOTE__.repository, repositoryCwd: __JAEN_REMOTE__.cwd}}))`.
+   `sqJaen` posts to `__JAEN_PYLON_URL__`, which both `gatsby-config.ts`
+   files set to `https://services.netsnek.com/jaen/graphql`, with the OIDC
+   access token out of `sessionStorage` as the bearer.
+4. On success it sets `isPublishing` and leaves the draft in the store.
+
+The service behind that URL has no source in the estate's checkouts, and
+what it does is legible from the workflow it triggers. It fires a GitHub
+`repository_dispatch`, `POST https://api.github.com/repos/<owner>/<repo>/dispatches`
+with `{"event_type": "UPDATE_JAEN_RESOURCE", "client_payload": {"migrationURL": ...}}`,
+signed with the service's own GitHub token, and
+`.github/workflows/jaen-publish.yaml` in the site repository answers it: it
+checks out `main`, refuses a URL outside the storage gateway, appends the
+line to `jaen-data/patches.txt` unless it is already there, commits as
+`jaen publish <noreply.snek.at@gmail.com>`, rebases and pushes. That is the
+only commit a publish makes. **No build follows on these two sites**, because
+the jaen packages are `link:` dependencies on a sibling checkout the runner
+does not have, so the build stays `scripts/deploy.sh` run by a human after a
+pull.
+
+`~/git/jaen-agent-v2` is the rewritten agent that replaces the dispatch with
+two contents API calls, `GET /repos/<repo>/contents/jaen-data%2Fpatches.txt?ref=main`
+and a `PUT` of the same path with the read `sha`, on `agent.jaen.io`. It is
+not what `services.netsnek.com/jaen` serves today. It is the starting point
+for the agent below, and its `src/hosts` and `src/stubs` move into it
+unchanged rather than being written a third time.
+
+At build time `gatsby-source-jaen/src/source-nodes/jaen-data.ts` reads
+`jaen-data/patches.txt`, one entry per line, fetches the `https://` lines
+through `fetchWithCache` and reads any other line as a file **inside**
+`jaen-data` with a traversal and symlink check, then deepmerges every
+`{createdAt, message, data}` in file order with `deepmergeArrayIdMerge`.
+The last patch wins a field. That local file path already exists and is what
+makes the design below cheap.
+
+### The repository as the store: one head patch
+
+The agent owns exactly one file per site, **`jaen-data/live.json`**, listed
+as the last line of `jaen-data/patches.txt`. Every save rewrites it with the
+merged draft of the whole site, in the patch shape the build already reads,
+`{createdAt, message, data: {pages, site, widgets}}`. Because it is last in
+the chain it wins the deepmerge, so the repository's HEAD is at all times a
+buildable statement of the current content.
+
+That is what lets publish commit nothing. The alternative, sealing the head
+file into a dated patch at publish time and starting a fresh one, was
+rejected: it puts a commit back into the publish path, which the target
+forbids, and it buys only a tidier file list. The historical patches
+(`2025-11-30-1653-sanitised.json` and the rest) stay frozen exactly as they
+are, and a maintainer who wants to fold the head file into a dated one does
+it with an ordinary commit that the agent neither makes nor needs to know
+about.
+
+`patches.txt` is touched only when `live.json` is not yet in it, once per
+site, in the same commit as the first save.
+
+### The agent's API
+
+`packages/jaen-agent`, a Pylon v3 service. Positional arguments, because
+Pylon maps them to flat GraphQL arguments. Resolvers are plain object
+literals or arrow properties, never class methods, because Pylon v3 pulls a
+resolver off its parent and calls it without a receiver, so a method loses
+`this`.
+
+```graphql
+type Query {
+  version: Version!
+  draft(site: String!, sinceSha: String): Draft!
+}
+
+type Mutation {
+  save(
+    site: String!
+    changes: [JaenChangeInput!]!
+    baseSha: String
+  ): SaveResult!
+  publish(site: String!): PublishResult!
+}
+
+type Draft {
+  site: String!
+  headSha: String! # the branch HEAD commit the answer was read at
+  blobSha: String! # jaen-data/live.json at that commit
+  changed: Boolean! # false when sinceSha is still the head
+  data: JSON # null when changed is false
+  authors: JSON # fieldKey -> {sub, name, at}
+  readAt: String!
+}
+
+type SaveResult {
+  headSha: String!
+  blobSha: String!
+  commitSha: String!
+  commitUrl: String!
+  savedAt: String!
+  rebased: Boolean!
+  overwrote: [FieldOverwrite!]! # field, the previous author, the previous instant
+}
+
+type PublishResult {
+  queued: Boolean!
+  headSha: String!
+  workflow: String
+  runUrl: String
+  reason: String # why not, when queued is false
+}
+```
+
+`draft(site)` reads the repository's HEAD. It resolves the branch head with
+`GET /repos/<repo>/commits/<branch>`, reads `jaen-data/live.json` with
+`GET /repos/<repo>/contents/...?ref=<branch>`, and answers the parsed `data`
+plus both shas. `sinceSha` is the head the caller already has: when it still
+matches, the answer is `changed: false` with no body, which is what almost
+every poll costs.
+
+`save(site, changes, baseSha)` applies the changes and commits, in the
+editor's name, one commit per call. `publish(site)` triggers the build and
+commits nothing.
+
+### The shape of a change
+
+A change is one dispatched redux action, named and flattened, so the client
+sends what it already produces and the agent needs no diffing.
+
+```ts
+interface JaenChangeInput {
+  kind:
+    | 'fieldWrite' // page.field_write
+    | 'sectionAdd' // page.section_add
+    | 'sectionRemove' // page.section_remove
+    | 'sectionMove' // page.section_move
+    | 'pageUpdate' // page.page_updateOrCreate
+    | 'pageDelete' // page.page_markForDeletion
+    | 'siteMetadata' // site.updateSiteMetadata
+    | 'widgetWrite' // widget.writeData
+  pageId?: string
+  section?: {path: Array<{fieldName: string; sectionId?: string}>; id: string}
+  fieldType?: string
+  fieldName?: string
+  value?: JSON
+  props?: JSON
+  at: string // the client's instant, advisory only
+}
+```
+
+`value` and `props` are the `JSON` scalar, because a jaen field's value is
+whatever the field type stores. The agent stamps the author itself out of
+the introspected token and ignores any author the client sends. It applies a
+change with the same reducer logic the client has, extracted into
+`packages/jaen/src/redux/apply-change.ts` and imported by both sides, so the
+browser and the agent can never disagree about what `sectionMove` means.
+
+A call carries at most 200 changes and at most one megabyte, which the
+debounce below never approaches.
+
+### Conflicts: the later commit wins
+
+`baseSha` is the head sha the client last saw, from its last `draft` or
+`save` answer. The rule is that a stale save is rebased and never rejected.
+
+1. Take the site's lock, a KV key `lock:<site>` written with a fifteen second
+   TTL, waited on for at most three seconds. Two saves of one site serialise
+   instead of racing the contents API.
+2. Read `jaen-data/live.json` at the branch HEAD, now, ignoring the cache.
+3. When `baseSha` is not the current head, the save is stale. Apply the
+   changes onto the document just read, which is the rebase, and answer
+   `rebased: true` with `overwrote`, the fields whose remote value a change
+   replaced together with who wrote them and when.
+4. `PUT` the file with the blob sha from step 2 as `sha`, so GitHub refuses
+   the write if the file moved in between. On a 409 the whole loop repeats,
+   three times, then the call answers an error and the client keeps the
+   changes in its queue.
+5. Release the lock.
+
+Because a change is a field and not a document, two editors on different
+fields never collide at all. Two editors on one field resolve as the target
+says, the later commit wins, and the CMS shows the field's last author and
+instant from `Draft.authors`, which the agent keeps in the head patch beside
+the data.
+
+### Identity
+
+Copied from the taxi pylon, `pylon/src/auth` and `pylon/src/oidc/zitadel.ts`.
+
+`AUTH_ISSUER` is mandatory. There is no unauthenticated variant of this
+service and the Worker refuses to start without the variable, because the
+agent holds write access to every site repository of the estate.
+
+`useAuth({issuer: AUTH_ISSUER})` runs on every request, wrapped in the
+introspection cache: the answer is remembered per SHA-256 of the bearer for
+`AUTH_CACHE_TTL_MS`, sixty seconds by default, and refreshed in the
+background past half its life. Without it every call pays two round trips of
+about 750 ms to `accounts.netsnek.com`, which is what the taxi pylon
+measured on 2026-09-05. Pylon's own `@requireAuth()` is not used, because it
+only checks that `auth` is truthy and `useAuth` sets that on an anonymous
+request as well. The agent has its own `requireAuth` demanding `auth.user`.
+
+Roles come from the `urn:zitadel:iam:org:project(s):(<id>:)?roles` claims of
+the introspection answer, with a project scope stripped off the key. When
+the token asserts none, the agent makes one grant lookup through the site's
+identity facade, `iamApiUrl` of the site entry, `https://idm.limosen.at/graphql`
+and `https://idm.booklimo.at/graphql`, with the Worker's own
+`ORG_USER_MANAGER_TOKEN` as the bearer rather than the caller's token. A
+failed lookup answers an empty list, which is a caller with no roles and
+never an admin. Every outgoing fetch carries a `User-Agent`, because
+Cloudflare fronts the issuer and answers a request without one with
+`error code: 1010` in plain text, which is not JSON.
+
+**Which site the caller may touch.** The site is named by a site key and not
+derived from the audience. limosen.at and booklimo.at sign in against the
+same Zitadel, the same CMS project `268283277977065078` and the same client
+`268283382465631862@cms`, so the audience is identical on both and cannot
+tell them apart. What differs is the organisation, `339284789469124181` for
+limosen and `356348844407002709` for booklimo. So: the site key names the
+repository, the identity decides the permission. A call is allowed when the
+token introspected at the entry's issuer, the caller holds the entry's
+`adminRole` (`jaen:admin`) in one of its `projectIds`, and the caller's
+resource owner (`urn:zitadel:iam:user:resourceowner:id`) or the organisation
+of that grant is the entry's `organizationId`. limosen's admin therefore
+gets a `FORBIDDEN` on booklimo, and an anonymous call an `AUTH_REQUIRED`,
+which is acceptance 3.
+
+The site table is a Worker var `SITES`, a JSON object, not a database:
+
+```json
+{
+  "booklimo.at": {
+    "repository": "netsnek/booklimo.at",
+    "branch": "main",
+    "issuer": "https://accounts.netsnek.com",
+    "organizationId": "356348844407002709",
+    "projectIds": ["268283277977065078"],
+    "adminRole": "jaen:admin",
+    "iamApiUrl": "https://idm.booklimo.at/graphql",
+    "publishWorkflow": "deploy.yaml",
+    "installationId": "<GitHub App installation>"
+  }
+}
+```
+
+### The GitHub credential and the commit author
+
+A **GitHub App**, `jaen-agent`, installed per repository. The Worker holds
+`GITHUB_APP_ID` and `GITHUB_APP_PRIVATE_KEY` as secrets, signs its own JWT
+with WebCrypto RS256 (no Node crypto needed on a Worker) and mints an
+installation token per request, cached in KV for its hour. A fine grained
+personal token per repository, `GITHUB_TOKEN`, stays supported as the
+interim before the App exists and as the fallback for a repository outside
+the App's account, and a site entry may name which it uses.
+
+The App is the decision because a fine grained token belongs to one human,
+expires within a year at the latest and takes every site down when it does,
+and adding a site means minting and deploying a new secret. An App
+installation adds a site by installing the App, and its token is short
+lived by construction.
+
+The credential is the agent's own either way. The editor's identity goes in
+the commit, which the contents API takes on the `PUT`:
+
+```json
+{
+  "message": "jaen: Florian Kleber edited 3 fields on /leistungen",
+  "author": {
+    "name": "<the token's name claim>",
+    "email": "<the token's email claim>"
+  },
+  "committer": {"name": "jaen-agent", "email": "noreply.snek.at@gmail.com"}
+}
+```
+
+An editor without an email claim gets `<sub>@users.noreply.<site>`, which is
+stable and never routes anywhere. `git log --format='%an <%ae>'` on the site
+repository is then the audit trail acceptance 2 asks for.
+
+### The client: a persistence layer beside persist-state
+
+A new file, `packages/jaen/src/redux/remote-state.ts`, next to
+`persist-state.ts` and shaped like it. `RemoteState(agent)` returns
+`{recordMiddleware, connect(store)}` and `index.tsx` adds the middleware to
+the store and calls `connect` when `__JAEN_AGENT__` is defined. Nothing
+changes when it is not, so a site without the plugin option behaves exactly
+as it does today.
+
+**A new `remote` slice**, added to `combineReducers`, holding `outbox` (the
+recorded changes not yet acknowledged), `headSha`, `saveState` of
+`idle | saving | saved | offline | error`, `lastSavedAt`, `authors` and
+`lastError`. `status` keeps `isEditing` and `isPublishing` untouched. The
+outbox lives in the store rather than in a module, so `persist-state`
+already writes it to `localStorage` on every action and reloads it on the
+next start. **That is the offline queue, for free**: a browser that loses the
+network keeps editing, the outbox grows in `localStorage`, and the flusher
+drains it when a call succeeds again. `RESET_STATE` clears the outbox with
+the rest, because discard means the unsent changes go too.
+
+**The recorder** is a middleware that translates the eight draft-bearing
+actions of the `page`, `site` and `widget` slices into a `JaenChangeInput`
+and appends it. It only records. It never sends, so a save cannot make a
+dispatch fail.
+
+**The flusher** sends after 800 ms of quiet or at twenty queued changes,
+whichever comes first, in one `save` call carrying the batch and the known
+`headSha`. On success it drops the flushed entries, stores the new head and
+sets `saved` with the instant. On a network failure it leaves the outbox
+alone, sets `offline` and retries after 2, 5, 15 and then every 30 seconds.
+The debounced batch is the unit of a commit, not the single change: a commit
+per keystroke would be one contents API round trip per character and a
+history nobody can read.
+
+**The poller** asks `draft(site, sinceSha: headSha)` every five seconds
+while the CMS is mounted or `status.isEditing` is set, and stops otherwise.
+`changed: false` is the usual answer and costs almost nothing. When the head
+moved, the client dispatches `hydrateFromRemote` on the three draft slices
+with the remote document, and those reducers keep any field that has an
+entry in the outbox, so a local unsent edit is never overwritten by a poll.
+Five seconds is comfortably inside the ten second acceptance.
+
+Polling and not a socket: a socket on a Worker needs a Durable Object, and a
+Durable Object is a store of record on the wrong side of the no-database
+rule.
+
+### The plugin option
+
+One option in `JaenPluginOptions`
+(`packages/gatsby-plugin-jaen/gatsby/gatsby-node.ts` and
+`src/gatsby/types.ts`), defined for the browser in the same
+`plugins.define` block as the existing four globals, as `__JAEN_AGENT__`:
+
+```ts
+agent?: {
+  /** GraphQL endpoint, https://agent.jaen.netsnek.com/graphql */
+  url: string
+  /** The key of this site in the agent's SITES table, e.g. "booklimo.at" */
+  site: string
+  pollMs?: number      // default 5000
+  debounceMs?: number  // default 800
+}
+```
+
+`remote`, `pylonUrl` and `storageUrl` stay as they are. `remote.repository`
+is still what the old publish path sends, and `storageUrl` is still where a
+media file goes, which does not change at all: the file is uploaded to the
+gateway as before and only its `media_nodes` entry travels through the agent.
+booklimo.at gains the block first, limosen.at at its next deploy.
+
+### The save state and the publish button
+
+`containers/cms-toolbar.tsx` and `components/cms/ToolbarButtons`. With the
+agent configured:
+
+- **The discard button goes.** Once a change is committed, discard cannot
+  undo it, and a button that claims otherwise is worse than no button. In
+  its place the toolbar shows the save state: "Saving", "Saved 12:04",
+  "Offline, 3 changes waiting", "Save failed, retrying". Undo is git, and
+  the answer of a save carries `commitUrl` for exactly that.
+- **The publish button keeps its label, its place and `isPublishing`.** Its
+  meaning narrows to "build now", and the commit message prompt goes with
+  it, because the commit has already happened and asking for its message at
+  publish time would be asking about something that no longer exists. It
+  becomes a plain confirm.
+- **There is no commit button**, which is the target's rule: saving is
+  committing.
+- A field's last author and instant come from `remote.authors` and are shown
+  in the field's own editing chrome.
+
+`publish(site)` on the agent fires `POST /repos/<repo>/actions/workflows/<publishWorkflow>/dispatches`
+with `{"ref": "<branch>"}` and answers `queued: true` with the run URL. A
+site entry without `publishWorkflow` answers `queued: false` with the reason,
+and the CMS says the build is run by the operator. That is the honest answer
+for both limousine sites today, where no Actions build has ever succeeded
+and the build is `scripts/deploy.sh` after a pull. The agent reports what
+GitHub answered and does not pretend a build started.
+
+### Deployment
+
+`packages/jaen-agent` in this repository, a Cloudflare Worker beside the
+taxi pylons in account `92920a0740087f4d54d9201675220d43`, one instance for
+the whole estate on `agent.jaen.netsnek.com`.
+
+`wrangler.toml`:
+
+```toml
+name = "jaen-agent"
+main = ".pylon/index.js"
+compatibility_date = "2026-07-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+send_metrics = false
+
+routes = [{ pattern = "agent.jaen.netsnek.com", custom_domain = true }]
+
+# Pylon derives its schema with ts-morph at build time and the import survives
+# into the bundle, and hono/compress gzips a body whose Content-Encoding the
+# edge then drops. Both are stubbed, as in jaen-agent-v2.
+[alias]
+"ts-morph" = "./src/stubs/ts-morph.ts"
+"hono/compress" = "./src/stubs/hono-compress.ts"
+
+[vars]
+AUTH_ISSUER = "https://accounts.netsnek.com"
+AUTH_CACHE_TTL_MS = 60000
+DEFAULT_BRANCH = "main"
+PYLON_TELEMETRY_DISABLED = 1
+SITES = "{...}"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "<jaen-agent-cache>"
+```
+
+No `[[d1_databases]]`, no prisma, no migrations directory. The KV holds two
+kinds of key and nothing else: `head:<site>`, the head sha and the parsed
+document with a thirty second TTL, and `lock:<site>`, the in-flight lock with
+a fifteen second TTL. A cold or lost KV is a slower read and never a lost
+change, because every write re-reads GitHub under the lock before it applies
+anything.
+
+Secrets, `wrangler secret put`: `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`
+(or `GITHUB_TOKEN` in the interim) and `ORG_USER_MANAGER_TOKEN`.
+
+`scripts/deploy.sh`, the taxi pylon's script with the database parts removed:
+the version out of `package.json`, the commit with a `-dirty` marker when the
+tree is not clean, `builtAt`, `npx pylon build`, then
+`env -u CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID=<account> npx wrangler deploy`
+with `AGENT_VERSION`, `AGENT_COMMIT` and `AGENT_BUILT_AT` as `--var`, and
+afterwards up to six attempts ten seconds apart at
+`{ version { agent commit builtAt } }` until the deployed Worker answers
+with the stamp it was given. `CLOUDFLARE_API_TOKEN` is dropped because a
+Pages token exported from a site checkout would otherwise win over the
+account login. `NODE_OPTIONS=--no-network-family-autoselection` is exported,
+because node's fetch dies on this machine's unreachable AAAA records and
+wrangler is node.
+
+### The open points, decided
+
+1. **Where the draft lives in the repository.** One head patch,
+   `jaen-data/live.json`, last in `patches.txt`, rewritten on every save.
+   The build already reads local patch files out of `jaen-data`, the last
+   patch wins the merge, and nothing needs committing at publish time.
+   Sealing it into a dated patch at publish was rejected for putting a
+   commit back into the publish path.
+2. **Commit granularity.** One commit per debounced batch, not per change.
+3. **What publish triggers.** `workflow_dispatch` on the workflow the site
+   entry names, `deploy.yaml` by default, and an honest `queued: false` with
+   a reason where a site has no working Actions build, which is the state of
+   both limousine sites.
+4. **The old publish mutation.** Not carried over. Bundles already deployed
+   keep calling `services.netsnek.com/jaen`, which stays deployed and
+   untouched. A site moves by rebuilding with the `agent` option.
+5. **The GitHub credential.** A GitHub App installation, with a fine grained
+   token per repository as the interim. An App adds a site by installing it,
+   a token adds a secret and an expiry date to every site at once.
+6. **Which site a token may write.** The site key names the repository, the
+   identity decides the permission, the organisation id discriminates. The
+   audience cannot, because both sites share one Zitadel project and client.
+7. **Live updates.** A five second poll of `draft(site, sinceSha)`, not a
+   socket, because a socket needs a Durable Object and that is a store of
+   record.
+8. **Discard.** Removed from the toolbar when the agent is configured, and
+   replaced by the save state. Undo is git, and the save answer carries the
+   commit URL.
+9. **The media library.** No path of its own. `media_nodes` is a jaen field
+   of the media page and rides the same save. The file keeps going straight
+   to the storage gateway.
+10. **Where the agent lives.** `packages/jaen-agent` in this repository, jaen
+    native as the owner asked. `~/git/jaen-agent-v2` contributes its
+    `src/hosts` and `src/stubs` and is retired once
+    `agent.jaen.netsnek.com` serves.
+11. **The conflict rule.** Field level, later commit wins, a stale save is
+    rebased on the current HEAD and never rejected, and the answer names
+    every field it overwrote and who had written it.
+
+Out of scope on purpose: per field locking, presence indicators, a comment
+or review step, and any branch but the site's own build branch.
+
 ## Acceptance
 
 - Two browser contexts signed in as two admins of booklimo.at: a text
