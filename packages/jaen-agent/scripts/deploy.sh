@@ -91,7 +91,14 @@ export PYLON_DISABLE_TELEMETRY=true
 # Build and deploy
 # --------------------------------------------------------------------------
 
-run npx pylon build
+# `npx pylon` cannot run: pylon-dev ships its CLI as an ESM file with no
+# shebang, so the shell reads `import{program as G}from"commander"` as shell
+# syntax and dies on the first parenthesis. Node is handed the file instead,
+# which is what npx would have done if the file said so itself.
+PYLON_CLI="$AGENT_DIR/node_modules/@getcronit/pylon-dev/dist/index.js"
+[[ -f "$PYLON_CLI" ]] || { echo "pylon-dev is not installed, run npm install" >&2; exit 1; }
+
+run node "$PYLON_CLI" build
 
 # env -u CLOUDFLARE_API_TOKEN: a token exported from one of the site checkouts
 # is a Pages token of another scope, and wrangler prefers a token over its own

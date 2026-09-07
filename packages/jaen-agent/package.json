@@ -6,10 +6,10 @@
   "license": "EUPL-1.2",
   "type": "module",
   "scripts": {
-    "build": "pylon build",
+    "build": "node node_modules/@getcronit/pylon-dev/dist/index.js build",
     "deploy": "scripts/deploy.sh",
-    "dev": "wrangler dev",
-    "test": "node --test tests/agent.test.ts",
+    "dev": "npm run build && wrangler dev",
+    "test": "npm run build && node --test tests/agent.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
