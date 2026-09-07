@@ -1,10 +1,19 @@
 import {MediaNode} from 'jaen'
-import {Flex, Heading, HStack, IconButton, Stack} from '@chakra-ui/react'
+import {
+  Flex,
+  Heading,
+  HStack,
+  Icon,
+  IconButton,
+  Stack,
+  Tabs
+} from '@chakra-ui/react'
 import React, {useEffect, useMemo, useState} from 'react'
 import {useIntl} from 'react-intl'
 
 import {BsLayoutSidebarInset} from '@react-icons/all-files/bs/BsLayoutSidebarInset'
 
+import {MediaSource} from '../../../contexts/jaen-frame-menu'
 import {PageTree} from '../../shared/PageTree/PageTree'
 import {TreeNode} from '../Pages/components/PageVisualizer'
 import {MediaGallery} from './components/MediaGallery/MediaGallery'
@@ -36,7 +45,18 @@ export interface MediaProps {
   defaultSelected?: string
 
   onJaenPageSelect: (id: string | null) => void
+
+  /**
+   * The sources registered on the frame's context, one tab each beside the
+   * page images. See okf/architecture/media.md, "Sources", in the taxi-app
+   * repository: the app registers Fahrzeuge and Dokumente there, and this
+   * component knows nothing about either beyond what a source declares.
+   */
+  sources?: MediaSource[]
 }
+
+/** The value of the tab the page images live on. A source id may not be this. */
+export const PAGE_IMAGES_TAB = 'jaen-pages'
 
 export const Media: React.FC<MediaProps> = ({
   tree,
@@ -49,7 +69,8 @@ export const Media: React.FC<MediaProps> = ({
   isSelector,
   onSelect,
   defaultSelected,
-  onJaenPageSelect
+  onJaenPageSelect,
+  sources
 }) => {
   const intl = useIntl()
 
@@ -126,7 +147,16 @@ export const Media: React.FC<MediaProps> = ({
     setSelectedMediaNode(null)
   }
 
-  return (
+  /**
+   * The page images are the first tab and stay the default, so the tab is
+   * an addition for whoever registered a source and no change at all for a
+   * site that registers none. A selector (FormMediaChooser) shows no tabs:
+   * it is choosing a page image and nothing else fits in a jaen field.
+   */
+  const [tab, setTab] = useState<string>(PAGE_IMAGES_TAB)
+  const tabbedSources = isSelector ? [] : (sources ?? [])
+
+  const gallery = (
     <Flex id="momo" pos="relative" minH="calc(100dvh - 4rem - 3rem)">
       <Stack
         as="nav"
@@ -212,5 +242,70 @@ export const Media: React.FC<MediaProps> = ({
         onDownload={onDownload}
       />
     </Flex>
+  )
+
+  if (tabbedSources.length === 0) {
+    return gallery
+  }
+
+  return (
+    <Tabs.Root
+      value={tab}
+      onValueChange={event => {
+        setTab(event.value)
+      }}
+      variant="line"
+      // A source reads through its own query and shows its own skeleton, so
+      // it is mounted when its tab is opened and dropped when it is left,
+      // rather than fetching in the background behind the page images.
+      lazyMount
+      unmountOnExit
+      data-testid="media-tabs">
+      <Tabs.List
+        px="4"
+        pos="sticky"
+        top="0"
+        zIndex="3"
+        bg="bg.surface"
+        borderBottom="1px solid"
+        borderColor="border.emphasized">
+        <Tabs.Trigger
+          value={PAGE_IMAGES_TAB}
+          data-testid={`media-tab-${PAGE_IMAGES_TAB}`}>
+          {intl.formatMessage({
+            id: 'MediaTabPageImages',
+            defaultMessage: 'Page images'
+          })}
+        </Tabs.Trigger>
+
+        {tabbedSources.map(source => (
+          <Tabs.Trigger
+            key={source.id}
+            value={source.id}
+            data-testid={`media-tab-${source.id}`}>
+            {source.icon && (
+              <Icon asChild>
+                <source.icon />
+              </Icon>
+            )}
+            {source.label}
+          </Tabs.Trigger>
+        ))}
+      </Tabs.List>
+
+      <Tabs.Content value={PAGE_IMAGES_TAB} p="0">
+        {gallery}
+      </Tabs.Content>
+
+      {tabbedSources.map(source => (
+        <Tabs.Content
+          key={source.id}
+          value={source.id}
+          p="4"
+          data-testid={`media-source-${source.id}`}>
+          <source.list onOpen={source.open} onRemove={source.remove} />
+        </Tabs.Content>
+      ))}
+    </Tabs.Root>
   )
 }

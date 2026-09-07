@@ -4,6 +4,7 @@ import {v4 as uuidv4} from 'uuid'
 
 import {Media, MediaProps} from '../components/cms/Media/Media'
 import {useCMSManagement, withCMSManagement} from '../connectors/cms-management'
+import {useJaenFrameMenuContext} from '../contexts/jaen-frame-menu'
 
 export interface MediaContainerProps {
   isSelector?: boolean
@@ -35,6 +36,15 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
   }>(field.staticValue || {})
 
   const manager = useCMSManagement()
+
+  /**
+   * The sources registered beside the page images, the way the frame's menu
+   * entries are registered: whoever mounts inside the frame calls
+   * registerMediaSource and the tab appears here. Nothing about vehicles or
+   * documents is known in this plugin, see the context and
+   * okf/architecture/media.md, "Sources".
+   */
+  const {mediaSources} = useJaenFrameMenuContext()
 
   useEffect(() => {
     setMediaNodes(field.value || field.staticValue || {})
@@ -286,6 +296,7 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
       onUpdate={onUpdate}
       onSelect={onSelect}
       onJaenPageSelect={onJaenPageSelect}
+      sources={mediaSources}
     />
   )
 }
