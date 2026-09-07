@@ -22,8 +22,19 @@ carries a Zitadel token, introspected the way the taxi pylons do it
 (through the identity facade of the organisation, `idm.<brand>`, or
 directly against the identity server for organisations without one),
 and a file belongs to the organisation that uploaded it: a token of
-another organisation is refused. The drivers (git, telegram, s3) do not
-change, the gate sits in front of them.
+another organisation is refused **unless the file's row shares it with
+that organisation**, which limosen's site media does with KRC by design,
+because the two sites are one content lineage. The drivers (git,
+telegram, s3) do not change, the gate sits in front of them.
+
+**Corrected 2026-09-08, because the sentence above used to end at "a
+token of another organisation is refused" and that is true of 19 rows out
+of 287.** All 266 of limosen's rows carry KRC in `shared`, so no limosen
+file can answer 403 to a booklimo token and an acceptance test that tries
+is testing the wrong direction. The cross organisation refusal is
+measured with a **KRC owned** file and the **limosen** token, never the
+reverse. And a share is bounded: it reaches `jaen:admin` and the storage
+roles of the other organisation and not every account in it.
 
 **The build fetches with a machine token.** `gatsby-source-jaen` (or the
 build step that resolves media nodes) downloads every media file the
@@ -85,8 +96,24 @@ listing accounts fast for the pylons.
 
 ## Acceptance
 
-- An anonymous `GET /storage/:id` on osg.netsnek.com answers 401, the
-  same with a token of another organisation 403, with a fitting token 200.
+- An anonymous `GET /storage/:id` on osg.netsnek.com answers 401, with a
+  fitting token 200, and with a token of another organisation 403 **measured
+  on a KRC owned file with the limosen token**, which is the only direction
+  in which this store can refuse: every limosen row shares with KRC and no
+  KRC row shares with anybody. limosen's site media being readable by
+  booklimo is the design working, not the gate leaking.
+- A share reaches `jaen:admin` and the storage roles of the organisation it
+  names, and nothing else: a `krc:driver` and a `krc:customer` token are 403
+  on a limosen site picture while `osg-krc`, `osg-build-krc` and a CMS
+  editor are 200. Put an organisation in `shared` only for content already
+  public on its owner's own site.
+- A `TransferDocument`'s row demands a storage role of every reader, its own
+  organisation included: a `krc:driver`, `krc:customer` or `krc:hotel` token
+  is 403 on an offer PDF while the same tokens read a car picture 200, and
+  the customer who opens that offer from a mail is unaffected because a
+  signature is decided before any role.
+- `osg.snek.at` answers exactly what `osg.netsnek.com` answers, because it
+  is a route on the same Worker.
 - A site build in GitHub Actions on booklimo.at with `OSG_TOKEN` set
   fetches every media node and the built site serves them from its own
   origin; the same build without the secret fails with a clear message.
@@ -1140,3 +1167,179 @@ Telegram chat than the one the old Go service reads. So the open door is real
 and it is the two sites' media, not the platform's documents, which is a
 sharper statement than "every id the gateway ever issued is readable there"
 and does not make it less urgent.
+
+## Repaired 2026-09-08, and what the repair changed about the design
+
+The adversarial pass above left five findings on the gate and six on the
+consumers. This section is what was done about each of them, on the systems
+that serve. Two Worker versions, one D1 migration, four commits in the gateway,
+one commit in each site and one in the taxi platform. No visitor lost a picture
+at any point, because both sites had already stopped asking the gateway for one.
+
+### A share is bounded now, and that is a change of rule
+
+The finding: read is by organisation with no role, so sharing limosen's 266
+site pictures with KRC gave every KRC account read access to all of them, a
+`krc:driver` and a `krc:customer` machine token included, measured 200 with
+both.
+
+The rule the design states, "read is by organisation and not by role", was
+written for the inside of an organisation and it is right there: a driver holds
+`krc:driver`, a hotel `krc:customer`, several accounts of the directory hold no
+role at all, and all of them have to see a car picture. It was never argued for
+the outside. A share crosses a tenant boundary, and the accounts that genuinely
+need another organisation's file are three: the site build (`storage:read`),
+the brand's storage machine user, and a CMS editor (`jaen:admin`).
+
+So `decideRead` splits what it used to decide in one step. The owner's own
+organisation reads with no role, unchanged. An organisation named in `shared`
+reads holding one of `jaen:admin`, `storage:read`, `storage:write`,
+`storage:sign` or `storage:admin`, and answers 403 otherwise, with a message
+that says a share needs a role rather than that the file belongs to somebody
+else. Measured on the live gateway afterwards: `krc:driver` 403 and
+`krc:customer` 403 on the limosen site picture, `osg-krc` 200,
+`osg-build-krc` 200 with `storage:read` alone, the booklimo CMS admin 200.
+
+**And the rule that goes with the column**: an organisation in `shared` is a
+read grant to a set of accounts you do not administer, so it belongs only on
+content that is already public on its owner's own site. limosen's site media
+qualifies. A document never would.
+
+### A row may demand a role of every reader, and a document does
+
+The finding: a `krc:customer` machine token read the offer `AN-260006` off the
+store by id, 200 `application/pdf`. The pylon would never have handed it that
+document, because `documentUrl` calls `callerMayRead(row.transfer)` first. The
+ids are unguessable Telegram handles, so this was defence in depth rather than
+an open door, but it is the platform's own rule that hiding a value in the view
+is not a permission.
+
+Special casing `application/pdf` in a storage gateway would have put taxi
+semantics into a service that serves six other sites, so the ownership row grew
+a column instead. `min_role` names the roles a caller must hold to read that
+file **at all**, its own organisation included, and it is NULL on 280 of 287
+rows. `scripts/backfill-owners.py` stamps it on every `TransferDocument` row
+and on nothing else, which is why it now claims a brand's pictures and its
+documents in two passes rather than one.
+
+An organisation is a tenant boundary and it is not one blast radius. A car
+picture is seen by every driver and every hotel of the brand, and an offer is
+the brand's paper about one customer's ride.
+
+**A signature is decided before `min_role`**, which is what makes this safe:
+the customer who opens the offer from their mail holds no token at all and
+opens a link the pylon minted after it had checked the ride. Measured after the
+deploy: `krc:driver`, `krc:customer` and `krc:hotel` are 403 on the offer and
+200 on a car picture, `osg-krc` and the CMS admin are 200 on the offer, and the
+mail's thirty day link still opens with no `Authorization` header.
+
+### The second door is shut, and it was ours all along
+
+`osg.snek.at` is an `A` record to the netcup host `89.58.34.70`, proxied. The
+design called it the first of two facts it could not establish, "nobody here
+knows who operates the other". The DNS zone `snek.at` is in Cloudflare account
+`a4b0e1ba603b529a64d355679ff2911a`, the same account the `osg` Worker runs in.
+Nobody had to be found: the hostname could be put in front of this Worker from
+the same credential that deploys it.
+
+It is a **Worker route** (`osg.snek.at/*`, zone `snek.at`, declared in
+`wrangler.toml` beside the two custom domains) and deliberately not a custom
+domain. A route leaves the `A` record exactly as it was, so rolling back is
+deleting one route rather than rebuilding a record for a host nobody here
+administers.
+
+What it costs the sites that still name that host: nothing, and it gives them
+something. netsnek.com, photonq.org, nadine-hauswirth.com, barbara-mauz.at and
+fhkit.at still fetch media from `osg.snek.at` in a visitor's browser. Every one
+of their ids is unclaimed, so with `CLAIM_ALL=0` the Worker answers them
+publicly and byte-identically, and it answers them better: the Go service sent
+`content-type: text/plain` for a PNG and no CORS header at all, the Worker
+sends `image/png`, `Access-Control-Allow-Origin: *` and a year of cache. Five
+ids, one per site, were measured on both hosts before the route and on the
+route afterwards, same bytes each time. limosen.at and booklimo.at name no
+gateway host in their served HTML any more, and their builds always fetch
+through the build's own gateway origin rather than through the host the data
+names, so nothing of theirs goes through the route either.
+
+Afterwards the second door answers what the first does: the limosen site
+picture is 401 `AUTH_REQUIRED` anonymously on `osg.snek.at` and 200 to a token
+that may read it.
+
+**`CLAIM_ALL` is still `0` and now it holds two doors open, not one.** Five
+live sites fetch unclaimed media through the gateway in a visitor's browser.
+Each has to be rebuilt on the new `gatsby-source-jaen` before its files are
+claimed, and `CLAIM_ALL=1` is only honest once the last of them has been.
+
+### The Actions workflows, and the secret that killed them
+
+`booklimo.at/.github/workflows/deploy.yaml` passed `OSG_TOKEN` to
+`atsnek/jaen/.github/workflows/jaen-deploy.yaml@main`, which does not declare
+that secret under `on.workflow_call.secrets`. A caller that maps a secret the
+callee never declared is a **`startup_failure`**: the run ends before a job
+starts and no log says why. Every Deploy run of that repository between
+2026-09-07T20:39 and this repair ended that way. The reference was added in
+good faith by the build step of this design and it is worse than useless: the
+reusable workflow would not have exported the variable into the Gatsby build
+anyway.
+
+Both sites' workflows now name `OSG_TOKEN` in a comment and pass nothing. What
+is missing is on the other side, in `atsnek/jaen`: that workflow has to declare
+`OSG_TOKEN` and export it into the build step beside `SENTRY_AUTH_TOKEN`. Until
+it does, and until the `link:` sibling checkout problem is solved (the reusable
+workflow fails at "Install dependencies" on every run, and has since 2025-11),
+**neither site is built by Actions and the acceptance must not claim it is**.
+What ships is `scripts/deploy.sh` on the maintainer's machine, which reads the
+token from `~/.config/jaen/osg-<brand>.env`. limosen.at's Deploy has no push
+trigger at all, which is written down in the file as deliberate for the same
+reason.
+
+The two commits are local. **They have not been pushed**, because this run may
+push nothing but the gateway branch, so GitHub still carries the broken
+mapping until somebody pushes `288d697` on booklimo.at and `7246282` on
+limosen.at.
+
+### What is measured, and what is written differently now
+
+`tests/46-private-storage-live.ipynb` of the taxi platform, 15 groups, all
+green, run twice. Three of them are new and one was rewritten:
+
+- check 2 is renamed to say that the other organisation reading is a 200 **on
+  purpose**, with the store's own counts in a comment, so nobody reads the
+  notebook as proof that a booklimo token is refused on limosen files
+- check 3 is renamed to say it is the only direction a refusal has
+- check 3b measures the bounded share, 3c that a car picture still asks for no
+  role, 3e that a document does, and 3d that the second door answers like the
+  first
+
+The gateway's own suite is 44 of 44 and its typecheck clean.
+
+### The stamps
+
+| piece           | value                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Worker versions | `e0f3b9a6` (bounded share, the osg.snek.at route), `c4161c12` (`min_role`)                                         |
+| ownership store | `ALTER TABLE file_owner ADD COLUMN min_role TEXT`, then 7 `TransferDocument` rows stamped. 287 rows, 280 with NULL |
+| gateway branch  | `private-storage`, `a56016f`, `8024870`, `554e456`, pushed                                                         |
+| sites           | booklimo.at `288d697`, limosen.at `7246282`, both local and both still to be pushed                                |
+| taxi platform   | `5825b74`, the notebook                                                                                            |
+
+### The one thing this repair could not do
+
+**The identity server went down in the middle of it.**
+`accounts.netsnek.com` and `accounts.photonq.org` answered 503 from their nginx
+for about twenty minutes on 2026-09-07 around 22:10 UTC. All three
+`zitadel-5dc4468558-*` pods in the `zitadel` namespace of the photonq cluster
+were `0/1`, logging `DB CONNECTION ERROR ... dial tcp 131.130.102.252:5432:
+connect: connection refused` while a `vzdump` was running on the cdl Proxmox
+(`walther-nas` held a `backup` lock). The host at `.252` pings and refuses the
+port, and nothing here can log into it: `root@131.130.102.252` answers
+`Permission denied (publickey,password)` from the photonq node and from the
+Proxmox alike. It came back on its own.
+
+While it is down every token read of this gateway is a 500 `AUTH_UNAVAILABLE`,
+which is the right answer and not a 401, and no visitor of either site notices,
+because neither site asks the gateway for anything. It is written down here
+because it is the single point every service of this estate shares and because
+the failure mode matches the one the memory note `walther-zitadel-db-disk-stall`
+records for the other Zitadel: a backup's filesystem freeze takes the database
+container down and it does not come back by itself.
