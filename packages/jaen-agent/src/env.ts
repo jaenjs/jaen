@@ -26,6 +26,14 @@ export interface SiteEntry {
   adminRole?: string
   /** The site's identity facade, for the grant lookup. */
   iamApiUrl?: string
+  /**
+   * The environment variable holding the organisation manager token the grant
+   * lookup through `iamApiUrl` is made with. One per site, the way the taxi
+   * pylons hold theirs: the facade answers for the organisation of the token
+   * it is sent, so one estate wide token would answer for one organisation and
+   * fail for the other. `ORG_USER_MANAGER_TOKEN` when absent.
+   */
+  orgManagerTokenVar?: string
   /** The workflow `publish` dispatches. No build when absent. */
   publishWorkflow?: string
   /** The GitHub App installation that holds the repository, when the App is used. */

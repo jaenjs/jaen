@@ -27,7 +27,10 @@ cd "$AGENT_DIR"
 # to a Pages token, and a Pages token is exactly what must not reach this
 # deploy.
 ACCOUNT_ID="92920a0740087f4d54d9201675220d43"
-HOST="agent.jaen.netsnek.com"
+# One custom domain per site, both on the one Worker. `agent.jaen.netsnek.com`
+# is not reachable: a Worker custom domain needs the zone in the Worker's own
+# account, and netsnek.com is a zone of another one. See wrangler.toml.
+HOSTS=("jaen-agent.booklimo.at" "jaen-agent.limosen.at")
 
 DRY_RUN=0
 
@@ -70,7 +73,7 @@ fi
 BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 printf 'deploy jaen-agent\n'
-printf '   route     https://%s/graphql\n' "$HOST"
+for h in "${HOSTS[@]}"; do printf '   route     https://%s/graphql\n' "$h"; done
 printf '   version   %s\n' "$VERSION"
 printf '   commit    %s\n' "$COMMIT"
 printf '   builtAt   %s\n' "$BUILT_AT"
@@ -124,6 +127,7 @@ fi
 # after wrangler reports the upload (measured on the taxi Workers 2026-09-05:
 # the old stamp for about twenty seconds), so the answer is asked for again, a
 # few times, before it is called wrong.
+for HOST in "${HOSTS[@]}"; do
 echo "verify https://$HOST/graphql"
 GOT=""
 for attempt in 1 2 3 4 5 6; do
@@ -151,3 +155,4 @@ else
   echo "       the deploy may still be propagating, or the Worker is an older build" >&2
   exit 1
 fi
+done

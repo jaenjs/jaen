@@ -12,8 +12,24 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 send_metrics = false
 
+# `agent.jaen.netsnek.com` is not reachable from here and the design's name is
+# corrected because of it: a Worker custom domain needs the zone in the same
+# Cloudflare account as the Worker, and `netsnek.com` is a zone of the account
+# `a4b0e1ba603b529a64d355679ff2911a`, while the taxi pylons and this Worker are
+# in `92920a0740087f4d54d9201675220d43`, whose zones are booklimo.at,
+# limosen.at, colorpedia.org, psylon.dev and whiss.org. So the agent carries one
+# custom domain per site, on the site's own zone, which also keeps the two
+# brands off each other's hostnames. One Worker answers both.
+#
+# Two labels and not three (`agent.jaen.booklimo.at`): Cloudflare's universal
+# certificate covers one level of subdomain, and a deeper name would need the
+# paid Advanced Certificate Manager.
 [[routes]]
-pattern = "agent.jaen.netsnek.com"
+pattern = "jaen-agent.booklimo.at"
+custom_domain = true
+
+[[routes]]
+pattern = "jaen-agent.limosen.at"
 custom_domain = true
 
 # Pylon derives its schema with ts-morph at build time and the import survives
@@ -54,7 +70,7 @@ PYLON_TELEMETRY_DISABLED = 1
 # `installationId` is absent until the `jaen-agent` GitHub App exists; the
 # interim credential is the GITHUB_TOKEN secret, a fine grained token with
 # contents:write on both repositories.
-SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"356348844407002709","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.booklimo.at/graphql"},"limosen.at":{"repository":"netsnek/limosen.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"339284789469124181","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.limosen.at/graphql"}}'
+SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"356348844407002709","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.booklimo.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_BOOKLIMO"},"limosen.at":{"repository":"netsnek/limosen.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"339284789469124181","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.limosen.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_LIMOSEN"}}'
 
 # The read cache (`head:<site>`, thirty seconds) and the in-flight lock
 # (`lock:<site>`, fifteen seconds), and the App installation token for its
@@ -68,7 +84,7 @@ SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","iss
 # and the id it prints goes below.
 [[kv_namespaces]]
 binding = "CACHE"
-id = "REPLACE_WITH_THE_JAEN_AGENT_CACHE_NAMESPACE_ID"
+id = "6e75d473808c48e7ac39c4391cce02fb"
 
 # No [[d1_databases]], no prisma, no migrations directory, and no Durable
 # Object. The repository is the store.
@@ -83,5 +99,12 @@ id = "REPLACE_WITH_THE_JAEN_AGENT_CACHE_NAMESPACE_ID"
 #   GITHUB_APP_PRIVATE_KEY  its private key in PKCS#8
 #                           (`openssl pkcs8 -topk8 -nocrypt -in app.pem`),
 #                           because WebCrypto reads no other form
-#   ORG_USER_MANAGER_TOKEN  the bearer the grant lookup through idm.<brand>
-#                           is made with, the agent's own and never a caller's
+#   ORG_USER_MANAGER_TOKEN_BOOKLIMO   the bearer the grant lookup through
+#   ORG_USER_MANAGER_TOKEN_LIMOSEN    idm.<brand> is made with, one per site
+#                           the way the taxi pylons hold theirs, named by the
+#                           site entry's `orgManagerTokenVar`. The agent's own
+#                           credential and never a caller's. The facade answers
+#                           for the organisation of the token it is sent, so
+#                           one estate wide token would answer for one brand
+#                           and fail for the other. `ORG_USER_MANAGER_TOKEN`
+#                           stays the fallback for a site that names no var.

@@ -246,7 +246,13 @@ const facadeGrants = async (
   userId: string
 ): Promise<{grants: CallerGrant[]; orgs: string[]}> => {
   const url = entry.iamApiUrl
-  const bearer = env().ORG_USER_MANAGER_TOKEN
+  // One token per site, the way the taxi pylons hold theirs: the facade
+  // answers for the organisation of the token it is sent, so limosen's
+  // manager asked about a booklimo account answers nothing.
+  const bearer =
+    (entry.orgManagerTokenVar
+      ? (env()[entry.orgManagerTokenVar] as string | undefined)
+      : undefined) || env().ORG_USER_MANAGER_TOKEN
 
   if (!url || !bearer || !userId) return {grants: [], orgs: []}
 
