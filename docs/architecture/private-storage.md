@@ -741,25 +741,25 @@ which has no delete.
 the ownership store decided without a network. `npm run typecheck` clean.
 `python3 tests/live.py`, 22 of 22 over HTTP:
 
-| what | answer |
-| --- | --- |
-| `/ping` with no token | 200 |
-| a preflight of `/storage/*` | 204 with `Access-Control-Allow-Headers: authorization` |
-| an anonymous upload | `AUTH_REQUIRED` |
-| an upload by a `krc:driver` | `FORBIDDEN`, and not `AUTH_REQUIRED` |
-| an upload by the booklimo admin | 314 ms, stamped `356348844407002709`, source `upload` |
-| that file read by its own organisation | 200, the same bytes, `Cache-Control: private, max-age=60` |
-| the same read by a `krc:driver` holding no storage role | 200 |
-| the same read anonymously | 401 `AUTH_REQUIRED` |
-| a file of limosen read by the booklimo admin | 403 `FORBIDDEN`, not 401 and not 404 |
-| an id nothing ever stored | 404 from the driver, the gate having passed it |
-| a link minted by a `krc:driver` | `FORBIDDEN` |
-| a link minted by the admin, 900 seconds | opens with no token at all, `public, max-age=900` |
-| the last four characters of that signature changed | 403 |
-| a link minted for one second, read two seconds later | 410 `LINK_EXPIRED` |
-| `storedFile` anonymous, then with the token | `AUTH_REQUIRED`, then the file |
-| `gitStore` with `jaen:admin` | `FORBIDDEN`, because it is `storage:admin` and nothing less |
-| a second read within the minute | 9 ms, so the remembered token costs no round trip |
+| what                                                    | answer                                                      |
+| ------------------------------------------------------- | ----------------------------------------------------------- |
+| `/ping` with no token                                   | 200                                                         |
+| a preflight of `/storage/*`                             | 204 with `Access-Control-Allow-Headers: authorization`      |
+| an anonymous upload                                     | `AUTH_REQUIRED`                                             |
+| an upload by a `krc:driver`                             | `FORBIDDEN`, and not `AUTH_REQUIRED`                        |
+| an upload by the booklimo admin                         | 314 ms, stamped `356348844407002709`, source `upload`       |
+| that file read by its own organisation                  | 200, the same bytes, `Cache-Control: private, max-age=60`   |
+| the same read by a `krc:driver` holding no storage role | 200                                                         |
+| the same read anonymously                               | 401 `AUTH_REQUIRED`                                         |
+| a file of limosen read by the booklimo admin            | 403 `FORBIDDEN`, not 401 and not 404                        |
+| an id nothing ever stored                               | 404 from the driver, the gate having passed it              |
+| a link minted by a `krc:driver`                         | `FORBIDDEN`                                                 |
+| a link minted by the admin, 900 seconds                 | opens with no token at all, `public, max-age=900`           |
+| the last four characters of that signature changed      | 403                                                         |
+| a link minted for one second, read two seconds later    | 410 `LINK_EXPIRED`                                          |
+| `storedFile` anonymous, then with the token             | `AUTH_REQUIRED`, then the file                              |
+| `gitStore` with `jaen:admin`                            | `FORBIDDEN`, because it is `storage:admin` and nothing less |
+| a second read within the minute                         | 9 ms, so the remembered token costs no round trip           |
 
 And the credential the taxi Worker will actually carry, `osg-krc`, a machine
 user holding `storage:read`, `storage:write` and `storage:sign` and no
@@ -776,3 +776,119 @@ anonymous reads and writes are logged, and the next steps are planned on counts
 rather than on guesses. And `osg.snek.at` still answers every id without a
 token, so until somebody who knows that netcup host closes it, all of this is a
 lock on one of two doors.
+
+## Built 2026-09-07, the jaen side
+
+The client half and the build half of the design, in the jaen checkout and in
+the two sites. The gateway's own half is the section above.
+
+### What jaen does now
+
+`packages/jaen/src/utils/open-storage-gateway.ts` has `fetchFile` and
+`useFileObjectUrl` beside `uploadFile`, and
+`packages/jaen/src/clients/osg/index.ts` puts the credential on every call it
+makes. The token is the signed-in person's, read out of the stored OIDC session
+under oidc-client-ts's own key
+`oidc.user:https://accounts.netsnek.com:268283382465631862@cms`, exactly as the
+CMS's own GraphQL client reads it, and in a Node process it is `OSG_TOKEN` off
+`globalThis.process.env`, read indirectly so webpack cannot inline a build
+machine's credential into a visitor's bundle.
+
+Three values deliberately pass through `useFileObjectUrl` without a fetch: a
+source that is not a gateway file at all, which is what a built site's
+`/osg/<id>.<ext>` path is, a foreign origin, because sending this person's
+token to somebody else's host would be the worse bug, and a gateway file while
+nobody is signed in, which is still the right request for a file the gateway has
+not claimed. So the hook is inert on a public page and only the CMS and the app
+pay for it.
+
+The components that draw are `MediaItem` (the gallery tile, its preview and its
+document link), `MediaPreview` (the preview and the editor's canvas),
+`FormMediaChooser` and `ImageField`'s unoptimised `defaultValue` branch. None
+of them is a bare `<img src="https://osg...">` any more.
+
+### What the build does now
+
+`gatsby-source-jaen` stops being a visitor of the gateway.
+`src/utils/osg-media.ts` collects every gateway URL in the sourced jaen data
+(`MediaNode.url`, an image field carrying only a `defaultValue`, and
+`jaenPageMetadata.image`, over the raw text rather than over parsed nodes,
+because published patch payloads are immutable history), fetches each file with
+`OSG_TOKEN`, writes it to `public/osg/<file_id>.<ext>` with `public/osg/index.json`
+beside it, and rewrites the data onto the site's own origin. `jaenPageMetadata.image`
+becomes absolute, because a crawler resolves a relative path against nothing.
+The remote patches named in `patches.txt` go through the same header in
+`src/utils/fetch-with-cache.ts`, and `createRemoteFileNode` takes it as
+`httpHeaders`, so the optimised path is unaffected. The gateway origin is the
+`storageUrl` plugin option, forwarded by `gatsby-plugin-jaen` from the same
+value the client half uses as `__JAEN_STORAGE_URL__`.
+
+A build without the secret stops at the first media node, in the source phase
+after twelve seconds, with `OSG_TOKEN is required to fetch media from the
+storage gateway` and the three places to put it, never with a blank image. Both
+sites' `scripts/deploy.sh` source `~/.config/jaen/osg-<brand>.env` before
+`osg.env`, because one machine user per organisation means the other brand's
+token reads none of this site's files, and both `.github/workflows/deploy.yaml`
+name `OSG_TOKEN` as a secret of the build for the day those workflows are
+repaired.
+
+**A rewritten path comes back as an id.** The CMS on a built site reads the
+rewritten data, so a publish writes `/osg/<id>.<ext>` into the patch it uploads.
+`collectLocalMediaIds` recognises exactly that shape and the next build fetches
+those ids from the gateway again, which closes the loop. Nothing else in the
+estate reads a site's jaen data, so no other consumer meets those paths.
+
+### Measured 2026-09-07 on a local production build of booklimo.at
+
+The build: 271 files, 27 800 kB, `jaen media: ... served from /osg/`. Afterwards
+no `/storage/` URL is left anywhere in `public` except inside the eight
+downloaded patch payloads, which are gateway files themselves and carry their
+own history, and the only mentions of `osg.netsnek.com` in the HTML are the four
+privacy pages naming the storage processor in prose.
+
+A visitor of `/de/`: 63 requests, none of them to any `osg.` host, the pictures
+drawn from the site's own origin.
+
+The CMS as the booklimo human admin, signed in against the live identity server,
+the built site served under its own name so the identity server's redirect URI
+matches: the media library draws 49 to 60 pictures, none of them a bare gateway
+src, and the twelve gateway reads it does make all carry
+`Authorization: Bearer`. Those twelve are the taxi app's own folders, which read
+the pylon's `CarImage.url` and document URLs at runtime rather than out of the
+built data (one of the ids matched a `CarImage.fileId` on `api.booklimo.at`), so
+the app's pictures inside the CMS are a token read like any other. An upload
+through the gallery carried the same bearer, and the gateway image of this run,
+with `ENFORCE_WRITES=1`, accepted it instead of answering `AUTH_REQUIRED`. Four
+tiles were drawn through `blob:` object URLs. Fifteen checks, fifteen passed.
+
+Without a browser, jaen's own client against the same image, upload and read
+through `uploadFile` and `fetchFile`: the upload is stored under
+`356348844407002709`, the read gives the same bytes back by checksum, the same
+file read anonymously is 401 `AUTH_REQUIRED` and read with the limosen storage
+token 403 `FORBIDDEN`. Five checks, five passed.
+
+**Two things the browser measurement could not do**, and they are the reason the
+byte path was measured without a browser as well. Chromium exposes no `File`
+body to an interception, so a forwarded upload arrives with an empty part and
+the gateway stores zero bytes, which is the interception's defect and not
+jaen's. And the image of this run holds only what this run put into it, so the
+historical Telegram ids the CMS asked for were answered from the deployed
+gateway, which is still the ungated build. Nothing here proves the gate on
+`osg.netsnek.com`, which is the deploy step's to prove.
+
+**A trap worth knowing.** The sign-in ends on `/loading/?code=...`, and the code
+is exchanged there. Navigating away before that finishes leaves no session in
+`sessionStorage`, and then every jaen client that reads the token from it, the
+CMS API, the agent and the storage gateway alike, is silently anonymous while
+the CMS still looks signed in, because its shell renders from the persisted
+redux state. Three verification runs failed that way before the check waited for
+the key.
+
+### What is open on this side
+
+`gatsby-plugin-jaen`'s typecheck has thirty errors, all of them in files this
+work did not touch (the Settings forms, `PasswordReset`, `WaitingScreen`,
+`wrap-page-element`, `cms/pages/index.tsx` and `jaen-frame.tsx`).
+`gatsby-source-jaen` typechecks clean and so does the `jaen` package's build.
+The sites' `OSG_TOKEN` secrets carry a reference in the workflows and a value
+only in the deploy phase, and neither site is built by Actions today anyway.
