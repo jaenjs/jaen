@@ -99,6 +99,8 @@ const Slice: React.FC<SliceProps> = props => {
   // Without intl.locale in the list the drawer kept "Settings" and "Logout"
   // beside a page that had long switched to German. extendMenu merges by
   // group and item id, so a second pass overwrites the labels in place.
+  const sharedDraft = manager.sharedDraft
+
   useEffect(() => {
     const isJaenAdmin = checkUserRoles(auth.user, ['jaen:admin'])
 
@@ -136,8 +138,6 @@ const Slice: React.FC<SliceProps> = props => {
        * See docs/architecture/draft-state.md, "The save state and the publish
        * button".
        */
-      const sharedDraft = manager.sharedDraft
-
       const saveStateItem = {
         label:
           sharedDraft.saveState === 'saving'
@@ -445,7 +445,19 @@ const Slice: React.FC<SliceProps> = props => {
     return () => {
       superseded = true
     }
-  }, [auth.user, props.data.allSitePage.nodes, manager.isEditing, intl.locale])
+    // The save state is in the deps because the menu is built here and not
+    // rendered from the store: without them the entry keeps the label it was
+    // registered with and says "Saved" with no instant for the rest of the
+    // session.
+  }, [
+    auth.user,
+    props.data.allSitePage.nodes,
+    manager.isEditing,
+    intl.locale,
+    sharedDraft.saveState,
+    sharedDraft.lastSavedAt,
+    sharedDraft.pending
+  ])
 
   return (
     <JaenFrame

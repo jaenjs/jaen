@@ -43,8 +43,7 @@ export function useStorageSrc(src?: string | null): string | undefined {
 
   if (!source) return undefined
 
-  const authenticated =
-    Boolean(storageFileId(source)) && Boolean(storageBearer())
+  const authenticated = Boolean(storageFileId(source)) && Boolean(storageBearer())
 
   return authenticated ? objectUrl : source
 }
