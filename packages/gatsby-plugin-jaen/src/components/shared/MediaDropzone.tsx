@@ -16,8 +16,8 @@
  *   point of the field (the invoice, a vehicle picture).
  * - **the surface**, with `children`: the children are the drop area
  *   themselves and a translucent sheet is drawn over them while a file
- *   hovers, which is what a gallery shows, where the grid is the target and
- *   a box would be in the way.
+ *   hovers, and only then, which is what a gallery shows, where the grid is
+ *   the target and a box would be in the way.
  *
  * Both render the same `FileUpload.Dropzone` and both carry
  * `data-testid="media-dropzone"` (MEDIA_DROPZONE_TESTID), which is how a
@@ -43,6 +43,12 @@ import {FaCloudUploadAlt} from '@react-icons/all-files/fa/FaCloudUploadAlt'
 
 /** The one testid every upload control of the estate carries. */
 export const MEDIA_DROPZONE_TESTID = 'media-dropzone'
+
+/**
+ * The drag sheet of the surface shape, which exists only while a file
+ * hovers. A check reads it to prove that nothing covers the grid at rest.
+ */
+export const MEDIA_DROPZONE_SHEET_TESTID = 'media-dropzone-sheet'
 
 export interface MediaDropzoneControl {
   /** Opens the file dialog, for a trigger that lives outside the dropzone. */
@@ -112,6 +118,38 @@ const DropzoneBridge: React.FC<{
   }, [api.dragging, onDragChange])
 
   return null
+}
+
+/**
+ * The sheet of the surface shape, drawn only while a file hovers over it.
+ *
+ * It used to ride on `FileUpload.DropzoneContent`, on the assumption that
+ * the slot appears with the drag the way a "drop it here" line does. It
+ * does not: in v3 `DropzoneContent` is a plain styled div that is always
+ * rendered, which is why the box shape draws its label and its hint in one.
+ * An absolute, translucent, blurred box inside it therefore stood over the
+ * media grid at every moment, and the Media tab showed every picture behind
+ * a white blur that no gesture made go away. The drag is asked for instead,
+ * from the machine that knows it.
+ */
+const DropSheet: React.FC = () => {
+  const api = useFileUploadContext()
+
+  if (!api.dragging) return null
+
+  return (
+    <Box
+      data-testid={MEDIA_DROPZONE_SHEET_TESTID}
+      pos="absolute"
+      inset="0"
+      zIndex="1"
+      // The sheet is the whole feedback of the surface shape, and it must
+      // not swallow the click that lands under it.
+      pointerEvents="none"
+      bg="bg.translucent"
+      backdropFilter="blur(8px) saturate(180%)"
+    />
+  )
 }
 
 export const MediaDropzone: React.FC<MediaDropzoneProps> = ({
@@ -194,19 +232,7 @@ export const MediaDropzone: React.FC<MediaDropzoneProps> = ({
           border="none"
           borderRadius="0"
           bg="transparent">
-          <FileUpload.DropzoneContent
-            asChild
-            // The sheet is the whole feedback of the surface shape, and it
-            // must not swallow the click that lands under it.
-            pointerEvents="none">
-            <Box
-              pos="absolute"
-              inset="0"
-              zIndex="1"
-              bg="bg.translucent"
-              backdropFilter="blur(8px) saturate(180%)"
-            />
-          </FileUpload.DropzoneContent>
+          <DropSheet />
           {children}
         </FileUpload.Dropzone>
       ) : (

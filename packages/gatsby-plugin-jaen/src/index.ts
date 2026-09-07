@@ -11,7 +11,8 @@ export type {
 // vehicle picture and the app's invoice all render this.
 export {
   MediaDropzone,
-  MEDIA_DROPZONE_TESTID
+  MEDIA_DROPZONE_TESTID,
+  MEDIA_DROPZONE_SHEET_TESTID
 } from './components/shared/MediaDropzone'
 export type {
   MediaDropzoneProps,
