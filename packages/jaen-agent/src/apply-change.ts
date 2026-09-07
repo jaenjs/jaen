@@ -63,13 +63,21 @@ export interface JaenChangeInput {
   fieldType?: string
   fieldName?: string
   /**
-   * Pylon renders a TypeScript `any` as the non-null scalar `Any!`, and
-   * there is no spelling that makes it nullable, so both are always sent.
-   * A kind that carries neither sends `{}`, which every branch below
-   * ignores.
+   * A field's value is whatever its field type stores, a string as often as
+   * an object, so this is pylon's `Any` scalar. Pylon renders a TypeScript
+   * `any` as the NON-NULL `Any!` and there is no spelling that makes it
+   * nullable, so `value` is always sent: a kind that carries none sends `{}`,
+   * which every branch below ignores.
    */
-  value?: any | null
-  props?: any | null
+  value?: any | null | undefined
+  /**
+   * Two things, by kind. For `fieldWrite` it is the field's own props. For
+   * the three section kinds it is the structural remainder of the redux
+   * payload, `between`, `move` and `sectionItemType`, which no other kind
+   * has. An object either way, so this one is `JSONObject` and may be
+   * omitted.
+   */
+  props?: Record<string, any> | null
   /** The client's instant. Advisory: the agent stamps its own. */
   at?: string
 }

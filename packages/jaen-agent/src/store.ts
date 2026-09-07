@@ -42,8 +42,17 @@ export const COMMITTER: CommitAuthor = {
   email: 'noreply.snek.at@gmail.com'
 }
 
-const CACHE_TTL_SECONDS = 30
-const LOCK_TTL_SECONDS = 15
+/**
+ * Cloudflare KV refuses an expirationTtl below sixty seconds ("Invalid
+ * expiration_ttl of 15. Expiration TTL must be at least 60."), and the design
+ * wants thirty for the cache and fifteen for the lock. So the key lives for
+ * KV's minute and carries its own deadline inside, which is what both are
+ * read against. KV only ever holds the value longer than it is honoured, and
+ * a stale one is ignored rather than trusted.
+ */
+const KV_MIN_TTL_SECONDS = 60
+const CACHE_TTL_MS = 30_000
+const LOCK_TTL_MS = 15_000
 const LOCK_WAIT_MS = 3_000
 const MAX_ATTEMPTS = 3
 
@@ -54,11 +63,9 @@ export interface ReadState {
   readAt: string
 }
 
-interface CachedRead {
-  head: string
-  blobSha: string | null
-  patch: HeadPatch
-  readAt: string
+interface CachedRead extends ReadState {
+  /** The instant past which this entry is not used, see KV_MIN_TTL_SECONDS. */
+  goodUntil: number
 }
 
 /**
@@ -74,13 +81,18 @@ export const readHead = async (
   options?: {fresh?: boolean}
 ): Promise<ReadState> => {
   const kv = cache()
-  const cacheKey = `head:${siteKey}`
+  const branch = siteBranch(entry)
+  // The branch is part of the key: a site entry that is repointed at another
+  // branch, which is what the tests do, must not read the old branch's head
+  // out of a cache that outlives the change. dropCache builds the same key.
+  const cacheKey = headKey(siteKey, entry)
 
   if (!options?.fresh && kv) {
     const hit = await kv.get(cacheKey, 'json')
 
-    if (hit) {
-      const cached = hit as CachedRead
+    const cached = hit as CachedRead | null
+
+    if (cached && cached.goodUntil > Date.now()) {
       return {
         head: cached.head,
         blobSha: cached.blobSha,
@@ -90,7 +102,6 @@ export const readHead = async (
     }
   }
 
-  const branch = siteBranch(entry)
   const head = await headSha(entry, branch)
   const file = await readFile(entry, sitePath(entry, LIVE_PATH), head)
 
@@ -106,8 +117,12 @@ export const readHead = async (
   if (kv) {
     // A cold or lost cache is a slower read and never a lost change, because
     // every write re-reads GitHub under the lock before it applies anything.
+    const cached: CachedRead = {...state, goodUntil: Date.now() + CACHE_TTL_MS}
+
     await kv
-      .put(cacheKey, JSON.stringify(state), {expirationTtl: CACHE_TTL_SECONDS})
+      .put(cacheKey, JSON.stringify(cached), {
+        expirationTtl: KV_MIN_TTL_SECONDS
+      })
       .catch(() => undefined)
   }
 
@@ -137,14 +152,20 @@ const acquireLock = async (siteKey: string): Promise<string | null> => {
   const until = Date.now() + LOCK_WAIT_MS
 
   for (;;) {
-    const held = await kv.get(key)
+    const held = parseLock(await kv.get(key))
 
-    if (!held) {
-      await kv.put(key, mine, {expirationTtl: LOCK_TTL_SECONDS})
+    if (!held || held.until <= Date.now()) {
+      await kv.put(
+        key,
+        JSON.stringify({holder: mine, until: Date.now() + LOCK_TTL_MS}),
+        {
+          expirationTtl: KV_MIN_TTL_SECONDS
+        }
+      )
 
-      const readBack = await kv.get(key)
+      const readBack = parseLock(await kv.get(key))
 
-      if (readBack === mine) return mine
+      if (readBack?.holder === mine) return mine
     }
 
     if (Date.now() >= until) {
@@ -157,6 +178,18 @@ const acquireLock = async (siteKey: string): Promise<string | null> => {
   }
 }
 
+const parseLock = (
+  raw: string | null
+): {holder: string; until: number} | null => {
+  if (!raw) return null
+
+  try {
+    return JSON.parse(raw) as {holder: string; until: number}
+  } catch {
+    return null
+  }
+}
+
 const releaseLock = async (siteKey: string, mine: string | null) => {
   const kv = cache()
 
@@ -164,14 +197,22 @@ const releaseLock = async (siteKey: string, mine: string | null) => {
 
   const key = `lock:${siteKey}`
 
-  if ((await kv.get(key)) === mine) await kv.delete(key).catch(() => undefined)
+  if (parseLock(await kv.get(key))?.holder === mine) {
+    await kv.delete(key).catch(() => undefined)
+  }
 }
 
-const dropCache = async (siteKey: string) => {
+/** The same key readHead writes, branch included, or nothing is dropped. */
+const dropCache = async (siteKey: string, entry: SiteEntry) => {
   const kv = cache()
 
-  if (kv) await kv.delete(`head:${siteKey}`).catch(() => undefined)
+  if (kv) {
+    await kv.delete(headKey(siteKey, entry)).catch(() => undefined)
+  }
 }
+
+const headKey = (siteKey: string, entry: SiteEntry): string =>
+  `head:${siteKey}:${siteBranch(entry)}`
 
 // --------------------------------------------------------------------------
 // The save
@@ -241,7 +282,7 @@ export const save = async (
         // than the same one, because the contents API writes one file.
         await ensureLiveLine(entry, branch, input.author)
 
-        await dropCache(siteKey)
+        await dropCache(siteKey, entry)
 
         return {
           headSha: written.commitSha,
@@ -257,7 +298,7 @@ export const save = async (
         if (!(error instanceof ConflictError)) throw error
 
         lastError = error
-        await dropCache(siteKey)
+        await dropCache(siteKey, entry)
       }
     }
 

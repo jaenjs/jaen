@@ -51,9 +51,9 @@ export interface Draft {
   /** False when sinceSha is still the head. */
   changed: boolean
   /** Null when changed is false. `{pages, site, widgets}`. */
-  data?: any | null
+  data?: Record<string, any> | null
   /** fieldKey -> {sub, name, at}. */
-  authors?: any | null
+  authors?: Record<string, any> | null
   readAt: string
 }
 

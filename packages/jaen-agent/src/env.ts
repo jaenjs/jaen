@@ -7,7 +7,7 @@
  * in against the same Zitadel with the same project and the same client, so
  * the audience cannot tell them apart and the organisation id does.
  */
-import {getEnv} from '@getcronit/pylon'
+import {getEnv, ServiceError} from '@getcronit/pylon'
 
 export interface SiteEntry {
   /** `owner/name` on GitHub. */
@@ -85,13 +85,18 @@ export const sites = (): Record<string, SiteEntry> => {
   return table
 }
 
-export class UnknownSiteError extends Error {
+/**
+ * A ServiceError and not a bare Error, because pylon reports anything else as
+ * "Unexpected error." with no message, and a misconfigured site key is the
+ * one mistake an operator has to be able to read off the answer.
+ */
+export class UnknownSiteError extends ServiceError {
   constructor(key: string) {
     super(
       `unknown site "${key}". The agent serves the keys of its SITES table, ` +
-        `and a site is added there and nowhere else.`
+        `and a site is added there and nowhere else.`,
+      {statusCode: 404, code: 'UNKNOWN_SITE'}
     )
-    this.name = 'UnknownSiteError'
   }
 }
 
