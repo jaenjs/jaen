@@ -46,9 +46,13 @@ import {
 import {getI18nOffers} from '../locales/i18nOffers'
 import {CustomerStatusBadge} from '../components/CustomerStatusBadge'
 import {
+  CarImage,
   ConfirmDialog,
+  DetailRow,
+  DriverColorDot,
   ErrorBanner,
   MoneyText,
+  Selectable,
   StatusBadge,
   toaster,
   PageHeader
@@ -74,15 +78,13 @@ const paymentLabel = (
   return (t[key] as string | undefined) ?? method
 }
 
-/** A label and a value, only rendered when there is a value. */
+/**
+ * A label and a value, only rendered when there is a value. The row itself is
+ * the shared DetailRow: its column wrapping and its selectable value are rule
+ * 9 and rule 11 in one place.
+ */
 function Item({label, value}: {label: string; value: React.ReactNode}) {
-  if (value === undefined || value === null || value === '') return null
-  return (
-    <DataList.Item>
-      <DataList.ItemLabel>{label}</DataList.ItemLabel>
-      <DataList.ItemValue>{value}</DataList.ItemValue>
-    </DataList.Item>
-  )
+  return <DetailRow label={label} value={value} hideEmpty />
 }
 
 function Section({
@@ -104,6 +106,57 @@ function Section({
         {title}
       </Heading>
       {children}
+    </Box>
+  )
+}
+
+/**
+ * "Ihr Fahrzeug", the card the customer reads once the driver said yes: the
+ * picture, the name, the colour dot and the plate
+ * (okf/architecture/media.md, "Where the car's picture appears"). Before the
+ * yes there is no card at all, because until then the car on the ride is the
+ * dispatcher's intention, and the pylon answers a customer no picture for it
+ * either.
+ */
+function VehicleCard({
+  car,
+  title
+}: {
+  car: NonNullable<Booking['car']>
+  title: string
+}) {
+  return (
+    <Box
+      borderWidth="1px"
+      borderColor="border.default"
+      rounded="surface"
+      bg="bg.surface"
+      p="4"
+      data-testid="booking-vehicle">
+      <Heading as="h3" size="sm" mb="3">
+        {title}
+      </Heading>
+      <Flex gap="4" align="center" minW="0">
+        <CarImage car={car} size={96} full alt={car.licensePlate ?? ''} />
+        <Box minW="0" flex="1">
+          {car.name && (
+            <Selectable fontWeight="semibold" lineClamp={1}>
+              {car.name}
+            </Selectable>
+          )}
+          <Flex gap="2" align="center" minW="0" mt="1">
+            {car.color && <DriverColorDot color={car.color} />}
+            {car.licensePlate && (
+              <Selectable
+                fontFamily="mono"
+                fontWeight="semibold"
+                letterSpacing="wider">
+                {car.licensePlate}
+              </Selectable>
+            )}
+          </Flex>
+        </Box>
+      </Flex>
     </Box>
   )
 }
@@ -302,13 +355,13 @@ export function BookingDetailView() {
                     <Text textStyle="xs" color="fg.muted">
                       {t.DetailLabelPickup}
                     </Text>
-                    <Text fontWeight="medium">{b.pickup}</Text>
+                    <Selectable fontWeight="medium">{b.pickup}</Selectable>
                   </Box>
                   <Box>
                     <Text textStyle="xs" color="fg.muted">
                       {t.DetailLabelDropoff}
                     </Text>
-                    <Text fontWeight="medium">{b.dropoff}</Text>
+                    <Selectable fontWeight="medium">{b.dropoff}</Selectable>
                   </Box>
                 </Stack>
               </Flex>
@@ -378,7 +431,9 @@ export function BookingDetailView() {
               <>
                 <Separator />
                 <Section title={t.DetailSectionNotes}>
-                  <Text whiteSpace="pre-wrap">{b.details.message}</Text>
+                  <Selectable whiteSpace="pre-wrap">
+                    {b.details.message}
+                  </Selectable>
                 </Section>
               </>
             )}
@@ -423,6 +478,11 @@ export function BookingDetailView() {
             )}
           </Stack>
         </Box>
+
+        {/* The car, once the driver said yes and never before it. */}
+        {b.driverStatus === 'ACCEPTED' && b.car && (
+          <VehicleCard car={b.car} title={t.DetailYourVehicle} />
+        )}
 
         {/* The driver and the car, and the map while the ride is live. */}
         <DriverTrackingCard

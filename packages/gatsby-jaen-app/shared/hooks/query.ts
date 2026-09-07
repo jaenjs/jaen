@@ -42,6 +42,7 @@ import {
   sessionSubject,
   useOnline
 } from '../offline'
+import {loadPageSize, savePageSize} from '../components/table/columns'
 
 // --------------- The client ---------------
 
@@ -298,9 +299,27 @@ export interface Pager {
   page: number
   /** The cursor the current page starts after, undefined on the first. */
   after: string | undefined
+  /**
+   * The rows a page holds, the query's `first`. The screen's default until a
+   * person chooses another size, and that choice is this browser's.
+   */
+  pageSize: number
+  /** Choose a size: it is remembered per table and the list lands on page 1. */
+  setPageSize: (size: number) => void
   next: (endCursor: string) => void
   prev: () => void
   first: () => void
+}
+
+/**
+ * Where a list remembers its size and what it counts as its own until a
+ * person says otherwise (design-consistency.md, rule 10). `tableId` is the
+ * DataTable's id, so the size lies beside the column layout of the same
+ * table.
+ */
+export interface PagerSizing {
+  tableId: string
+  defaultSize: number
 }
 
 interface PagerState {
@@ -318,43 +337,73 @@ const firstPage = (key: string): PagerState => ({
 })
 
 /**
- * Cursor pagination as the screens drive it: next, previous, first. The
- * cursors that led to the current page are the trail back. `argsKey` names
- * the list, and a list whose arguments changed starts on its first page
- * without an effect: the state is simply not this list's any more.
+ * Cursor pagination as the screens drive it: next, previous, first, and the
+ * size of a page. The cursors that led to the current page are the trail
+ * back. `argsKey` names the list, and a list whose arguments changed starts
+ * on its first page without an effect: the state is simply not this list's
+ * any more. The size is part of the key for that reason, so choosing another
+ * size lands on page 1 by the same rule and needs no reset of its own.
+ *
+ * The saved size is read while the state is built, not in an effect, so the
+ * list's first read already asks for the size the person chose. On the server
+ * and in a browser that blocks storage the read answers the default, which is
+ * what the screen renders there anyway.
  */
-export function usePager(argsKey: string): Pager {
-  const [state, setState] = useState<PagerState>(() => firstPage(argsKey))
-  const live = state.key === argsKey ? state : firstPage(argsKey)
+export function usePager(argsKey: string, sizing?: PagerSizing): Pager {
+  const [chosen, setChosen] = useState<number>(() =>
+    sizing ? loadPageSize(sizing.tableId, sizing.defaultSize) : 0
+  )
+  const pageSize = sizing ? chosen : 0
+  const key = `${argsKey}|${pageSize}`
+  const [state, setState] = useState<PagerState>(() => firstPage(key))
+  const live = state.key === key ? state : firstPage(key)
+
+  const tableId = sizing?.tableId
+  const setPageSize = useCallback(
+    (size: number) => {
+      if (!tableId) return
+      savePageSize(tableId, size)
+      setChosen(size)
+    },
+    [tableId]
+  )
 
   const next = useCallback(
     (endCursor: string) => {
       setState(current => {
-        const from = current.key === argsKey ? current : firstPage(argsKey)
+        const from = current.key === key ? current : firstPage(key)
         return {
-          key: argsKey,
+          key,
           page: from.page + 1,
           after: endCursor,
           trail: [...from.trail, from.after]
         }
       })
     },
-    [argsKey]
+    [key]
   )
 
   const prev = useCallback(() => {
     setState(current => {
-      const from = current.key === argsKey ? current : firstPage(argsKey)
+      const from = current.key === key ? current : firstPage(key)
       if (from.page <= 1) return from
       const trail = [...from.trail]
       const after = trail.pop()
-      return {key: argsKey, page: from.page - 1, after, trail}
+      return {key, page: from.page - 1, after, trail}
     })
-  }, [argsKey])
+  }, [key])
 
   const first = useCallback(() => {
-    setState(firstPage(argsKey))
-  }, [argsKey])
+    setState(firstPage(key))
+  }, [key])
 
-  return {page: live.page, after: live.after, next, prev, first}
+  return {
+    page: live.page,
+    after: live.after,
+    pageSize,
+    setPageSize,
+    next,
+    prev,
+    first
+  }
 }

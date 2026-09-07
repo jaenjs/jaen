@@ -44,7 +44,19 @@ const de = {
   DriverUnassigned: 'Fahrer entfernt',
   AssignFailed: 'Zuweisung fehlgeschlagen',
   AssignDriver: 'Fahrer zuweisen',
-  Unassign: 'Fahrer entfernen'
+  Unassign: 'Fahrer entfernen',
+
+  FieldImage: 'Fahrzeugbild',
+  ImageUpload: 'Bild hochladen',
+  ImageReplace: 'Bild ersetzen',
+  ImageRemove: 'Bild entfernen',
+  ImageHint: 'Bild hierher ziehen oder klicken, PNG oder JPG',
+  ImageUploading: 'Bild wird hochgeladen',
+  ImageUploaded: 'Bild hochgeladen',
+  ImageRemoved: 'Bild entfernt',
+  ImageFailed: 'Bild konnte nicht hochgeladen werden',
+  ImageNotAnImage: 'Nur Bilder, PNG oder JPG',
+  ImageAlt: 'Bild von {plate}'
 }
 
 export type FleetStrings = typeof de
@@ -88,7 +100,19 @@ const en: FleetStrings = {
   DriverUnassigned: 'Driver removed',
   AssignFailed: 'Assignment failed',
   AssignDriver: 'Assign driver',
-  Unassign: 'Remove driver'
+  Unassign: 'Remove driver',
+
+  FieldImage: 'Vehicle picture',
+  ImageUpload: 'Upload picture',
+  ImageReplace: 'Replace picture',
+  ImageRemove: 'Remove picture',
+  ImageHint: 'Drop a picture here or click, PNG or JPG',
+  ImageUploading: 'The picture is uploading',
+  ImageUploaded: 'Picture uploaded',
+  ImageRemoved: 'Picture removed',
+  ImageFailed: 'The picture could not be uploaded',
+  ImageNotAnImage: 'Pictures only, PNG or JPG',
+  ImageAlt: 'Picture of {plate}'
 }
 
 const tr: FleetStrings = {
@@ -130,7 +154,19 @@ const tr: FleetStrings = {
   DriverUnassigned: 'Şoför kaldırıldı',
   AssignFailed: 'Atama başarısız',
   AssignDriver: 'Şoför ata',
-  Unassign: 'Şoförü kaldır'
+  Unassign: 'Şoförü kaldır',
+
+  FieldImage: 'Araç fotoğrafı',
+  ImageUpload: 'Fotoğraf yükle',
+  ImageReplace: 'Fotoğrafı değiştir',
+  ImageRemove: 'Fotoğrafı kaldır',
+  ImageHint: 'Fotoğrafı buraya sürükleyin veya tıklayın, PNG ya da JPG',
+  ImageUploading: 'Fotoğraf yükleniyor',
+  ImageUploaded: 'Fotoğraf yüklendi',
+  ImageRemoved: 'Fotoğraf kaldırıldı',
+  ImageFailed: 'Fotoğraf yüklenemedi',
+  ImageNotAnImage: 'Yalnızca fotoğraf, PNG ya da JPG',
+  ImageAlt: '{plate} fotoğrafı'
 }
 
 const ar: FleetStrings = {
@@ -172,7 +208,19 @@ const ar: FleetStrings = {
   DriverUnassigned: 'تمت إزالة السائق',
   AssignFailed: 'فشل الإسناد',
   AssignDriver: 'إسناد سائق',
-  Unassign: 'إزالة السائق'
+  Unassign: 'إزالة السائق',
+
+  FieldImage: 'صورة السيارة',
+  ImageUpload: 'رفع صورة',
+  ImageReplace: 'استبدال الصورة',
+  ImageRemove: 'إزالة الصورة',
+  ImageHint: 'اسحب الصورة إلى هنا أو انقر، PNG أو JPG',
+  ImageUploading: 'يجري رفع الصورة',
+  ImageUploaded: 'تم رفع الصورة',
+  ImageRemoved: 'تمت إزالة الصورة',
+  ImageFailed: 'تعذّر رفع الصورة',
+  ImageNotAnImage: 'الصور فقط، PNG أو JPG',
+  ImageAlt: 'صورة {plate}'
 }
 
 export function getI18nFleet(code: I18nCode): {

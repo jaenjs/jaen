@@ -293,14 +293,20 @@ const readDirectoryPage = async (args: {
 }
 
 export function useUserDirectory(pageSize = DEFAULT_PAGE_SIZE) {
-  const pager = usePager(JSON.stringify({kind: 'directory', first: pageSize}))
+  // The size is the pager's: the reader's choice for this table, remembered
+  // beside its column layout, `pageSize` the default until somebody chooses.
+  const pager = usePager(JSON.stringify({kind: 'directory'}), {
+    tableId: 'users',
+    defaultSize: pageSize
+  })
+  const size = pager.pageSize
   const args = useMemo(
     () => ({
-      first: pageSize,
+      first: size,
       after: pager.after,
       organizationId: organizationId()
     }),
-    [pageSize, pager.after]
+    [size, pager.after]
   )
 
   const {
@@ -326,9 +332,9 @@ export function useUserDirectory(pageSize = DEFAULT_PAGE_SIZE) {
       startCursor: null,
       totalCount,
       currentPage: pager.page,
-      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+      totalPages: Math.max(1, Math.ceil(totalCount / size))
     }
-  }, [page, pager.page, pageSize])
+  }, [page, pager.page, size])
 
   const nextPage = useCallback(() => {
     if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
@@ -341,6 +347,8 @@ export function useUserDirectory(pageSize = DEFAULT_PAGE_SIZE) {
     error,
     isFetching,
     pagination,
+    pageSize: size,
+    setPageSize: pager.setPageSize,
     nextPage,
     prevPage,
     refetch

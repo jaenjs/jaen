@@ -83,3 +83,33 @@ export const saveLayout = (tableId: string, layout: ColumnLayout[]) => {
     /* a browser that blocks storage keeps the layout for the tab only */
   }
 }
+
+/**
+ * The page size beside the layout (design-consistency.md, rule 10): the four
+ * sizes are the reader's choice, remembered per table under
+ * `taxi-app.<tableId>.pageSize`, and a table nobody has chosen for keeps the
+ * size its screen has always had.
+ */
+export const PAGE_SIZES = [10, 25, 50, 100] as const
+
+const pageSizeKey = (tableId: string) => `taxi-app.${tableId}.pageSize`
+
+/** The saved size, or the screen's default. A size that is not one of the four is ignored. */
+export const loadPageSize = (tableId: string, fallback: number): number => {
+  try {
+    const raw = window.localStorage.getItem(pageSizeKey(tableId))
+    if (!raw) return fallback
+    const size = Number.parseInt(raw, 10)
+    return (PAGE_SIZES as readonly number[]).includes(size) ? size : fallback
+  } catch {
+    return fallback
+  }
+}
+
+export const savePageSize = (tableId: string, size: number) => {
+  try {
+    window.localStorage.setItem(pageSizeKey(tableId), String(size))
+  } catch {
+    /* a browser that blocks storage keeps the size for the tab only */
+  }
+}

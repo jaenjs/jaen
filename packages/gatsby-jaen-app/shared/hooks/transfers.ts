@@ -516,6 +516,7 @@ export const mapHref = (address: string | undefined): string | undefined =>
 interface SchemaFieldNames {
   transfer: string[]
   query: string[]
+  car: string[]
 }
 
 const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
@@ -523,6 +524,7 @@ const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
     {
       query:
         'query { transfer: __type(name: "Transfer") { fields { name } } ' +
+        'car: __type(name: "Car") { fields { name } } ' +
         'root: __type(name: "Query") { fields { name } } }',
       variables: undefined,
       operationName: undefined
@@ -535,7 +537,8 @@ const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
       : []
   return {
     transfer: names(result?.data?.transfer),
-    query: names(result?.data?.root)
+    query: names(result?.data?.root),
+    car: names(result?.data?.car)
   }
 }
 
@@ -550,15 +553,24 @@ const readSchemaFieldNames = async (): Promise<SchemaFieldNames> => {
 const schemaFields = async (): Promise<{
   transfer: Set<string>
   query: Set<string>
+  car: Set<string>
 }> => {
   try {
     const names = await cachedRead(
       keys.schema('transfer'),
       readSchemaFieldNames
     )
-    return {transfer: new Set(names.transfer), query: new Set(names.query)}
+    return {
+      transfer: new Set(names.transfer),
+      query: new Set(names.query),
+      car: new Set(names.car)
+    }
   } catch {
-    return {transfer: new Set<string>(), query: new Set<string>()}
+    return {
+      transfer: new Set<string>(),
+      query: new Set<string>(),
+      car: new Set<string>()
+    }
   }
 }
 
@@ -566,6 +578,16 @@ const schemaFields = async (): Promise<{
 export const hasTransferField = async (name: string): Promise<boolean> => {
   const {transfer} = await schemaFields()
   return transfer.size === 0 || transfer.has(name)
+}
+
+/**
+ * The same for the Car type, which grew the picture on 2026-09-07
+ * (okf/architecture/media.md). A site built ahead of its pylon reads the
+ * fleet without the five image fields rather than failing the whole query.
+ */
+export const hasCarField = async (name: string): Promise<boolean> => {
+  const {car} = await schemaFields()
+  return car.size === 0 || car.has(name)
 }
 
 /**
@@ -707,6 +729,12 @@ export const forgetTransfer = (id: string) => {
 // --------------- The list ---------------
 
 export interface TransferListArgs {
+  /**
+   * The table the size is remembered under, the DataTable id of the screen
+   * that reads the list. The board's is `transfers`, the driver's own list
+   * is `my-rides`.
+   */
+  tableId?: string
   pageSize?: number
   fromISO?: string
   toISO?: string
@@ -763,12 +791,16 @@ export function useTransferList(args: TransferListArgs = {}) {
   const pageSize = args.pageSize ?? DEFAULT_PAGE_SIZE
   const {fromISO, toISO, state} = args
 
-  const pager = usePager(
-    JSON.stringify({first: pageSize, fromISO, toISO, state})
-  )
+  // The size is the pager's: the reader's choice for this table, remembered
+  // beside its column layout, `pageSize` the default until somebody chooses.
+  const pager = usePager(JSON.stringify({fromISO, toISO, state}), {
+    tableId: args.tableId ?? 'transfers',
+    defaultSize: pageSize
+  })
+  const size = pager.pageSize
   const pageArgs = useMemo<ListPageArgs>(
-    () => ({first: pageSize, after: pager.after, fromISO, toISO, state}),
-    [pageSize, pager.after, fromISO, toISO, state]
+    () => ({first: size, after: pager.after, fromISO, toISO, state}),
+    [size, pager.after, fromISO, toISO, state]
   )
 
   const {
@@ -793,9 +825,9 @@ export function useTransferList(args: TransferListArgs = {}) {
       hasPreviousPage: pager.page > 1,
       totalCount,
       currentPage: pager.page,
-      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+      totalPages: Math.max(1, Math.ceil(totalCount / size))
     }
-  }, [page, pager.page, pageSize])
+  }, [page, pager.page, size])
 
   const nextPage = useCallback(() => {
     if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
@@ -814,6 +846,8 @@ export function useTransferList(args: TransferListArgs = {}) {
     error,
     isFetching,
     pagination,
+    pageSize: size,
+    setPageSize: pager.setPageSize,
     nextPage,
     prevPage,
     firstPage,

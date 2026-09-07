@@ -16,13 +16,17 @@ export interface MoneyTextProps extends Omit<TextProps, 'children'> {
 }
 
 /** The formatter alone, for table cells and toasts that are not a Text. */
-export function useMoneyFormat(currency = 'EUR'): (value: number | string | null | undefined) => string | null {
+export function useMoneyFormat(
+  currency = 'EUR'
+): (value: number | string | null | undefined) => string | null {
   const code = useI18nCode()
   return value => {
     const n = typeof value === 'string' ? Number(value) : value
     if (n === null || n === undefined || Number.isNaN(n)) return null
     try {
-      return new Intl.NumberFormat(code, {style: 'currency', currency}).format(n)
+      return new Intl.NumberFormat(code, {style: 'currency', currency}).format(
+        n
+      )
     } catch {
       // An unknown currency code throws. Two decimals and the code is still a
       // readable amount, which beats a blank cell on an invoice screen.
@@ -35,8 +39,15 @@ export function MoneyText({value, currency = 'EUR', ...rest}: MoneyTextProps) {
   const format = useMoneyFormat(currency)
   const text = format(value)
   if (text === null) return null
+  // A price is data, so it stays selectable inside an app whose chrome is not
+  // (design-consistency.md, rule 11, and Selectable.tsx).
   return (
-    <Text as="span" fontVariantNumeric="tabular-nums" whiteSpace="nowrap" {...rest}>
+    <Text
+      as="span"
+      data-selectable
+      fontVariantNumeric="tabular-nums"
+      whiteSpace="nowrap"
+      {...rest}>
       {text}
     </Text>
   )

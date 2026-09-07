@@ -33,6 +33,13 @@
  * class on <html>, read through `useColorMode` from 'jaen' when a component
  * needs the value, and never toggled from inside the app.
  *
+ * Chrome is not selectable, data is (design-consistency.md, rule 11). The one
+ * place the app says it is app.css, keyed on this shell's own class, and not a
+ * style prop here: a dialog, a drawer, a sheet and a toast render into a
+ * portal on `body`, outside this element, and a rule written on this Box would
+ * miss every one of them. See "Chrome is not selectable" in src/styles/app.css
+ * and shared/components/Selectable.tsx for the mark that says a value is data.
+ *
  * The site's own `limosen.*` tokens are not in scope on this branch: jaen's
  * Layout mounts the site system only for pages outside the jaen layout, so a
  * `bg="limosen.bg.card"` here would resolve to nothing. The app looks like the

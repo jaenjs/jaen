@@ -22,14 +22,16 @@
  * The admin's confirmation is `confirmOffer(args:{transferId})`, the
  * customer's link is the same field with `token`, see pylon/src/offers.
  */
-import {useCallback} from 'react'
+import {useCallback, useMemo} from 'react'
+import {keepPreviousData} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
 import {
   cachedRead,
   invalidateTransfers,
   keys,
   queryClient,
-  useAppQuery
+  useAppQuery,
+  usePager
 } from './query'
 import {call, invalidateOffers, isUnknownField} from './offers'
 import {fetchTransfer, rememberTransfer, type TransferRow} from './transfers'
@@ -242,15 +244,24 @@ export const uploadInvoice = async (
   const doc = mapDocument(node)
   if (!doc.id) throw new Error('no document id in the answer')
   await invalidateDocuments(transfer.id)
+  // The Media tab's Dokumente source lists the brand's documents, so it is
+  // a page behind after an upload here.
+  void invalidateDocumentsPage()
   return doc
 }
 
+/**
+ * The row and its object, gone. `transferId` is optional because the Media
+ * tab's Dokumente source knows only the document it was handed: without it
+ * every ride's document list is read again instead of one.
+ */
 export const deleteDocument = async (doc: {
   id: string
-  transferId: string
+  transferId?: string
 }): Promise<void> => {
   await call('deleteTransferDocument', {args: {id: doc.id}}, '', 'mutation')
   await invalidateDocuments(doc.transferId)
+  void invalidateDocumentsPage()
 }
 
 // --------------- The status writes ---------------
@@ -288,6 +299,7 @@ const settle = async (transferId: string): Promise<TransferRow | null> => {
   void invalidateTransfers()
   void invalidateOffers()
   void invalidateDocuments(transferId)
+  void invalidateDocumentsPage()
   return row
 }
 
@@ -327,3 +339,182 @@ export const confirmAsAdmin = (
   transferId: string
 ): Promise<TransferRow | null> =>
   statusWrite('confirmOffer', {transferId}, transferId)
+
+// --------------- The brand's whole list, the Media tab's Dokumente source ---------------
+
+/**
+ * One card of the Dokumente source of jaen's Media tab
+ * (okf/architecture/media.md, "Sources"): a document of the brand with the
+ * ride's code beside it, read through `transferDocumentsPage(args:{first,
+ * after, kind, month, search})`, admin only, newest first, keyset paged the
+ * way the offers screen is paged.
+ *
+ * It is a different read from `transferDocuments` above, which answers one
+ * ride's documents to whoever may see that ride. This one is the brand's
+ * paper in one list and exists only for an admin.
+ */
+export interface DocumentListRow {
+  /** `document:<uuid>`, the id documentUrl and the delete take. */
+  id: string
+  transferId: string
+  kind: DocumentKind
+  /** AN-260003, or whatever the invoice carries. */
+  number?: string
+  filename: string
+  contentType: string
+  /** Bytes. */
+  size: number
+  language: string
+  /** BQ7Q4W-1, the ride a person reads. */
+  code: string
+  /** The addressee's first line, else the first passenger's name. */
+  customer: string
+  createdAt: string
+  sentAt?: string
+  sentTo?: string
+}
+
+const mapDocumentRow = (node: any): DocumentListRow => ({
+  id: String(node?.id ?? ''),
+  transferId: String(node?.transferId ?? ''),
+  kind: node?.kind === 'INVOICE' ? 'INVOICE' : 'OFFER',
+  number: str(node?.number),
+  filename: str(node?.filename) ?? '',
+  contentType: str(node?.contentType) ?? 'application/pdf',
+  size: typeof node?.size === 'number' ? node.size : 0,
+  language: str(node?.language) ?? 'de',
+  code: str(node?.code) ?? '',
+  customer: str(node?.customer) ?? '',
+  createdAt: str(node?.createdAt) ?? '',
+  sentAt: str(node?.sentAt),
+  sentTo: str(node?.sentTo)
+})
+
+const LISTING_FIELDS =
+  '{ id transferId kind number filename contentType size language code customer createdAt sentAt sentTo }'
+
+export interface DocumentPageArgs {
+  first: number
+  after?: string
+  kind?: DocumentKind
+  /** YYYY-MM, the document's own date. */
+  month?: string
+  /** Matches the number and the ride's code, on the pylon. */
+  search?: string
+}
+
+export interface DocumentPage {
+  rows: DocumentListRow[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
+  /** True when the deployed pylon has no such field yet, so the tab says so instead of failing. */
+  unavailable?: boolean
+}
+
+const EMPTY_PAGE: DocumentPage = {
+  rows: [],
+  endCursor: null,
+  hasNextPage: false,
+  totalCount: 0,
+  unavailable: true
+}
+
+export const documentsPageKey = (args: Record<string, unknown>) =>
+  ['documents', 'page', args] as const
+
+/** Every page of the source is read again after an upload or a delete. */
+export const invalidateDocumentsPage = () =>
+  queryClient.invalidateQueries({queryKey: ['documents', 'page']})
+
+const readDocumentsPage = async (
+  args: DocumentPageArgs
+): Promise<DocumentPage> => {
+  const listArgs: Record<string, unknown> = {first: args.first}
+  if (args.after) listArgs.after = args.after
+  if (args.kind) listArgs.kind = args.kind
+  if (args.month) listArgs.month = args.month
+  if (args.search) listArgs.search = args.search
+  try {
+    const result = await call(
+      'transferDocumentsPage',
+      {args: listArgs},
+      `{ totalCount pageInfo { endCursor hasNextPage } edges { node ${LISTING_FIELDS} } }`
+    )
+    return {
+      rows: (Array.isArray(result?.edges) ? result.edges : [])
+        .map((e: any) => e?.node)
+        .filter(Boolean)
+        .map(mapDocumentRow),
+      endCursor: result?.pageInfo?.endCursor ?? null,
+      hasNextPage: !!result?.pageInfo?.hasNextPage,
+      totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
+    }
+  } catch (err) {
+    // A pylon from before this field: the tab is empty and says why, rather
+    // than a red error on a page whose other tabs are fine.
+    if (isUnknownField(err)) return EMPTY_PAGE
+    throw err
+  }
+}
+
+export interface DocumentListArgs {
+  pageSize?: number
+  kind?: DocumentKind
+  month?: string
+  search?: string
+  enabled?: boolean
+}
+
+/**
+ * The Dokumente source's rows, one page at a time. The filters are pushed
+ * down to the resolver, the page shown stays while the next is read, and
+ * the source shows its skeleton while the first page is out, like every
+ * other view of the app.
+ */
+export function useDocumentsPage(args: DocumentListArgs = {}) {
+  const pageSize = args.pageSize ?? 24
+  const {kind, month} = args
+  const search = args.search?.trim() || undefined
+
+  const pager = usePager(JSON.stringify({first: pageSize, kind, month, search}))
+  const pageArgs = useMemo<DocumentPageArgs>(
+    () => ({first: pageSize, after: pager.after, kind, month, search}),
+    [pageSize, pager.after, kind, month, search]
+  )
+
+  const {
+    query: q,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useAppQuery({
+    queryKey: documentsPageKey({...pageArgs}),
+    queryFn: () => readDocumentsPage(pageArgs),
+    placeholderData: keepPreviousData,
+    enabled: args.enabled !== false
+  })
+
+  const page = q.data
+  const rows = page?.rows ?? EMPTY_PAGE.rows
+
+  return {
+    rows,
+    isLoading,
+    error,
+    isFetching,
+    unavailable: !!page?.unavailable,
+    totalCount: page?.totalCount ?? 0,
+    hasNextPage: !!page?.hasNextPage,
+    hasPreviousPage: pager.page > 1,
+    currentPage: pager.page,
+    totalPages: Math.max(1, Math.ceil((page?.totalCount ?? 0) / pageSize)),
+    nextPage: () => {
+      if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
+    },
+    prevPage: pager.prev,
+    firstPage: pager.first,
+    refetch
+  }
+}

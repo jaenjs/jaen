@@ -27,6 +27,7 @@ export function getI18nCommon(code: I18nCode) {
         Next: 'Next',
         PaginationOf: 'of {totalPages} ({totalCount} total)',
         PageLabel: 'Page {page} of {pages}',
+        PerPage: 'Per page',
 
         StatusCompleted: 'Completed',
         StatusPlanned: 'Planned',
@@ -103,6 +104,7 @@ export function getI18nCommon(code: I18nCode) {
         Next: 'Sonraki',
         PaginationOf: '{totalPages} sayfa ({totalCount} toplam)',
         PageLabel: 'Sayfa {page} / {pages}',
+        PerPage: 'Sayfa başına',
 
         StatusCompleted: 'Tamamlandı',
         StatusPlanned: 'Planlandı',
@@ -179,6 +181,7 @@ export function getI18nCommon(code: I18nCode) {
         Next: 'التالي',
         PaginationOf: 'من {totalPages} ({totalCount} إجمالي)',
         PageLabel: 'الصفحة {page} من {pages}',
+        PerPage: 'لكل صفحة',
 
         StatusCompleted: 'مكتمل',
         StatusPlanned: 'مخطط',
@@ -255,6 +258,7 @@ export function getI18nCommon(code: I18nCode) {
       Next: 'Weiter',
       PaginationOf: 'von {totalPages} ({totalCount} gesamt)',
       PageLabel: 'Seite {page} von {pages}',
+      PerPage: 'Pro Seite',
 
       StatusCompleted: 'Abgeschlossen',
       StatusPlanned: 'Geplant',

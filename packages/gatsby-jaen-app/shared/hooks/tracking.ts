@@ -42,6 +42,7 @@ import {useQueries} from '@tanstack/react-query'
 import {useCaller} from '../auth'
 import {isOnline} from '../offline'
 import {gql} from './bookings'
+import {hasCarField} from './transfers'
 import {
   errorMessage,
   keys,
@@ -244,6 +245,14 @@ export interface CustomerRide {
   driverId: string | null
   /** The plate stamped on the ride, the tracking answer's own wins when present. */
   licensePlate: string | null
+  /** The class, for the silhouette a car without a picture falls back to. */
+  carClass: string | null
+  /**
+   * The car's thumbnail. The pylon answers it to a customer only once the
+   * driver said yes (okf/architecture/media.md), so an unconfirmed ride
+   * carries none even when a car is already pencilled in.
+   */
+  carImageThumbUrl: string | null
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
@@ -267,8 +276,14 @@ export const customerRideWindow = (
   return {fromISO: dateOnly(from), toISO: dateOnly(to)}
 }
 
-const CUSTOMER_RIDE_SELECTION =
-  '{ edges { node { id code state pickupDateTime pickupLocation driverId car { licensePlate } } } }'
+/**
+ * What the map's ride list reads. The car's picture is asked for only where
+ * the deployed Car type carries it, so a site built ahead of its pylon still
+ * draws the list.
+ */
+const customerRideSelection = async (): Promise<string> =>
+  '{ edges { node { id code state pickupDateTime pickupLocation driverId ' +
+  `car { licensePlate carClass${(await hasCarField('imageThumbUrl')) ? ' imageThumbUrl' : ''} } } } }`
 
 export const mapCustomerRide = (node: any): CustomerRide => ({
   id: String(node?.id ?? ''),
@@ -277,7 +292,9 @@ export const mapCustomerRide = (node: any): CustomerRide => ({
   pickupAtISO: text(node?.pickupDateTime) ?? null,
   pickupLocation: text(node?.pickupLocation) ?? null,
   driverId: text(node?.driverId) ?? null,
-  licensePlate: text(node?.car?.licensePlate) ?? null
+  licensePlate: text(node?.car?.licensePlate) ?? null,
+  carClass: text(node?.car?.carClass) ?? null,
+  carImageThumbUrl: text(node?.car?.imageThumbUrl) ?? null
 })
 
 /**
@@ -292,7 +309,7 @@ export const fetchCustomerRides = async (window: {
   const result = await gql(
     'transfers',
     {args: {first: 100, fromISO: window.fromISO, toISO: window.toISO}},
-    CUSTOMER_RIDE_SELECTION
+    await customerRideSelection()
   )
   const edges: any[] = Array.isArray(result?.edges) ? result.edges : []
   return edges

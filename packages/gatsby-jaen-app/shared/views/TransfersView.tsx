@@ -109,6 +109,7 @@ import {
 } from '../hooks/transfers'
 import {
   AmountInput,
+  CarImage,
   DriverColorDot,
   EmptyState,
   DialogActions,
@@ -616,6 +617,13 @@ export function AssignDialog({
                 return (
                   <HStack gap="2" minW="0">
                     <DriverColorDot color={d.driverColor} />
+                    {/* The car's picture beside the plate, dispatch.md
+                        section 9 with media.md: a dispatcher recognises the
+                        car faster than the plate. A car without a picture
+                        shows the silhouette of its class. */}
+                    {car && (
+                      <CarImage car={car} size={36} alt={car.licensePlate} />
+                    )}
                     <Box minW="0" flex="1">
                       <Text textStyle="sm" fontWeight="medium" truncate>
                         {driverDisplayName(d)}
@@ -688,6 +696,7 @@ export function AssignDialog({
                 renderItem={c => (
                   <HStack gap="2" minW="0">
                     <DriverColorDot color={c.color} />
+                    <CarImage car={c} size={36} alt={c.licensePlate} />
                     <Box minW="0">
                       <Text textStyle="sm" fontWeight="medium" truncate>
                         {carDisplayName(c)}
@@ -2815,6 +2824,8 @@ function DispatchBoard() {
     error,
     isFetching,
     pagination,
+    pageSize,
+    setPageSize,
     nextPage,
     prevPage,
     firstPage,
@@ -2955,6 +2966,8 @@ function DispatchBoard() {
             onFirst: firstPage,
             onPrev: prevPage,
             onNext: nextPage,
+            pageSize,
+            onPageSize: setPageSize,
             always: true
           }}
         />
@@ -3019,11 +3032,13 @@ function MyRides({heading, subtitle}: {heading: string; subtitle?: string}) {
     error,
     isFetching,
     pagination,
+    pageSize,
+    setPageSize,
     nextPage,
     prevPage,
     firstPage,
     refetch
-  } = useTransferList(args)
+  } = useTransferList({...args, tableId: 'my-rides'})
   useViewRefresh(refetch, isFetching)
   // Offline the list is the stored answer, see shared/offline.ts. When the
   // connection returns it is read again and the banner above it goes.
@@ -3101,7 +3116,9 @@ function MyRides({heading, subtitle}: {heading: string; subtitle?: string}) {
             hasNext: pagination.hasNextPage,
             onFirst: firstPage,
             onPrev: prevPage,
-            onNext: nextPage
+            onNext: nextPage,
+            pageSize,
+            onPageSize: setPageSize
           }}
         />
       </Stack>

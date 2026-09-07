@@ -279,7 +279,15 @@ export function DataTable<Row>({
   // the list is empty when the truth is that it could not be read.
   const showEmpty = !isLoading && !error && rows.length === 0 && empty != null
   const showControl = columnsControl && !mobile
-  const showPager = !!pager && (pager.always || pager.hasNext || pager.page > 1)
+  // A paged table always offers its size (design-consistency.md, rule 10):
+  // a list of one page is one page because of the size the reader chose, so
+  // the control that changes it cannot hide with the page buttons.
+  const showPager =
+    !!pager &&
+    (pager.always ||
+      pager.hasNext ||
+      pager.page > 1 ||
+      pager.onPageSize !== undefined)
   const cards = mobile || cardsOnly
 
   const renderCard =
@@ -421,6 +429,15 @@ export function DataTable<Row>({
                               return (
                                 <Table.Cell
                                   key={c.id}
+                                  // A data cell is data (rule 11): its value
+                                  // stays selectable inside an app whose
+                                  // chrome is not, and the buttons and badges
+                                  // in it go back to none through the shell's
+                                  // own selector. A controls column holds no
+                                  // value, only buttons, so it is not marked.
+                                  data-selectable={
+                                    c.controls ? undefined : true
+                                  }
                                   verticalAlign="middle"
                                   style={{width: c.width}}
                                   overflow="hidden"
@@ -483,6 +500,9 @@ export function DataTable<Row>({
           onFirst={pager.onFirst}
           onPrev={pager.onPrev}
           onNext={pager.onNext}
+          pageSize={pager.pageSize}
+          pageSizes={pager.pageSizes}
+          onPageSize={pager.onPageSize}
         />
       )}
     </>

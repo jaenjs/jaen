@@ -96,6 +96,7 @@ export function getI18nBookings(code: I18nCode) {
         DetailPayment: 'Payment: {method}',
         DetailSectionStatus: 'Offer and invoice',
         DetailSectionDocuments: 'Documents',
+        DetailYourVehicle: 'Your vehicle',
         StatusExplainNEW: 'We have your request and will send you an offer.',
         StatusExplainOFFERED:
           'Please confirm the offer through the link in your e-mail.',
@@ -232,6 +233,7 @@ export function getI18nBookings(code: I18nCode) {
         DetailPayment: 'Ödeme: {method}',
         DetailSectionStatus: 'Teklif ve fatura',
         DetailSectionDocuments: 'Belgeler',
+        DetailYourVehicle: 'Aracınız',
         StatusExplainNEW:
           'Talebiniz bize ulaştı, size bir teklif göndereceğiz.',
         StatusExplainOFFERED:
@@ -368,6 +370,7 @@ export function getI18nBookings(code: I18nCode) {
         DetailPayment: 'الدفع: {method}',
         DetailSectionStatus: 'العرض والفاتورة',
         DetailSectionDocuments: 'المستندات',
+        DetailYourVehicle: 'مركبتكم',
         StatusExplainNEW: 'وصلنا طلبك وسنرسل لك عرضاً.',
         StatusExplainOFFERED:
           'يرجى تأكيد العرض عبر الرابط في بريدك الإلكتروني.',
@@ -504,6 +507,7 @@ export function getI18nBookings(code: I18nCode) {
       DetailPayment: 'Zahlung: {method}',
       DetailSectionStatus: 'Angebot und Rechnung',
       DetailSectionDocuments: 'Dokumente',
+      DetailYourVehicle: 'Ihr Fahrzeug',
       StatusExplainNEW: 'Deine Anfrage ist da, wir schicken dir ein Angebot.',
       StatusExplainOFFERED:
         'Bitte bestätige das Angebot über den Link in deiner E-Mail.',

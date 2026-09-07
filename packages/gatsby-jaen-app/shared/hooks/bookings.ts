@@ -29,7 +29,12 @@ import {
   usePager,
   useRestored
 } from './query'
-import {hasTransferField, transferCode, transferSlug} from './transfers'
+import {
+  hasCarField,
+  hasTransferField,
+  transferCode,
+  transferSlug
+} from './transfers'
 
 /**
  * A GraphQL enum member is spelled bare, not quoted, and it is indistinguishable
@@ -140,7 +145,22 @@ export interface Booking {
   payingParty?: string | null
   transferCategory?: string
   transferType?: string
-  car?: {name?: string; licensePlate?: string; carClass?: string}
+  car?: {
+    name?: string
+    licensePlate?: string
+    carClass?: string
+    /** The car's paint, #RRGGBB, for the colour dot on the customer's card. */
+    color?: string
+    /**
+     * The car's picture. The pylon answers it to a customer only once the
+     * driver said yes (okf/architecture/media.md), so a picture on the row
+     * is itself the sign that the ride is confirmed.
+     */
+    imageUrl?: string
+    imageThumbUrl?: string
+  }
+  /** The driver's answer, NONE to WITHDRAWN. Undefined on a schema without it. */
+  driverStatus?: string
   details?: {
     flightNumber?: string
     message?: string
@@ -223,9 +243,13 @@ export const mapBooking = (t: any): Booking => {
       ? {
           name: text(car.carName),
           licensePlate: text(car.licensePlate),
-          carClass: text(car.carClass)
+          carClass: text(car.carClass),
+          color: text(car.color),
+          imageUrl: text(car.imageUrl),
+          imageThumbUrl: text(car.imageThumbUrl)
         }
       : undefined,
+    driverStatus: text(t?.driverStatus),
     details: details
       ? {
           flightNumber: text(details.flightNumber),
@@ -259,7 +283,8 @@ export const mapBooking = (t: any): Booking => {
 const bookingSelection = async (): Promise<string> =>
   `{ id ${(await hasTransferField('code')) ? 'code ' : ''}${(await hasTransferField('customerStatus')) ? 'customerStatus language ' : ''}customerId driverId pickupDateTime pickupLocation dropoffLocation subject state requestedAt ` +
   `referenceId price paymentMethode payingParty transferCategory transferType ` +
-  `car { carName licensePlate carClass } ` +
+  `${(await hasTransferField('driverStatus')) ? 'driverStatus ' : ''}` +
+  `car { carName licensePlate carClass color${(await hasCarField('imageThumbUrl')) ? ' imageUrl imageThumbUrl' : ''} } ` +
   `details { flightNumber message luggage childSeats } ` +
   `passengers { totalCount } ` +
   `extras { edges { node { type amount } } } ` +
@@ -313,10 +338,16 @@ const readBookingsPage = async (args: {
 }
 
 export function useBookings(pageSize = DEFAULT_PAGE_SIZE) {
-  const pager = usePager(JSON.stringify({first: pageSize}))
+  // The size is the pager's: the reader's choice for this table, remembered
+  // beside its column layout, `pageSize` the default until somebody chooses.
+  const pager = usePager('bookings', {
+    tableId: 'bookings',
+    defaultSize: pageSize
+  })
+  const size = pager.pageSize
   const args = useMemo(
-    () => ({first: pageSize, after: pager.after}),
-    [pageSize, pager.after]
+    () => ({first: size, after: pager.after}),
+    [size, pager.after]
   )
 
   const {
@@ -340,16 +371,26 @@ export function useBookings(pageSize = DEFAULT_PAGE_SIZE) {
       endCursor: current?.endCursor ?? null,
       totalCount,
       currentPage: pager.page,
-      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+      totalPages: Math.max(1, Math.ceil(totalCount / size))
     }
-  }, [current, pager.page, pageSize])
+  }, [current, pager.page, size])
 
   const nextPage = useCallback(() => {
     if (current?.hasNextPage && current.endCursor) pager.next(current.endCursor)
   }, [current, pager])
   const prevPage = pager.prev
 
-  return {bookings, isLoading, error, page, nextPage, prevPage, refetch}
+  return {
+    bookings,
+    isLoading,
+    error,
+    page,
+    pageSize: size,
+    setPageSize: pager.setPageSize,
+    nextPage,
+    prevPage,
+    refetch
+  }
 }
 
 // --------------- One booking ---------------

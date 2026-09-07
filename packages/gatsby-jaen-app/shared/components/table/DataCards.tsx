@@ -7,6 +7,7 @@
  */
 import React, {useState, type ReactNode} from 'react'
 import {Box, HStack, Stack, Text} from '@chakra-ui/react'
+import {selectable} from '../Selectable'
 import type {DataColumn} from './columns'
 
 export type DayTone = 'green' | 'yellow' | undefined
@@ -131,7 +132,10 @@ export function DefaultCard<Row>({
       onClick={() => onOpen(row)}
       cursor="pointer">
       {first && (
-        <Box textStyle="sm" fontWeight="semibold" minW="0">
+        // The card's fields carry the row's values, and a value is data
+        // (rule 11). The controls column below is buttons only and is left
+        // to the shell's user-select none.
+        <Box {...selectable} textStyle="sm" fontWeight="semibold" minW="0">
           {first.cell(row)}
         </Box>
       )}
@@ -143,6 +147,7 @@ export function DefaultCard<Row>({
                 {c.label}
               </Text>
               <Box
+                {...selectable}
                 minW="0"
                 flex="1"
                 textAlign={c.align === 'end' ? 'end' : undefined}>

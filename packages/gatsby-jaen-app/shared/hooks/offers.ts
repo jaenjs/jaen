@@ -348,19 +348,23 @@ export function useOffers(args: OfferListArgs = {}) {
   const {status, month, search, language} = args
   const trimmed = search?.trim() || undefined
 
+  // The size is the pager's: the reader's choice for this table, remembered
+  // beside its column layout, `pageSize` the default until somebody chooses.
   const pager = usePager(
-    JSON.stringify({first: pageSize, status, month, search: trimmed, language})
+    JSON.stringify({status, month, search: trimmed, language}),
+    {tableId: 'offers', defaultSize: pageSize}
   )
+  const size = pager.pageSize
   const pageArgs = useMemo<PageArgs>(
     () => ({
-      first: pageSize,
+      first: size,
       after: pager.after,
       status,
       month,
       search: trimmed,
       language
     }),
-    [pageSize, pager.after, status, month, trimmed, language]
+    [size, pager.after, status, month, trimmed, language]
   )
 
   const {
@@ -384,9 +388,9 @@ export function useOffers(args: OfferListArgs = {}) {
       hasPreviousPage: pager.page > 1,
       totalCount,
       currentPage: pager.page,
-      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+      totalPages: Math.max(1, Math.ceil(totalCount / size))
     }
-  }, [page, pager.page, pageSize])
+  }, [page, pager.page, size])
 
   const nextPage = useCallback(() => {
     if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
@@ -398,6 +402,8 @@ export function useOffers(args: OfferListArgs = {}) {
     error,
     isFetching,
     pagination,
+    pageSize: size,
+    setPageSize: pager.setPageSize,
     nextPage,
     prevPage: pager.prev,
     firstPage: pager.first,
@@ -499,10 +505,15 @@ const readCustomerBillingPage = async (args: {
  * write that moves a status refreshes it with the booking list.
  */
 export function useCustomerBilling(pageSize = DEFAULT_PAGE_SIZE) {
-  const pager = usePager(JSON.stringify({billing: true, first: pageSize}))
+  // The size is the pager's, remembered beside this table's column layout.
+  const pager = usePager('customer-billing', {
+    tableId: 'customer-billing',
+    defaultSize: pageSize
+  })
+  const size = pager.pageSize
   const pageArgs = useMemo(
-    () => ({first: pageSize, after: pager.after}),
-    [pageSize, pager.after]
+    () => ({first: size, after: pager.after}),
+    [size, pager.after]
   )
   const {
     query: q,
@@ -524,9 +535,9 @@ export function useCustomerBilling(pageSize = DEFAULT_PAGE_SIZE) {
       hasPreviousPage: pager.page > 1,
       totalCount,
       currentPage: pager.page,
-      totalPages: Math.max(1, Math.ceil(totalCount / pageSize))
+      totalPages: Math.max(1, Math.ceil(totalCount / size))
     }
-  }, [page, pager.page, pageSize])
+  }, [page, pager.page, size])
   const nextPage = useCallback(() => {
     if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
   }, [page, pager])
@@ -536,6 +547,8 @@ export function useCustomerBilling(pageSize = DEFAULT_PAGE_SIZE) {
     error,
     isFetching,
     pagination,
+    pageSize: size,
+    setPageSize: pager.setPageSize,
     nextPage,
     prevPage: pager.prev,
     firstPage: pager.first,

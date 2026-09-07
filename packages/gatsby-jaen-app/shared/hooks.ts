@@ -34,6 +34,7 @@ import {
   usePager
 } from './hooks/query'
 import {readDriverColors} from './hooks/colors'
+import {hasCarField} from './hooks/transfers'
 
 /**
  * One GraphQL document, with its arguments written into the document itself.
@@ -816,6 +817,8 @@ export interface ResourceCar {
   carClass?: string
   driverId?: string
   driverName?: string
+  /** The car's thumbnail on the storage gateway, for the picker's small picture. */
+  imageThumbUrl?: string
 }
 
 const EMPTY_CARS: ResourceCar[] = []
@@ -829,7 +832,10 @@ const readCars = async (): Promise<ResourceCar[]> => {
     'cars',
     {args: {first: 200}},
     `{ totalCount pageInfo { endCursor startCursor hasNextPage hasPreviousPage } edges { node { id carName licensePlate color ` +
-      `carClass driverId driverName } } }`
+      `carClass driverId driverName ` +
+      // The picture is younger than the deployed schemas, so it is asked for
+      // only where the Car type carries it (okf/architecture/media.md).
+      `${(await hasCarField('imageThumbUrl')) ? 'imageThumbUrl ' : ''}} } }`
   )
   const edges: any[] = Array.isArray(conn?.edges) ? conn.edges : []
 
@@ -842,7 +848,8 @@ const readCars = async (): Promise<ResourceCar[]> => {
       color: String(n?.color ?? ''),
       carClass: n?.carClass ?? undefined,
       driverId: n?.driverId ?? undefined,
-      driverName: n?.driverName ?? undefined
+      driverName: n?.driverName ?? undefined,
+      imageThumbUrl: n?.imageThumbUrl ?? undefined
     }
   })
 }

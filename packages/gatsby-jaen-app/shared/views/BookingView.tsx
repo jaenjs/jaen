@@ -478,11 +478,13 @@ export function BookingView() {
     error,
     isFetching,
     pagination,
+    pageSize,
+    setPageSize,
     nextPage,
     prevPage,
     firstPage,
     refetch
-  } = useTransferList(args)
+  } = useTransferList({...args, tableId: 'bookings'})
   useViewRefresh(refetch, isFetching)
   const drivers = useBookingDrivers(rows)
 
@@ -681,7 +683,9 @@ export function BookingView() {
             hasNext: pagination.hasNextPage,
             onFirst: firstPage,
             onPrev: prevPage,
-            onNext: nextPage
+            onNext: nextPage,
+            pageSize,
+            onPageSize: setPageSize
           }}
         />
       </Stack>

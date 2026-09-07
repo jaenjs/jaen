@@ -52,10 +52,12 @@ import {
 } from '../auth'
 import {
   ConfirmDialog,
+  DetailRow,
   DriverColorDot,
   EmptyState,
   ErrorBanner,
   MoneyText,
+  selectable,
   toaster,
   PageHeader
 } from '../components'
@@ -297,6 +299,11 @@ function Section({
   )
 }
 
+/**
+ * A row of the account card. The shared DetailRow carries the label column,
+ * the wrapping of a long mail address or id (rule 9) and the selectable mark
+ * (rule 11); this screen only says which of its values is mono.
+ */
 function Row({
   label,
   value,
@@ -306,17 +313,7 @@ function Row({
   value?: string
   mono?: boolean
 }) {
-  return (
-    <DataList.Item>
-      <DataList.ItemLabel minW="32">{label}</DataList.ItemLabel>
-      <DataList.ItemValue
-        fontFamily={mono ? 'mono' : undefined}
-        textStyle={mono ? 'xs' : undefined}
-        wordBreak="break-all">
-        {value || '-'}
-      </DataList.ItemValue>
-    </DataList.Item>
-  )
+  return <DetailRow label={label} value={value} mono={mono} placeholder="-" />
 }
 
 interface CardProps {
@@ -736,11 +733,21 @@ function ExpensesCard({
     <Section title={t.SectionExpenses} hint={t.ExpensesHint}>
       <Stack gap="5">
         <Box as="form" onSubmit={submit}>
+          {/* The two narrow fields say their width, they do not only refuse
+              to grow: Chakra's field recipe is `width: 100%`, so a
+              `flex: 0 0 auto` field in a row was 100 per cent of the row and
+              could not shrink either, and the date, the amount and the note
+              stood three screens wide with the button off the page. Measured
+              on the user detail at 1024 and 1440 on 2026-09-07, rule 9. */}
           <Flex
             gap="3"
             direction={{base: 'column', md: 'row'}}
             align={{md: 'end'}}>
-            <Field.Root required invalid={touched && !dateOk} flex="0 0 auto">
+            <Field.Root
+              required
+              invalid={touched && !dateOk}
+              flex="0 0 auto"
+              w={{md: 'auto'}}>
               <Field.Label>{t.ExpenseDate}</Field.Label>
               <Input
                 type="date"
@@ -748,7 +755,11 @@ function ExpensesCard({
                 onChange={e => setDate(e.target.value)}
               />
             </Field.Root>
-            <Field.Root required invalid={touched && !amountOk} flex="0 0 auto">
+            <Field.Root
+              required
+              invalid={touched && !amountOk}
+              flex="0 0 auto"
+              w={{md: 'auto'}}>
               <Field.Label>{t.ExpenseAmount}</Field.Label>
               <NumberInput.Root
                 value={amount}
@@ -813,10 +824,14 @@ function ExpensesCard({
               <Table.Body>
                 {expenses.map(x => (
                   <Table.Row key={x.id}>
-                    <Table.Cell whiteSpace="nowrap">
+                    <Table.Cell {...selectable} whiteSpace="nowrap">
                       {formatDate(x.date, code)}
                     </Table.Cell>
-                    <Table.Cell>{x.note || '-'}</Table.Cell>
+                    {/* A driver's own words about the expense: data, and a
+                        long one breaks inside its column (rules 9 and 11). */}
+                    <Table.Cell {...selectable} overflowWrap="anywhere">
+                      {x.note || '-'}
+                    </Table.Cell>
                     <Table.Cell textAlign="end">
                       <MoneyText value={x.amount} />
                     </Table.Cell>

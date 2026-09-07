@@ -56,6 +56,48 @@ body:has(.jaen-app) {
   touch-action: manipulation;
 }
 
+/* ── Chrome is not selectable, data is ──────────────────────────────────────
+   design-consistency.md, rule 11. Owner, 2026-09-07: "the text of a lot of
+   elements is still selectable". Inside the app a person can never select the
+   interface, the way no native app lets one: a tap that drags a little no
+   longer paints a button's word blue and a long press on a phone offers no
+   selection handle over a heading. The rule sits on the document and not on
+   the shell's element, because a dialog, a drawer, a sheet and a toast render
+   into a portal on `body`, outside the shell, and would keep their selection.
+   The selector only matches while the app's shell is on the page, so the
+   public pages and the CMS outside the app are untouched.
+
+   What a person does want to select is data, and data says so with one mark,
+   [data-selectable] (shared/components/Selectable.tsx): a code, a name, an
+   address, a phone number, a mail address, a price, a note, a table cell's
+   value and a detail row's value. A button or a badge inside such a value is
+   chrome again, so a whole table cell can be marked without its Details
+   button becoming selectable. Every input, textarea and select stays
+   selectable whatever it sits in, or a person could not correct the middle of
+   an address they typed. */
+html:has(.jaen-app),
+html:has(.jaen-app) body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html:has(.jaen-app) [data-selectable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+html:has(.jaen-app)
+  [data-selectable]
+  :is(button, [role='button'], .chakra-badge) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html:has(.jaen-app) :is(input, textarea, select, [contenteditable='true']) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* ── The refresh icon turns ─────────────────────────────────────────────────
    shared/components/RefreshButton.tsx and PullToRefresh.tsx put the class on
    the icon while the view's query is on the wire (rule 5a). Reduced motion

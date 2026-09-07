@@ -230,6 +230,8 @@ export function UsersView() {
     error,
     isFetching,
     pagination,
+    pageSize,
+    setPageSize,
     nextPage,
     prevPage,
     refetch
@@ -391,6 +393,8 @@ export function UsersView() {
           onFirst: firstPage,
           onPrev: prevPage,
           onNext: nextPage,
+          pageSize,
+          onPageSize: setPageSize,
           always: true
         }}
       />

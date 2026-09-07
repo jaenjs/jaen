@@ -43,6 +43,7 @@ import {
   type TrackingMapPin
 } from '../components/locations'
 import {
+  CarImage,
   DriverColorDot,
   EmptyState,
   ErrorBanner,
@@ -316,6 +317,14 @@ function UnderwayRow({
   const plate = entry.tracking?.car?.licensePlate ?? entry.ride.licensePlate
   const driverName = entry.tracking?.driver?.name
   const state = entry.tracking?.state ?? entry.ride.state
+  // The car's picture on the ride's card, media.md. The tracking answer
+  // carries no picture, so it comes from the ride's own car, which the
+  // pylon answers to a customer only once the driver said yes.
+  const car = {
+    licensePlate: plate,
+    carClass: entry.tracking?.car?.carClass ?? entry.ride.carClass,
+    imageThumbUrl: entry.ride.carImageThumbUrl
+  }
   return (
     <HStack
       role="listitem"
@@ -332,6 +341,7 @@ function UnderwayRow({
         size="3.5"
         mt="1.5"
       />
+      <CarImage car={car} size={48} alt={plate ?? ''} />
       <Box minW="0" flex="1">
         <HStack gap="2" flexWrap="wrap">
           <Text fontFamily="mono" fontWeight="semibold" letterSpacing="wider">

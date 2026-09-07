@@ -42,12 +42,15 @@ import {fill, getI18nCommon} from '../locales/i18nCommon'
 import {useCaller} from '../auth'
 import {useDrivers, type ResourceUser} from '../hooks'
 import {
+  CarImage,
+  CarImageField,
   DialogActions,
   DriverColorDot,
   EmptyState,
   ErrorBanner,
   toaster,
-  PageHeader
+  PageHeader,
+  type CarImageValue
 } from '../components'
 import {RefreshButton} from '../components/RefreshButton'
 import {useViewRefresh} from '../hooks/view-refresh'
@@ -122,6 +125,8 @@ function FleetCard({car, driver, stripe, t, onOpen}: FleetCardProps) {
       onClick={() => onOpen(car)}
       cursor="pointer">
       <HStack gap="3" minW="0">
+        {/* The car's picture, or the silhouette of its class (media.md). */}
+        <CarImage car={car} size={56} alt={car.licensePlate} />
         <CarSwatch color={car.color} size="8" />
         <Box flex="1" minW="0">
           <HStack gap="2" minW="0">
@@ -219,6 +224,12 @@ export function FleetView() {
   // open the dialog under it.
   const columns = useMemo<DataColumn<FleetCar>[]>(
     () => [
+      {
+        id: 'image',
+        label: t.FieldImage,
+        width: 88,
+        cell: car => <CarImage car={car} size={48} alt={car.licensePlate} />
+      },
       {
         id: 'color',
         label: t.ColColor,
@@ -405,12 +416,27 @@ const emptyForm = (car?: FleetCar): CarInput => ({
   driverId: car?.driverId
 })
 
+/** The picture the car has now, in the shape the field and the mutation take. */
+const imageOf = (car?: FleetCar): CarImageValue | null =>
+  car?.imageFileId && car?.imageUrl && car?.imageThumbUrl
+    ? {
+        imageFileId: car.imageFileId,
+        imageUrl: car.imageUrl,
+        imageThumbUrl: car.imageThumbUrl,
+        imageWidth: car.imageWidth,
+        imageHeight: car.imageHeight
+      }
+    : null
+
 /** One dialog for both: the title and the mutation are the only difference. */
 function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
   const code = useI18nCode()
   const {strings: t} = getI18nFleet(code)
   const {strings: tc} = getI18nCommon(code)
   const [form, setForm] = useState<CarInput>(() => emptyForm(car))
+  // The picture is its own piece of state: it is uploaded while the dialog
+  // stands open and saved with the rest on submit.
+  const [image, setImage] = useState<CarImageValue | null>(() => imageOf(car))
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
@@ -419,6 +445,7 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
   useEffect(() => {
     if (open) {
       setForm(emptyForm(car))
+      setImage(imageOf(car))
       setTouched(false)
       setFailure(null)
     }
@@ -441,11 +468,21 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
         // Explicit null takes the car away from its driver, undefined would leave it.
         driverId: form.driverId || null
       }
+      // The picture only when it changed: an untouched dialog must not
+      // rewrite five columns, and clearing it is an explicit null.
+      const before = imageOf(car)
+      const changed =
+        (before?.imageFileId ?? null) !== (image?.imageFileId ?? null)
       if (car) {
-        await updateCarMutation(car.id, input)
+        await updateCarMutation(car.id, changed ? {...input, image} : input)
         toaster.success({title: t.CarUpdated})
       } else {
-        await createCarMutation(input)
+        const id = await createCarMutation(input)
+        // createCar writes no picture, so a new car with one is updated once
+        // more. A car that was created and then failed to take its picture
+        // still exists, which is why this is a second call and not a retry
+        // of the first.
+        if (id && image) await updateCarMutation(id, {image})
         toaster.success({title: t.CarCreated})
       }
       onSaved()
@@ -477,6 +514,18 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
             </Dialog.Header>
             <Dialog.Body>
               <Stack gap="4">
+                <Field.Root>
+                  <Field.Label>{t.FieldImage}</Field.Label>
+                  <CarImageField
+                    value={image}
+                    onChange={setImage}
+                    carClass={form.carClass}
+                    licensePlate={form.licensePlate}
+                    disabled={saving}
+                    strings={t}
+                    onFailure={setFailure}
+                  />
+                </Field.Root>
                 <Field.Root required invalid={touched && !plateOk}>
                   <Field.Label>
                     {t.FieldPlate} <Field.RequiredIndicator />

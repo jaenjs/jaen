@@ -9,6 +9,13 @@ export type {CardApi, DayTone, Section} from './DataCards'
 export {ColumnsPopover} from './ColumnsPopover'
 export {Pager} from './Pager'
 export type {PagerProps} from './Pager'
-export {defaultLayout, loadLayout, saveLayout} from './columns'
+export {
+  defaultLayout,
+  loadLayout,
+  saveLayout,
+  loadPageSize,
+  savePageSize,
+  PAGE_SIZES
+} from './columns'
 export type {DataColumn, ColumnLayout} from './columns'
 export {useIsMobile} from './useIsMobile'

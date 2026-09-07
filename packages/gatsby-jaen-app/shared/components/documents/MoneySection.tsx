@@ -22,18 +22,16 @@ import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   Box,
   Button,
-  FileUpload,
   HStack,
-  Icon,
   Input,
   Stack,
   Text,
   Timeline
 } from '@chakra-ui/react'
+import {MediaDropzone, type MediaDropzoneControl} from 'gatsby-plugin-jaen'
 import {FaCheck} from '@react-icons/all-files/fa/FaCheck'
 import {FaTimes} from '@react-icons/all-files/fa/FaTimes'
 import {FaFilePdf} from '@react-icons/all-files/fa/FaFilePdf'
-import {FaCloudUploadAlt} from '@react-icons/all-files/fa/FaCloudUploadAlt'
 import {useI18nCode} from '../../i18n'
 import {fill, getI18nOffers, type OffersStrings} from '../../locales/i18nOffers'
 import {isOfflineError} from '../../offline'
@@ -311,9 +309,10 @@ export function MoneySection({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [paidOpen, setPaidOpen] = useState(false)
   const [number, setNumber] = useState('')
-  // Chakra's FileUpload keeps the accepted file in its own state. Clearing it
-  // after the upload needs the store, so the root is controlled through a ref.
-  const clearFiles = useRef<(() => void) | null>(null)
+  // The shared dropzone keeps the accepted file in its own state. Clearing
+  // it after the upload needs the machine, so the control comes back through
+  // a ref, and without the clear a second drop of the same file does nothing.
+  const dropzone = useRef<MediaDropzoneControl | null>(null)
 
   const steps = useMemo(
     () => stepsOf(transfer, offer, invoice, s, code),
@@ -366,7 +365,7 @@ export function MoneySection({
       )
       remember(doc)
       toaster.success({title: fill(s.Uploaded, {filename: doc.filename})})
-      clearFiles.current?.()
+      dropzone.current?.clear()
     } catch (err) {
       setFailure(
         err instanceof InvoiceFileError
@@ -466,44 +465,31 @@ export function MoneySection({
               </Text>
               {uploadEnabled ? (
                 <>
-                  <FileUpload.Root
+                  {/*
+                    jaen's own upload control, the one the Media tab drops
+                    on: the invoice used to have a dropzone of its own that
+                    looked and behaved differently for the same gesture, and
+                    the owner asked for one library and one control
+                    (okf/architecture/media.md). It carries
+                    MEDIA_DROPZONE_TESTID, and the outer element keeps
+                    invoice-dropzone so a check can name this one.
+                  */}
+                  <MediaDropzone
                     accept="application/pdf"
                     maxFiles={1}
                     maxFileSize={MAX_INVOICE_BYTES}
-                    disabled={busy === 'upload'}
-                    onFileChange={details => {
-                      if (details.rejectedFiles.length) {
-                        setFailure(s.UploadRejected)
-                        return
-                      }
-                      const file = details.acceptedFiles[0]
+                    uploading={busy === 'upload'}
+                    controlRef={dropzone}
+                    rootTestId="invoice-dropzone"
+                    label={s.UploadInvoice}
+                    uploadingLabel={s.Uploading}
+                    hint={invoice ? s.UploadReplaceHint : s.UploadHint}
+                    onReject={() => setFailure(s.UploadRejected)}
+                    onUpload={files => {
+                      const file = files[0]
                       if (file) void upload(file)
-                    }}>
-                    <FileUpload.Context>
-                      {api => {
-                        clearFiles.current = () => api.clearFiles()
-                        return null
-                      }}
-                    </FileUpload.Context>
-                    <FileUpload.HiddenInput data-testid="invoice-file-input" />
-                    <FileUpload.Dropzone
-                      minH="28"
-                      w="full"
-                      cursor="pointer"
-                      data-testid="invoice-dropzone">
-                      <Icon color="fg.muted" boxSize="6">
-                        <FaCloudUploadAlt />
-                      </Icon>
-                      <FileUpload.DropzoneContent>
-                        <Text textStyle="sm" fontWeight="medium">
-                          {busy === 'upload' ? s.Uploading : s.UploadInvoice}
-                        </Text>
-                        <Text textStyle="xs" color="fg.muted">
-                          {invoice ? s.UploadReplaceHint : s.UploadHint}
-                        </Text>
-                      </FileUpload.DropzoneContent>
-                    </FileUpload.Dropzone>
-                  </FileUpload.Root>
+                    }}
+                  />
                   <HStack gap="2" flexWrap="wrap">
                     <Input
                       size="sm"

@@ -563,6 +563,8 @@ export function OffersTable() {
     error,
     isFetching,
     pagination,
+    pageSize,
+    setPageSize,
     nextPage,
     prevPage,
     firstPage,
@@ -786,7 +788,9 @@ export function OffersTable() {
           hasNext: pagination.hasNextPage,
           onFirst: firstPage,
           onPrev: prevPage,
-          onNext: nextPage
+          onNext: nextPage,
+          pageSize,
+          onPageSize: setPageSize
         }}
       />
     </Stack>
@@ -1227,6 +1231,8 @@ function CustomerRides({f}: {f: FinanceStrings}) {
     isLoading,
     error,
     pagination,
+    pageSize,
+    setPageSize,
     nextPage,
     prevPage,
     firstPage,
@@ -1379,7 +1385,9 @@ function CustomerRides({f}: {f: FinanceStrings}) {
         hasNext: pagination.hasNextPage,
         onFirst: firstPage,
         onPrev: prevPage,
-        onNext: nextPage
+        onNext: nextPage,
+        pageSize,
+        onPageSize: setPageSize
       }}
     />
   )

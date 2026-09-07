@@ -86,10 +86,12 @@ import {
 } from '../hooks/transfers'
 import {
   ConfirmDialog,
+  DetailRow,
   DriverColorDot,
   EmptyState,
   ErrorBanner,
   MoneyText,
+  Selectable,
   StatusBadge,
   toaster,
   useStateLabel,
@@ -165,13 +167,13 @@ function Section({
   )
 }
 
+/**
+ * A row of this page's data lists. The layout, the wrapping of a long value
+ * and the selectable mark all live in the shared DetailRow (rule 9 and rule
+ * 11), never at a value of this screen.
+ */
 function Item({label, value}: {label: string; value: React.ReactNode}) {
-  return (
-    <DataList.Item>
-      <DataList.ItemLabel>{label}</DataList.ItemLabel>
-      <DataList.ItemValue>{value ?? '–'}</DataList.ItemValue>
-    </DataList.Item>
-  )
+  return <DetailRow label={label} value={value} />
 }
 
 /** The extras of a transfer, and for the dispatcher a way to add and remove them. */
@@ -556,9 +558,9 @@ function DriverRideScreen({
             <FaArrowLeft />
             {t.DetailBackMine}
           </Button>
-          <Text textStyle="xs" color="fg.muted" fontFamily="mono">
+          <Selectable textStyle="xs" color="fg.muted" fontFamily="mono">
             {transfer.code}
-          </Text>
+          </Selectable>
         </HStack>
 
         {/* The pickup: the time large, the address, one tap to the map. */}
@@ -584,11 +586,11 @@ function DriverRideScreen({
                 <Box color="fg.muted" mt="1">
                   <FaMapMarkerAlt />
                 </Box>
-                <Text fontWeight="medium">{transfer.pickup}</Text>
+                <Selectable fontWeight="medium">{transfer.pickup}</Selectable>
               </HStack>
-              <Text textStyle="sm" color="fg.muted" ms="6">
+              <Selectable textStyle="sm" color="fg.muted" ms="6">
                 → {transfer.dropoff}
-              </Text>
+              </Selectable>
             </Box>
             {map && (
               <IconButton
@@ -623,13 +625,13 @@ function DriverRideScreen({
                 letterSpacing="wider">
                 {t.Passenger}
               </Text>
-              <Text fontWeight="semibold" textStyle="lg" truncate>
+              <Selectable fontWeight="semibold" textStyle="lg" truncate>
                 {name || t.NoPassenger}
-              </Text>
+              </Selectable>
               {phone && (
-                <Text textStyle="sm" color="fg.muted">
+                <Selectable textStyle="sm" color="fg.muted">
                   {phone}
-                </Text>
+                </Selectable>
               )}
             </Box>
             {tel && (
@@ -664,12 +666,12 @@ function DriverRideScreen({
                 letterSpacing="wider">
                 {t.Wishes}
               </Text>
-              <Text
+              <Selectable
                 textStyle="sm"
                 color={transfer.details?.message ? 'fg.default' : 'fg.muted'}
                 whiteSpace="pre-wrap">
                 {transfer.details?.message || t.NoWishes}
-              </Text>
+              </Selectable>
             </Box>
           </HStack>
         </Box>
@@ -1473,12 +1475,12 @@ function DetailScreen({
           />
 
           <Section title={t.SectionNotes}>
-            <Text
+            <Selectable
               textStyle="sm"
               whiteSpace="pre-wrap"
               color={transfer.details?.message ? 'fg.default' : 'fg.muted'}>
               {transfer.details?.message || t.NoNotes}
-            </Text>
+            </Selectable>
           </Section>
         </Box>
 

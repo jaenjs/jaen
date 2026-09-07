@@ -12,6 +12,7 @@
  */
 import {keys, queryClient, useAppQuery} from './query'
 import {gql, mutate} from './users'
+import {hasCarField} from './transfers'
 
 /** The Prisma enum CarClass, one entry each, so a class the backend knows has a word on screen. */
 export const CAR_CLASSES = [
@@ -36,6 +37,16 @@ export interface FleetCar {
   driverId?: string
   driverName?: string
   updatedAt?: string
+  /**
+   * The car's picture on the storage gateway, okf/architecture/media.md.
+   * The three ids move together: a car has all of them or none, and a car
+   * with none shows the silhouette of its class.
+   */
+  imageFileId?: string
+  imageUrl?: string
+  imageThumbUrl?: string
+  imageWidth?: number
+  imageHeight?: number
 }
 
 const mapCar = (n: any): FleetCar => ({
@@ -46,7 +57,12 @@ const mapCar = (n: any): FleetCar => ({
   color: typeof n?.color === 'string' && n.color ? n.color : '#000000',
   driverId: n?.driverId ?? undefined,
   driverName: n?.driverName ?? undefined,
-  updatedAt: n?.updatedAt ?? undefined
+  updatedAt: n?.updatedAt ?? undefined,
+  imageFileId: n?.imageFileId ?? undefined,
+  imageUrl: n?.imageUrl ?? undefined,
+  imageThumbUrl: n?.imageThumbUrl ?? undefined,
+  imageWidth: typeof n?.imageWidth === 'number' ? n.imageWidth : undefined,
+  imageHeight: typeof n?.imageHeight === 'number' ? n.imageHeight : undefined
 })
 
 const EMPTY_CARS: FleetCar[] = []
@@ -55,7 +71,8 @@ const readFleet = async (): Promise<FleetCar[]> => {
   const conn = await gql(
     'cars',
     {args: {first: 100}},
-    '{ edges { node { id licensePlate carName carClass color driverId driverName updatedAt } } }'
+    '{ edges { node { id licensePlate carName carClass color driverId driverName updatedAt ' +
+      `${(await hasCarField('imageThumbUrl')) ? 'imageFileId imageUrl imageThumbUrl imageWidth imageHeight ' : ''}} } }`
   )
   const rows = (Array.isArray(conn?.edges) ? conn.edges : [])
     .map((e: any) => e?.node)
@@ -97,6 +114,21 @@ export interface CarInput {
   color: string
   /** A driver's id, null to take the car away from its driver, undefined to leave it alone. */
   driverId?: string | null
+  /**
+   * The picture as the gateway answered it, null to clear it, undefined to
+   * leave it alone. The three ids are sent together, which is what the
+   * backend's updateCar requires.
+   */
+  image?: CarImageInput | null
+}
+
+/** The triple the storage gateway answered, plus the picture's own pixels. */
+export interface CarImageInput {
+  imageFileId: string
+  imageUrl: string
+  imageThumbUrl: string
+  imageWidth?: number
+  imageHeight?: number
 }
 
 const CAR_SELECTION = '{ __typename id }'
@@ -113,15 +145,34 @@ const carArgs = (input: Partial<CarInput>) => ({
   carName: input.carName?.trim() || undefined,
   carClass: input.carClass ?? undefined,
   color: input.color || undefined,
-  driverId: input.driverId === null ? '' : input.driverId || undefined
+  driverId: input.driverId === null ? '' : input.driverId || undefined,
+  // The picture, all three ids or three empty strings. `undefined` says
+  // nothing about it and the row keeps what it has.
+  ...(input.image === undefined
+    ? {}
+    : input.image === null
+      ? {imageFileId: '', imageUrl: '', imageThumbUrl: ''}
+      : {
+          imageFileId: input.image.imageFileId,
+          imageUrl: input.image.imageUrl,
+          imageThumbUrl: input.image.imageThumbUrl,
+          imageWidth: input.image.imageWidth,
+          imageHeight: input.image.imageHeight
+        })
 })
 
+/**
+ * `createCar` does not take a picture: the backend's create writes the plate,
+ * the name, the class, the colour and the driver, and the picture arrives
+ * with an update. The dialog creates first and then sends the picture, which
+ * is one call more and one code path fewer.
+ */
 export async function createCarMutation(
   input: CarInput
 ): Promise<string | undefined> {
   const result = await mutate(
     'createCar',
-    {args: carArgs(input)},
+    {args: carArgs({...input, image: undefined})},
     CAR_SELECTION
   )
   await invalidateFleet()
