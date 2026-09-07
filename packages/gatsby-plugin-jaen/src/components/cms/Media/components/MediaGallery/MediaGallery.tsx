@@ -10,7 +10,8 @@ import {
   InputGroup,
   Slider,
   Spacer,
-  Tag
+  Tag,
+  Text
 } from '@chakra-ui/react'
 import {MediaNode} from 'jaen'
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
@@ -26,7 +27,7 @@ import {FaSlidersH} from '@react-icons/all-files/fa/FaSlidersH'
 import {FaTimes} from '@react-icons/all-files/fa/FaTimes'
 import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
 
-import {MediaPreviewState} from '../../types'
+import {MediaFolderNode, MediaPreviewState} from '../../types'
 import {MediaGrid} from './components/MediaGrid/MediaGrid'
 import {useDebouncedCallback} from 'use-debounce'
 import {
@@ -38,7 +39,7 @@ export interface MediaGalleryProps {
   pageFilter?: string
   removePageFilter: () => void
 
-  mediaNodes: MediaNode[]
+  mediaNodes: MediaFolderNode[]
 
   selectedMediaNode: MediaNode | null
   onSelectMediaNode: (node: MediaNode | null) => void
@@ -58,6 +59,15 @@ export interface MediaGalleryProps {
 
   isSidebarOpen: boolean
   onToggleSidebar: () => void
+
+  /**
+   * Upload is refused inside a folder an app registered: a car's picture is
+   * uploaded on the car and a document on its ride, never here. The button
+   * stays visible and disabled and the hint says where the gesture belongs,
+   * see okf/architecture/media.md, "One gallery, jaen's".
+   */
+  isUploadDisabled?: boolean
+  uploadHint?: string
 
   isPreview: MediaPreviewState
   onPreview: (state: MediaPreviewState) => void
@@ -79,6 +89,8 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
   onDownload,
   isSidebarOpen,
   onToggleSidebar,
+  isUploadDisabled,
+  uploadHint,
   isPreview,
   onPreview,
   isSelector,
@@ -384,6 +396,8 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
             variant="outline"
             aria-label={isDragActive ? 'Drop to upload' : 'Upload images'}
             loading={isUploading}
+            disabled={isUploadDisabled}
+            title={isUploadDisabled ? uploadHint : undefined}
             onClick={() => dropzoneControl.current?.open()}>
             <FaPlus
               style={{
@@ -404,6 +418,9 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
               variant="outline"
               size="xs"
               loading={isUploading}
+              disabled={isUploadDisabled}
+              title={isUploadDisabled ? uploadHint : undefined}
+              data-testid="media-upload-button"
               onClick={() => dropzoneControl.current?.open()}>
               <FaPlus />
               Upload
@@ -425,9 +442,23 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
         </Button>
       </HStack>
 
+      {isUploadDisabled && uploadHint && (
+        <Text
+          px="4"
+          py="2"
+          fontSize="sm"
+          color="fg.muted"
+          borderBottom="1px solid"
+          borderColor="border.emphasized"
+          data-testid="media-upload-hint">
+          {uploadHint}
+        </Text>
+      )}
+
       <MediaDropzone
         accept="image/*"
         maxFiles={20}
+        disabled={isUploadDisabled}
         onUpload={handleOnUpload}
         uploading={isUploading}
         controlRef={dropzoneControl}

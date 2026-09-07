@@ -3,6 +3,11 @@ import {MediaNode, uploadFile, useField, useNotificationsContext} from 'jaen'
 import {v4 as uuidv4} from 'uuid'
 
 import {Media, MediaProps} from '../components/cms/Media/Media'
+import {TreeNode} from '../components/cms/Pages/components/PageVisualizer'
+import type {
+  MediaFolderNode,
+  MediaFolderTreeNode
+} from '../contexts/jaen-frame-menu'
 import {useCMSManagement, withCMSManagement} from '../connectors/cms-management'
 import {useJaenFrameMenuContext} from '../contexts/jaen-frame-menu'
 
@@ -38,13 +43,30 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
   const manager = useCMSManagement()
 
   /**
-   * The sources registered beside the page images, the way the frame's menu
-   * entries are registered: whoever mounts inside the frame calls
-   * registerMediaSource and the tab appears here. Nothing about vehicles or
+   * The folders an app registered, the way the frame's menu entries are
+   * registered: whoever mounts inside the frame calls registerMediaFolders
+   * and its entries appear in the tree here. Nothing about vehicles or
    * documents is known in this plugin, see the context and
-   * okf/architecture/media.md, "Sources".
+   * okf/architecture/media.md, "One gallery, jaen's".
    */
-  const {mediaSources} = useJaenFrameMenuContext()
+  const {mediaFolders} = useJaenFrameMenuContext()
+
+  /** Every tree id that belongs to a folder of an app, the folder included. */
+  const folderIds = useMemo(() => {
+    const ids = new Set<string>()
+
+    const walk = (node: MediaFolderTreeNode) => {
+      ids.add(node.id)
+      node.children.forEach(walk)
+    }
+
+    mediaFolders.forEach(folder => {
+      ids.add(folder.id)
+      folder.tree.forEach(walk)
+    })
+
+    return ids
+  }, [mediaFolders])
 
   useEffect(() => {
     setMediaNodes(field.value || field.staticValue || {})
@@ -59,6 +81,13 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
   }, [props.defaultSelected])
 
   const onUpload = async (files: File[]) => {
+    // The gallery disables the control inside an app folder; this is the
+    // same refusal one layer down, so a drop that got past the UI writes no
+    // page image under a folder's id.
+    if (folderIds.has(jaenPageId ?? '')) {
+      return
+    }
+
     try {
       const uploadedMediaNodes = await Promise.all(
         files.map(async file => {
@@ -187,7 +216,48 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
     }
   }
 
+  /** Which folder a node came from, empty for a page image. */
+  const folderOfNode = useMemo(() => {
+    const owner = new Map<string, (typeof mediaFolders)[number]>()
+
+    mediaFolders.forEach(folder => {
+      folder.nodes.forEach(node => {
+        owner.set(node.id, folder)
+      })
+    })
+
+    return owner
+  }, [mediaFolders])
+
   const onDelete = (mediaId: string) => {
+    /**
+     * A node of an app folder is not in the CMS field, so deleting it here
+     * would write nothing and leave the row where it is. The folder's own
+     * onDelete removes the thing behind it (a car's picture, a document
+     * row) and its read then answers one node fewer.
+     */
+    const folder = folderOfNode.get(mediaId)
+
+    if (folder) {
+      if (folder.onDelete) {
+        void Promise.resolve(folder.onDelete(mediaId)).catch(error => {
+          console.error('jaen: deleting the media node failed', error)
+
+          toast({
+            position: 'top-right',
+            title: 'Delete failed',
+            description:
+              error instanceof Error
+                ? error.message
+                : 'Could not delete the file',
+            status: 'error'
+          })
+        })
+      }
+
+      return
+    }
+
     const mutableMediaNodes = {...mediaNodes}
 
     delete mutableMediaNodes[mediaId]
@@ -273,21 +343,60 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
   }
 
   const mediaNodesValues = useMemo(() => {
-    const values = Object.values(mediaNodes)
+    const values: MediaFolderNode[] = Object.values(mediaNodes)
 
     // if selector and jaenPageId is set, filter mediaNodes by jaenPageId
     if (props.isSelector && jaenPageId) {
       return values.filter(mediaNode => mediaNode.jaenPageId === jaenPageId)
     }
 
-    return values
-  }, [mediaNodes, jaenPageId])
+    /**
+     * The app's folders bring their own nodes, read from its backend rather
+     * than from the CMS field, and they go into the same grid as the page
+     * images. A selector chooses a page image and nothing else fits in a
+     * jaen field, so it sees none of them.
+     */
+    if (props.isSelector) {
+      return values
+    }
+
+    return values.concat(...mediaFolders.map(folder => folder.nodes))
+  }, [mediaNodes, jaenPageId, mediaFolders, props.isSelector])
+
+  /**
+   * The folders' entries merged into the page tree, one branch per folder
+   * after the pages. `showInNodeGraphVisualizer` is what the tree node of
+   * the pages carries; nothing draws these in the graph, and it is false
+   * for that reason.
+   */
+  const tree = useMemo(() => {
+    if (props.isSelector || mediaFolders.length === 0) {
+      return manager.tree
+    }
+
+    const asTreeNode = (node: MediaFolderTreeNode): TreeNode => ({
+      id: node.id,
+      label: node.label,
+      children: node.children.map(asTreeNode),
+      showInNodeGraphVisualizer: false
+    })
+
+    return [
+      ...manager.tree,
+      ...mediaFolders.map(folder => ({
+        id: folder.id,
+        label: folder.label,
+        children: folder.tree.map(asTreeNode),
+        showInNodeGraphVisualizer: false
+      }))
+    ]
+  }, [manager.tree, mediaFolders, props.isSelector])
 
   return (
     <Media
       isSelector={props.isSelector}
       defaultSelected={defaultSelected}
-      tree={manager.tree}
+      tree={tree}
       mediaNodes={mediaNodesValues}
       onUpload={onUpload}
       onClone={onClone}
@@ -296,7 +405,7 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
       onUpdate={onUpdate}
       onSelect={onSelect}
       onJaenPageSelect={onJaenPageSelect}
-      sources={mediaSources}
+      folders={props.isSelector ? undefined : mediaFolders}
     />
   )
 }

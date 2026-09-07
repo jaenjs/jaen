@@ -1,27 +1,22 @@
 import {MediaNode} from 'jaen'
-import {
-  Flex,
-  Heading,
-  HStack,
-  Icon,
-  IconButton,
-  Stack,
-  Tabs
-} from '@chakra-ui/react'
+import {Flex, Heading, HStack, IconButton, Stack} from '@chakra-ui/react'
 import React, {useEffect, useMemo, useState} from 'react'
 import {useIntl} from 'react-intl'
 
 import {BsLayoutSidebarInset} from '@react-icons/all-files/bs/BsLayoutSidebarInset'
 
-import {MediaSource} from '../../../contexts/jaen-frame-menu'
+import {
+  MediaFolders,
+  MediaFolderTreeNode
+} from '../../../contexts/jaen-frame-menu'
 import {PageTree} from '../../shared/PageTree/PageTree'
 import {TreeNode} from '../Pages/components/PageVisualizer'
 import {MediaGallery} from './components/MediaGallery/MediaGallery'
 import {MediaPreview} from './components/MediaPreview/MediaPreview'
-import {MediaPreviewState} from './types'
+import {MediaFolderNode, MediaPreviewState} from './types'
 
 export interface MediaProps {
-  mediaNodes: MediaNode[]
+  mediaNodes: MediaFolderNode[]
   tree: Array<TreeNode>
 
   onUpload: (files: File[]) => Promise<void>
@@ -47,16 +42,15 @@ export interface MediaProps {
   onJaenPageSelect: (id: string | null) => void
 
   /**
-   * The sources registered on the frame's context, one tab each beside the
-   * page images. See okf/architecture/media.md, "Sources", in the taxi-app
-   * repository: the app registers Fahrzeuge and Dokumente there, and this
-   * component knows nothing about either beyond what a source declares.
+   * The folders an app registered on the frame's context, already merged
+   * into `tree` and `mediaNodes` by the container. They are handed on for
+   * two things this component decides: selecting an app folder shows every
+   * node underneath it rather than only the ones filed exactly there, and
+   * upload inside one is refused with the folder's hint. See
+   * okf/architecture/media.md, "One gallery, jaen's".
    */
-  sources?: MediaSource[]
+  folders?: MediaFolders[]
 }
-
-/** The value of the tab the page images live on. A source id may not be this. */
-export const PAGE_IMAGES_TAB = 'jaen-pages'
 
 export const Media: React.FC<MediaProps> = ({
   tree,
@@ -70,7 +64,7 @@ export const Media: React.FC<MediaProps> = ({
   onSelect,
   defaultSelected,
   onJaenPageSelect,
-  sources
+  folders
 }) => {
   const intl = useIntl()
 
@@ -127,15 +121,61 @@ export const Media: React.FC<MediaProps> = ({
     onJaenPageSelect(null)
   }
 
+  /**
+   * Every id of an app folder mapped to the ids underneath it, itself
+   * included. A page shows the media filed on that page and nothing of its
+   * children, which is jaen's own behaviour and stays; an app folder is a
+   * heading rather than a page, so "Fahrzeuge" shows every car's picture
+   * and a car's own entry only that car's.
+   */
+  const folderScopes = useMemo(() => {
+    const scopes = new Map<string, Set<string>>()
+
+    const walk = (node: MediaFolderTreeNode): Set<string> => {
+      const own = new Set<string>([node.id])
+      node.children.forEach(child => {
+        walk(child).forEach(id => own.add(id))
+      })
+      scopes.set(node.id, own)
+      return own
+    }
+
+    ;(folders ?? []).forEach(folder => {
+      const own = new Set<string>([folder.id])
+      folder.tree.forEach(child => {
+        walk(child).forEach(id => own.add(id))
+      })
+      scopes.set(folder.id, own)
+    })
+
+    return scopes
+  }, [folders])
+
+  /** The folder a selected tree entry belongs to, none for a page. */
+  const selectedFolder = useMemo(() => {
+    const selected = filters.page?.jaenPageId
+    if (!selected) return undefined
+
+    return (folders ?? []).find(folder =>
+      folderScopes.get(folder.id)?.has(selected)
+    )
+  }, [filters.page?.jaenPageId, folders, folderScopes])
+
   const filteredMediaNodes = useMemo(() => {
-    if (filters.page) {
+    const selected = filters.page?.jaenPageId
+
+    if (selected) {
+      const scope = folderScopes.get(selected)
+
       return mediaNodes.filter(node => {
-        return node.jaenPageId === filters.page?.jaenPageId
+        if (!node.jaenPageId) return false
+
+        return scope ? scope.has(node.jaenPageId) : node.jaenPageId === selected
       })
     }
 
     return mediaNodes
-  }, [filters, mediaNodes])
+  }, [filters.page?.jaenPageId, folderScopes, mediaNodes])
 
   const sortedMediaNodes = filteredMediaNodes.sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -147,16 +187,7 @@ export const Media: React.FC<MediaProps> = ({
     setSelectedMediaNode(null)
   }
 
-  /**
-   * The page images are the first tab and stay the default, so the tab is
-   * an addition for whoever registered a source and no change at all for a
-   * site that registers none. A selector (FormMediaChooser) shows no tabs:
-   * it is choosing a page image and nothing else fits in a jaen field.
-   */
-  const [tab, setTab] = useState<string>(PAGE_IMAGES_TAB)
-  const tabbedSources = isSelector ? [] : (sources ?? [])
-
-  const gallery = (
+  return (
     <Flex id="momo" pos="relative" minH="calc(100dvh - 4rem - 3rem)">
       <Stack
         as="nav"
@@ -220,6 +251,8 @@ export const Media: React.FC<MediaProps> = ({
         onUpdate={onUpdate}
         onClone={handleClone}
         onDownload={onDownload}
+        isUploadDisabled={!!selectedFolder}
+        uploadHint={selectedFolder?.uploadHint}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={toggleSidebar}
         isPreview={isPreview}
@@ -242,70 +275,5 @@ export const Media: React.FC<MediaProps> = ({
         onDownload={onDownload}
       />
     </Flex>
-  )
-
-  if (tabbedSources.length === 0) {
-    return gallery
-  }
-
-  return (
-    <Tabs.Root
-      value={tab}
-      onValueChange={event => {
-        setTab(event.value)
-      }}
-      variant="line"
-      // A source reads through its own query and shows its own skeleton, so
-      // it is mounted when its tab is opened and dropped when it is left,
-      // rather than fetching in the background behind the page images.
-      lazyMount
-      unmountOnExit
-      data-testid="media-tabs">
-      <Tabs.List
-        px="4"
-        pos="sticky"
-        top="0"
-        zIndex="3"
-        bg="bg.surface"
-        borderBottom="1px solid"
-        borderColor="border.emphasized">
-        <Tabs.Trigger
-          value={PAGE_IMAGES_TAB}
-          data-testid={`media-tab-${PAGE_IMAGES_TAB}`}>
-          {intl.formatMessage({
-            id: 'MediaTabPageImages',
-            defaultMessage: 'Page images'
-          })}
-        </Tabs.Trigger>
-
-        {tabbedSources.map(source => (
-          <Tabs.Trigger
-            key={source.id}
-            value={source.id}
-            data-testid={`media-tab-${source.id}`}>
-            {source.icon && (
-              <Icon asChild>
-                <source.icon />
-              </Icon>
-            )}
-            {source.label}
-          </Tabs.Trigger>
-        ))}
-      </Tabs.List>
-
-      <Tabs.Content value={PAGE_IMAGES_TAB} p="0">
-        {gallery}
-      </Tabs.Content>
-
-      {tabbedSources.map(source => (
-        <Tabs.Content
-          key={source.id}
-          value={source.id}
-          p="4"
-          data-testid={`media-source-${source.id}`}>
-          <source.list onOpen={source.open} onRemove={source.remove} />
-        </Tabs.Content>
-      ))}
-    </Tabs.Root>
   )
 }

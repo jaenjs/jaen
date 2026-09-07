@@ -1,43 +1,61 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-  useMemo,
-  type ComponentType
-} from 'react'
+import {createContext, useCallback, useContext, useState, useMemo} from 'react'
+
+import type {MediaNode} from 'jaen'
 
 import {NavigationGroupsProps} from '../components/JaenFrame/components/NavigationGroups'
 import {NavigationItem} from '../components/JaenFrame/components/NavigationGroups/NavigationGroups'
 import {MenuButtonProps} from '../components/shared/MenuButton'
 
 /**
- * What the Media tab hands a source's list when it renders it: the source's
- * own open and remove, so a card can call them without knowing the source
- * object. Both are optional, a source that has neither renders a read only
- * grid.
+ * A media node of an app's folder. jaen's own MediaNode is an image and
+ * says nothing about its type, so the one thing a folder adds is the
+ * gateway's `mimeType`: a node that says `application/pdf` draws the
+ * document icon and its file name in the grid and opens its url in a new
+ * tab, everything else draws its picture. See okf/architecture/media.md in
+ * the taxi-app repository, "One gallery, jaen's".
  */
-export interface MediaSourceListProps {
-  onOpen?: (itemId: string) => void | Promise<void>
-  onRemove?: (itemId: string) => void | Promise<void>
+export interface MediaFolderNode extends MediaNode {
+  /** What the storage gateway answered, `image/png`, `application/pdf`. */
+  mimeType?: string
 }
 
 /**
- * A source of the Media tab beside the page images: an id, the label of its
- * tab, an icon, and the component that renders its grid. The list renders
- * with the source's own data (a TanStack Query hook of the registering app,
- * the skeleton first and the data when it lands) and receives `open` and
- * `remove` as props, see MediaSourceListProps.
+ * Folders an app adds to the Media tab's tree, with the nodes that live in
+ * them. There is one gallery and it is jaen's: no tab, no chrome of its
+ * own, the app's folders sit in the same tree as the pages and their nodes
+ * are in the same grid as the page images.
+ *
+ * - `id` and `label` are the folder itself, "Fahrzeuge" or "Dokumente".
+ * - `tree` are its children, one per car or one per month. A child's `id`
+ *   is what the folder's nodes carry as their `jaenPageId`, which is how
+ *   selecting a child filters the grid: the gallery filters by that field
+ *   and knows nothing else about either.
+ * - `nodes` come from the registering app's own read (a TanStack Query
+ *   hook), not from the CMS field, so nothing needs a publish and every
+ *   admin sees the same list on every device.
+ * - `onDelete` removes the thing behind a node (a car's picture, a
+ *   document row). A folder without one shows a read only grid.
+ *
+ * Upload inside such a folder is refused with `uploadHint`, because a car's
+ * picture is uploaded on the car and a document on its ride.
  */
-export interface MediaSource {
+export interface MediaFolders {
   id: string
   label: string
-  icon?: ComponentType
-  list: ComponentType<MediaSourceListProps>
-  open?: (itemId: string) => void | Promise<void>
-  remove?: (itemId: string) => void | Promise<void>
-  /** Tabs are sorted by it, the page images always first. */
+  tree: MediaFolderTreeNode[]
+  nodes: MediaFolderNode[]
+  onDelete?: (nodeId: string) => void | Promise<void>
+  /** The one line the gallery shows where upload is refused. */
+  uploadHint?: string
+  /** Folders are sorted by it, the page tree always first. */
   order?: number
+}
+
+/** A folder's child, the shape the page tree already draws. */
+export interface MediaFolderTreeNode {
+  id: string
+  label: string
+  children: MediaFolderTreeNode[]
 }
 
 // Define the context type
@@ -61,16 +79,17 @@ type JaenFrameMenuContextType = {
 
   extendAddMenu: (items: MenuButtonProps['items']) => void
 
-  /** The registered sources of the Media tab, by their order. */
-  mediaSources: MediaSource[]
+  /** The registered folders of the Media tab, by their order. */
+  mediaFolders: MediaFolders[]
 
   /**
-   * Registers a source of the Media tab, the way extendMenu registers a
-   * menu entry: keyed by id, so registering the same id again replaces the
-   * source in place (a label in a new language, a new list) and nothing is
-   * duplicated. It cannot remove, an entry stays until the page reloads.
+   * Registers a set of folders of the Media tab, the way extendMenu
+   * registers a menu entry: keyed by id, so registering the same id again
+   * replaces the folders in place (a label in a new language, a fresh list
+   * of nodes) and nothing is duplicated. It cannot remove, an entry stays
+   * until the page reloads.
    */
-  registerMediaSource: (source: MediaSource) => void
+  registerMediaFolders: (folders: MediaFolders) => void
 }
 
 // Create the context
@@ -100,7 +119,7 @@ export const JaenFrameMenuProvider: React.FC<{
     items: {}
   })
 
-  const [sources, setSources] = useState<{[id: string]: MediaSource}>({})
+  const [folders, setFolders] = useState<{[id: string]: MediaFolders}>({})
 
   const extendMenu = (
     type: 'app' | 'user',
@@ -142,16 +161,16 @@ export const JaenFrameMenuProvider: React.FC<{
 
   // Stable, unlike extendMenu: a registrar may list it in an effect's
   // dependencies without registering in a loop.
-  const registerMediaSource = useCallback((source: MediaSource) => {
-    setSources(prev => ({...prev, [source.id]: source}))
+  const registerMediaFolders = useCallback((next: MediaFolders) => {
+    setFolders(prev => ({...prev, [next.id]: next}))
   }, [])
 
-  const mediaSources = useMemo(
+  const mediaFolders = useMemo(
     () =>
-      Object.values(sources).sort(
+      Object.values(folders).sort(
         (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.id.localeCompare(b.id)
       ),
-    [sources]
+    [folders]
   )
 
   const contextValue = useMemo(
@@ -160,16 +179,16 @@ export const JaenFrameMenuProvider: React.FC<{
       extendMenu,
       addMenu,
       extendAddMenu,
-      mediaSources,
-      registerMediaSource
+      mediaFolders,
+      registerMediaFolders
     }),
     [
       menu,
       extendMenu,
       addMenu,
       extendAddMenu,
-      mediaSources,
-      registerMediaSource
+      mediaFolders,
+      registerMediaFolders
     ]
   )
 

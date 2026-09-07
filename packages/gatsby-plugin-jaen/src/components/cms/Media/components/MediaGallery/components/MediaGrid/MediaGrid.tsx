@@ -2,12 +2,13 @@ import {Box, SimpleGrid} from '@chakra-ui/react'
 import {MediaNode} from 'jaen'
 import React from 'react'
 
+import {MediaFolderNode} from '../../../../types'
 import {MediaItem} from '../MediaItem/MediaItem'
 
 const MemoedMediaItem = React.memo(MediaItem)
 
 export interface MediaGridProps {
-  mediaNodes: MediaNode[]
+  mediaNodes: MediaFolderNode[]
   selectedMediaNode: MediaNode | null
 
   columnCount: number

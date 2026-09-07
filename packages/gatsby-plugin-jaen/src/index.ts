@@ -1,10 +1,11 @@
 export {useJaenFrameMenuContext} from './contexts/jaen-frame-menu'
-// The Media tab's sources: an app registers one with registerMediaSource and
-// it becomes a tab beside the page images, see okf/architecture/media.md in
-// the taxi-app repository.
+// The Media tab's folders: an app registers a set with registerMediaFolders
+// and its entries appear in jaen's own tree with its nodes in jaen's own
+// grid, see okf/architecture/media.md in the taxi-app repository.
 export type {
-  MediaSource,
-  MediaSourceListProps
+  MediaFolders,
+  MediaFolderNode,
+  MediaFolderTreeNode
 } from './contexts/jaen-frame-menu'
 // The one upload control of the estate: the Media gallery, the fleet's
 // vehicle picture and the app's invoice all render this.
