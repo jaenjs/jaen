@@ -439,22 +439,38 @@ actions of the `page`, `site` and `widget` slices into a `JaenChangeInput`
 and appends it. It only records. It never sends, so a save cannot make a
 dispatch fail.
 
-**The flusher** sends after 800 ms of quiet or at twenty queued changes,
-whichever comes first, in one `save` call carrying the batch and the known
-`headSha`. On success it drops the flushed entries, stores the new head and
-sets `saved` with the instant. On a network failure it leaves the outbox
-alone, sets `offline` and retries after 2, 5, 15 and then every 30 seconds.
-The debounced batch is the unit of a commit, not the single change: a commit
-per keystroke would be one contents API round trip per character and a
-history nobody can read.
+**The flusher** sends at twenty queued changes, or after 800 ms of quiet where
+the change is one keystroke of a stream, or at once where it is not. On success
+it drops the flushed entries, stores the new head and sets `saved` with the
+instant. On a network failure it leaves the outbox alone, sets `offline` and
+retries after 2, 5, 15 and then every 30 seconds.
 
-**The poller** asks `draft(site, sinceSha: headSha)` every five seconds
-while the CMS is mounted or `status.isEditing` is set, and stops otherwise.
-`changed: false` is the usual answer and costs almost nothing. When the head
-moved, the client dispatches `hydrateFromRemote` on the three draft slices
-with the remote document, and those reducers keep any field that has an
-entry in the outbox, so a local unsent edit is never overwritten by a poll.
-Five seconds is comfortably inside the ten second acceptance.
+The quiet time is for one case: a field written character by character, where a
+commit per keystroke would be one contents API round trip per letter and a
+history nobody can read. The MDX editor is the only family in jaen that writes
+that way, its CodeMirror state change runs `onUpdateValue` on every character.
+Nothing else does. `Field.Text` writes on blur and has already waited out its
+own 500 ms debounce before the change is even recorded, an image is picked
+once, a media node is uploaded once, a section is added or moved by a click.
+Waiting 800 ms for those is waiting for a second change that cannot arrive, so
+they flush at once, and an immediate flush is never pushed back out by a
+keystroke recorded after it.
+
+**The poller** asks `draft(site, sinceSha: headSha)` while the CMS is mounted
+or `status.isEditing` is set, and stops otherwise. `changed: false` is the
+usual answer and costs almost nothing. When the head moved, the client
+dispatches `hydrateFromRemote` on the three draft slices with the remote
+document, and those reducers keep any field that has an entry in the outbox,
+so a local unsent edit is never overwritten by a poll.
+
+The interval is adaptive: `activePollMs`, 1500 by default, while the tab is
+visible or while this browser's own save is still out or waiting in the
+outbox, and `pollMs`, 5000, while the tab is hidden. Coming back to a hidden
+tab asks at once rather than waiting the idle interval out. The interval is not
+a load question, a poll whose `sinceSha` is still the head answers out of the
+agent's KV with no body, it is the tail of the acceptance: it decides how long
+the other editor's CMS waits before it asks about a change that is already
+committed. Fast where somebody is reading the answer, slow where nobody is.
 
 Polling and not a socket: a socket on a Worker needs a Durable Object, and a
 Durable Object is a store of record on the wrong side of the no-database
@@ -473,8 +489,12 @@ agent?: {
   url: string
   /** The key of this site in the agent's SITES table, e.g. "booklimo.at" */
   site: string
-  pollMs?: number      // default 5000
-  debounceMs?: number  // default 800
+  /** The poll while the tab is hidden. */
+  pollMs?: number       // default 5000
+  /** The poll while the tab is visible or a save is out. */
+  activePollMs?: number // default 1500
+  /** The quiet a streaming field waits out before its batch is committed. */
+  debounceMs?: number   // default 800
 }
 ```
 
@@ -610,9 +630,10 @@ wrangler is node.
 6. **Which site a token may write.** The site key names the repository, the
    identity decides the permission, the organisation id discriminates. The
    audience cannot, because both sites share one Zitadel project and client.
-7. **Live updates.** A five second poll of `draft(site, sinceSha)`, not a
-   socket, because a socket needs a Durable Object and that is a store of
-   record.
+7. **Live updates.** A poll of `draft(site, sinceSha)`, not a socket, because
+   a socket needs a Durable Object and that is a store of record. The interval
+   is 1500 ms while the tab is visible and 5000 ms while it is hidden, see
+   "The budget".
 8. **Discard.** Removed from the toolbar when the agent is configured, and
    replaced by the save state. Undo is git, and the save answer carries the
    commit URL.
@@ -706,16 +727,16 @@ afterwards.
   booklimo's admin on limosen are `FORBIDDEN`, and an unlisted site key is
   `UNKNOWN_SITE`.
 
-**Why the poll is 2500 ms.** At the design's 5000 the same two measurements
+**Why the poll was 2500 ms.** At the design's 5000 the same two measurements
 were 9.0 s and 12.1 s, and the picture missed the ten second acceptance. The
 save is already committed by then, so the interval only decides how long the
 other CMS waits before it asks, and a poll whose `sinceSha` is still the head
 answers `changed: false` with no body out of the agent's KV. The remaining
 tail is the save itself: the toolbar reads "Saving" for four to six seconds,
 which is the lock, the fresh read of the head and the `PUT` of a
-`live.json` that carries a hundred and forty media nodes. Ten seconds holds,
-but not with much room, and shortening the save is where the next second
-comes from, not shortening the poll again.
+`live.json` that carries a hundred and forty media nodes. Ten seconds held,
+but not with much room. The flat 2500 was superseded the next day by the split
+interval in "The budget" below.
 
 **The identity server fell over in the middle of the run.**
 `accounts.netsnek.com` answered `Errors.Internal` and then 503 on
@@ -725,6 +746,75 @@ It recovered by itself at 22:12 UTC and the measurements above are from after
 it. Nothing in this deployment caused it and nothing in this deployment
 survives it: the agent is exactly as available as the identity server it
 introspects against.
+
+## The budget, measured 2026-09-08
+
+The ten second acceptance held on the deployed estate, but only just: the
+shared draft verifier read 9.6 and 10.1 s for a text change and 8.4 and 9.2 s
+for a picture, with one of the four already over the line. This is where those
+seconds go, what was taken out of them and what is left.
+
+**How it is measured.** Two browser contexts, both signed in as the booklimo
+human admin, both talking to the live `jaen-agent.booklimo.at`. The first
+writes a jaen text field on the home page and blurs it, or drops a four by four
+PNG into the media library; the clock starts on that gesture and stops when the
+second context's own draft carries the change. The before numbers are read on
+the deployed booklimo.at, the after numbers on a local production build of the
+same site against the same live agent, because reads and saves on a throwaway
+branch are not possible: the agent commits to `main`. The field is set back to
+the value it had afterwards, one commit each way, both by the human admin, and
+the test picture is deleted from the library again.
+
+**Where the seconds go.**
+
+| leg                      | before         | after                      |
+| ------------------------ | -------------- | -------------------------- |
+| the field's own debounce | 500 ms on blur | unchanged                  |
+| the save debounce        | 800 ms, always | 0 unless the field streams |
+| the save round trip      | 4 to 6 s       | unchanged                  |
+| the other editor's poll  | 0 to 2500 ms   | 0 to 1500 ms               |
+
+**The numbers.** Measured as above, one run each.
+
+| what                                    | before | after |
+| --------------------------------------- | ------ | ----- |
+| a text change reaches the second editor | 9.3 s  | 6.9 s |
+| a picture reaches the second editor     | 9.3 s  | 7.3 s |
+| a picture in the uploader's own library | 1.4 s  | 1.4 s |
+
+**What was taken out.** Two waits that bought nothing. The save debounce now
+applies to a streaming field only, because `Field.Text` writes once on blur
+after its own 500 ms and a picture is uploaded once, so the 800 ms was spent
+waiting for a second change that could not arrive. And the poll became 1500 ms
+while the tab is visible instead of a flat 2500, which halves the average wait
+of the editor who is actually looking, while a hidden tab drops to 5000 and
+costs the agent less than it did before.
+
+**What is left, and it is most of it.** The save round trip is four to six
+seconds and none of it is the client's: the agent takes the site's lock, reads
+`jaen-data/live.json` at the head, applies the change and `PUT`s a file that
+carries a hundred and forty media nodes through the contents API. That is where
+the next three seconds are, not in any interval on this side. Nothing above
+shortens it and nothing above needs to: with the two waits gone the acceptance
+has three seconds of room instead of half of one.
+
+**The gallery, in the same run.** Three defects the verifier found, on the
+local build against the live agent:
+
+- The grid is newest first. `Object.values` of the media field answered
+  whatever order the keys had and the uploader appended, so a picture just
+  uploaded landed at the bottom and the second editor never saw it at the top
+  either. After the fix the just uploaded file is the first item in both.
+- Inside a car's folder the cover is first. The nodes arrive from the app in
+  position order and the gallery no longer sorts them by date: a car with three
+  pictures reads "Bild 1, Bild 2, Bild 3" inside its folder and "Bild 3, Bild 2,
+  Bild 1" in the undivided grid, which is the date order there.
+- Load more fires. It hung off a scroll listener on `window` measuring
+  `#last-media-item`, an id the preview also uses, so it was ambiguous and it
+  saw nothing wherever an ancestor rather than the window scrolled. An
+  IntersectionObserver on a sentinel at the end of the grid answers whichever
+  ancestor scrolls: at 1440 by 900 and at 390 by 780 the grid grew 23 to 53 to
+  143 nodes, the whole library.
 
 ## Acceptance
 
