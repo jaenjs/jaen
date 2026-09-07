@@ -188,7 +188,14 @@ export const Media: React.FC<MediaProps> = ({
   }
 
   return (
-    <Flex id="momo" pos="relative" minH="calc(100dvh - 4rem - 3rem)">
+    <Flex
+      id="momo"
+      pos="relative"
+      minH="calc(100dvh - 4rem - 3rem)"
+      // How many folders an app registered, which is what a check reads to
+      // tell "no folder registered" from "registered and not drawn".
+      data-testid="media-gallery"
+      data-folder-count={(folders ?? []).length}>
       <Stack
         as="nav"
         h="calc(100dvh - 4rem)"
