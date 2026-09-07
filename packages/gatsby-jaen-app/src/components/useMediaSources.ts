@@ -45,8 +45,8 @@ const DOCUMENTS_ORDER = 20
 /**
  * Where a car is edited. The fleet screen keeps its vehicle form as a
  * dialog and has no route of its own for one car, so the source lands on
- * the fleet with the car named in the query string: the screen shows the
- * card today and can open the form on it the moment it reads the argument.
+ * the fleet with the car named in the query string, and the screen opens
+ * the form on that car once the fleet has landed (FleetView.tsx).
  */
 export const fleetPathFor = (carId: string) =>
   `/app/fleet/?car=${encodeURIComponent(carId)}`

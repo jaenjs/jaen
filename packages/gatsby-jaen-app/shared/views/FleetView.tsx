@@ -154,6 +154,34 @@ function FleetCard({car, driver, stripe, t, onOpen}: FleetCardProps) {
   )
 }
 
+/**
+ * The car the Media tab's Fahrzeuge source asked for. Its open lands on
+ * `/app/fleet/?car=<id>` (media.md, "Sources", and src/components/
+ * useMediaSources.ts), and the screen opens the vehicle form on that car.
+ */
+const readAskedCar = (): string | undefined => {
+  try {
+    return new URLSearchParams(window.location.search).get('car') ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Takes the argument out of the address once the form is open, so closing
+ * the form leaves the plain list and a reload does not open it again.
+ */
+const forgetAskedCar = () => {
+  try {
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has('car')) return
+    url.searchParams.delete('car')
+    window.history.replaceState(window.history.state, '', url.toString())
+  } catch {
+    /* no address to write, the form still opens */
+  }
+}
+
 export function FleetView() {
   const caller = useCaller()
   const code = useI18nCode()
@@ -166,6 +194,21 @@ export function FleetView() {
     open: false
   })
   const [assigning, setAssigning] = useState<string | null>(null)
+
+  // The car the address asked for, read once on mount. The fleet lands a
+  // moment later, so the form is opened by the effect below and not here.
+  const [asked, setAsked] = useState<string | undefined>(() =>
+    typeof window !== 'undefined' ? readAskedCar() : undefined
+  )
+
+  useEffect(() => {
+    if (!asked || isLoading) return
+    const car = cars.find(c => c.id === asked)
+    setAsked(undefined)
+    forgetAskedCar()
+    // An id that names no car of this brand leaves the list as it is.
+    if (car) setDialog({open: true, car})
+  }, [asked, isLoading, cars])
 
   const driverById = new Map(drivers.map(d => [d.id, d]))
   const nameFor = (car: FleetCar) => {
