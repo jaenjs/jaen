@@ -11,6 +11,16 @@ export interface JaenSourceOptions extends PluginOptions {
   i18n?: JaenI18nOptions
   /** Absolute site origin, used by the sitemap and hreflang emission. */
   siteUrl?: string
+  /**
+   * Origin of the storage gateway holding this site's media, no trailing path.
+   *
+   * The build fetches every media file the jaen data names from here with
+   * OSG_TOKEN and serves the files from the site's own output, so the
+   * published site never asks the gateway for anything. Forwarded by
+   * gatsby-plugin-jaen from its own `storageUrl` option; the two are the same
+   * value and the client half of it is the `__JAEN_STORAGE_URL__` define.
+   */
+  storageUrl?: string
 }
 
 /** Narrow raw plugin options to the i18n config, if one was provided. */
@@ -25,6 +35,15 @@ export const i18nFromPluginOptions = (
   }
 
   return i18n
+}
+
+/** The gateway origin from plugin options, normalized. */
+export const storageUrlFromPluginOptions = (
+  pluginOptions: unknown
+): string | undefined => {
+  const options = pluginOptions as Partial<JaenSourceOptions> | undefined
+
+  return options?.storageUrl?.replace(/\/+$/, '')
 }
 
 /** The site origin from plugin options or environment, normalized. */

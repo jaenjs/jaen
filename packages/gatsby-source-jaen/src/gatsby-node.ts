@@ -24,6 +24,7 @@ import {onCreateWebpackConfig as onCreateWebpackConfigJaenTemplate} from './on-c
 import {onCreateWebpackConfig as onCreateWebpackConfigJaenData} from './on-create-webpack-config/jaen-data'
 
 import {onPostBuild as onPostBuildSitemap} from './on-post-build/sitemap'
+import {onPostBuild as onPostBuildOsgMedia} from './on-post-build/osg-media'
 
 import {
   i18nFromPluginOptions,
@@ -35,6 +36,7 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
 }) => {
   return Joi.object({
     siteUrl: Joi.string().uri(),
+    storageUrl: Joi.string().uri(),
     i18n: Joi.object({
       defaultLocale: Joi.string().required(),
       locales: Joi.array()
@@ -65,8 +67,11 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
   })
 }
 
-export const sourceNodes: GatsbyNode['sourceNodes'] = async args => {
-  await sourceNodesJaenData(args)
+export const sourceNodes: GatsbyNode['sourceNodes'] = async (
+  args,
+  pluginOptions
+) => {
+  await sourceNodesJaenData(args, pluginOptions)
 
   // Must be called after sourceJaenNodes
   await sourceNodesJaenPages(args)
@@ -127,4 +132,6 @@ export const onPostBuild: GatsbyNode['onPostBuild'] = async (
     siteUrl: siteUrlFromPluginOptions(pluginOptions),
     i18n: i18nFromPluginOptions(pluginOptions)
   })
+
+  await onPostBuildOsgMedia(args)
 }

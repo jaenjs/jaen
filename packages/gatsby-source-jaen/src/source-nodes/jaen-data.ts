@@ -6,6 +6,16 @@ import {SourceNodesArgs} from 'gatsby'
 import {deepmergeArrayIdMerge} from '../utils/deepmerge'
 
 import {fetchWithCache} from '../utils/fetch-with-cache'
+import {
+  fetchGatewayFiles,
+  gatewayFileId,
+  osgAuthHeaders,
+  rewriteGatewayUrls
+} from '../utils/osg-media'
+import {
+  siteUrlFromPluginOptions,
+  storageUrlFromPluginOptions
+} from '../utils/plugin-options'
 
 export type JaenData = {
   pages?: JaenPage[]
@@ -44,9 +54,15 @@ const normalizeCheckboxBooleans = (data: JaenData | undefined): void => {
   walkPages(data?.pages)
 }
 
-export const sourceNodes = async (args: SourceNodesArgs) => {
+export const sourceNodes = async (
+  args: SourceNodesArgs,
+  pluginOptions?: unknown
+) => {
   const {actions, createNodeId, createContentDigest, reporter, cache} = args
   const {createNode} = actions
+
+  const storageUrl = storageUrlFromPluginOptions(pluginOptions)
+  const siteUrl = siteUrlFromPluginOptions(pluginOptions)
 
   // Log a message using the reporter
   reporter.info('Fetching and sourcing nodes...')
@@ -86,11 +102,18 @@ export const sourceNodes = async (args: SourceNodesArgs) => {
       }
 
       if (link.startsWith('http://') || link.startsWith('https://')) {
+        // A patch is a gateway file like any other and is owned by this
+        // site's organisation, so the machine token goes on the request.
         response = await fetchWithCache<{
           createdAt: Date
           message: string
           data: JaenData
-        }>(link, {cache})
+        }>(link, {
+          cache,
+          ...(gatewayFileId(link, storageUrl)
+            ? {headers: osgAuthHeaders()}
+            : {})
+        })
       } else {
         // Local patch file: the line is a path relative to the jaen-data
         // directory. Reject anything resolving outside of it (path
@@ -185,6 +208,40 @@ export const sourceNodes = async (args: SourceNodesArgs) => {
             }
           }
         })
+      }
+    }
+
+    /**
+     * Every gateway file this site names is downloaded here, with OSG_TOKEN,
+     * and every gateway URL in the data is rewritten onto this site's own
+     * origin. After this the built site has no runtime relationship with the
+     * gateway at all: a visitor never asks it for anything and it never
+     * serves a visitor. The bytes go to `public/osg/` in onPostBuild, which
+     * is the first moment `public` is safe to write.
+     */
+    const mediaFiles = await fetchGatewayFiles({
+      data: jaenData,
+      cacheDir: path.join(process.cwd(), '.cache'),
+      storageUrl,
+      reporter
+    })
+
+    if (mediaFiles.length > 0) {
+      const rewritten = rewriteGatewayUrls(jaenData, {storageUrl, siteUrl})
+
+      reporter.info(
+        `jaen media: ${rewritten} gateway URL(s) rewritten onto ${
+          siteUrl || 'this site'
+        }`
+      )
+
+      if (!siteUrl) {
+        // Only jaenPageMetadata.image needs the absolute form, and only
+        // crawlers read it, so this is a warning rather than a stop.
+        reporter.warn(
+          'jaen media: no siteUrl, so page metadata images stay relative and ' +
+            'OpenGraph crawlers will not resolve them'
+        )
       }
     }
 

@@ -14,13 +14,17 @@ interface JaenThemeI18nOptions {
 interface JaenThemeOptions {
   i18n?: JaenThemeI18nOptions
   siteUrl?: string
+  /** Origin of the storage gateway holding this site's media. */
+  storageUrl?: string
 }
 
 /**
- * Theme config. i18n and siteUrl options are forwarded to gatsby-source-jaen,
- * which owns localized page generation and the hreflang-aware sitemap.xml /
- * robots.txt emission (the former gatsby-plugin-sitemap had neither i18n
- * awareness nor system-route knowledge and is gone).
+ * Theme config. i18n, siteUrl and storageUrl are forwarded to
+ * gatsby-source-jaen, which owns localized page generation, the hreflang-aware
+ * sitemap.xml / robots.txt emission (the former gatsby-plugin-sitemap had
+ * neither i18n awareness nor system-route knowledge and is gone) and, since
+ * the storage gateway went private, fetching this site's media at build time
+ * and serving it from the site's own origin.
  */
 const Config = (themeOptions: JaenThemeOptions): GatsbyConfig => ({
   jsxRuntime: 'automatic',
@@ -33,7 +37,13 @@ const Config = (themeOptions: JaenThemeOptions): GatsbyConfig => ({
       resolve: `gatsby-source-jaen`,
       options: {
         ...(themeOptions.i18n ? {i18n: themeOptions.i18n} : {}),
-        ...(themeOptions.siteUrl ? {siteUrl: themeOptions.siteUrl} : {})
+        ...(themeOptions.siteUrl ? {siteUrl: themeOptions.siteUrl} : {}),
+        // The gateway the build fetches this site's media from, with
+        // OSG_TOKEN. One option for both halves: the client reads the same
+        // value as the __JAEN_STORAGE_URL__ define.
+        ...(themeOptions.storageUrl
+          ? {storageUrl: themeOptions.storageUrl}
+          : {})
       }
     },
     {

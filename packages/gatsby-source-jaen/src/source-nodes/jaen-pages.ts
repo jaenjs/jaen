@@ -1,7 +1,12 @@
 import {MediaNode} from 'jaen'
 import {Node, SourceNodesArgs} from 'gatsby'
-import {createRemoteFileNode} from 'gatsby-source-filesystem'
+import {
+  createFileNodeFromBuffer,
+  createRemoteFileNode
+} from 'gatsby-source-filesystem'
+import {promises as fsp} from 'fs'
 import {getLastPartOfId} from '../utils/get-last-part-of-id'
+import {osgAuthHeaders, osgFileFor} from '../utils/osg-media'
 
 import {JaenData} from './jaen-data'
 
@@ -58,12 +63,38 @@ The existing templates are: ${jaenTemplates
       } = page.jaenFields?.['IMA:MEDIA_NODES']?.['media_nodes']?.value || {}
 
       for (const [mediaId, node] of Object.entries(nodes)) {
-        const fileNode = await createRemoteFileNode({
-          url: node.url,
-          parentNodeId: node.id,
-          createNode,
-          ...args
-        })
+        /**
+         * The bytes are already here.
+         *
+         * jaen-data downloaded every gateway file this site names, with the
+         * machine token, and rewrote `node.url` onto this site's own origin,
+         * so `createRemoteFileNode` could neither fetch that path nor carry a
+         * credential if it could. The file node is built from the cached
+         * bytes instead, which is also one download rather than two. Anything
+         * that is not a gateway file (an image on a foreign host) still goes
+         * the remote way, with the header, in case that host is a gateway
+         * this build does not know.
+         */
+        const osgFile = osgFileFor(node.url)
+
+        const fileNode = osgFile
+          ? await createFileNodeFromBuffer({
+              buffer: await fsp.readFile(osgFile.cachePath),
+              name: osgFile.fileId
+                .replace(/[^A-Za-z0-9._-]/g, '_')
+                .slice(0, 100),
+              ext: osgFile.ext,
+              parentNodeId: node.id,
+              createNode,
+              ...args
+            })
+          : await createRemoteFileNode({
+              url: node.url,
+              httpHeaders: osgAuthHeaders(),
+              parentNodeId: node.id,
+              createNode,
+              ...args
+            })
 
         const data = {
           id: mediaId,
