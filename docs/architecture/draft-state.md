@@ -595,6 +595,21 @@ wrangler is node.
 Out of scope on purpose: per field locking, presence indicators, a comment
 or review step, and any branch but the site's own build branch.
 
+## Identity, the one way, owner 2026-09-07
+
+Owner: "ich hoffe du machst die Authentifizierung und Autorisierung so wie
+im jaen agent und zitadel-gql und kochst fürs osg nicht eine eigene Suppe
+mit dem Authentication-Plugin." Every jaen service (the agent, the storage
+gateway, the identity facade) authenticates and authorises the same way:
+the module of zitadel-gql (`apps/graphql/src/auth.ts`, its `requireAuth`
+replacing Pylon's, the introspection against Zitadel) and of the taxi
+pylon (`pylon/src/auth`, the introspection through the organisation's
+facade with the org manager token, the sixty second cache, `requireRole`
+with the organisation's role keys). That module is copied, not
+reinvented: the same token, the same introspection, the same cache, the
+same errors, the same role names, no scheme of a service's own and no
+use of Pylon's authentication plugin in a way the others do not share.
+
 ## Acceptance
 
 - Two browser contexts signed in as two admins of booklimo.at: a text

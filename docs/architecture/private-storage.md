@@ -55,6 +55,21 @@ by the gateway itself, so the store stays one.
 browser's push service without a token, so the pylon puts a signed link
 there too.
 
+## Identity, the one way, owner 2026-09-07
+
+Owner: "ich hoffe du machst die Authentifizierung und Autorisierung so wie
+im jaen agent und zitadel-gql und kochst fürs osg nicht eine eigene Suppe
+mit dem Authentication-Plugin." Every jaen service (the agent, the storage
+gateway, the identity facade) authenticates and authorises the same way:
+the module of zitadel-gql (`apps/graphql/src/auth.ts`, its `requireAuth`
+replacing Pylon's, the introspection against Zitadel) and of the taxi
+pylon (`pylon/src/auth`, the introspection through the organisation's
+facade with the org manager token, the sixty second cache, `requireRole`
+with the organisation's role keys). That module is copied, not
+reinvented: the same token, the same introspection, the same cache, the
+same errors, the same role names, no scheme of a service's own and no
+use of Pylon's authentication plugin in a way the others do not share.
+
 ## Acceptance
 
 - An anonymous `GET /storage/:id` on osg.netsnek.com answers 401, the
