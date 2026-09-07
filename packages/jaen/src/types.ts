@@ -7,6 +7,29 @@ declare global {
   }
 
   var __JAEN_PYLON_URL__: string | undefined
+
+  /**
+   * The jaen agent, the one service that holds the shared draft. Undefined on
+   * a site that has not been rebuilt with the `agent` plugin option, and every
+   * part of the shared draft is switched off when it is: the CMS keeps its
+   * draft in `localStorage` alone, exactly as before.
+   *
+   * `site` is the site's key in the agent's SITES table, which names the
+   * repository. It is not derived from the audience, because two sites can
+   * sign in against one Zitadel project and then have the same one.
+   */
+  var __JAEN_AGENT__:
+    | {
+        /** GraphQL endpoint, e.g. https://agent.jaen.netsnek.com/graphql */
+        url: string
+        /** The site's key in the agent's SITES table, e.g. "booklimo.at" */
+        site: string
+        /** Poll interval of the shared draft. Default 5000. */
+        pollMs?: number
+        /** Quiet time before a batch is committed. Default 800. */
+        debounceMs?: number
+      }
+    | undefined
   /**
    * Origin of the storage gateway that holds CMS media. Undefined falls back
    * to the public osg.snek.at, which is what every site used before this was

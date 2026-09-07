@@ -19,6 +19,13 @@ const siteSlice = createSlice({
         ...action.payload
       }
     },
+    /** The remote draft, see `page.hydrateFromRemote`. */
+    hydrateFromRemote: (
+      state,
+      action: PayloadAction<IJaenSiteState['siteMetadata']>
+    ) => {
+      state.siteMetadata = action.payload
+    },
     discardAllChanges: state => {
       state.siteMetadata = {}
     }

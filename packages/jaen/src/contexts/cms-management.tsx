@@ -1,9 +1,17 @@
 // CMSManagementContext.tsx
 import deepmerge from 'deepmerge'
-import {createContext, ReactNode, useCallback, useContext, useMemo} from 'react'
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo
+} from 'react'
 import {FaRocket} from '@react-icons/all-files/fa/FaRocket'
 
 import {
+  jaenAgent,
   resetState,
   RootState,
   store,
@@ -11,6 +19,9 @@ import {
   useAppSelector,
   withRedux
 } from '../redux'
+import {actions as remoteActions} from '../redux/slices/remote'
+import {publishSite} from '../clients/agent'
+import {useSharedDraft, SharedDraftState} from '../hooks/use-shared-draft'
 import {actions as pageActions} from '../redux/slices/page'
 import * as statusActions from '../redux/slices/status'
 import {actions as siteActions} from '../redux/slices/site'
@@ -67,6 +78,12 @@ interface CMSManagementContextData {
     discard: () => void
     publish: () => void
   }
+
+  /**
+   * The shared draft. `enabled` is false on a site built without the `agent`
+   * plugin option, and the CMS keeps its old three-verb toolbar then.
+   */
+  sharedDraft: SharedDraftState
 }
 
 // Create the initial context
@@ -99,6 +116,12 @@ const CMSManagementContext = createContext<CMSManagementContextData>({
     import: () => Promise.resolve(),
     discard: () => {},
     publish: () => {}
+  },
+  sharedDraft: {
+    enabled: false,
+    saveState: 'idle',
+    pending: 0,
+    authors: {}
   }
 })
 
@@ -117,6 +140,23 @@ export const CMSManagementProvider = withRedux(
     const dispatch = useAppDispatch()
 
     const notification = useNotificationsContext()
+
+    const sharedDraft = useSharedDraft()
+
+    /**
+     * The CMS is open. The poller runs while this provider is mounted or while
+     * edit mode is on, and stops otherwise, so a visitor who never opens the
+     * CMS never asks the agent anything.
+     */
+    useEffect(() => {
+      if (!jaenAgent) return
+
+      dispatch(remoteActions.setActive(true))
+
+      return () => {
+        dispatch(remoteActions.setActive(false))
+      }
+    }, [dispatch])
 
     const siteMetadata = useSiteMetadataContext()
 
@@ -555,6 +595,58 @@ export const CMSManagementProvider = withRedux(
     }, [setIsEditing, setIsPublishing])
 
     const publishDraft = useCallback(async () => {
+      // With the agent configured, publish means build now and nothing else.
+      // Everything the editors wrote was committed at save time, so there is
+      // no commit message to ask for: asking would be asking about a commit
+      // that no longer exists.
+      if (jaenAgent) {
+        try {
+          const confirmed = await notification.confirm({
+            icon: FaRocket,
+            title: 'Publish',
+            message:
+              'Start a build from the current state of the repository? Every change is already committed.',
+            confirmText: 'Publish',
+            cancelText: 'Cancel'
+          })
+
+          if (!confirmed) return
+
+          const answer = await publishSite(jaenAgent)
+
+          if (answer.queued) {
+            setIsPublishing(true)
+
+            notification.toast({
+              status: 'success',
+              title: 'Publish',
+              description: answer.runUrl
+                ? `The build was started: ${answer.runUrl}`
+                : 'The build was started'
+            })
+          } else {
+            // The agent reports what GitHub answered and does not pretend a
+            // build started. Both limousine sites are built by hand today.
+            notification.toast({
+              status: 'info',
+              title: 'Publish',
+              description:
+                answer.reason ||
+                'This site has no automatic build; the operator builds it.'
+            })
+          }
+        } catch (error) {
+          console.error('An error occurred:', error)
+          notification.toast({
+            status: 'error',
+            title: 'Publish',
+            description: (error as Error).message
+          })
+        }
+
+        return
+      }
+
       try {
         const state = store.getState() as RootState
 
@@ -661,7 +753,8 @@ export const CMSManagementProvider = withRedux(
             import: importDraft,
             discard: discardDraft,
             publish: publishDraft
-          }
+          },
+          sharedDraft
         }}>
         {children}
       </CMSManagementContext.Provider>

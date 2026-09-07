@@ -67,7 +67,27 @@ export * from './utils/open-storage-gateway'
 export {useDynamicPaths} from './hooks/use-dynamic-paths'
 export {useMediaModal, MediaModalProvider} from './contexts/media-modal'
 
-export {withRedux, useAppSelector} from './redux'
+export {withRedux, useAppSelector, jaenAgent} from './redux'
+export {useSharedDraft} from './hooks/use-shared-draft'
+export type {SharedDraftState} from './hooks/use-shared-draft'
+export type {
+  JaenChange,
+  JaenChangeKind,
+  JaenAuthor,
+  JaenAuthors,
+  JaenDraftData,
+  JaenDraftState,
+  FieldOverwrite
+} from './redux/apply-change'
+export {
+  applyChange,
+  applyChanges,
+  changeKey,
+  draftDataToState,
+  draftStateToData,
+  emptyDraftState,
+  overwrittenFields
+} from './redux/apply-change'
 
 export {
   SiteMetadataProvider,

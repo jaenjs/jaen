@@ -1,4 +1,5 @@
 import {JaenPage, IJaenPopup, ISite, Widget} from '../types'
+import {FieldOverwrite, JaenAuthors, JaenChange} from './apply-change'
 
 export interface IError {
   code: string
@@ -37,10 +38,35 @@ export interface IWidgetState {
   nodes: Array<Widget>
 }
 
+/**
+ * The shared draft's client side. `outbox` is the offline queue: it lives in
+ * the store rather than in a module so `persist-state` writes it to
+ * localStorage on every action for free, and the flusher drains it when a call
+ * succeeds again.
+ */
+export interface IRemoteState {
+  /** The CMS is mounted. Drives the poller together with `status.isEditing`. */
+  active: boolean
+  outbox: Array<{id: number; change: JaenChange}>
+  nextId: number
+  /** The branch head the client last saw, sent as `baseSha` and `sinceSha`. */
+  headSha?: string
+  blobSha?: string
+  saveState: 'idle' | 'saving' | 'saved' | 'offline' | 'error'
+  lastSavedAt?: string
+  lastCommitUrl?: string
+  lastError?: string
+  /** fieldKey -> who last wrote it, from the agent. */
+  authors: JaenAuthors
+  /** Fields the last save took from somebody else, for the CMS to report. */
+  lastOverwrote?: FieldOverwrite[]
+}
+
 export interface IJaenState {
   site: IJaenSiteState
   page: IPageState
   status: IStatusState
   popup: IPopupState
   widget: IWidgetState
+  remote: IRemoteState
 }

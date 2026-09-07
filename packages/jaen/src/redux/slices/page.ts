@@ -420,6 +420,26 @@ const pagesSlice = createSlice({
       return state
     },
 
+    /**
+     * The remote draft, from a poll of the agent that answered a head this
+     * browser did not have. The nodes are replaced wholesale rather than
+     * merged, because the caller has already folded the outbox back onto the
+     * remote document through `applyChanges`, so what arrives here is the
+     * remote state plus this browser's unsent edits and merging it a second
+     * time would resurrect what another editor deleted.
+     *
+     * `registeredPageFields` and `lastAddedNodeId` are this session's own and
+     * are left alone.
+     */
+    hydrateFromRemote(
+      state,
+      action: PayloadAction<{nodes: IPageState['pages']['nodes']}>
+    ) {
+      state.nodes = action.payload.nodes
+
+      return state
+    },
+
     discardAllChanges(state) {
       state.registeredPageFields = {}
       state.nodes = {}

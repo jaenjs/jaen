@@ -48,11 +48,19 @@ const widgetsSlice = createSlice({
 
       state.nodes.push(node)
     },
+    /** The remote draft, see `page.hydrateFromRemote`. */
+    hydrateFromRemote: (
+      state,
+      action: PayloadAction<IWidgetState['nodes']>
+    ) => {
+      state.nodes = action.payload
+    },
     discardAllChanges: state => {
       state.nodes = []
     }
   }
 })
 
-export const {writeData, discardAllChanges} = widgetsSlice.actions
+export const {writeData, hydrateFromRemote, discardAllChanges} =
+  widgetsSlice.actions
 export default widgetsSlice.reducer
