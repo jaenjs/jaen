@@ -741,25 +741,25 @@ which has no delete.
 the ownership store decided without a network. `npm run typecheck` clean.
 `python3 tests/live.py`, 22 of 22 over HTTP:
 
-| what                                                    | answer                                                      |
-| ------------------------------------------------------- | ----------------------------------------------------------- |
-| `/ping` with no token                                   | 200                                                         |
-| a preflight of `/storage/*`                             | 204 with `Access-Control-Allow-Headers: authorization`      |
-| an anonymous upload                                     | `AUTH_REQUIRED`                                             |
-| an upload by a `krc:driver`                             | `FORBIDDEN`, and not `AUTH_REQUIRED`                        |
-| an upload by the booklimo admin                         | 314 ms, stamped `356348844407002709`, source `upload`       |
-| that file read by its own organisation                  | 200, the same bytes, `Cache-Control: private, max-age=60`   |
-| the same read by a `krc:driver` holding no storage role | 200                                                         |
-| the same read anonymously                               | 401 `AUTH_REQUIRED`                                         |
-| a file of limosen read by the booklimo admin            | 403 `FORBIDDEN`, not 401 and not 404                        |
-| an id nothing ever stored                               | 404 from the driver, the gate having passed it              |
-| a link minted by a `krc:driver`                         | `FORBIDDEN`                                                 |
-| a link minted by the admin, 900 seconds                 | opens with no token at all, `public, max-age=900`           |
-| the last four characters of that signature changed      | 403                                                         |
-| a link minted for one second, read two seconds later    | 410 `LINK_EXPIRED`                                          |
-| `storedFile` anonymous, then with the token             | `AUTH_REQUIRED`, then the file                              |
-| `gitStore` with `jaen:admin`                            | `FORBIDDEN`, because it is `storage:admin` and nothing less |
-| a second read within the minute                         | 9 ms, so the remembered token costs no round trip           |
+| what | answer |
+| --- | --- |
+| `/ping` with no token | 200 |
+| a preflight of `/storage/*` | 204 with `Access-Control-Allow-Headers: authorization` |
+| an anonymous upload | `AUTH_REQUIRED` |
+| an upload by a `krc:driver` | `FORBIDDEN`, and not `AUTH_REQUIRED` |
+| an upload by the booklimo admin | 314 ms, stamped `356348844407002709`, source `upload` |
+| that file read by its own organisation | 200, the same bytes, `Cache-Control: private, max-age=60` |
+| the same read by a `krc:driver` holding no storage role | 200 |
+| the same read anonymously | 401 `AUTH_REQUIRED` |
+| a file of limosen read by the booklimo admin | 403 `FORBIDDEN`, not 401 and not 404 |
+| an id nothing ever stored | 404 from the driver, the gate having passed it |
+| a link minted by a `krc:driver` | `FORBIDDEN` |
+| a link minted by the admin, 900 seconds | opens with no token at all, `public, max-age=900` |
+| the last four characters of that signature changed | 403 |
+| a link minted for one second, read two seconds later | 410 `LINK_EXPIRED` |
+| `storedFile` anonymous, then with the token | `AUTH_REQUIRED`, then the file |
+| `gitStore` with `jaen:admin` | `FORBIDDEN`, because it is `storage:admin` and nothing less |
+| a second read within the minute | 9 ms, so the remembered token costs no round trip |
 
 And the credential the taxi Worker will actually carry, `osg-krc`, a machine
 user holding `storage:read`, `storage:write` and `storage:sign` and no
