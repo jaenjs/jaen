@@ -63,12 +63,25 @@ mit dem Authentication-Plugin." Every jaen service (the agent, the storage
 gateway, the identity facade) authenticates and authorises the same way:
 the module of zitadel-gql (`apps/graphql/src/auth.ts`, its `requireAuth`
 replacing Pylon's, the introspection against Zitadel) and of the taxi
-pylon (`pylon/src/auth`, the introspection through the organisation's
-facade with the org manager token, the sixty second cache, `requireRole`
-with the organisation's role keys). That module is copied, not
-reinvented: the same token, the same introspection, the same cache, the
-same errors, the same role names, no scheme of a service's own and no
-use of Pylon's authentication plugin in a way the others do not share.
+pylon (`pylon/src/auth`, the sixty second cache, `requireRole` with the
+organisation's role keys). That module is copied, not reinvented: the
+same token, the same introspection, the same cache, the same errors, the
+same role names, no scheme of a service's own and no use of Pylon's
+authentication plugin in a way the others do not share.
+
+**Corrected 2026-09-07 from the two codebases, because the sentence above
+first said the taxi pylon introspects "through the organisation's facade
+with the org manager token", and it does not.** Read from
+`pylon/wrangler.toml` and `pylon/wrangler-booklimo.toml`: both Workers set
+`AUTH_ISSUER = "https://accounts.netsnek.com"` and introspect the caller's
+token there, which is also `zitadel-gql`'s issuer. The organisation's
+facade (`IAM_API_URL`, `idm.limosen.at` and `idm.booklimo.at`) and
+`ORG_USER_MANAGER_TOKEN` are the pylon's **directory** path, how it lists
+accounts and their grants, and never how it decides what a caller's own
+token is. So one introspection endpoint under one application key is what
+all three services share, and the design section below agrees with the
+rule rather than departing from it. The facade keeps its job, which is
+listing accounts fast for the pylons.
 
 ## Acceptance
 
@@ -568,3 +581,60 @@ into refusals. That is why `CLAIM_ALL` is its own step at the end and not the
 same switch as read enforcement, and why step 1 logs every anonymous read for
 a while before anything is refused: the log is the only census this store can
 be given.
+
+### Built on the taxi platform's side, 2026-09-07 late
+
+The gateway's own half is this repository's branch `private-storage` of
+`jaenjs/open-storage-gateway`. What the taxi platform built against it is
+written in `okf/architecture/media.md` of `netsnek/taxi-app`, and three of the
+things it cost belong here, because they are true for every jaen service that
+talks to this gateway and not only for that platform.
+
+**The mutation argument is `Number`, not `Int`.** Pylon derives the gateway's
+schema from its TypeScript and a `number` argument becomes the scalar
+`Number`, so a document that declares `mutation SignedUrl($id: String!,
+$expiresIn: Int)` is refused with `GRAPHQL_VALIDATION_FAILED` before the
+resolver is reached and no link is minted at all. Read off the gateway's own
+`schema.graphql`. The same holds for `upload`, whose `driver` is `String` and
+whose `file` is `File!`, which is why jaen builds that body by hand.
+
+**A role that exists on the CMS project is still not grantable in another
+organisation.** The four roles `storage:read`, `storage:write`,
+`storage:sign` and `storage:admin` had to be added to project
+`268283277977065078` with the system user `claude-admin` (`AddProjectRole` on
+`zitadel.project.v2beta.ProjectService`, the recipe of the memory note
+`netsnek-zitadel-admin`), because an organisation manager token cannot add a
+project role. And after that `CreateAuthorization` still answered
+`Errors.Project.Role.NotFound (COMMAND-mm9F4)`, which reads like a missing
+role and is a missing grant: the CMS project is granted to each organisation
+with an explicit list of role keys, so `UpdateProjectGrant` has to carry the
+**whole** new `roleKeys` list, it replaces rather than adds. Every jaen site's
+organisation that is to hold a storage credential goes through both steps.
+
+**A consumer decides how to fetch, it does not guess.** `storageFileId` and
+`storageBearer` are exported beside `fetchFile` and `useFileObjectUrl` for
+exactly that: a source is fetched with the reader's own token when it is a
+gateway file **and** there is a session, and drawn as it stands otherwise,
+which covers a signed link on a public page and a path a build wrote. The
+taxi app has one component for the whole rule
+(`app/shared/components/StorageImage.tsx`, mirrored into
+`packages/gatsby-jaen-app`), and a picture whose bytes have not arrived yet
+draws a placeholder rather than the gateway URL, because painting the URL for
+one frame is a 401 and a broken image in the layout.
+
+**Measured twice**, `tests/44-private-storage.ipynb` of the taxi platform,
+6 / 0 / 0 / 0 both times, the second time against an image built from the
+gateway head that added the shared read and the backfill: an anonymous read
+401 `AUTH_REQUIRED`, the owning organisation's token 200 with
+`Cache-Control: private, max-age=60`, another organisation's token 403, a
+minted link opening with no `Authorization` header and running out in 900
+seconds, an anonymous caller minting nothing, an expired signature 410
+`LINK_EXPIRED` where a forged one is 403, and the offer the Worker compiled
+reachable by a customer through a thirty day link and by nobody else.
+
+**What is still not true in production.** Read off the live
+`osg.netsnek.com` at the end of that run: `/ping` 200, the mutation type
+carrying `upload` alone and no `signedUrl`, and an anonymous
+`GET /storage/<a known Telegram id>` still 200. The gate ships when this
+branch does, and only then does a pylon that mints links get its
+`OSG_TOKEN`.
