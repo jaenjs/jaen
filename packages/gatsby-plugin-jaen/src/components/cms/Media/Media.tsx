@@ -1,12 +1,5 @@
 import {MediaNode} from 'jaen'
-import {
-  Flex,
-  Heading,
-  HStack,
-  IconButton,
-  Stack,
-  useBreakpointValue
-} from '@chakra-ui/react'
+import {Flex, Heading, HStack, IconButton, Stack} from '@chakra-ui/react'
 import React, {useEffect, useMemo, useState} from 'react'
 import {useIntl} from 'react-intl'
 
@@ -77,8 +70,18 @@ export const Media: React.FC<MediaProps> = ({
 
   const [isSidebarOpen, setSidebarOpen] = useState(false) // State variable for sidebar visibility
 
-  /** True while the tree overlays the grid rather than standing beside it. */
-  const isNarrow = useBreakpointValue({base: true, md: false}, {ssr: false})
+  /**
+   * True while the tree overlays the grid rather than standing beside it,
+   * asked at the moment of the click. Chakra's useBreakpointValue reads
+   * matchMedia, which does not exist while Gatsby renders the HTML, and
+   * this component is rendered there: it failed the build of /cms/media/
+   * with "window is not defined". Nothing renders differently for it, so a
+   * plain question at the click is both enough and safe.
+   */
+  const isNarrow = () =>
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(max-width: 47.9375em)').matches
 
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen)
@@ -264,7 +267,7 @@ export const Media: React.FC<MediaProps> = ({
 
                 // The overlay covers the grid on a phone, so the answer to
                 // the pick has to be uncovered to be read.
-                if (isNarrow) setSidebarOpen(false)
+                if (isNarrow()) setSidebarOpen(false)
               }}
             />
           </Stack>
