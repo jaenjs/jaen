@@ -1053,3 +1053,90 @@ memoised for the isolate's life, so deleting rows alone leaves running
 isolates serving the old answer, and a `wrangler deploy` is what recycles
 them. The rows themselves can be rebuilt from the same four sources, which is
 the one reason deleting them is recoverable at all.
+
+## Verified adversarially 2026-09-07, on the systems that serve
+
+A read only pass over the live `osg.netsnek.com`, `api.booklimo.at`,
+`booklimo.at` and the ownership store itself. Nothing was written, no mail was
+sent, and every token read came from `~/.config/taxi-app` and
+`~/.config/jaen`. Four of the five things it set out to reproduce reproduced.
+The fifth did not, and the reason is in the store rather than in the code.
+
+**Anonymous reads are refused, and not only on the three ids it was asked
+about.** Every one of the 180 gateway ids the two sites' local `jaen-data`
+names answers 401 `AUTH_REQUIRED` without a token, and so does every one of
+the eleven files the platform itself owns on booklimo, the seven
+`TransferDocument` rows and the four `CarImage` rows. All eleven answer 200 to
+the brand's own machine token. A site picture (13,951 bytes, `image/jpeg`), a
+car picture and the offer `AN-260006` (159,008 bytes, `application/pdf`) were
+the three the pass was asked for, and each is 401 anonymous and 200 to the
+token whose organisation the row names.
+
+**A booklimo token is not refused on a limosen site picture, and no booklimo
+token can be.** Read off the D1 store rather than off a guess:
+
+```
+SELECT org_id, shared, COUNT(*) FROM file_owner GROUP BY org_id, shared
+339284789469124181 | 356348844407002709 | 266
+356348844407002709 | NULL               |  19
+```
+
+Every one of limosen's 266 rows carries KRC in `shared`, so there is no
+limosen file in the store that a KRC token is refused on. Measured: the
+limosen owned site picture answers 200 to the KRC storage machine user, to a
+`krc:driver` machine token, to a `krc:customer` machine token and to
+`osg-build-krc`, which holds `storage:read` and nothing else. The refusal
+itself works and is measurable in the other direction only: the limosen
+storage token on booklimo's car picture and on the offer is 403 `FORBIDDEN`
+with `This file belongs to another organisation`.
+
+That is the `shared` column doing what it was added for, and it is also the
+sentence in **Target** above ("a token of another organisation is refused")
+being true of 19 files out of 285 rather than of the store. Anybody writing
+the cross organisation leg of an acceptance test picks a **KRC owned** file
+and a limosen token, never the reverse, and the acceptance list should say so
+instead of leaving the reader to find it on the wire.
+
+**What `shared` costs, said plainly.** Read is by organisation and no role, so
+a share is a share with every account of the other organisation. Every KRC
+driver and every KRC customer account can read all 266 of limosen's site media
+by id. Those files are the pictures limosen.at serves publicly anyway, so the
+exposure is the ids and not the content, but the same column used one day for
+a file that is not public would hand it to a whole tenant. A share belongs
+only on content that is already public on its owner's own site.
+
+**The signed link chain holds, measured off the mail's own values.** The
+booklimo pylon's `mailPreview(event: OFFER, audience: CUSTOMER)` for the ride
+carrying `AN-260006` answers a `documentUrl` of
+`…/storage/<id>?exp=1791409902&sig=…`, which is `signedGatewayLink(url,
+MAIL_LINK_TTL_SECONDS)` and thirty days out. Fetched with no `Authorization`
+header at all it is 200 `application/pdf`, 159,008 bytes, `Cache-Control:
+public, max-age=2591990`. A signature this pass minted itself from
+`SIGNING_KEY` over `${id}\n${exp}` with `exp` an hour in the past is 410
+`LINK_EXPIRED`, the same message with a fresh 900 second `exp` is 200, and the
+same message signed with a wrong key is 403 `FORBIDDEN`. So expiry and
+forgery are told apart and neither is a 401.
+
+**No visitor of booklimo.at touches the gateway.** In a browser, `/` and
+`/de/` each make 91 requests and none of them to any `osg.` host. All 41
+`img` elements load, their sources are `booklimo.at` itself and the two
+Mercedes COSY renders the site has always linked, and the served HTML mentions
+no gateway host at all while it does carry `/osg/<id>` paths of the site's own
+origin.
+
+**The CMS media library carries a bearer on every gateway request.** Signed in
+on the live `booklimo.at` as the booklimo human admin, `/cms/media/` draws 145
+`img` elements of which 144 load, the one that does not has an empty `src` and
+is a placeholder rather than a refused read. Not one is a bare
+`<img src="https://osg…">`, four are `blob:` object URLs, and the twelve
+gateway requests the page makes all carry `Authorization` and all answer 200.
+Measured twice with the same numbers.
+
+**The second door is open for the sites' media and shut for the platform's.**
+`osg.snek.at` still answers the limosen site picture anonymously with the same
+13,951 bytes that `osg.netsnek.com` refuses. It answers 502 for the car
+picture and for the offer PDF, because those were uploaded through a different
+Telegram chat than the one the old Go service reads. So the open door is real
+and it is the two sites' media, not the platform's documents, which is a
+sharper statement than "every id the gateway ever issued is readable there"
+and does not make it less urgent.
