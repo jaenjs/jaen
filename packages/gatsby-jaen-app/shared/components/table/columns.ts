@@ -21,6 +21,19 @@ export interface DataColumn<Row> {
   defaultVisible?: boolean
   /** Numbers sit on the right. */
   align?: 'start' | 'end'
+  /**
+   * The cell's words as plain text, for the cell's `title`: a cell is clipped
+   * at its column's edge (design-consistency.md, rule 8), and the title says
+   * what the ellipsis hides. A cell whose `cell` returns a string carries it
+   * without this.
+   */
+  text?: (row: Row) => string | null | undefined
+  /**
+   * The cell holds buttons: they never wrap onto a second line, and the
+   * column's width is the width its buttons take, the buttons are never
+   * clipped.
+   */
+  controls?: boolean
 }
 
 export interface ColumnLayout {
@@ -28,7 +41,9 @@ export interface ColumnLayout {
   visible: boolean
 }
 
-export const defaultLayout = <Row>(columns: DataColumn<Row>[]): ColumnLayout[] =>
+export const defaultLayout = <Row>(
+  columns: DataColumn<Row>[]
+): ColumnLayout[] =>
   columns.map(c => ({id: c.id, visible: c.defaultVisible ?? true}))
 
 const storageKey = (tableId: string) => `taxi-app.${tableId}.columns`
@@ -38,7 +53,10 @@ const storageKey = (tableId: string) => `taxi-app.${tableId}.columns`
  * default. A column added since the layout was saved is appended with its
  * default, one that no longer exists is dropped.
  */
-export const loadLayout = <Row>(tableId: string, columns: DataColumn<Row>[]): ColumnLayout[] => {
+export const loadLayout = <Row>(
+  tableId: string,
+  columns: DataColumn<Row>[]
+): ColumnLayout[] => {
   const defaults = defaultLayout(columns)
   try {
     const raw = window.localStorage.getItem(storageKey(tableId))
@@ -46,7 +64,9 @@ export const loadLayout = <Row>(tableId: string, columns: DataColumn<Row>[]): Co
     const parsed = JSON.parse(raw) as ColumnLayout[]
     if (!Array.isArray(parsed)) return defaults
     const known = new Set(defaults.map(c => c.id))
-    const kept = parsed.filter(c => c && typeof c.id === 'string' && known.has(c.id)).map(c => ({id: c.id, visible: c.visible !== false}))
+    const kept = parsed
+      .filter(c => c && typeof c.id === 'string' && known.has(c.id))
+      .map(c => ({id: c.id, visible: c.visible !== false}))
     defaults.forEach(c => {
       if (!kept.some(k => k.id === c.id)) kept.push(c)
     })

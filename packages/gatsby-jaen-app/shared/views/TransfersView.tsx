@@ -1869,12 +1869,15 @@ const COLUMN_WIDTHS: Record<ColumnId, number> = {
   code: 96,
   status: 160,
   route: 240,
-  pickup: 130,
+  // "Mo., 07. Sep. 2026" is 123px at the table's 14px and the cell adds
+  // 16px of padding, the 130px of the first build cut it (design-consistency.md, rule 8).
+  pickup: 150,
   passenger: 160,
   capacity: 110,
   flight: 90,
   driver: 160,
-  vehicle: 150,
+  // The "Zuerst Fahrer zuweisen" badge is 166px wide.
+  vehicle: 190,
   price: 110,
   customer: 160,
   category: 110,

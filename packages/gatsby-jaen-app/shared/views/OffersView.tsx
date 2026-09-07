@@ -27,13 +27,13 @@ export function OffersView() {
   }, [navigate])
 
   // The table's skeleton while the route changes, so nothing of the old
-  // screen flashes and no frame reads "Loading" (design-consistency.md).
+  // screen flashes and no frame carries a loading word (design-consistency.md).
   return (
     <Box p={{base: '4', md: '6'}} maxW="full" data-testid="offers-redirect">
       <TableSkeleton
         columns={[
           {id: 'number', label: s.ColNumber, width: 110},
-          {id: 'date', label: s.ColDate, width: 130},
+          {id: 'date', label: s.ColDate, width: 160},
           {id: 'customer', label: s.ColCustomer, width: 170},
           {id: 'total', label: s.ColTotal, width: 100, align: 'end'},
           {id: 'status', label: s.ColStatus, width: 180}

@@ -10,12 +10,16 @@
  * bar reads, `tabsFor` of GlassTabBar.tsx), a horizontal swipe of at least
  * 60 px with more horizontal than vertical travel moves to the neighbouring
  * place: right to left to the next place, left to right to the previous,
- * mirrored under rtl. The bar's pill follows the swipe place for place
- * (`dragPill`), springs into the new place on release (`pressPill`, the very
- * thing a tap does) and the new view mounts as on a tap, through gatsby's
- * navigate. The view swipe exists while the bar is on: the places are the
- * bar's, and without the bar nothing on the screen would say where a swipe
- * leads.
+ * mirrored under rtl. The places form a ring (navigation.md, "The ring"):
+ * the neighbour of the first place backwards is the last place, Ich, and
+ * the neighbour of the last place forwards is the first, so no swipe on a
+ * bar view is a dead end. The bar's pill follows the swipe place for place
+ * (`dragPill`), on the two wrapping swipes out through the bar's edge and,
+ * once the travel would commit, at the far end of the bar (`ringDrag`),
+ * springs into the new place on release (`pressPill`, the very thing a tap
+ * does) and the new view mounts as on a tap, through gatsby's navigate. The
+ * view swipe exists while the bar is on: the places are the bar's, and
+ * without the bar nothing on the screen would say where a swipe leads.
  *
  * On a sub view, anything whose path is not a place of the bar, a detail
  * page, a settings page, the horizontal swipe does nothing except the edge
@@ -62,8 +66,6 @@ export const EDGE_ZONE_PX = 24
 export const EDGE_BACK_PX = 80
 /** Finger travel before the direction of a touch is decided. */
 const SLOP = 10
-/** The pill's give beyond the last place, in places, so the end still answers. */
-const OVERSHOOT = 0.15
 /** The page slides out this long past the threshold, and back this long before it. */
 const LEAVE_MS = 220
 const SNAP_MS = 200
@@ -102,6 +104,39 @@ const pathOf = (item: NavItem): string =>
 export const placeOf = (items: NavItem[], pathname: string): number => {
   const path = pathname.replace(/\/$/, '')
   return items.findIndex(item => pathOf(item) === path)
+}
+
+/**
+ * The place a step lands on, around the ring: one past the last place is the
+ * first, one before the first is the last.
+ */
+export const ringNeighbour = (
+  from: number,
+  count: number,
+  step: 1 | -1
+): number => (from + step + count) % count
+
+/**
+ * The pill's offset from its place, in places, under a finger. Between two
+ * places it is the finger's travel. From the first place backwards and from
+ * the last place forwards, the two swipes that wrap, the pill follows the
+ * finger out through the bar's edge until the travel reaches the threshold
+ * that commits the swipe, and from there it stands at the far end of the
+ * bar, one whole ring away, so what the bar shows is always the place a
+ * release lands on. The bar clips the pill at its edge, the capsule has
+ * overflow hidden, and draws any offset, so nothing there needs to know.
+ */
+export const ringDrag = (
+  travel: number,
+  from: number,
+  count: number,
+  threshold: number
+): number => {
+  const wraps =
+    count > 1 &&
+    ((from === 0 && travel < 0) || (from === count - 1 && travel > 0))
+  if (!wraps || Math.abs(travel) < threshold) return travel
+  return travel < 0 ? travel + count : travel - count
 }
 
 /** True when something between the target and the host scrolls sideways. */
@@ -263,12 +298,13 @@ export function Swipes({children}: SwipesProps) {
       const sign = g.rtl ? -1 : 1
       if (g.mode === 'view') {
         // Towards the next place is against the finger: the finger pulls the
-        // next view in from the end side, the pill walks to the end side.
-        const towardNext = (-g.dx * sign) / g.pillW
-        const hasNext = g.from + 1 < g.items.length
-        const hasPrev = g.from > 0
+        // next view in from the end side, the pill walks to the end side. On
+        // the ring every place has a neighbour on both sides, so the pill
+        // follows a whole place either way, out through the edge and on to
+        // the far end when the swipe wraps.
+        const towardNext = clamp((-g.dx * sign) / g.pillW, -1, 1)
         dragPill(
-          clamp(towardNext, hasPrev ? -1 : -OVERSHOOT, hasNext ? 1 : OVERSHOOT)
+          ringDrag(towardNext, g.from, g.items.length, VIEW_SWIPE_PX / g.pillW)
         )
       } else {
         const travel = Math.max(0, g.dx * sign)
@@ -289,9 +325,15 @@ export function Swipes({children}: SwipesProps) {
       const horizontal = !cancelled && Math.abs(g.dx) > Math.abs(g.dy)
       if (mode === 'view') {
         const towardNext = -g.dx * sign
+        // The neighbour around the ring: past Ich comes the first place,
+        // before the first place comes Ich. One place alone has no ring.
         const target =
-          horizontal && Math.abs(towardNext) >= VIEW_SWIPE_PX
-            ? g.items[towardNext > 0 ? g.from + 1 : g.from - 1]
+          horizontal &&
+          g.items.length > 1 &&
+          Math.abs(towardNext) >= VIEW_SWIPE_PX
+            ? g.items[
+                ringNeighbour(g.from, g.items.length, towardNext > 0 ? 1 : -1)
+              ]
             : undefined
         // The pill sets off with the release, as it does with a tap, and the
         // drag is let go in the same frame so it springs from where it stood.

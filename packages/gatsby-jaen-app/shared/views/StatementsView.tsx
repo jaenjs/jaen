@@ -39,7 +39,6 @@ import {
   ButtonGroup,
   Field,
   Flex,
-  Heading,
   HStack,
   Input,
   InputGroup,
@@ -102,6 +101,7 @@ import {
   CustomerStatusBadge,
   CUSTOMER_STATUS_PALETTE
 } from '../components/CustomerStatusBadge'
+import {SectionHeading} from '../components/SectionHeading'
 import {TableSkeleton} from '../components/skeletons'
 import {useViewRefresh} from '../hooks/view-refresh'
 import {DataTable, type DataColumn, type DataGroup} from '../components/table'
@@ -232,7 +232,8 @@ function StatementLines({
       {
         id: 'time',
         label: t.StatementsColDate,
-        width: 140,
+        width: 150,
+        text: line => `${line.date} ${line.time}`,
         cell: line => (
           <Text as="span" whiteSpace="nowrap" fontVariantNumeric="tabular-nums">
             {line.date} {line.time}
@@ -243,6 +244,7 @@ function StatementLines({
         id: 'route',
         label: t.StatementsColRoute,
         width: 320,
+        text: line => `${line.pickup} → ${line.dropoff}`,
         cell: line => (
           <Text color="fg.muted" lineClamp={1}>
             {line.pickup} → {line.dropoff}
@@ -276,6 +278,7 @@ function StatementLines({
         id: 'documents',
         label: t.StatementsColDocuments,
         width: 220,
+        controls: true,
         cell: line => <RideDocumentButtons docs={documents[line.transferId]} />
       })
     }
@@ -406,6 +409,7 @@ export function StatementMonths({
         id: 'month',
         label: t.StatementsColMonth,
         width: 200,
+        text: row => monthLabel(row.month),
         cell: row => (
           <Text as="span" fontWeight="medium" whiteSpace="nowrap">
             {monthLabel(row.month)}
@@ -416,12 +420,17 @@ export function StatementMonths({
         id: 'kind',
         label: t.StatementsColKind,
         width: 180,
+        text: row => kindLabel(row.kind, t),
         cell: row => <Text color="fg.muted">{kindLabel(row.kind, t)}</Text>
       },
       {
+        // "Monatsabrechnung (PDF)" and "Monatsabrechnung (Excel)" side by
+        // side are 480px of buttons, measured on booklimo.at, and the cell
+        // adds its padding.
         id: 'files',
         label: t.StatementsColFiles,
-        width: 400,
+        width: 510,
+        controls: true,
         cell: files
       }
     ],
@@ -581,6 +590,7 @@ export function OffersTable() {
         id: 'number',
         label: s.ColNumber,
         width: 110,
+        text: row => row.number || '–',
         cell: row => (
           <Text
             as="span"
@@ -593,9 +603,12 @@ export function OffersTable() {
         )
       },
       {
+        // "06.09.2026, 23:58" is 143px at the table's 14px, and the 130px
+        // of the first build ran it into the code beside it.
         id: 'date',
         label: s.ColDate,
-        width: 130,
+        width: 160,
+        text: row => formatDateTime(row.createdAt, code),
         cell: row => (
           <Text as="span" whiteSpace="nowrap" fontVariantNumeric="tabular-nums">
             {formatDateTime(row.createdAt, code)}
@@ -606,6 +619,7 @@ export function OffersTable() {
         id: 'code',
         label: s.ColCode,
         width: 100,
+        text: row => row.code,
         cell: row => (
           <Text as="span" fontFamily="mono" whiteSpace="nowrap">
             {row.code}
@@ -616,6 +630,7 @@ export function OffersTable() {
         id: 'customer',
         label: s.ColCustomer,
         width: 170,
+        text: row => row.customer || '–',
         cell: row => (
           <Text textStyle="sm" truncate>
             {row.customer || '–'}
@@ -637,7 +652,8 @@ export function OffersTable() {
       {
         id: 'pickup',
         label: s.ColPickup,
-        width: 130,
+        width: 160,
+        text: row => formatDateTime(row.pickupDateTime, code),
         cell: row => (
           <Text as="span" whiteSpace="nowrap" fontVariantNumeric="tabular-nums">
             {formatDateTime(row.pickupDateTime, code)}
@@ -680,6 +696,7 @@ export function OffersTable() {
         id: 'sentTo',
         label: s.ColSentTo,
         width: 190,
+        text: row => row.sentTo || s.NotSentYet,
         cell: row => (
           <Box minW="0">
             <Text textStyle="sm" truncate>
@@ -697,6 +714,7 @@ export function OffersTable() {
         id: 'document',
         label: s.ColDocument,
         width: 220,
+        controls: true,
         cell: row => (
           <RideDocumentButtons
             docs={{
@@ -930,7 +948,8 @@ export function DriversHalf({
       own.push({
         id: 'driver',
         label: f.ColDriver,
-        width: 180,
+        width: 160,
+        text: row => row.name || '–',
         cell: row => (
           <HStack gap="2" minW="0">
             <DriverColorDot color={row.color} />
@@ -945,7 +964,8 @@ export function DriversHalf({
       {
         id: 'month',
         label: f.ColMonth,
-        width: 150,
+        width: 140,
+        text: row => monthLabel(row.month),
         cell: row => (
           <Text as="span" fontWeight="medium" whiteSpace="nowrap">
             {monthLabel(row.month)}
@@ -966,14 +986,14 @@ export function DriversHalf({
       {
         id: 'revenue',
         label: f.ColRevenue,
-        width: 110,
+        width: 100,
         align: 'end',
         cell: row => <MoneyText value={row.revenue} />
       },
       {
         id: 'cash',
         label: f.ColCash,
-        width: 110,
+        width: 100,
         align: 'end',
         cell: row => <MoneyText value={row.cash} />
       },
@@ -996,7 +1016,7 @@ export function DriversHalf({
       {
         id: 'payout',
         label: f.ColPayout,
-        width: 120,
+        width: 110,
         align: 'end',
         cell: row => (
           <MoneyText
@@ -1009,7 +1029,7 @@ export function DriversHalf({
       {
         id: 'status',
         label: f.ColStatus,
-        width: 200,
+        width: 180,
         cell: row => (
           <Box
             minW="0"
@@ -1041,17 +1061,24 @@ export function DriversHalf({
         )
       },
       {
+        // "PDF" and "Excel" beside each other are 172px of buttons, and the
+        // 170px of the first build pushed the Excel button under the action.
         id: 'files',
         label: f.ColFiles,
-        width: 170,
+        width: 200,
+        controls: true,
         cell: files
       }
     )
     if (!readOnly) {
       own.push({
+        // "Als ausbezahlt markieren" is a 208px button. With the widths
+        // above the admin's ten columns are 1380px, inside the 1392px frame
+        // of a 1440 screen, so nothing scrolls there.
         id: 'action',
         label: f.ColAction,
-        width: 200,
+        width: 230,
+        controls: true,
         cell: action
       })
     }
@@ -1209,6 +1236,7 @@ function CustomerRides({f}: {f: FinanceStrings}) {
         id: 'code',
         label: f.RidesColCode,
         width: 110,
+        text: row => row.code,
         cell: row => (
           <Text
             as="span"
@@ -1222,7 +1250,8 @@ function CustomerRides({f}: {f: FinanceStrings}) {
       {
         id: 'pickup',
         label: f.RidesColDate,
-        width: 140,
+        width: 160,
+        text: row => formatDateTime(row.pickupDateTime, code),
         cell: row => (
           <Text as="span" whiteSpace="nowrap" fontVariantNumeric="tabular-nums">
             {formatDateTime(row.pickupDateTime, code)}
@@ -1230,9 +1259,12 @@ function CustomerRides({f}: {f: FinanceStrings}) {
         )
       },
       {
+        // Clamped to one line by design, and 230px keeps the customer's
+        // nine columns at 1390px, inside the frame of a 1440 screen.
         id: 'route',
         label: f.RidesColRoute,
-        width: 280,
+        width: 230,
+        text: row => `${row.pickup} → ${row.dropoff}`,
         cell: row => (
           <Text color="fg.muted" lineClamp={1}>
             {row.pickup} → {row.dropoff}
@@ -1269,9 +1301,16 @@ function CustomerRides({f}: {f: FinanceStrings}) {
         )
       },
       {
+        // "noch keine Rechnung" is 130px at 14px and a date with its time
+        // 143px, the 140px of the first build ran both into "offen" beside
+        // them.
         id: 'invoice',
         label: f.RidesColInvoice,
-        width: 140,
+        width: 170,
+        text: row =>
+          row.invoicedAt
+            ? formatDateTime(row.invoicedAt, code)
+            : f.InvoiceNotYet,
         cell: row => (
           <Text
             textStyle="sm"
@@ -1286,7 +1325,9 @@ function CustomerRides({f}: {f: FinanceStrings}) {
       {
         id: 'paid',
         label: f.RidesColPaid,
-        width: 140,
+        width: 170,
+        text: row =>
+          row.paidAt ? formatDateTime(row.paidAt, code) : f.PaidNotYet,
         cell: row => (
           <Text
             textStyle="sm"
@@ -1300,6 +1341,7 @@ function CustomerRides({f}: {f: FinanceStrings}) {
         id: 'documents',
         label: f.RidesColDocuments,
         width: 200,
+        controls: true,
         cell: row => <RideDocumentButtons docs={documents[row.id]} />
       }
     ],
@@ -1350,11 +1392,11 @@ function CustomerHalf({
   return (
     <Stack gap="6" data-testid="billing-customer">
       <Stack gap="3">
-        <Heading size="md">{f.MyStatements}</Heading>
+        <SectionHeading>{f.MyStatements}</SectionHeading>
         <StatementMonths userId={userId} embedded />
       </Stack>
       <Stack gap="3">
-        <Heading size="md">{f.MyRides}</Heading>
+        <SectionHeading>{f.MyRides}</SectionHeading>
         <CustomerRides f={f} />
       </Stack>
     </Stack>

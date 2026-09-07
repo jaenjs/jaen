@@ -22,6 +22,19 @@
  * collapse mode is and moves no text. The day header row, one cell wide,
  * carries both.
  *
+ * A cell never runs into its neighbour (design-consistency.md, rule 8). The
+ * table is `table-layout: fixed` with a width per column, and the scroll
+ * area's `white-space: nowrap` reaches every cell, so a text wider than its
+ * column used to walk on into the next cell and the last column's button was
+ * cut at the frame's edge. Every cell now clips at its own edge with an
+ * ellipsis and carries the whole text in its `title` where the column says
+ * what its text is, a cell of buttons keeps them on one line, and the
+ * actions column takes the width its word needs, never less than the 72px
+ * "Details" always had. The width of a column is still the screen's to
+ * choose, and it has to fit the longest German content, the clip is what
+ * keeps a miss from touching the neighbour. The frame scrolls sideways when
+ * the columns are wider than it, the page never does.
+ *
  * Waiting is the skeleton (design-consistency.md, rule 3): while the data is
  * loading and there is nothing to draw, the table is its own header row and
  * eight grey rows with the two stripes, or grey cards below `md`. Rows that
@@ -37,7 +50,16 @@
  * order, into the screen's Stack, exactly where the board had them.
  */
 import React, {useEffect, useMemo, useState, type ReactNode} from 'react'
-import {Box, Button, HStack, Progress, Skeleton, Table, Text, type SystemStyleObject} from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  HStack,
+  Progress,
+  Skeleton,
+  Table,
+  Text,
+  type SystemStyleObject
+} from '@chakra-ui/react'
 import {
   getCoreRowModel,
   getExpandedRowModel,
@@ -49,17 +71,48 @@ import {useI18nCode} from '../../i18n'
 import {getI18nCommon} from '../../locales/i18nCommon'
 import {ErrorBanner} from '../ErrorBanner'
 import {ListSkeleton, TableSkeleton} from '../skeletons'
-import {loadLayout, saveLayout, defaultLayout, type ColumnLayout, type DataColumn} from './columns'
+import {
+  loadLayout,
+  saveLayout,
+  defaultLayout,
+  type ColumnLayout,
+  type DataColumn
+} from './columns'
 import {ColumnsPopover} from './ColumnsPopover'
-import {DataCards, DefaultCard, type CardApi, type DayTone, type Section} from './DataCards'
+import {
+  DataCards,
+  DefaultCard,
+  type CardApi,
+  type DayTone,
+  type Section
+} from './DataCards'
 import {Pager, type PagerProps} from './Pager'
 import {useIsMobile} from './useIsMobile'
 
 /** The grouping column, never drawn: its value is the day a row belongs to. */
 const GROUP = '__group'
 
-/** The Details column on the right, the same 72px on every table. */
-const ACTIONS_WIDTH = 72
+/** The actions column's floor, the 72px "Details" always had. */
+const ACTIONS_MIN_WIDTH = 72
+
+/**
+ * The actions column is as wide as its word: an xs button sets its text at
+ * 12px, where a letter is 7px at the widest that occurs, plus the button's
+ * 16px of padding and the cell's own 16px. "Details" stays at the floor,
+ * "Fahrten anzeigen" gets 152px instead of the 72px that cut it.
+ */
+const actionsWidthFor = (label: string) =>
+  Math.max(ACTIONS_MIN_WIDTH, 24 + 8 * label.length)
+
+/** A cell's title: the column's text, or the cell itself when it is a string. */
+const cellTitle = <Row,>(
+  column: DataColumn<Row>,
+  row: Row,
+  content: ReactNode
+): string | undefined => {
+  if (column.text) return column.text(row) ?? undefined
+  return typeof content === 'string' ? content : undefined
+}
 
 /**
  * One stripe on one edge of a cell: 4px, the full height of the row, inside
@@ -148,7 +201,9 @@ export function DataTable<Row>({
 
   // The layout, remembered per browser: the default on the server and on the
   // first client render so the two agree, the saved one after mount.
-  const [layout, setLayout] = useState<ColumnLayout[]>(() => defaultLayout(columns))
+  const [layout, setLayout] = useState<ColumnLayout[]>(() =>
+    defaultLayout(columns)
+  )
   useEffect(() => {
     setLayout(loadLayout(tableId, columns))
     // The columns' ids are what the layout is made of, their cells may change freely.
@@ -168,7 +223,10 @@ export function DataTable<Row>({
   }, [columns, group])
 
   const columnOrder = useMemo(() => layout.map(l => l.id), [layout])
-  const columnVisibility = useMemo(() => Object.fromEntries(layout.map(l => [l.id, l.visible])), [layout])
+  const columnVisibility = useMemo(
+    () => Object.fromEntries(layout.map(l => [l.id, l.visible])),
+    [layout]
+  )
   const grouping = useMemo(() => (group ? [GROUP] : []), [group])
 
   const table = useReactTable<Row>({
@@ -188,7 +246,9 @@ export function DataTable<Row>({
     .getVisibleLeafColumns()
     .map(c => byId.get(c.id))
     .filter((c): c is DataColumn<Row> => !!c)
-  const minWidth = visible.reduce((sum, c) => sum + c.width, ACTIONS_WIDTH)
+  const details = actionLabel ?? tc.Details
+  const actionsWidth = actionsWidthFor(details)
+  const minWidth = visible.reduce((sum, c) => sum + c.width, actionsWidth)
 
   // The row model as sections: a header row per group, then its rows. Flat
   // rows are one section without a header.
@@ -205,7 +265,11 @@ export function DataTable<Row>({
       }
     })
   } else {
-    sections.push({key: '', tone: undefined, rows: table.getRowModel().rows.map(r => r.original)})
+    sections.push({
+      key: '',
+      tone: undefined,
+      rows: table.getRowModel().rows.map(r => r.original)
+    })
   }
 
   // Skeleton with nothing to draw, a progress line over rows that are there.
@@ -216,19 +280,27 @@ export function DataTable<Row>({
   const showEmpty = !isLoading && !error && rows.length === 0 && empty != null
   const showControl = columnsControl && !mobile
   const showPager = !!pager && (pager.always || pager.hasNext || pager.page > 1)
-  const details = actionLabel ?? tc.Details
   const cards = mobile || cardsOnly
 
   const renderCard =
     card ??
     ((row: Row, api: CardApi) => (
-      <DefaultCard row={row} columns={visible} tone={api.tone} stripe={stripe?.(row)} onOpen={onOpen} />
+      <DefaultCard
+        row={row}
+        columns={visible}
+        tone={api.tone}
+        stripe={stripe?.(row)}
+        onOpen={onOpen}
+      />
     ))
 
   return (
     <>
       {(summary !== undefined || showControl) && (
-        <HStack justify={summary !== undefined ? 'space-between' : 'flex-end'} flexWrap="wrap" gap="2">
+        <HStack
+          justify={summary !== undefined ? 'space-between' : 'flex-end'}
+          flexWrap="wrap"
+          gap="2">
           {summary !== undefined &&
             (showSkeleton ? (
               <Skeleton h="4" w="40" rounded="sm" data-skeleton="summary" />
@@ -237,7 +309,13 @@ export function DataTable<Row>({
                 {summary}
               </Text>
             ))}
-          {showControl && <ColumnsPopover columns={columns} layout={layout} onChange={changeLayout} />}
+          {showControl && (
+            <ColumnsPopover
+              columns={columns}
+              layout={layout}
+              onChange={changeLayout}
+            />
+          )}
         </HStack>
       )}
 
@@ -264,15 +342,29 @@ export function DataTable<Row>({
           cards ? (
             <ListSkeleton rows={8} avatar={avatarSkeleton} />
           ) : (
-            <TableSkeleton columns={visible} avatar={avatarSkeleton} dayHeader={!!group} actionsWidth={ACTIONS_WIDTH} />
+            <TableSkeleton
+              columns={visible}
+              avatar={avatarSkeleton}
+              dayHeader={!!group}
+              actionsWidth={actionsWidth}
+            />
           )
         ) : showEmpty ? (
           empty
         ) : cards ? (
-          <DataCards sections={sections} rowId={rowId} label={group?.label} card={renderCard} />
+          <DataCards
+            sections={sections}
+            rowId={rowId}
+            label={group?.label}
+            card={renderCard}
+          />
         ) : (
           <Table.ScrollArea borderWidth="1px" rounded="surface" bg="bg.surface">
-            <Table.Root size="sm" variant="line" tableLayout="fixed" style={{minWidth}}>
+            <Table.Root
+              size="sm"
+              variant="line"
+              tableLayout="fixed"
+              style={{minWidth}}>
               <Table.Header>
                 <Table.Row bg="bg.subtle">
                   {visible.map(c => (
@@ -285,7 +377,7 @@ export function DataTable<Row>({
                       {c.label}
                     </Table.ColumnHeader>
                   ))}
-                  <Table.ColumnHeader style={{width: ACTIONS_WIDTH}} />
+                  <Table.ColumnHeader style={{width: actionsWidth}} />
                 </Table.Row>
               </Table.Header>
               <Table.Body>
@@ -305,7 +397,10 @@ export function DataTable<Row>({
                             position="relative"
                             _before={edgeStripe('start', 'transparent')}
                             _after={edgeStripe('end', when)}>
-                            <Text textStyle="sm" fontWeight="semibold" color={tone ? 'colorPalette.fg' : 'fg.muted'}>
+                            <Text
+                              textStyle="sm"
+                              fontWeight="semibold"
+                              color={tone ? 'colorPalette.fg' : 'fg.muted'}>
                               {group.label(section.key)}
                             </Text>
                           </Table.Cell>
@@ -321,22 +416,41 @@ export function DataTable<Row>({
                             colorPalette={tone}
                             _hover={{bg: 'bg.subtle'}}
                             onClick={() => onOpen(row)}>
-                            {visible.map((c, i) => (
-                              <Table.Cell
-                                key={c.id}
-                                verticalAlign="middle"
-                                style={{width: c.width}}
-                                textAlign={c.align === 'end' ? 'end' : undefined}
-                                position={i === 0 ? 'relative' : undefined}
-                                _before={i === 0 ? edgeStripe('start', who) : undefined}>
-                                {c.cell(row)}
-                              </Table.Cell>
-                            ))}
+                            {visible.map((c, i) => {
+                              const content = c.cell(row)
+                              return (
+                                <Table.Cell
+                                  key={c.id}
+                                  verticalAlign="middle"
+                                  style={{width: c.width}}
+                                  overflow="hidden"
+                                  textOverflow="ellipsis"
+                                  whiteSpace={c.controls ? 'nowrap' : undefined}
+                                  title={cellTitle(c, row, content)}
+                                  textAlign={
+                                    c.align === 'end' ? 'end' : undefined
+                                  }
+                                  position={i === 0 ? 'relative' : undefined}
+                                  _before={
+                                    i === 0
+                                      ? edgeStripe('start', who)
+                                      : undefined
+                                  }>
+                                  {content}
+                                </Table.Cell>
+                              )
+                            })}
                             <Table.Cell
                               verticalAlign="middle"
-                              style={{width: ACTIONS_WIDTH}}
+                              style={{width: actionsWidth}}
+                              overflow="hidden"
+                              whiteSpace="nowrap"
                               position="relative"
-                              _before={visible.length === 0 ? edgeStripe('start', who) : undefined}
+                              _before={
+                                visible.length === 0
+                                  ? edgeStripe('start', who)
+                                  : undefined
+                              }
                               _after={edgeStripe('end', when)}>
                               <Button
                                 size="xs"
