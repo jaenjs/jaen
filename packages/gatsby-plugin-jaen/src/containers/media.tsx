@@ -3,6 +3,7 @@ import {MediaNode, uploadFile, useField, useNotificationsContext} from 'jaen'
 import {v4 as uuidv4} from 'uuid'
 
 import {Media, MediaProps} from '../components/cms/Media/Media'
+import {byCreatedAtDescending} from '../components/cms/Media/order'
 import {TreeNode} from '../components/cms/Pages/components/PageVisualizer'
 import type {
   MediaFolderNode,
@@ -343,7 +344,17 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
   }
 
   const mediaNodesValues = useMemo(() => {
-    const values: MediaFolderNode[] = Object.values(mediaNodes)
+    /**
+     * Newest first. `Object.values` of the field answers whatever order the
+     * keys happen to have, and `onUpload` spreads the new node onto the end
+     * of that object, so a picture just uploaded landed at the bottom of the
+     * grid and an editor on a second device, whose CMS took the same object
+     * from the agent, never saw it at the top either. The gallery is the
+     * only place this order is decided, so it is decided here.
+     */
+    const values: MediaFolderNode[] = Object.values(mediaNodes).sort(
+      byCreatedAtDescending
+    )
 
     // if selector and jaenPageId is set, filter mediaNodes by jaenPageId
     if (props.isSelector && jaenPageId) {
@@ -360,6 +371,13 @@ const MediaContainer: React.FC<MediaContainerProps> = props => {
       return values
     }
 
+    /**
+     * A folder's nodes keep the order the folder handed them over in, which
+     * is position order for a car, the cover first. They are appended rather
+     * than merged by date, and `Media` only sorts by date where no folder is
+     * selected, so the cover stays first inside a car. See
+     * okf/architecture/media.md, "One gallery, jaen's".
+     */
     return values.concat(...mediaFolders.map(folder => folder.nodes))
   }, [mediaNodes, jaenPageId, mediaFolders, props.isSelector])
 

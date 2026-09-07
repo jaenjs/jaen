@@ -13,6 +13,7 @@ import {PageTree} from '../../shared/PageTree/PageTree'
 import {TreeNode} from '../Pages/components/PageVisualizer'
 import {MediaGallery} from './components/MediaGallery/MediaGallery'
 import {MediaPreview} from './components/MediaPreview/MediaPreview'
+import {byCreatedAtDescending} from './order'
 import {MediaFolderNode, MediaPreviewState} from './types'
 
 export interface MediaProps {
@@ -190,9 +191,23 @@ export const Media: React.FC<MediaProps> = ({
     return mediaNodes
   }, [filters.page?.jaenPageId, folderScopes, mediaNodes])
 
-  const sortedMediaNodes = filteredMediaNodes.sort((a, b) => {
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  })
+  /**
+   * Newest first, on a copy. The sort used to run in place on the array the
+   * container memoized, so it rewrote the container's own list on every
+   * render of this component, and it ran unmemoized on every render besides.
+   *
+   * It is skipped inside an app folder. There the nodes arrive in the order
+   * the folder handed them over in, which is position order for a car with
+   * the cover first, and sorting a car's pictures by upload date would throw
+   * exactly that away. See okf/architecture/media.md, "One gallery, jaen's".
+   */
+  const sortedMediaNodes = useMemo(() => {
+    if (selectedFolder) {
+      return filteredMediaNodes
+    }
+
+    return [...filteredMediaNodes].sort(byCreatedAtDescending)
+  }, [filteredMediaNodes, selectedFolder])
 
   const handleClone = (id: string) => {
     onClone(id)
