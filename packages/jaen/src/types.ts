@@ -24,8 +24,16 @@ declare global {
         url: string
         /** The site's key in the agent's SITES table, e.g. "booklimo.at" */
         site: string
-        /** Poll interval of the shared draft. Default 5000. */
+        /**
+         * Poll interval of the shared draft while the tab is hidden.
+         * Default 5000.
+         */
         pollMs?: number
+        /**
+         * Poll interval while the tab is visible, or while a save of this
+         * browser is still out. Default 1500.
+         */
+        activePollMs?: number
         /** Quiet time before a batch is committed. Default 800. */
         debounceMs?: number
       }

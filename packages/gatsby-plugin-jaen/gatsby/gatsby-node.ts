@@ -32,8 +32,16 @@ export interface JaenPluginOptions extends PluginOptions {
      */
     site?: string
     siteKey?: string
-    /** Poll interval of the shared draft, ms. Default 5000. */
+    /**
+     * Poll interval of the shared draft while the tab is hidden, ms.
+     * Default 5000.
+     */
     pollMs?: number
+    /**
+     * Poll interval while the tab is visible, or while a save of this browser
+     * is still out, ms. Default 1500.
+     */
+    activePollMs?: number
     /** Quiet time before a batch is committed, ms. Default 800. */
     debounceMs?: number
   }
@@ -108,6 +116,7 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
       site: Joi.string(),
       siteKey: Joi.string(),
       pollMs: Joi.number().integer().min(1000),
+      activePollMs: Joi.number().integer().min(500),
       debounceMs: Joi.number().integer().min(100)
     })
       .or('site', 'siteKey')
@@ -249,6 +258,7 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] =
                   url: pluginOptions.agent.url,
                   site: pluginOptions.agent.site || pluginOptions.agent.siteKey,
                   pollMs: pluginOptions.agent.pollMs,
+                  activePollMs: pluginOptions.agent.activePollMs,
                   debounceMs: pluginOptions.agent.debounceMs
                 }
               : undefined

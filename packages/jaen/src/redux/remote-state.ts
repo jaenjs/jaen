@@ -44,6 +44,23 @@ const MAX_BATCH = 20
 /** The agent refuses more than this in one call. */
 const CALL_LIMIT = 200
 
+/** A field type whose value a person types letter by letter. */
+const TYPED_FIELD = /text|mdx|rich/i
+
+/**
+ * Whether a recorded change is one keystroke of a stream.
+ *
+ * The quiet time exists for exactly that case and no other: it turns a typed
+ * sentence into one commit instead of one commit per letter. Every other
+ * change is a single gesture that cannot repeat faster than a person can
+ * click, an uploaded picture, an added or moved section, a deleted page, and
+ * waiting 800 ms before even starting a save that then takes seconds spends
+ * a twelfth of the ten second budget on nothing. Those go at once.
+ */
+const isKeystroke = (change: JaenChange): boolean =>
+  change.kind === 'fieldWrite' &&
+  (typeof change.value === 'string' || TYPED_FIELD.test(change.fieldType || ''))
+
 /**
  * The recorder: the eight draft-bearing actions of the `page`, `site` and
  * `widget` slices, translated into the agent's change shape.
@@ -184,8 +201,10 @@ export default (config: AgentConfig) => {
 
   const connect = (store: Store) => {
     let flushTimer: ReturnType<typeof setTimeout> | undefined
+    let flushIsImmediate = false
     let retryTimer: ReturnType<typeof setTimeout> | undefined
     let pollTimer: ReturnType<typeof setInterval> | undefined
+    let pollingEvery: number | undefined
     let inFlight = false
     let failures = 0
     let stopped = false
@@ -195,6 +214,7 @@ export default (config: AgentConfig) => {
     const clearFlush = () => {
       if (flushTimer) clearTimeout(flushTimer)
       flushTimer = undefined
+      flushIsImmediate = false
     }
 
     const scheduleRetry = () => {
@@ -266,9 +286,18 @@ export default (config: AgentConfig) => {
     }
 
     const scheduleFlush = (delay: number) => {
-      clearFlush()
+      // A keystroke moves its own deadline to the last keystroke, which is
+      // what a debounce is, but it must never move a flush that was asked for
+      // at once: a picture recorded and then a letter typed would otherwise
+      // put the picture 800 ms behind the letter.
+      if (delay > 0 && flushTimer && flushIsImmediate) return
+
+      if (flushTimer) clearTimeout(flushTimer)
+
+      flushIsImmediate = delay === 0
       flushTimer = setTimeout(() => {
         flushTimer = undefined
+        flushIsImmediate = false
         void flush()
       }, delay)
     }
@@ -339,16 +368,57 @@ export default (config: AgentConfig) => {
       return Boolean(s.remote?.active || s.status?.isEditing)
     }
 
-    const syncPolling = () => {
-      const wanted = shouldPoll()
+    const isVisible = () =>
+      typeof document === 'undefined' || document.visibilityState !== 'hidden'
 
-      if (wanted && !pollTimer) {
-        pollTimer = setInterval(() => void poll(), config.pollMs)
-        void poll()
-      } else if (!wanted && pollTimer) {
-        clearInterval(pollTimer)
+    /**
+     * The interval, adaptive. A poll whose `sinceSha` is still the head costs
+     * the agent one KV read and answers `changed: false` with no body, so the
+     * interval is not a load question, it is the tail of the ten second
+     * acceptance: it decides how long the other editor's CMS waits before it
+     * asks about a change that is already committed.
+     *
+     * Fast while somebody is looking at this tab, and while this browser's
+     * own save is still out or waiting in the outbox, because that is exactly
+     * when a second head is about to appear. Slow when the tab is hidden,
+     * where nobody can read the answer anyway and the poll only exists so
+     * that coming back is not a blank wait.
+     */
+    const wantedPollMs = () =>
+      isVisible() || inFlight || (state().remote?.outbox?.length || 0) > 0
+        ? config.activePollMs
+        : config.pollMs
+
+    const syncPolling = () => {
+      if (!shouldPoll()) {
+        if (pollTimer) clearInterval(pollTimer)
         pollTimer = undefined
+        pollingEvery = undefined
+        return
       }
+
+      const every = wantedPollMs()
+
+      if (pollTimer && pollingEvery === every) return
+
+      const isFirst = !pollTimer
+
+      if (pollTimer) clearInterval(pollTimer)
+
+      pollingEvery = every
+      pollTimer = setInterval(() => void poll(), every)
+
+      if (isFirst) void poll()
+    }
+
+    /**
+     * Coming back to the tab asks at once rather than waiting out the idle
+     * interval that was running while it was hidden.
+     */
+    const onVisibilityChange = () => {
+      syncPolling()
+
+      if (isVisible()) void poll()
     }
 
     store.dispatch(remoteActions.resume())
@@ -363,11 +433,18 @@ export default (config: AgentConfig) => {
       const length = remote.outbox.length
 
       if (length > lastOutboxLength) {
-        // Twenty queued changes or 800 ms of quiet, whichever comes first. The
-        // debounced batch is the unit of a commit: one commit per keystroke
-        // would be one contents API round trip per character and a history
-        // nobody can read.
-        scheduleFlush(length >= MAX_BATCH ? 0 : config.debounceMs)
+        // A typed field waits for the quiet, twenty queued changes or not, so
+        // that a sentence is one commit rather than one contents API round
+        // trip per character and a history nobody can read. Anything else is
+        // one gesture and goes at once: an uploaded picture reaches the other
+        // editor a debounce sooner for it.
+        const latest = remote.outbox[length - 1]?.change
+
+        scheduleFlush(
+          length >= MAX_BATCH || !latest || !isKeystroke(latest)
+            ? 0
+            : config.debounceMs
+        )
       }
 
       lastOutboxLength = length
@@ -376,9 +453,10 @@ export default (config: AgentConfig) => {
     })
 
     // Anything left in the outbox from the last visit is sent as soon as the
-    // store is up: that is the offline queue draining.
+    // store is up: that is the offline queue draining, and it has already
+    // waited long enough without waiting out a debounce as well.
     if (lastOutboxLength > 0) {
-      scheduleFlush(config.debounceMs)
+      scheduleFlush(0)
     }
 
     const onOnline = () => {
@@ -391,6 +469,10 @@ export default (config: AgentConfig) => {
       window.addEventListener('online', onOnline)
     }
 
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange)
+    }
+
     syncPolling()
 
     return () => {
@@ -401,6 +483,10 @@ export default (config: AgentConfig) => {
       if (pollTimer) clearInterval(pollTimer)
       if (typeof window !== 'undefined') {
         window.removeEventListener('online', onOnline)
+      }
+
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityChange)
       }
     }
   }
