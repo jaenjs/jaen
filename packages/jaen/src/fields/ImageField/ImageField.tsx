@@ -127,6 +127,7 @@ export const ImageField = connectField<ImageFieldMediaId, ImageFieldProps>(
         }}>
         <HighlightTooltip
           id={jaenField.id || jaenField.name}
+          author={jaenField.lastAuthor}
           isEditing={jaenField.isEditing}
           boxSize={autoScale ? 'full' : 'fit-content'}
           actions={[

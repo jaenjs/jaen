@@ -412,6 +412,7 @@ export const TextField = connectField<string, TextFieldProps>(
     return (
       <HighlightTooltip
         id={jaenField.id || jaenField.name}
+        author={jaenField.lastAuthor}
         actions={[
           <Button
             variant={

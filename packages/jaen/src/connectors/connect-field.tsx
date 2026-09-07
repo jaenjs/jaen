@@ -2,6 +2,8 @@ import React, {useCallback} from 'react'
 
 import {TuneSelectorProps} from '../components/TuneSelectorButton'
 import {useField} from '../hooks/use-field'
+import {useFieldAuthor} from '../hooks/use-field-author'
+import {JaenAuthor} from '../redux/apply-change'
 import {IJaenConnection} from '../types'
 
 export interface JaenFieldProps {
@@ -60,6 +62,13 @@ export const connectField = <IValue, P = {}>(
           tunes: TuneSelectorProps['tunes']
           activeTunes: TuneSelectorProps['activeTunes']
           tune: TuneSelectorProps['onTune']
+
+          /**
+           * Who last wrote this field and when, out of the shared draft. It is
+           * undefined on a site without the agent and on a field nobody has
+           * written since the head patch was made.
+           */
+          lastAuthor?: JaenAuthor
         }
       }
     >
@@ -76,6 +85,18 @@ export const connectField = <IValue, P = {}>(
     ...rest
   }) => {
     const field = useField<IValue>(name, options.fieldType)
+
+    const lastAuthor = useFieldAuthor({
+      pageId: field.jaenPageId,
+      section: field.SectionBlockContext
+        ? {
+            path: field.SectionBlockContext.path,
+            id: field.SectionBlockContext.id
+          }
+        : undefined,
+      fieldType: options.fieldType,
+      fieldName: name
+    })
 
     if (!id) {
       if (idStrategy === 'auto') {
@@ -177,7 +198,8 @@ export const connectField = <IValue, P = {}>(
           relatedName,
           tunes: tunes || [],
           activeTunes: field.props?.activeTunes,
-          isDisabled
+          isDisabled,
+          lastAuthor
         }}
         {...(rest as P)}
       />

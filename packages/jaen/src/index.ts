@@ -42,6 +42,7 @@ export {useSectionField, UseSectionField} from './hooks/use-section-field'
 export {Field} from './fields'
 export type {ImageFieldProps, TextFieldProps} from './fields'
 export {useField} from './hooks/use-field'
+export {useFieldAuthor} from './hooks/use-field-author'
 export {
   JaenPage,
   JaenPageMetadata,
