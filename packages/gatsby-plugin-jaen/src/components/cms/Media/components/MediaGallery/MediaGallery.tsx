@@ -14,7 +14,6 @@ import {
 } from '@chakra-ui/react'
 import {MediaNode} from 'jaen'
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import {useDropzone} from 'react-dropzone'
 import {BsLayoutSidebarInset} from '@react-icons/all-files/bs/BsLayoutSidebarInset'
 
 import {FaCheck} from '@react-icons/all-files/fa/FaCheck'
@@ -30,6 +29,10 @@ import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
 import {MediaPreviewState} from '../../types'
 import {MediaGrid} from './components/MediaGrid/MediaGrid'
 import {useDebouncedCallback} from 'use-debounce'
+import {
+  MediaDropzone,
+  MediaDropzoneControl
+} from '../../../../shared/MediaDropzone'
 
 export interface MediaGalleryProps {
   pageFilter?: string
@@ -200,49 +203,29 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
 
   const [isUploading, setIsUploading] = useState<boolean>(false)
 
-  const handleOnUpload = async (files: File[]) => {
-    setIsUploading(true)
+  /**
+   * The gallery's grid is the drop area and the toolbar's button is the way
+   * to the file dialog, so the control of the shared dropzone is handed out
+   * here rather than rendered as a button of its own. The selection is
+   * cleared after every upload: without it the same file dropped twice is
+   * one upload and the second gesture does nothing.
+   */
+  const dropzoneControl = useRef<MediaDropzoneControl | null>(null)
+  const [isDragActive, setIsDragActive] = useState<boolean>(false)
 
-    await onUpload(files)
+  const handleOnUpload = useCallback(
+    async (files: File[]) => {
+      setIsUploading(true)
 
-    setIsUploading(false)
-  }
-
-  const dropzone = useDropzone({
-    onDrop: handleOnUpload,
-    accept: {
-      'image/*': []
-    }
-  })
-
-  // useEffect(() => {
-  //   const searchParams = new URLSearchParams(window.location.search)
-
-  //   const pageFilter = searchParams.get('page')
-
-  //   if (pageFilter) {
-  //     setPageFilter(pageFilter)
-  //   }
-
-  //   const upload = searchParams.get('upload')
-
-  //   console.log('upload', dropzone)
-
-  //   if (upload === 'true' && !dropzone.isFileDialogActive) {
-  //     // wait for media gallery to be rendered
-  //     dropzone.open()
-  //   }
-
-  //   // // reset search params
-  //   // searchParams.delete('page')
-  //   // searchParams.delete('upload')
-
-  //   // window.history.replaceState(
-  //   //   {},
-  //   //   '',
-  //   //   `${window.location.pathname}?${searchParams.toString()}`
-  //   // )
-  // }, [dropzone.isFileDialogActive])
+      try {
+        await onUpload(files)
+      } finally {
+        setIsUploading(false)
+        dropzoneControl.current?.clear()
+      }
+    },
+    [onUpload]
+  )
 
   const searchRef = useRef<HTMLInputElement>(null)
 
@@ -399,21 +382,19 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
           <IconButton
             size="xs"
             variant="outline"
-            aria-label={
-              dropzone.isDragActive ? 'Drop to upload' : 'Upload images'
-            }
+            aria-label={isDragActive ? 'Drop to upload' : 'Upload images'}
             loading={isUploading}
-            onClick={dropzone.open}>
+            onClick={() => dropzoneControl.current?.open()}>
             <FaPlus
               style={{
-                transform: dropzone.isDragActive ? 'rotate(15deg)' : 'none'
+                transform: isDragActive ? 'rotate(15deg)' : 'none'
               }}
             />
           </IconButton>
         </Box>
 
         <Box display={{base: 'none', md: 'block'}}>
-          {dropzone.isDragActive ? (
+          {isDragActive ? (
             <Button size="xs" colorPalette="orange">
               <FaPlus />
               Drop to upload
@@ -423,7 +404,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
               variant="outline"
               size="xs"
               loading={isUploading}
-              onClick={dropzone.open}>
+              onClick={() => dropzoneControl.current?.open()}>
               <FaPlus />
               Upload
             </Button>
@@ -444,46 +425,28 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
         </Button>
       </HStack>
 
-      <Box
-        {...dropzone.getRootProps({
-          onClick: event => {
-            event.stopPropagation()
-          }
-        })}
-        h="full"
-        pos="relative"
-        p="1">
-        <input {...dropzone.getInputProps()} />
-
-        {dropzone.isDragActive && (
-          <Box
-            bg="bg.translucent"
-            backdropFilter="blur(8px) saturate(180%) contrast(46%) brightness(120%)"
-            pos="absolute"
-            top="0"
-            left="0"
-            w="full"
-            h="full"
-            zIndex={1}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
+      <MediaDropzone
+        accept="image/*"
+        maxFiles={20}
+        onUpload={handleOnUpload}
+        uploading={isUploading}
+        controlRef={dropzoneControl}
+        onDragChange={setIsDragActive}>
+        <Box h="full" p="1">
+          <MediaGrid
+            mediaNodes={limitedMediaNodes}
+            columnCount={6 - columnCount}
+            selectedMediaNode={selectedMediaNode}
+            onSelect={onSelectMediaNode}
+            onDoubleClick={() => {
+              onPreview('PREVIEW')
+            }}
+            onUpdateDescription={description => {
+              handleUpdate({description})
+            }}
           />
-        )}
-
-        <MediaGrid
-          mediaNodes={limitedMediaNodes}
-          columnCount={6 - columnCount}
-          selectedMediaNode={selectedMediaNode}
-          onSelect={onSelectMediaNode}
-          onDoubleClick={() => {
-            onPreview('PREVIEW')
-          }}
-          onUpdateDescription={description => {
-            handleUpdate({description})
-          }}
-        />
-      </Box>
+        </Box>
+      </MediaDropzone>
     </Box>
   )
 }
