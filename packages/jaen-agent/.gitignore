@@ -1,0 +1,9 @@
+# Pylon's build output: the derived schema, the generated client and the
+# bundle wrangler deploys. All three are rebuilt by `pylon build`.
+.pylon
+
+# The Worker's local secrets. Never committed: it holds AUTH_KEY, the
+# repository credential and the facade bearer.
+.dev.vars
+
+node_modules

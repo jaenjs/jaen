@@ -1,0 +1,87 @@
+#:schema node_modules/wrangler/config-schema.json
+#
+# One Worker for the whole estate, beside the taxi pylons in account
+# 92920a0740087f4d54d9201675220d43. Deploy it with scripts/deploy.sh, never
+# with a bare `wrangler deploy`: the script stamps the version vars the
+# `{ version { agent commit builtAt } }` query answers with, and a bare deploy
+# leaves them unset.
+name = "jaen-agent"
+main = ".pylon/index.js"
+compatibility_date = "2026-07-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+send_metrics = false
+
+[[routes]]
+pattern = "agent.jaen.netsnek.com"
+custom_domain = true
+
+# Pylon derives its schema with ts-morph at build time and the import survives
+# into the bundle, which esbuild cannot resolve on a machine that never had the
+# package. hono/compress gzips a body and sets Content-Encoding, which
+# Cloudflare's edge drops on the way out, so the client receives gzip bytes it
+# was told are plain JSON. Both are stubbed, as in jaen-agent-v2.
+[alias]
+"ts-morph" = "./src/stubs/ts-morph.ts"
+"hono/compress" = "./src/stubs/hono-compress.ts"
+
+[vars]
+# Mandatory. Without it pylon installs no auth middleware, `auth` stays empty,
+# and every call is refused with a message no one can tell from a broken
+# token. src/index.ts refuses to answer at all rather than serve that.
+AUTH_ISSUER = "https://accounts.netsnek.com"
+# The CMS project both sites' editors sign in against. AUTH_KEY (a secret) has
+# to be the JSON key of an API app in THIS project: Zitadel puts the
+# introspecting application's project into the audience it demands.
+AUTH_PROJECT_ID = "268283277977065078"
+AUTH_CACHE_TTL_MS = 60000
+DEFAULT_BRANCH = "main"
+PYLON_TELEMETRY_DISABLED = 1
+
+# The site table. There is no database, so this is where a site is added and
+# nowhere else. The site key names the repository, the identity decides the
+# permission: both limousine sites sign in against the same Zitadel with the
+# same CMS project and the same client `268283382465631862@cms`, so the
+# audience is identical on both and only `organizationId` tells them apart.
+#
+# `publishWorkflow` is deliberately absent on both. No Actions build has ever
+# succeeded on either site (the jaen packages are `link:` dependencies on a
+# sibling checkout the runner does not have), so the build is scripts/deploy.sh
+# run by a human after a pull, and `publish` answers `queued: false` with that
+# as the reason rather than pretending a build started. Add the key when a
+# site grows a working workflow.
+#
+# `installationId` is absent until the `jaen-agent` GitHub App exists; the
+# interim credential is the GITHUB_TOKEN secret, a fine grained token with
+# contents:write on both repositories.
+SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"356348844407002709","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.booklimo.at/graphql"},"limosen.at":{"repository":"netsnek/limosen.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"339284789469124181","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.limosen.at/graphql"}}'
+
+# The read cache (`head:<site>`, thirty seconds) and the in-flight lock
+# (`lock:<site>`, fifteen seconds), and the App installation token for its
+# hour. Nothing else, and nothing that is a store of record: every write
+# re-reads GitHub under the lock before it applies anything, so a cold or lost
+# KV is a slower read and never a lost change.
+#
+# Created once with
+#   env -u CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID=92920a0740087f4d54d9201675220d43 \
+#     npx wrangler kv namespace create CACHE
+# and the id it prints goes below.
+[[kv_namespaces]]
+binding = "CACHE"
+id = "REPLACE_WITH_THE_JAEN_AGENT_CACHE_NAMESPACE_ID"
+
+# No [[d1_databases]], no prisma, no migrations directory, and no Durable
+# Object. The repository is the store.
+#
+# Secrets, `wrangler secret put <name>`, never values in this file:
+#   AUTH_KEY                the JSON key of an API app in AUTH_PROJECT_ID,
+#                           which pylon introspects with (PrivateKeyJwt)
+#   GITHUB_TOKEN            the interim repository credential, a fine grained
+#                           token with contents:write on netsnek/booklimo.at
+#                           and netsnek/limosen.at
+#   GITHUB_APP_ID           the `jaen-agent` App, once it exists
+#   GITHUB_APP_PRIVATE_KEY  its private key in PKCS#8
+#                           (`openssl pkcs8 -topk8 -nocrypt -in app.pem`),
+#                           because WebCrypto reads no other form
+#   ORG_USER_MANAGER_TOKEN  the bearer the grant lookup through idm.<brand>
+#                           is made with, the agent's own and never a caller's
