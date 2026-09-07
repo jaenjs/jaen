@@ -340,6 +340,18 @@ export const confirmAsAdmin = (
 ): Promise<TransferRow | null> =>
   statusWrite('confirmOffer', {transferId}, transferId)
 
+/**
+ * NEW to CONFIRMED for a booking that carries no offer, the office's own
+ * confirmation (okf/architecture/dispatch.md section 11). The pylon mails
+ * the "Buchungsbestätigung" and the office copy and pushes the customer,
+ * and only from there on may a driver be asked. An OFFERED ride goes
+ * through `confirmAsAdmin` above instead, so the two paths never race.
+ */
+export const confirmBooking = (
+  transferId: string
+): Promise<TransferRow | null> =>
+  statusWrite('confirmBooking', {transferId}, transferId)
+
 // --------------- The brand's whole list, the Media tab's Dokumente source ---------------
 
 /**

@@ -53,6 +53,20 @@ const de = {
   // Cells
   NotAssigned: 'Nicht zugewiesen',
   AssignDriverFirst: 'Zuerst Fahrer zuweisen',
+
+  // No driver before the confirmation, dispatch.md section 11
+  ConfirmFirst: 'Zuerst bestätigen',
+  ActionConfirmBooking: 'Buchung bestätigen',
+  ConfirmBookingTitle: 'Buchung bestätigen?',
+  ConfirmBookingBody:
+    'Die Fahrt wird bestätigt und der Kunde bekommt die Buchungsbestätigung. Erst danach kann ein Fahrer angefragt werden.',
+  ConfirmBookingPrice: 'Preis: {price}',
+  ConfirmBookingNoPrice: 'Noch kein Preis festgelegt',
+  ConfirmBookingRecipient: 'Bestätigung an: {recipient}',
+  ConfirmBookingNoRecipient:
+    'Keine E-Mail-Adresse hinterlegt, es geht keine Bestätigung raus',
+  ConfirmBookingAction: 'Bestätigen und senden',
+  ToastConfirmed: 'Buchung bestätigt',
   AssignVehicle: 'Fahrzeug zuweisen',
   SetPrice: 'Preis festlegen',
   NoPrice: 'Kein Preis',
@@ -338,6 +352,20 @@ const en: TransfersStrings = {
 
   NotAssigned: 'Not assigned',
   AssignDriverFirst: 'Assign a driver first',
+
+  // No driver before the confirmation, dispatch.md section 11
+  ConfirmFirst: 'Confirm first',
+  ActionConfirmBooking: 'Confirm booking',
+  ConfirmBookingTitle: 'Confirm the booking?',
+  ConfirmBookingBody:
+    'The ride is confirmed and the customer receives the booking confirmation. Only then can a driver be asked.',
+  ConfirmBookingPrice: 'Price: {price}',
+  ConfirmBookingNoPrice: 'No price set yet',
+  ConfirmBookingRecipient: 'Confirmation to: {recipient}',
+  ConfirmBookingNoRecipient:
+    'No mail address on this ride, no confirmation goes out',
+  ConfirmBookingAction: 'Confirm and send',
+  ToastConfirmed: 'Booking confirmed',
   AssignVehicle: 'Assign vehicle',
   SetPrice: 'Set price',
   NoPrice: 'No price',
@@ -610,6 +638,20 @@ const tr: TransfersStrings = {
 
   NotAssigned: 'Atanmamış',
   AssignDriverFirst: 'Önce şoför atayın',
+
+  // No driver before the confirmation, dispatch.md section 11
+  ConfirmFirst: 'Önce onaylayın',
+  ActionConfirmBooking: 'Rezervasyonu onayla',
+  ConfirmBookingTitle: 'Rezervasyon onaylansın mı?',
+  ConfirmBookingBody:
+    'Yolculuk onaylanır ve müşteri rezervasyon onayını alır. Şoför ancak bundan sonra sorulabilir.',
+  ConfirmBookingPrice: 'Fiyat: {price}',
+  ConfirmBookingNoPrice: 'Henüz fiyat belirlenmedi',
+  ConfirmBookingRecipient: 'Onay şu adrese: {recipient}',
+  ConfirmBookingNoRecipient:
+    'Bu yolculukta e-posta adresi yok, onay gönderilmez',
+  ConfirmBookingAction: 'Onayla ve gönder',
+  ToastConfirmed: 'Rezervasyon onaylandı',
   AssignVehicle: 'Araç ata',
   SetPrice: 'Fiyat belirle',
   NoPrice: 'Fiyat yok',
@@ -883,6 +925,20 @@ const ar: TransfersStrings = {
 
   NotAssigned: 'غير معيّن',
   AssignDriverFirst: 'عيّن سائقًا أولًا',
+
+  // No driver before the confirmation, dispatch.md section 11
+  ConfirmFirst: 'أكّد أولاً',
+  ActionConfirmBooking: 'تأكيد الحجز',
+  ConfirmBookingTitle: 'هل تريد تأكيد الحجز؟',
+  ConfirmBookingBody:
+    'يتم تأكيد الرحلة ويستلم العميل تأكيد الحجز. بعد ذلك فقط يمكن طلب سائق.',
+  ConfirmBookingPrice: 'السعر: {price}',
+  ConfirmBookingNoPrice: 'لم يُحدَّد سعر بعد',
+  ConfirmBookingRecipient: 'التأكيد إلى: {recipient}',
+  ConfirmBookingNoRecipient:
+    'لا يوجد عنوان بريد على هذه الرحلة، لن يُرسل تأكيد',
+  ConfirmBookingAction: 'أكّد وأرسل',
+  ToastConfirmed: 'تم تأكيد الحجز',
   AssignVehicle: 'تعيين مركبة',
   SetPrice: 'تحديد السعر',
   NoPrice: 'لا يوجد سعر',

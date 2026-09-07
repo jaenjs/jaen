@@ -106,7 +106,11 @@ import {OfflineBanner} from '../components/OfflineBanner'
 import {CustomerStatusBadge} from '../components/CustomerStatusBadge'
 import {MoneySection} from '../components/documents/MoneySection'
 import {OfferDialog} from '../components/documents/OfferDialog'
-import {canSendOffer} from '../hooks/offers'
+import {
+  canConfirmBooking,
+  canSendOffer,
+  needsConfirmation
+} from '../hooks/offers'
 import {getI18nOffers} from '../locales/i18nOffers'
 import {getI18nOffline} from '../locales/i18nOffline'
 import {useOnline, useRefetchOnReconnect} from '../offline'
@@ -114,6 +118,7 @@ import {asTransferState, type TransferState} from '../locales/i18nStates'
 import {fill, type TransfersStrings} from '../locales/i18nTransfers'
 import {
   AssignDialog,
+  ConfirmBookingDialog,
   CreateTransferDialog,
   DriverAnswerBadge,
   PriceDialog,
@@ -910,6 +915,18 @@ function DetailScreen({
     editable && transfer.price != null && canSendOffer(transfer.customerStatus)
   const [unassignOpen, setUnassignOpen] = useState(false)
   const [unassigning, setUnassigning] = useState(false)
+  // No driver before the confirmation, dispatch.md section 11: the picker is
+  // disabled with the hint while the customer's status is NEW, OFFERED or
+  // DECLINED, and a NEW ride carries "Buchung bestätigen" beside the state.
+  const blocked =
+    editable &&
+    !isClosed(transfer.state) &&
+    needsConfirmation(transfer.customerStatus)
+  const confirmable =
+    editable &&
+    !isClosed(transfer.state) &&
+    canConfirmBooking(transfer.customerStatus)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   // Who was asked, newest first, for the dispatcher. The names come from the
   // driver list and the users page, the id stands in for a name not loaded.
@@ -1036,9 +1053,30 @@ function DetailScreen({
                 <Button
                   size="sm"
                   colorPalette="brand"
+                  disabled={blocked}
+                  title={blocked ? t.ConfirmFirst : undefined}
+                  data-testid="assign-driver"
                   onClick={() => setAssignOpen(true)}>
                   {transfer.driverId ? t.ActionReassign : t.ActionAssign}
                 </Button>
+                {blocked && (
+                  <Badge
+                    colorPalette="gray"
+                    variant="outline"
+                    data-testid="confirm-first">
+                    {t.ConfirmFirst}
+                  </Badge>
+                )}
+                {confirmable && (
+                  <Button
+                    size="sm"
+                    colorPalette="brand"
+                    variant="outline"
+                    data-testid="confirm-booking"
+                    onClick={() => setConfirmOpen(true)}>
+                    {t.ActionConfirmBooking}
+                  </Button>
+                )}
                 {offerable && (
                   <Button
                     size="sm"
@@ -1262,10 +1300,17 @@ function DetailScreen({
                       {t.ActionUnassign}
                     </Button>
                   )}
+                  {blocked && (
+                    <Badge colorPalette="gray" variant="outline" size="sm">
+                      {t.ConfirmFirst}
+                    </Badge>
+                  )}
                   <Button
                     size="xs"
                     variant="ghost"
                     colorPalette="brand"
+                    disabled={blocked}
+                    title={blocked ? t.ConfirmFirst : undefined}
                     onClick={() => setAssignOpen(true)}>
                     {transfer.driverId ? t.ActionReassign : t.ActionAssign}
                   </Button>
@@ -1556,6 +1601,12 @@ function DetailScreen({
               setDocumentsVersion(v => v + 1)
               onRefresh()
             }}
+          />
+          <ConfirmBookingDialog
+            open={confirmOpen}
+            onClose={() => setConfirmOpen(false)}
+            transfer={transfer}
+            onSaved={onChanged}
           />
           <StateDialog
             open={stateOpen}

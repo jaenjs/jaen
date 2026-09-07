@@ -65,6 +65,30 @@ export const canSendOffer = (status: string | null | undefined): boolean => {
   return s === 'NEW' || s === 'OFFERED'
 }
 
+/**
+ * A ride the customer has not confirmed gets no driver and no car
+ * (okf/architecture/dispatch.md section 11): the pylon refuses assignDriver
+ * and assignCar with CONFIRMATION_REQUIRED on NEW, OFFERED and DECLINED,
+ * and the screens draw the picker disabled with "Zuerst bestätigen" rather
+ * than letting the dispatcher run into the refusal. A row from a backend
+ * that has no customerStatus at all is dispatched the way it always was.
+ */
+export const needsConfirmation = (
+  status: string | null | undefined
+): boolean => {
+  const s = asCustomerStatus(status)
+  return s === 'NEW' || s === 'OFFERED' || s === 'DECLINED'
+}
+
+/**
+ * The office's own "Buchung bestätigen", `confirmBooking`: a booking with
+ * no offer only. An OFFERED ride is confirmed through the offer, by the
+ * customer's link or by the dispatcher on the money side, so the two paths
+ * never race.
+ */
+export const canConfirmBooking = (status: string | null | undefined): boolean =>
+  asCustomerStatus(status) === 'NEW'
+
 /** The dropzone is enabled from CONFIRMED on: the invoice may be replaced until it is paid. */
 export const canUploadInvoice = (
   status: string | null | undefined

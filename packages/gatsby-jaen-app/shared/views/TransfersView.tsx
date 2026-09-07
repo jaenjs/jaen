@@ -126,6 +126,9 @@ import {RefreshButton} from '../components/RefreshButton'
 import {useViewRefresh} from '../hooks/view-refresh'
 import {OfflineBanner} from '../components/OfflineBanner'
 import {CustomerStatusBadge} from '../components/CustomerStatusBadge'
+import {ConfirmDialog} from '../components/ConfirmDialog'
+import {canConfirmBooking, needsConfirmation} from '../hooks/offers'
+import {confirmBooking} from '../hooks/documents'
 import {
   DataTable,
   useIsMobile,
@@ -834,6 +837,92 @@ export function PriceDialog({
         </Field.Root>
       </Stack>
     </Sheet>
+  )
+}
+
+/**
+ * "Buchung bestätigen", the office's confirmation of a booking that carries
+ * no offer (okf/architecture/dispatch.md section 11). It names the two
+ * things the dispatcher is deciding about, the price the customer will read
+ * on the confirmation and the address it goes to, and only then writes
+ * CONFIRMED: from there on a driver may be asked.
+ */
+export interface ConfirmBookingDialogProps {
+  open: boolean
+  onClose: () => void
+  transfer: TransferRow | null
+  onSaved: (row: TransferRow) => void
+}
+
+/** The address the pylon would mail: the first passenger carrying one. */
+export function confirmationRecipient(
+  transfer: TransferRow | null | undefined
+): string {
+  const passenger = (transfer?.passengers ?? []).find(
+    p => typeof p.email === 'string' && p.email.includes('@')
+  )
+  return passenger?.email?.trim() ?? ''
+}
+
+export function ConfirmBookingDialog({
+  open,
+  onClose,
+  transfer,
+  onSaved
+}: ConfirmBookingDialogProps) {
+  const {t} = useTransferStrings()
+  const code = useI18nCode()
+  const [busy, setBusy] = useState(false)
+
+  const recipient = confirmationRecipient(transfer)
+
+  const submit = async () => {
+    if (!transfer) return
+    setBusy(true)
+    try {
+      const row = await confirmBooking(transfer.id)
+      toaster.success({title: t.ToastConfirmed})
+      if (row) onSaved(row)
+      onClose()
+    } catch (err) {
+      toaster.error({
+        title: t.ToastFailed,
+        description: errorMessage(err, '')
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={submit}
+      loading={busy}
+      title={t.ConfirmBookingTitle}
+      confirmLabel={t.ConfirmBookingAction}
+      body={
+        <Stack gap="2">
+          <Text>{t.ConfirmBookingBody}</Text>
+          <Text textStyle="sm" fontWeight="medium">
+            {transfer?.price != null
+              ? fill(t.ConfirmBookingPrice, {
+                  price: formatAmount(code, transfer.price)
+                })
+              : t.ConfirmBookingNoPrice}
+          </Text>
+          <Text
+            textStyle="sm"
+            color={recipient ? 'fg.muted' : 'fg.error'}
+            data-testid="confirm-recipient">
+            {recipient
+              ? fill(t.ConfirmBookingRecipient, {recipient})
+              : t.ConfirmBookingNoRecipient}
+          </Text>
+        </Stack>
+      }
+    />
   )
 }
 
@@ -2054,6 +2143,8 @@ export interface RowActions {
   onAssign?: (row: BoardRow) => void
   onPrice?: (row: BoardRow) => void
   onState?: (row: BoardRow) => void
+  /** "Buchung bestätigen" beside the state, on a NEW ride only. */
+  onConfirm?: (row: BoardRow) => void
 }
 
 function CapacityText({row}: {row: BoardRow}) {
@@ -2142,6 +2233,25 @@ export function DriverAnswerBadge({
 function DriverCell({row, actions}: {row: BoardRow; actions: RowActions}) {
   const {t} = useTransferStrings()
   const stop = (e: React.MouseEvent) => e.stopPropagation()
+  // No driver before the confirmation (dispatch.md section 11). The picker
+  // is drawn disabled with the hint rather than opening into a refusal,
+  // and a ride that already carries a driver keeps reading as it does.
+  if (
+    !row.driverId &&
+    !isClosed(row.state) &&
+    needsConfirmation(row.customerStatus)
+  ) {
+    return (
+      <Badge
+        colorPalette="gray"
+        variant="outline"
+        opacity="0.7"
+        data-testid="confirm-first"
+        title={t.ConfirmFirst}>
+        {t.ConfirmFirst}
+      </Badge>
+    )
+  }
   if (row.driverId) {
     return (
       <HStack gap="2" minW="0">
@@ -2285,6 +2395,37 @@ function PriceCell({row, actions}: {row: BoardRow; actions: RowActions}) {
   )
 }
 
+/**
+ * "Buchung bestätigen" beside the state, on a NEW ride the office still owes
+ * the customer their paper (dispatch.md section 11). An OFFERED ride is
+ * confirmed through the offer and carries nothing here.
+ */
+function ConfirmBookingCell({
+  row,
+  actions
+}: {
+  row: BoardRow
+  actions: RowActions
+}) {
+  const {t} = useTransferStrings()
+  if (!actions.onConfirm || isClosed(row.state)) return null
+  if (!canConfirmBooking(row.customerStatus)) return null
+  return (
+    <Badge
+      as="button"
+      colorPalette="brand"
+      variant="subtle"
+      cursor="pointer"
+      data-testid="confirm-booking"
+      onClick={e => {
+        e.stopPropagation()
+        actions.onConfirm?.(row)
+      }}>
+      {t.ActionConfirmBooking}
+    </Badge>
+  )
+}
+
 function StatusCell({row, actions}: {row: BoardRow; actions: RowActions}) {
   if (!actions.onState) return <StatusBadge state={row.state} />
   return (
@@ -2355,6 +2496,7 @@ function transferCell(
         <HStack gap="1" flexWrap="wrap">
           <StatusCell row={row} actions={actions} />
           <CustomerStatusBadge status={row.customerStatus} size="sm" />
+          <ConfirmBookingCell row={row} actions={actions} />
         </HStack>
       )
     case 'route':
@@ -2837,6 +2979,7 @@ function DispatchBoard() {
   const [assignFor, setAssignFor] = useState<TransferRow | null>(null)
   const [priceFor, setPriceFor] = useState<TransferRow | null>(null)
   const [stateFor, setStateFor] = useState<TransferRow | null>(null)
+  const [confirmFor, setConfirmFor] = useState<TransferRow | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
 
   const enriched = useMemo(
@@ -2853,7 +2996,8 @@ function DispatchBoard() {
       onOpen: row => navigate(transferPath(row)),
       onAssign: setAssignFor,
       onPrice: setPriceFor,
-      onState: setStateFor
+      onState: setStateFor,
+      onConfirm: setConfirmFor
     }),
     [navigate]
   )
@@ -2995,6 +3139,12 @@ function DispatchBoard() {
         open={!!stateFor}
         onClose={() => setStateFor(null)}
         transfer={stateFor}
+        onSaved={onSaved}
+      />
+      <ConfirmBookingDialog
+        open={!!confirmFor}
+        onClose={() => setConfirmFor(null)}
+        transfer={confirmFor}
         onSaved={onSaved}
       />
       <CreateTransferDialog
