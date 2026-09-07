@@ -1,5 +1,12 @@
 import {MediaNode} from 'jaen'
-import {Flex, Heading, HStack, IconButton, Stack} from '@chakra-ui/react'
+import {
+  Flex,
+  Heading,
+  HStack,
+  IconButton,
+  Stack,
+  useBreakpointValue
+} from '@chakra-ui/react'
 import React, {useEffect, useMemo, useState} from 'react'
 import {useIntl} from 'react-intl'
 
@@ -69,6 +76,9 @@ export const Media: React.FC<MediaProps> = ({
   const intl = useIntl()
 
   const [isSidebarOpen, setSidebarOpen] = useState(false) // State variable for sidebar visibility
+
+  /** True while the tree overlays the grid rather than standing beside it. */
+  const isNarrow = useBreakpointValue({base: true, md: false}, {ssr: false})
 
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen)
@@ -196,12 +206,22 @@ export const Media: React.FC<MediaProps> = ({
       // tell "no folder registered" from "registered and not drawn".
       data-testid="media-gallery"
       data-folder-count={(folders ?? []).length}>
+      {/*
+        On a phone the tree is the whole screen for as long as it is open.
+        It used to sit beside the grid at a fixed 20rem, which at 390px left
+        the grid 70px wide, so the sidebar was hidden below md and with it
+        every folder: nothing on a phone could reach Fahrzeuge or Dokumente.
+        It overlays instead, and picking an entry closes it again.
+      */}
       <Stack
         as="nav"
         h="calc(100dvh - 4rem)"
-        pos="sticky"
+        pos={{base: 'absolute', md: 'sticky'}}
         top="0"
-        w="xs"
+        left="0"
+        zIndex={{base: 3, md: 'auto'}}
+        bg="bg.surface"
+        w={{base: 'full', md: 'xs'}}
         borderRight="1px solid"
         borderColor="border.emphasized"
         overflow="auto"
@@ -241,6 +261,10 @@ export const Media: React.FC<MediaProps> = ({
                 })
 
                 onJaenPageSelect(id)
+
+                // The overlay covers the grid on a phone, so the answer to
+                // the pick has to be uncovered to be read.
+                if (isNarrow) setSidebarOpen(false)
               }}
             />
           </Stack>

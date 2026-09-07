@@ -254,18 +254,25 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
         bg="bg.surface"
         borderBottom="1px solid"
         borderColor="border.emphasized">
+        {/*
+          The opener stands at every width. It used to sit inside the two
+          nested md-only stacks below, together with the column slider, so a
+          phone had no control at all that showed the folder tree and the
+          Media tab was the grid and nothing else. The slider stays behind
+          md, where there is room for it.
+        */}
+        {!isSelector && !isSidebarOpen && (
+          <IconButton
+            aria-label="open sidebar"
+            fontSize="1.2em"
+            variant="ghost"
+            onClick={onToggleSidebar}>
+            <BsLayoutSidebarInset />
+          </IconButton>
+        )}
+
         <HStack display={{base: 'none', md: 'flex'}}>
           <HStack display={{base: 'none', md: 'flex'}}>
-            {!isSelector && !isSidebarOpen && (
-              <IconButton
-                aria-label="open sidebar"
-                fontSize="1.2em"
-                variant="ghost"
-                onClick={onToggleSidebar}>
-                <BsLayoutSidebarInset />
-              </IconButton>
-            )}
-
             <Icon boxSize="2" asChild>
               <FaMinus
                 onClick={() => {
