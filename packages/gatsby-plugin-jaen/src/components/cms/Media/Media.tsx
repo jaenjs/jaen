@@ -266,8 +266,10 @@ export const Media: React.FC<MediaProps> = ({
                 onJaenPageSelect(id)
 
                 // The overlay covers the grid on a phone, so the answer to
-                // the pick has to be uncovered to be read.
-                if (isNarrow()) setSidebarOpen(false)
+                // the pick has to be uncovered to be read. A branch is not an
+                // answer, it is tapped to open it, and closing the tree on it
+                // would put a car's folder out of reach forever.
+                if (isNarrow() && !node.children?.length) setSidebarOpen(false)
               }}
             />
           </Stack>
