@@ -32,7 +32,12 @@ export interface DataCardsProps<Row> {
   card: (row: Row, api: CardApi) => ReactNode
 }
 
-export function DataCards<Row>({sections, rowId, label, card}: DataCardsProps<Row>) {
+export function DataCards<Row>({
+  sections,
+  rowId,
+  label,
+  card
+}: DataCardsProps<Row>) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const toggle = (id: string) =>
     setExpanded(prev => {
@@ -53,8 +58,13 @@ export function DataCards<Row>({sections, rowId, label, card}: DataCardsProps<Ro
               rounded="control"
               bg={section.tone ? 'colorPalette.subtle' : 'bg.subtle'}
               borderInlineEndWidth="4px"
-              borderInlineEndColor={section.tone ? 'colorPalette.solid' : 'transparent'}>
-              <Text textStyle="sm" fontWeight="semibold" color={section.tone ? 'colorPalette.fg' : 'fg.muted'}>
+              borderInlineEndColor={
+                section.tone ? 'colorPalette.solid' : 'transparent'
+              }>
+              <Text
+                textStyle="sm"
+                fontWeight="semibold"
+                color={section.tone ? 'colorPalette.fg' : 'fg.muted'}>
                 {label(section.key)}
               </Text>
             </Box>
@@ -63,7 +73,11 @@ export function DataCards<Row>({sections, rowId, label, card}: DataCardsProps<Ro
             const id = rowId(row)
             return (
               <React.Fragment key={id}>
-                {card(row, {expanded: expanded.has(id), toggle: () => toggle(id), tone: section.tone})}
+                {card(row, {
+                  expanded: expanded.has(id),
+                  toggle: () => toggle(id),
+                  tone: section.tone
+                })}
               </React.Fragment>
             )
           })}
@@ -82,9 +96,24 @@ export interface DefaultCardProps<Row> {
   onOpen: (row: Row) => void
 }
 
-/** The card a screen gets for free: the board's frame around the visible columns. */
-export function DefaultCard<Row>({row, columns, tone, stripe, onOpen}: DefaultCardProps<Row>) {
-  const [first, ...rest] = columns
+/**
+ * The card a screen gets for free: the board's frame around the visible
+ * columns. A controls column (columns.ts) is not a label and a value: its
+ * buttons take the card's whole width under the fields, because the value
+ * column beside a label is 230px on a 390px screen and "Monatsabrechnung
+ * (Excel)" alone is 241px, which is how the hotel's month cards reached
+ * 616px on 2026-09-07. The buttons say what they are, the label stays off.
+ */
+export function DefaultCard<Row>({
+  row,
+  columns,
+  tone,
+  stripe,
+  onOpen
+}: DefaultCardProps<Row>) {
+  const [first, ...others] = columns
+  const rest = others.filter(c => !c.controls)
+  const controls = others.filter(c => c.controls)
   return (
     <Box
       rounded="surface"
@@ -113,10 +142,22 @@ export function DefaultCard<Row>({row, columns, tone, stripe, onOpen}: DefaultCa
               <Text color="fg.muted" w="24" flexShrink={0}>
                 {c.label}
               </Text>
-              <Box minW="0" flex="1" textAlign={c.align === 'end' ? 'end' : undefined}>
+              <Box
+                minW="0"
+                flex="1"
+                textAlign={c.align === 'end' ? 'end' : undefined}>
                 {c.cell(row)}
               </Box>
             </HStack>
+          ))}
+        </Stack>
+      )}
+      {controls.length > 0 && (
+        <Stack gap="2" mt="3" minW="0">
+          {controls.map(c => (
+            <Box key={c.id} minW="0">
+              {c.cell(row)}
+            </Box>
           ))}
         </Stack>
       )}

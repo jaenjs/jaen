@@ -377,12 +377,14 @@ export function StatementMonths({
   // The two files of a month, worded Monatsabrechnung so nobody takes them
   // for an invoice. Each opens the signed link the Worker answers, the way
   // a document opens. On a desk they sit in the row, on a phone in the
-  // card, where a button is a thumb's 44px (hard-rules.md).
+  // card, where a button is a thumb's 44px (hard-rules.md) and the two wrap
+  // onto two lines: side by side they are 480px, the card 334px.
   const files = (row: StatementMonth) => (
     <ButtonGroup
       size="sm"
       variant="outline"
       gap="2"
+      flexWrap={{base: 'wrap', md: 'nowrap'}}
       onClick={e => e.stopPropagation()}>
       <Button
         minH={{base: '44px', md: '8'}}
@@ -879,13 +881,15 @@ export function DriversHalf({
   }
 
   // The month's PDF and Excel, drawn only where the DRV_ tab exists, the
-  // way a document button is drawn only where the document is.
+  // way a document button is drawn only where the document is. In the card
+  // they wrap, the two being wider than the card together.
   const files = (row: DriverBillingRow) =>
     row.statement ? (
       <ButtonGroup
         size="sm"
         variant="outline"
         gap="2"
+        flexWrap={{base: 'wrap', md: 'nowrap'}}
         onClick={e => e.stopPropagation()}>
         <Button
           minH={{base: '44px', md: '8'}}

@@ -1878,7 +1878,10 @@ const COLUMN_WIDTHS: Record<ColumnId, number> = {
   driver: 160,
   // The "Zuerst Fahrer zuweisen" badge is 166px wide.
   vehicle: 190,
-  price: 110,
+  // The "Preis festlegen" badge is 123px wide at the table's 14px, and the
+  // 110px of the first build left 21px of it past the cell (measured on
+  // booklimo.at, 2026-09-07).
+  price: 150,
   customer: 160,
   category: 110,
   payment: 110,
