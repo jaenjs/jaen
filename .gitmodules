@@ -1,0 +1,6 @@
+[submodule "services/jaen-idm"]
+	path = services/jaen-idm
+	url = https://github.com/jaenjs/jaen-idm.git
+[submodule "services/emailwerk"]
+	path = services/emailwerk
+	url = https://github.com/netsnek/emailwerk.git
