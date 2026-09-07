@@ -1,0 +1,27 @@
+{
+  "name": "jaen-agent",
+  "version": "3.0.0",
+  "private": true,
+  "description": "The jaen agent: the one process that reads a site's jaen data from its repository and writes every saved change back as a git commit.",
+  "license": "EUPL-1.2",
+  "type": "module",
+  "scripts": {
+    "build": "pylon build",
+    "deploy": "scripts/deploy.sh",
+    "dev": "wrangler dev",
+    "test": "node --test tests/agent.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@getcronit/pylon": "3.0.0-canary-20260518070904.53bffd061c32775b53c69b81d42bb9230d5214dc",
+    "deepmerge": "^4.3.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "@getcronit/pylon-dev": "2.0.0-canary-20260518070904.53bffd061c32775b53c69b81d42bb9230d5214dc",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.99.0"
+  }
+}
