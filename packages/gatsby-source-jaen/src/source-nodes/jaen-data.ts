@@ -9,6 +9,7 @@ import {fetchWithCache} from '../utils/fetch-with-cache'
 import {
   fetchGatewayFiles,
   gatewayFileId,
+  gatewayOrigin,
   osgAuthHeaders,
   rewriteGatewayUrls
 } from '../utils/osg-media'
@@ -102,17 +103,26 @@ export const sourceNodes = async (
       }
 
       if (link.startsWith('http://') || link.startsWith('https://')) {
-        // A patch is a gateway file like any other and is owned by this
-        // site's organisation, so the machine token goes on the request.
+        // A patch is a gateway file like any other, owned by this site's
+        // organisation, so the machine token goes on the request. And it is
+        // asked of this build's own gateway whatever host the line names:
+        // every patches.txt in the estate still names osg.snek.at, the open
+        // door the private gateway is closing, and a site whose build depends
+        // on that host stops building the day it is shut.
+        const patchFileId = gatewayFileId(link, storageUrl)
+        const patchUrl = patchFileId
+          ? `${gatewayOrigin(storageUrl)}/storage/${encodeURIComponent(
+              patchFileId
+            )}`
+          : link
+
         response = await fetchWithCache<{
           createdAt: Date
           message: string
           data: JaenData
-        }>(link, {
+        }>(patchUrl, {
           cache,
-          ...(gatewayFileId(link, storageUrl)
-            ? {headers: osgAuthHeaders()}
-            : {})
+          ...(patchFileId ? {headers: osgAuthHeaders()} : {})
         })
       } else {
         // Local patch file: the line is a path relative to the jaen-data

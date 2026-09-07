@@ -59,10 +59,18 @@ export interface OsgFile {
  */
 const files = new Map<string, OsgFile>()
 
-export const osgFiles = (): OsgFile[] =>
-  Array.from(new Set(files.values())).sort((a, b) =>
+export const osgFiles = (): OsgFile[] => {
+  // By file id, not by object identity: the same file met under two spellings
+  // is remembered twice, and copying it twice into the output would be two
+  // writes of one path.
+  const byId = new Map<string, OsgFile>()
+
+  files.forEach(file => byId.set(file.fileId, file))
+
+  return Array.from(byId.values()).sort((a, b) =>
     a.fileId.localeCompare(b.fileId)
   )
+}
 
 export const osgFileFor = (idOrUrl: string): OsgFile | undefined =>
   files.get(idOrUrl)
@@ -112,6 +120,61 @@ export const gatewayFileId = (
  * too, and those are exactly the ones a visitor's browser would fetch.
  */
 const URL_PATTERN = /https?:\/\/[^\s"'<>()]*\/storage\/[^\s"'<>()\\]+/gi
+
+/**
+ * The rewrite's own output, read back as the file it names.
+ *
+ * A published patch is written from the CMS's state, and the CMS's state is
+ * the data this build already rewrote, so a site that publishes after a build
+ * ships patches whose media are `/osg/<id>.<ext>` and not gateway URLs. If
+ * that path were only a path, the file id would be gone from the data
+ * forever and the next build could not fetch it. It is not only a path: the
+ * name in it is the id, so the mapping is reversible and this whole rewrite
+ * is idempotent.
+ *
+ * The one id shape this cannot read back is one that had to be digested to
+ * become a file name (see `safeName`), which is a `git_`/`s3_` id. Nothing in
+ * the estate has one: every id ever issued here is a Telegram id, which is
+ * base64url and is its own file name.
+ */
+const LOCAL_PATTERN = new RegExp(
+  `(?:https?://[^\\s"'<>()]+)?/${PUBLIC_MEDIA_DIR}/([A-Za-z0-9._-]+?)\\.[A-Za-z0-9]{1,8}\\b`,
+  'g'
+)
+
+/** File ids named by a path this build's own rewrite wrote earlier. */
+export const collectLocalMediaIds = (data: unknown): string[] => {
+  const found = new Set<string>()
+
+  const walk = (value: unknown): void => {
+    if (typeof value === 'string') {
+      // Array.from, not the iterator: this package is compiled to ES5
+      // without downlevelIteration, and a `for...of` over an iterator becomes
+      // an indexed loop over something that has no length, so the body never
+      // runs and the whole scan silently finds nothing.
+      for (const match of Array.from(value.matchAll(LOCAL_PATTERN))) {
+        const id = match[1]
+
+        if (id && id !== 'index') found.add(id)
+      }
+
+      return
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach(walk)
+      return
+    }
+
+    if (value && typeof value === 'object') {
+      Object.values(value as Record<string, unknown>).forEach(walk)
+    }
+  }
+
+  walk(data)
+
+  return Array.from(found)
+}
 
 export const collectGatewayUrls = (
   data: unknown,
@@ -241,8 +304,9 @@ export const fetchGatewayFiles = async (options: {
   files.clear()
 
   const urls = collectGatewayUrls(data, storageUrl)
+  const localIds = collectLocalMediaIds(data)
 
-  if (urls.length === 0) return []
+  if (urls.length === 0 && localIds.length === 0) return []
 
   if (!process.env['OSG_TOKEN']) {
     reporter.panic(MISSING_TOKEN_MESSAGE)
@@ -262,11 +326,22 @@ export const fetchGatewayFiles = async (options: {
   let downloaded = 0
   let reused = 0
 
-  for (const sourceUrl of urls) {
-    const fileId = gatewayFileId(sourceUrl, storageUrl)
+  // The gateway URLs first, then the ids a previous build's rewrite left
+  // behind: a file named both ways is downloaded once and both spellings map
+  // onto the one path.
+  const wanted: Array<{sourceUrl: string; fileId: string}> = [
+    ...urls.flatMap(sourceUrl => {
+      const fileId = gatewayFileId(sourceUrl, storageUrl)
 
-    if (!fileId) continue
+      return fileId ? [{sourceUrl, fileId}] : []
+    }),
+    ...localIds.map(fileId => ({
+      sourceUrl: `${origin}/storage/${fileId}`,
+      fileId
+    }))
+  ]
 
+  for (const {sourceUrl, fileId} of wanted) {
     const known = files.get(fileId)
 
     if (known) {
@@ -364,8 +439,11 @@ export const rewriteGatewayUrls = (
 
   let rewritten = 0
 
-  const replaceIn = (value: string, absolute: boolean): string =>
-    value.replace(URL_PATTERN, match => {
+  const replaceIn = (value: string, absolute: boolean): string => {
+    const target = (file: OsgFile): string =>
+      absolute && siteUrl ? `${siteUrl}${file.publicPath}` : file.publicPath
+
+    const withGatewayUrls = value.replace(URL_PATTERN, match => {
       const trailing = /[.,;:)\]}]+$/.exec(match)?.[0] ?? ''
       const url = trailing ? match.slice(0, -trailing.length) : match
       const file = files.get(url)
@@ -374,11 +452,27 @@ export const rewriteGatewayUrls = (
 
       rewritten++
 
-      const target =
-        absolute && siteUrl ? `${siteUrl}${file.publicPath}` : file.publicPath
-
-      return `${target}${trailing}`
+      return `${target(file)}${trailing}`
     })
+
+    // A path a previous build's rewrite wrote is left as it is, except for
+    // the one place that has to be absolute: `jaenPageMetadata.image` is what
+    // OpenGraph hands a crawler, and a crawler resolves a relative path
+    // against nothing.
+    if (!absolute || !siteUrl) return withGatewayUrls
+
+    return withGatewayUrls.replace(LOCAL_PATTERN, (match, id: string) => {
+      if (match.startsWith('http')) return match
+
+      const file = files.get(id)
+
+      if (!file) return match
+
+      rewritten++
+
+      return `${siteUrl}${file.publicPath}`
+    })
+  }
 
   const walk = (value: unknown, parentKey?: string, key?: string): unknown => {
     if (typeof value === 'string') {
