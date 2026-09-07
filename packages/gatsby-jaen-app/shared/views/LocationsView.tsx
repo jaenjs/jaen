@@ -63,6 +63,13 @@ import {fillTracking, getI18nTracking} from '../locales/i18nTracking'
  */
 const NOBODY: ResourceUser[] = []
 
+/**
+ * The screen between the frame's bar and the tab bar. The shell declares the
+ * variable on the element that carries the tab bar's clearance
+ * (src/components/AppShell.tsx), the fallback is a screen without the bar.
+ */
+const APP_VIEW_H = 'var(--app-view-h, calc(100dvh - 4rem))'
+
 export function LocationsView() {
   const caller = useCaller()
   if (caller.loading) return <LocationsSkeleton />
@@ -80,15 +87,16 @@ function LocationsSkeleton() {
   return (
     <Flex
       direction="column"
-      h="calc(100dvh - 4rem)"
-      minH="24rem"
+      h={APP_VIEW_H}
       maxW="full"
+      overflow="hidden"
+      data-view="locations"
       data-skeleton="map"
       aria-busy="true">
       <Box px={{base: '4', md: '6'}} pt={{base: '4', md: '6'}} pb="4">
         <PageHeader title={tc.NavLocations} />
       </Box>
-      <Skeleton flex="1" minH="20rem" rounded="0" />
+      <Skeleton flex="1" minH="0" rounded="0" />
     </Flex>
   )
 }
@@ -129,16 +137,29 @@ function Locations({drivers}: {drivers: ResourceUser[]}) {
   )
 
   return (
-    // The CMS frame is 4rem and sticky, the heading takes its own height, and
-    // the map fills what is left. Nothing sits at the bottom of the viewport.
-    <Flex direction="column" h="calc(100dvh - 4rem)" minH="24rem" maxW="full">
-      <Box px={{base: '4', md: '6'}} pt={{base: '4', md: '6'}} pb="4">
+    // The view is the screen between the frame's bar and the tab bar, the
+    // header row on top and the map filling the rest, and the page itself
+    // never scrolls (design-consistency.md, rule 12). No minimum height: one
+    // that is taller than the screen would be exactly the scroll the rule
+    // forbids, so the map shrinks with a short screen instead.
+    <Flex
+      direction="column"
+      h={APP_VIEW_H}
+      maxW="full"
+      overflow="hidden"
+      data-view="locations">
+      <Box
+        px={{base: '4', md: '6'}}
+        pt={{base: '4', md: '6'}}
+        pb="4"
+        flexShrink="0"
+        data-locations-header="">
         <PageHeader title={tc.NavLocations} />
       </Box>
       <Box
         position="relative"
         flex="1"
-        minH="20rem"
+        minH="0"
         overflow="hidden"
         bg="bg.canvas">
         {error && (
@@ -244,13 +265,36 @@ function CustomerLocations() {
       : fillTracking(t.LiveRidesMany, {count: live.length})
 
   return (
-    <Box p={{base: '4', md: '6'}} maxW="full" data-view="customer-locations">
-      <PageHeader
-        title={tc.NavLocations}
-        subtitle={t.CustomerSubtitle}
-        actions={<RefreshButton />}
-      />
-      <Stack gap="4" mt="4">
+    // The customer's half of the screen is the same frame: the header row on
+    // top, the rest of the screen below it, and the page never scrolls. What
+    // scrolls is the box the map and the ride cards sit in, so a customer
+    // with several rides reaches them all without the document growing past
+    // the viewport (design-consistency.md, rule 12).
+    <Flex
+      direction="column"
+      h={APP_VIEW_H}
+      maxW="full"
+      overflow="hidden"
+      data-view="customer-locations">
+      <Box
+        px={{base: '4', md: '6'}}
+        pt={{base: '4', md: '6'}}
+        flexShrink="0"
+        data-locations-header="">
+        <PageHeader
+          title={tc.NavLocations}
+          subtitle={t.CustomerSubtitle}
+          actions={<RefreshButton />}
+        />
+      </Box>
+      <Stack
+        gap="4"
+        flex="1"
+        minH="0"
+        overflowY="auto"
+        px={{base: '4', md: '6'}}
+        pt="4"
+        pb={{base: '4', md: '6'}}>
         {error && <ErrorBanner message={error} onRetry={refetch} />}
 
         {nothingYet ? (
@@ -300,7 +344,7 @@ function CustomerLocations() {
           </Box>
         )}
       </Stack>
-    </Box>
+    </Flex>
   )
 }
 

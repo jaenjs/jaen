@@ -28,6 +28,7 @@ import {
   Text,
   Timeline
 } from '@chakra-ui/react'
+import {uploadFile} from 'jaen'
 import {MediaDropzone, type MediaDropzoneControl} from 'gatsby-plugin-jaen'
 import {FaCheck} from '@react-icons/all-files/fa/FaCheck'
 import {FaTimes} from '@react-icons/all-files/fa/FaTimes'
@@ -44,7 +45,9 @@ import {
   type CustomerStatus
 } from '../../hooks/offers'
 import {
+  assertInvoiceFile,
   confirmAsAdmin,
+  gatewayFileOf,
   InvoiceFileError,
   markPaid,
   MAX_INVOICE_BYTES,
@@ -354,13 +357,22 @@ export function MoneySection({
     void run('send', () => sendInvoice(invoice), s.InvoiceSent)
   }
 
+  /**
+   * The dropped invoice: checked here, then uploaded to the storage gateway
+   * with jaen's own `uploadFile`, the same call a page image and a car's
+   * picture go through (okf/architecture/media.md, "Everything uploads to
+   * the gateway"), and only then is the pylon told what came back. No file
+   * bytes reach the pylon at all.
+   */
   const upload = async (file: File) => {
     setBusy('upload')
     setFailure(null)
     try {
+      await assertInvoiceFile(file)
+      const uploaded = await uploadFile(file, file.name || 'invoice.pdf')
       const doc = await uploadInvoice(
         {id: transfer.id, language: transfer.language},
-        file,
+        gatewayFileOf(uploaded, file),
         number
       )
       remember(doc)

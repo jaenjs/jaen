@@ -24,15 +24,15 @@
  * data there after a reload. Nothing here retries: the screens showed the
  * error at once before this layer and they still do.
  */
-import {useCallback, useEffect, useState, useSyncExternalStore} from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   QueryClient,
   useQuery,
   type QueryKey,
   type UseQueryOptions,
-  type UseQueryResult
-} from '@tanstack/react-query'
-import {persistQueryClient} from '@tanstack/react-query-persist-client'
+  type UseQueryResult,
+} from "@tanstack/react-query";
+import { persistQueryClient } from "@tanstack/react-query-persist-client";
 import {
   isOfflineError,
   markOffline,
@@ -40,13 +40,13 @@ import {
   onOfflineStoreCleared,
   PERSIST_MAX_AGE,
   sessionSubject,
-  useOnline
-} from '../offline'
-import {loadPageSize, savePageSize} from '../components/table/columns'
+  useOnline,
+} from "../offline";
+import { loadPageSize, savePageSize } from "../components/table/columns";
 
 // --------------- The client ---------------
 
-const MINUTE = 60_000
+const MINUTE = 60_000;
 
 /**
  * 30 s for the lists, 5 min for the people and the fleet, which change by
@@ -57,32 +57,32 @@ const MINUTE = 60_000
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      networkMode: 'offlineFirst',
+      networkMode: "offlineFirst",
       retry: false,
       staleTime: 30_000,
       gcTime: PERSIST_MAX_AGE,
       refetchOnWindowFocus: true,
-      refetchOnReconnect: true
+      refetchOnReconnect: true,
     },
-    mutations: {networkMode: 'offlineFirst', retry: false}
-  }
-})
+    mutations: { networkMode: "offlineFirst", retry: false },
+  },
+});
 
 for (const domain of [
-  'users',
-  'user',
-  'drivers',
-  'fleet',
-  'driverColor',
-  'driverColors',
-  'bookingDriver',
-  'caller',
-  'schema'
+  "users",
+  "user",
+  "drivers",
+  "fleet",
+  "driverColor",
+  "driverColors",
+  "bookingDriver",
+  "caller",
+  "schema",
 ]) {
-  queryClient.setQueryDefaults([domain], {staleTime: 5 * MINUTE})
+  queryClient.setQueryDefaults([domain], { staleTime: 5 * MINUTE });
 }
-queryClient.setQueryDefaults(['tracking'], {staleTime: 0})
-queryClient.setQueryDefaults(['geocode'], {staleTime: Infinity})
+queryClient.setQueryDefaults(["tracking"], { staleTime: 0 });
+queryClient.setQueryDefaults(["geocode"], { staleTime: Infinity });
 
 // --------------- The keys ---------------
 
@@ -92,40 +92,43 @@ queryClient.setQueryDefaults(['geocode'], {staleTime: Infinity})
  * it: `['transfers']` matches every page of every list.
  */
 export const keys = {
-  caller: (subject: string | undefined) => ['caller', subject ?? ''] as const,
-  schema: (name: string) => ['schema', name] as const,
-  transfers: (args: Record<string, unknown>) => ['transfers', args] as const,
-  transfer: (idOrCode: string) => ['transfer', idOrCode] as const,
-  users: (args: Record<string, unknown>) => ['users', args] as const,
-  user: (userId: string) => ['user', userId] as const,
-  drivers: () => ['drivers'] as const,
-  driverColor: (userId: string) => ['driverColor', userId] as const,
+  caller: (subject: string | undefined) => ["caller", subject ?? ""] as const,
+  schema: (name: string) => ["schema", name] as const,
+  transfers: (args: Record<string, unknown>) => ["transfers", args] as const,
+  transfer: (idOrCode: string) => ["transfer", idOrCode] as const,
+  users: (args: Record<string, unknown>) => ["users", args] as const,
+  user: (userId: string) => ["user", userId] as const,
+  drivers: () => ["drivers"] as const,
+  driverColor: (userId: string) => ["driverColor", userId] as const,
   /** One batch per set of ids, sorted and distinct, see ./colors.ts. */
   driverColors: (userIds: readonly string[]) =>
-    ['driverColors', userIds] as const,
-  fleet: () => ['fleet'] as const,
-  fleetPicker: () => ['fleet', 'picker'] as const,
-  locations: (args: Record<string, unknown>) => ['locations', args] as const,
-  dashboard: (month: string) => ['dashboard', month] as const,
+    ["driverColors", userIds] as const,
+  fleet: () => ["fleet"] as const,
+  fleetPicker: () => ["fleet", "picker"] as const,
+  locations: (args: Record<string, unknown>) => ["locations", args] as const,
+  dashboard: (month: string) => ["dashboard", month] as const,
   expenses: (userId: string, month: string | undefined) =>
-    ['expenses', userId, month ?? ''] as const,
-  statements: (userId: string) => ['statements', userId] as const,
+    ["expenses", userId, month ?? ""] as const,
+  statements: (userId: string) => ["statements", userId] as const,
   statementLines: (userId: string, month: string, kind: string) =>
-    ['statements', userId, month, kind] as const,
-  bookings: (args: Record<string, unknown>) => ['bookings', args] as const,
-  booking: (idOrCode: string) => ['booking', idOrCode] as const,
-  bookingDriver: (driverId: string) => ['bookingDriver', driverId] as const,
-  tracking: (transferId: string) => ['tracking', transferId] as const,
-  geocode: (address: string) => ['geocode', address] as const
-}
+    ["statements", userId, month, kind] as const,
+  bookings: (args: Record<string, unknown>) => ["bookings", args] as const,
+  booking: (idOrCode: string) => ["booking", idOrCode] as const,
+  bookingDriver: (driverId: string) => ["bookingDriver", driverId] as const,
+  tracking: (transferId: string) => ["tracking", transferId] as const,
+  geocode: (address: string) => ["geocode", address] as const,
+  /** Who the confirmation of one ride would be mailed to, see hooks/documents. */
+  confirmationRecipient: (transferId: string) =>
+    ["confirmationRecipient", transferId] as const,
+};
 
 /** Every domain a change to a transfer can be seen on. */
 export const invalidateTransfers = () =>
   Promise.all(
-    [['transfers'], ['bookings'], ['dashboard'], ['tracking']].map(queryKey =>
-      queryClient.invalidateQueries({queryKey})
-    )
-  ).then(() => undefined)
+    [["transfers"], ["bookings"], ["dashboard"], ["tracking"]].map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey }),
+    ),
+  ).then(() => undefined);
 
 // --------------- The persisted cache ---------------
 
@@ -137,26 +140,26 @@ export const invalidateTransfers = () =>
  * `restored`, which the restore flips, and it flips whether the store held
  * anything or not.
  */
-let restored = false
-const restoredListeners = new Set<() => void>()
+let restored = false;
+const restoredListeners = new Set<() => void>();
 
 const markRestored = () => {
-  if (restored) return
-  restored = true
-  restoredListeners.forEach(l => l())
-}
+  if (restored) return;
+  restored = true;
+  restoredListeners.forEach((l) => l());
+};
 
 const subscribeRestored = (listener: () => void) => {
-  restoredListeners.add(listener)
+  restoredListeners.add(listener);
   return () => {
-    restoredListeners.delete(listener)
-  }
-}
+    restoredListeners.delete(listener);
+  };
+};
 
-const restoredNow = () => restored
-const restoredOnServer = () => false
+const restoredNow = () => restored;
+const restoredOnServer = () => false;
 
-let persistence: {subject: string | undefined; stop: () => void} | undefined
+let persistence: { subject: string | undefined; stop: () => void } | undefined;
 
 /**
  * Restore the store into the client and keep the client written to it. Called
@@ -165,72 +168,72 @@ let persistence: {subject: string | undefined; stop: () => void} | undefined
  * then walking into /app, restarts the persistence for the new account.
  */
 export const ensurePersisted = () => {
-  if (typeof window === 'undefined') return
-  const subject = sessionSubject()
-  if (persistence && persistence.subject === subject) return
-  persistence?.stop()
+  if (typeof window === "undefined") return;
+  const subject = sessionSubject();
+  if (persistence && persistence.subject === subject) return;
+  persistence?.stop();
   // Mounted once for the page, so the client hears the focus and online
   // signals wherever a hook renders, above the provider as well as under it.
-  if (!persistence) queryClient.mount()
+  if (!persistence) queryClient.mount();
   const [stop, done] = persistQueryClient({
     queryClient,
     persister: offlinePersister,
     maxAge: PERSIST_MAX_AGE,
-    buster: subject ?? '',
+    buster: subject ?? "",
     dehydrateOptions: {
       // The last good answer is what a reload offline wants, whatever state
       // the query is in now: a query that failed offline still holds it.
-      shouldDehydrateQuery: query => query.state.data !== undefined,
-      shouldDehydrateMutation: () => false
-    }
-  })
-  persistence = {subject, stop}
-  done.catch(() => undefined).finally(markRestored)
-}
+      shouldDehydrateQuery: (query) => query.state.data !== undefined,
+      shouldDehydrateMutation: () => false,
+    },
+  });
+  persistence = { subject, stop };
+  done.catch(() => undefined).finally(markRestored);
+};
 
 onOfflineStoreCleared(() => {
-  queryClient.clear()
-})
+  queryClient.clear();
+});
 
 /** True once the persisted cache has been read on this page, false on the server. */
 export function useRestored(): boolean {
   const value = useSyncExternalStore(
     subscribeRestored,
     restoredNow,
-    restoredOnServer
-  )
+    restoredOnServer,
+  );
   useEffect(() => {
-    ensurePersisted()
-  }, [])
-  return value
+    ensurePersisted();
+  }, []);
+  return value;
 }
 
 // --------------- The wrapper ---------------
 
 export const errorMessage = (err: unknown): string =>
-  err instanceof Error ? err.message : String(err)
+  err instanceof Error ? err.message : String(err);
 
 export interface AppQuery<TData> {
-  query: UseQueryResult<TData, Error>
+  query: UseQueryResult<TData, Error>;
   /**
    * True while nothing is on the screen yet and a read is on its way, and
    * while a page other than the one shown is being read. A background
    * refetch of what is shown is not loading, the rows are there.
    */
-  isLoading: boolean
+  isLoading: boolean;
   /**
    * The message a screen shows, or null. A read that failed for want of a
    * network while the query still holds an answer is not an error to a
    * person: the answer is on the screen and the banner says how old it is.
    */
-  error: string | null
+  error: string | null;
   /**
    * True while the query is on the wire, first read or background refetch
    * alike. The refresh button and the pull turn on this, never on isLoading,
    * which is false while cached rows are shown (design-consistency.md, 5a).
    */
-  isFetching: boolean
-  refetch: () => void
+  isFetching: boolean;
+  refetch: () => void;
 }
 
 /**
@@ -240,37 +243,37 @@ export interface AppQuery<TData> {
  * the screens have always read.
  */
 export function useAppQuery<TQueryFnData, TData = TQueryFnData>(
-  options: UseQueryOptions<TQueryFnData, Error, TData, QueryKey>
+  options: UseQueryOptions<TQueryFnData, Error, TData, QueryKey>,
 ): AppQuery<TData> {
-  const restored = useRestored()
+  const restored = useRestored();
   const enabled =
-    options.enabled === undefined ? true : options.enabled === true
+    options.enabled === undefined ? true : options.enabled === true;
   const query = useQuery(
-    {...options, enabled: enabled && restored},
-    queryClient
-  )
-  const {online} = useOnline()
+    { ...options, enabled: enabled && restored },
+    queryClient,
+  );
+  const { online } = useOnline();
 
-  const hasData = query.data !== undefined
-  const at = query.dataUpdatedAt
+  const hasData = query.data !== undefined;
+  const at = query.dataUpdatedAt;
   useEffect(() => {
     // The banner reads "Offline, Stand hh:mm" from the newest answer shown.
-    if (!online && hasData && at) markOffline(new Date(at).toISOString())
-  }, [online, hasData, at])
+    if (!online && hasData && at) markOffline(new Date(at).toISOString());
+  }, [online, hasData, at]);
 
   const error = query.error
     ? isOfflineError(query.error) && hasData
       ? null
       : errorMessage(query.error)
-    : null
+    : null;
   const isLoading =
     (query.isPending && enabled && (query.isFetching || !restored)) ||
-    (query.isPlaceholderData && query.isFetching)
+    (query.isPlaceholderData && query.isFetching);
   const refetch = useCallback(() => {
-    void query.refetch()
-  }, [query.refetch])
+    void query.refetch();
+  }, [query.refetch]);
 
-  return {query, isLoading, error, isFetching: query.isFetching, refetch}
+  return { query, isLoading, error, isFetching: query.isFetching, refetch };
 }
 
 /**
@@ -282,33 +285,33 @@ export function useAppQuery<TQueryFnData, TData = TQueryFnData>(
 export async function cachedRead<T>(
   queryKey: QueryKey,
   queryFn: () => Promise<T>,
-  staleTime?: number
+  staleTime?: number,
 ): Promise<T> {
   try {
-    return await queryClient.fetchQuery({queryKey, queryFn, staleTime})
+    return await queryClient.fetchQuery({ queryKey, queryFn, staleTime });
   } catch (err) {
-    const held = queryClient.getQueryData<T>(queryKey)
-    if (held !== undefined) return held
-    throw err
+    const held = queryClient.getQueryData<T>(queryKey);
+    if (held !== undefined) return held;
+    throw err;
   }
 }
 
 // --------------- The pager ---------------
 
 export interface Pager {
-  page: number
+  page: number;
   /** The cursor the current page starts after, undefined on the first. */
-  after: string | undefined
+  after: string | undefined;
   /**
    * The rows a page holds, the query's `first`. The screen's default until a
    * person chooses another size, and that choice is this browser's.
    */
-  pageSize: number
+  pageSize: number;
   /** Choose a size: it is remembered per table and the list lands on page 1. */
-  setPageSize: (size: number) => void
-  next: (endCursor: string) => void
-  prev: () => void
-  first: () => void
+  setPageSize: (size: number) => void;
+  next: (endCursor: string) => void;
+  prev: () => void;
+  first: () => void;
 }
 
 /**
@@ -318,23 +321,23 @@ export interface Pager {
  * table.
  */
 export interface PagerSizing {
-  tableId: string
-  defaultSize: number
+  tableId: string;
+  defaultSize: number;
 }
 
 interface PagerState {
-  key: string
-  page: number
-  after: string | undefined
-  trail: Array<string | undefined>
+  key: string;
+  page: number;
+  after: string | undefined;
+  trail: Array<string | undefined>;
 }
 
 const firstPage = (key: string): PagerState => ({
   key,
   page: 1,
   after: undefined,
-  trail: []
-})
+  trail: [],
+});
 
 /**
  * Cursor pagination as the screens drive it: next, previous, first, and the
@@ -351,51 +354,51 @@ const firstPage = (key: string): PagerState => ({
  */
 export function usePager(argsKey: string, sizing?: PagerSizing): Pager {
   const [chosen, setChosen] = useState<number>(() =>
-    sizing ? loadPageSize(sizing.tableId, sizing.defaultSize) : 0
-  )
-  const pageSize = sizing ? chosen : 0
-  const key = `${argsKey}|${pageSize}`
-  const [state, setState] = useState<PagerState>(() => firstPage(key))
-  const live = state.key === key ? state : firstPage(key)
+    sizing ? loadPageSize(sizing.tableId, sizing.defaultSize) : 0,
+  );
+  const pageSize = sizing ? chosen : 0;
+  const key = `${argsKey}|${pageSize}`;
+  const [state, setState] = useState<PagerState>(() => firstPage(key));
+  const live = state.key === key ? state : firstPage(key);
 
-  const tableId = sizing?.tableId
+  const tableId = sizing?.tableId;
   const setPageSize = useCallback(
     (size: number) => {
-      if (!tableId) return
-      savePageSize(tableId, size)
-      setChosen(size)
+      if (!tableId) return;
+      savePageSize(tableId, size);
+      setChosen(size);
     },
-    [tableId]
-  )
+    [tableId],
+  );
 
   const next = useCallback(
     (endCursor: string) => {
-      setState(current => {
-        const from = current.key === key ? current : firstPage(key)
+      setState((current) => {
+        const from = current.key === key ? current : firstPage(key);
         return {
           key,
           page: from.page + 1,
           after: endCursor,
-          trail: [...from.trail, from.after]
-        }
-      })
+          trail: [...from.trail, from.after],
+        };
+      });
     },
-    [key]
-  )
+    [key],
+  );
 
   const prev = useCallback(() => {
-    setState(current => {
-      const from = current.key === key ? current : firstPage(key)
-      if (from.page <= 1) return from
-      const trail = [...from.trail]
-      const after = trail.pop()
-      return {key, page: from.page - 1, after, trail}
-    })
-  }, [key])
+    setState((current) => {
+      const from = current.key === key ? current : firstPage(key);
+      if (from.page <= 1) return from;
+      const trail = [...from.trail];
+      const after = trail.pop();
+      return { key, page: from.page - 1, after, trail };
+    });
+  }, [key]);
 
   const first = useCallback(() => {
-    setState(firstPage(key))
-  }, [key])
+    setState(firstPage(key));
+  }, [key]);
 
   return {
     page: live.page,
@@ -404,6 +407,6 @@ export function usePager(argsKey: string, sizing?: PagerSizing): Pager {
     setPageSize,
     next,
     prev,
-    first
-  }
+    first,
+  };
 }

@@ -27,6 +27,29 @@ html:has(.jaen-app),
 body:has(.jaen-app) {
   margin: 0 !important;
   padding: 0 !important;
+}
+
+/* The page scrolls, and it is the document that scrolls (design-consistency.md,
+   rule 12). `overflow-x: hidden` on the root element propagates to the viewport
+   and clips the sideways overflow there, which is all this rule ever wanted.
+   The same declaration on `body` did something else: an element whose one axis
+   is hidden computes the other to `auto`, so the body became a scroll box of
+   its own inside a viewport that could no longer scroll. Everything that reads
+   or writes the page's scroll was then talking about the wrong element:
+   `window.scrollY` stood at 0 whatever the phone showed, `window.scrollTo` moved
+   nothing, and Gatsby's own scroll restoration, which is written in exactly
+   those two, could neither save a list's position nor put a new view at its top.
+   That is the defect the owner reported on app 1.4.1, the map opening with its
+   header under the bar after a scroll somewhere else. `clip` on the body keeps
+   the horizontal clipping and creates no scroll box. Measured on a local
+   production build of booklimo.at at 390: the board's scrollHeight is the
+   document's 5511 px, `window.scrollTo` moves the page, and body.scrollTop
+   stays 0. */
+body:has(.jaen-app) {
+  overflow-x: clip !important;
+}
+
+html:has(.jaen-app) {
   overflow-x: hidden !important;
 }
 

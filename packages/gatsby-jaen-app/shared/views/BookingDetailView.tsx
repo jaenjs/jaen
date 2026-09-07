@@ -46,7 +46,7 @@ import {
 import {getI18nOffers} from '../locales/i18nOffers'
 import {CustomerStatusBadge} from '../components/CustomerStatusBadge'
 import {
-  CarImage,
+  CarGallery,
   ConfirmDialog,
   DetailRow,
   DriverColorDot,
@@ -112,11 +112,13 @@ function Section({
 
 /**
  * "Ihr Fahrzeug", the card the customer reads once the driver said yes: the
- * picture, the name, the colour dot and the plate
- * (okf/architecture/media.md, "Where the car's picture appears"). Before the
- * yes there is no card at all, because until then the car on the ride is the
- * dispatcher's intention, and the pylon answers a customer no picture for it
- * either.
+ * pictures, the name, the colour dot and the plate
+ * (okf/architecture/media.md, "Where the car's pictures appear"). This is
+ * one of the two places the customer looks at the car itself, so it draws
+ * the whole gallery as the swipeable strip with the cover first rather than
+ * the single picture a list shows. Before the yes there is no card at all,
+ * because until then the car on the ride is the dispatcher's intention, and
+ * the pylon answers a customer no picture for it either.
  */
 function VehicleCard({
   car,
@@ -136,9 +138,9 @@ function VehicleCard({
       <Heading as="h3" size="sm" mb="3">
         {title}
       </Heading>
-      <Flex gap="4" align="center" minW="0">
-        <CarImage car={car} size={96} full alt={car.licensePlate ?? ''} />
-        <Box minW="0" flex="1">
+      <Stack gap="4">
+        <CarGallery car={car} alt={car.licensePlate ?? ''} />
+        <Box minW="0">
           {car.name && (
             <Selectable fontWeight="semibold" lineClamp={1}>
               {car.name}
@@ -156,7 +158,7 @@ function VehicleCard({
             )}
           </Flex>
         </Box>
-      </Flex>
+      </Stack>
     </Box>
   )
 }

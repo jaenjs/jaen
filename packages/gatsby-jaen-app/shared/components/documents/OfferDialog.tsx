@@ -11,7 +11,8 @@
  * compiler and the template family are loaded (the first time on a page,
  * a chunk of their own, see ../../typst/compile.ts), and the PDF is
  * compiled and shown in an `<object>` the browser renders itself, no pdf.js.
- * "Senden" uploads the PDF as the ride's OFFER document with its JSON and
+ * "Senden" uploads the PDF to the storage gateway, stores the answer as
+ * the ride's OFFER document with its JSON and
  * then calls `sendOffer(args:{documentId})`, which mails it and sets the
  * customer status.
  *
@@ -35,6 +36,7 @@
  */
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Box, Link, Skeleton, Stack, Text} from '@chakra-ui/react'
+import {uploadFile} from 'jaen'
 import {useI18nCode, type I18nCode} from '../../i18n'
 import {fill} from '../../locales/i18nCommon'
 import {getI18nTransfers} from '../../locales/i18nTransfers'
@@ -42,6 +44,7 @@ import {fetchGraphQL} from '../../../client/limosen'
 import {useCaller} from '../../auth'
 import {fullName, mutate, useUserDetail} from '../../hooks/users'
 import {GraphQLRequestError, type TransferRow} from '../../hooks/transfers'
+import {gatewayFileOf} from '../../hooks/documents'
 import {isOfflineError} from '../../offline'
 import {DialogActions} from '../DialogActions'
 import {ErrorBanner} from '../ErrorBanner'
@@ -793,8 +796,32 @@ export function OfferDialog({
     }
     setPhase('sending')
     setError(null)
-    const typst = await import('../../typst/compile')
     const {reservation, data, pdf} = preview
+
+    const filename = `${reservation.number}.pdf`
+
+    // The compiled PDF goes to the storage gateway from here, with jaen's
+    // own uploadFile, the same call a page image and a car's picture go
+    // through (okf/architecture/media.md, "Everything uploads to the
+    // gateway"). The pylon is then told what came back and never sees the
+    // bytes; the base64 field it used to take is gone with the private
+    // bucket.
+    let uploaded: Awaited<ReturnType<typeof uploadFile>>
+    try {
+      uploaded = await uploadFile(
+        new File([pdf.slice().buffer as ArrayBuffer], filename, {
+          type: 'application/pdf'
+        }),
+        filename
+      )
+      if (!uploaded?.data?.file_id || !uploaded?.fileUrl) {
+        throw new Error('the storage gateway answered no file')
+      }
+    } catch (err) {
+      setPhase('ready')
+      setError(fill(s.ErrorUpload, {reason: reasonOf(err, s)}))
+      return
+    }
 
     let document: OfferDocument
     try {
@@ -804,9 +831,12 @@ export function OfferDialog({
           args: {
             transferId: transfer.id,
             kind: 'OFFER',
-            contentBase64: typst.pdfBase64(pdf),
-            filename: `${reservation.number}.pdf`,
-            contentType: 'application/pdf',
+            ...gatewayFileOf(uploaded, {
+              name: filename,
+              size: pdf.byteLength,
+              type: 'application/pdf'
+            }),
+            filename,
             number: reservation.number,
             language: data.language,
             data

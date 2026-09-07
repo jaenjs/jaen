@@ -38,9 +38,15 @@ export interface FleetCar {
   driverName?: string
   updatedAt?: string
   /**
-   * The car's picture on the storage gateway, okf/architecture/media.md.
-   * The three ids move together: a car has all of them or none, and a car
-   * with none shows the silhouette of its class.
+   * The car's gallery on the storage gateway, in its order, the first one
+   * the cover (okf/architecture/media.md, "Many pictures per car"). Empty
+   * for a car nobody has photographed, which shows the silhouette of its
+   * class instead.
+   */
+  images: CarPicture[]
+  /**
+   * The cover's own values, which the backend answers from the first
+   * picture. Every place that fits one picture reads these.
    */
   imageFileId?: string
   imageUrl?: string
@@ -48,6 +54,28 @@ export interface FleetCar {
   imageWidth?: number
   imageHeight?: number
 }
+
+/** One picture of a car, as the fleet reads it back. */
+export interface CarPicture {
+  id: string
+  fileId: string
+  url: string
+  /** The gateway's thumbnail, or the full file where it made none. */
+  thumbUrl: string
+  width?: number
+  height?: number
+}
+
+const mapPicture = (n: any): CarPicture => ({
+  id: String(n?.id ?? ''),
+  fileId: String(n?.fileId ?? ''),
+  url: String(n?.url ?? ''),
+  thumbUrl: String(n?.thumbUrl ?? '') || String(n?.url ?? ''),
+  width: typeof n?.width === 'number' ? n.width : undefined,
+  height: typeof n?.height === 'number' ? n.height : undefined
+})
+
+const NO_PICTURES: CarPicture[] = []
 
 const mapCar = (n: any): FleetCar => ({
   id: String(n?.id ?? ''),
@@ -58,6 +86,7 @@ const mapCar = (n: any): FleetCar => ({
   driverId: n?.driverId ?? undefined,
   driverName: n?.driverName ?? undefined,
   updatedAt: n?.updatedAt ?? undefined,
+  images: Array.isArray(n?.carImages) ? n.carImages.map(mapPicture) : NO_PICTURES,
   imageFileId: n?.imageFileId ?? undefined,
   imageUrl: n?.imageUrl ?? undefined,
   imageThumbUrl: n?.imageThumbUrl ?? undefined,
@@ -72,6 +101,10 @@ const readFleet = async (): Promise<FleetCar[]> => {
     'cars',
     {args: {first: 100}},
     '{ edges { node { id licensePlate carName carClass color driverId driverName updatedAt ' +
+      // A site is built and deployed before the pylon that carries the
+      // gallery, so the fields are asked for only where the schema has
+      // them. A fleet read that fails outright would blank the screen.
+      `${(await hasCarField('carImages')) ? 'carImages { id fileId url thumbUrl width height } ' : ''}` +
       `${(await hasCarField('imageThumbUrl')) ? 'imageFileId imageUrl imageThumbUrl imageWidth imageHeight ' : ''}} } }`
   )
   const rows = (Array.isArray(conn?.edges) ? conn.edges : [])
@@ -98,10 +131,13 @@ export function useFleet() {
   return {cars: q.data ?? EMPTY_CARS, isLoading, error, isFetching, refetch}
 }
 
-/** The fleet and the pickers under its key, and the transfer lists that show a car. */
+/**
+ * The fleet and the pickers under its key, the transfer lists that show a
+ * car, and the bookings, whose "Ihr Fahrzeug" card draws the same gallery.
+ */
 const invalidateFleet = async () => {
   await Promise.all(
-    [['fleet'], ['transfers']].map(queryKey =>
+    [['fleet'], ['transfers'], ['bookings']].map(queryKey =>
       queryClient.invalidateQueries({queryKey})
     )
   )
@@ -114,21 +150,6 @@ export interface CarInput {
   color: string
   /** A driver's id, null to take the car away from its driver, undefined to leave it alone. */
   driverId?: string | null
-  /**
-   * The picture as the gateway answered it, null to clear it, undefined to
-   * leave it alone. The three ids are sent together, which is what the
-   * backend's updateCar requires.
-   */
-  image?: CarImageInput | null
-}
-
-/** The triple the storage gateway answered, plus the picture's own pixels. */
-export interface CarImageInput {
-  imageFileId: string
-  imageUrl: string
-  imageThumbUrl: string
-  imageWidth?: number
-  imageHeight?: number
 }
 
 const CAR_SELECTION = '{ __typename id }'
@@ -145,36 +166,18 @@ const carArgs = (input: Partial<CarInput>) => ({
   carName: input.carName?.trim() || undefined,
   carClass: input.carClass ?? undefined,
   color: input.color || undefined,
-  driverId: input.driverId === null ? '' : input.driverId || undefined,
-  // The picture, all three ids or three empty strings. `undefined` says
-  // nothing about it and the row keeps what it has.
-  ...(input.image === undefined
-    ? {}
-    : input.image === null
-      ? {imageFileId: '', imageUrl: '', imageThumbUrl: ''}
-      : {
-          imageFileId: input.image.imageFileId,
-          imageUrl: input.image.imageUrl,
-          imageThumbUrl: input.image.imageThumbUrl,
-          imageWidth: input.image.imageWidth,
-          imageHeight: input.image.imageHeight
-        })
+  driverId: input.driverId === null ? '' : input.driverId || undefined
 })
 
 /**
- * `createCar` does not take a picture: the backend's create writes the plate,
- * the name, the class, the colour and the driver, and the picture arrives
- * with an update. The dialog creates first and then sends the picture, which
- * is one call more and one code path fewer.
+ * `createCar` writes no picture: the backend's create takes the plate, the
+ * name, the class, the colour and the driver, and the pictures are their own
+ * rows written by `addCarImagesMutation` afterwards.
  */
 export async function createCarMutation(
   input: CarInput
 ): Promise<string | undefined> {
-  const result = await mutate(
-    'createCar',
-    {args: carArgs({...input, image: undefined})},
-    CAR_SELECTION
-  )
+  const result = await mutate('createCar', {args: carArgs(input)}, CAR_SELECTION)
   await invalidateFleet()
   return typeof result?.id === 'string' ? result.id : undefined
 }
@@ -185,6 +188,77 @@ export async function updateCarMutation(
   input: Partial<CarInput>
 ): Promise<void> {
   await mutate('updateCar', {args: {carId, ...carArgs(input)}}, CAR_SELECTION)
+  await invalidateFleet()
+}
+
+/** The picture the gateway answered, as `addCarImages` takes it. */
+export interface NewCarPicture {
+  fileId: string
+  url: string
+  /** The gateway's thumbnail, absent where it made none. */
+  thumbUrl?: string
+  width?: number
+  height?: number
+}
+
+const GALLERY_SELECTION =
+  '{ __typename id carImages { id fileId url thumbUrl width height } }'
+
+const readGallery = (car: any): CarPicture[] =>
+  Array.isArray(car?.carImages) ? car.carImages.map(mapPicture) : NO_PICTURES
+
+/**
+ * `addCarImages(args:{carId, images})`. The pictures the vehicle form has
+ * just uploaded to the storage gateway, appended in the order they were
+ * given. The car's whole gallery comes back, which is how the form learns
+ * the ids of the rows it has just made and can then order them.
+ */
+export async function addCarImagesMutation(
+  carId: string,
+  images: NewCarPicture[]
+): Promise<CarPicture[]> {
+  const car = await mutate(
+    'addCarImages',
+    {
+      args: {
+        carId,
+        images: images.map(i => ({
+          fileId: i.fileId,
+          url: i.url,
+          thumbUrl: i.thumbUrl || undefined,
+          width: i.width,
+          height: i.height
+        }))
+      }
+    },
+    GALLERY_SELECTION
+  )
+  await invalidateFleet()
+  return readGallery(car)
+}
+
+/**
+ * `reorderCarImages(args:{carId, ids})`, the gallery in the order the form
+ * dragged it into and the first id the new cover. The backend refuses a
+ * list that does not name every picture of the car exactly once, so a form
+ * that is a write behind is told rather than half applied.
+ */
+export async function reorderCarImagesMutation(
+  carId: string,
+  ids: string[]
+): Promise<CarPicture[]> {
+  const car = await mutate(
+    'reorderCarImages',
+    {args: {carId, ids}},
+    GALLERY_SELECTION
+  )
+  await invalidateFleet()
+  return readGallery(car)
+}
+
+/** `removeCarImage(args:{id})`. One picture goes and the rest close the gap. */
+export async function removeCarImageMutation(imageId: string): Promise<void> {
+  await mutate('removeCarImage', {args: {id: imageId}}, GALLERY_SELECTION)
   await invalidateFleet()
 }
 

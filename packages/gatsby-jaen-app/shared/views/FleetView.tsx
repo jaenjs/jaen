@@ -14,7 +14,7 @@
  * Admin only. `cars` answers a driver too, but the writes do not, and the
  * shell offers the entry to an admin alone.
  */
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {
   Box,
   Button,
@@ -31,7 +31,8 @@ import {
   Stack,
   Stat,
   Text,
-  parseColor
+  parseColor,
+  useBreakpointValue
 } from '@chakra-ui/react'
 import {FaCar} from '@react-icons/all-files/fa/FaCar'
 import {FaPlus} from '@react-icons/all-files/fa/FaPlus'
@@ -43,14 +44,14 @@ import {useCaller} from '../auth'
 import {useDrivers, type ResourceUser} from '../hooks'
 import {
   CarImage,
-  CarImageField,
+  CarImagesField,
   DialogActions,
   DriverColorDot,
   EmptyState,
   ErrorBanner,
   toaster,
   PageHeader,
-  type CarImageValue
+  type CarGalleryItem
 } from '../components'
 import {RefreshButton} from '../components/RefreshButton'
 import {useViewRefresh} from '../hooks/view-refresh'
@@ -59,8 +60,11 @@ import {NumberSkeleton} from '../components/skeletons'
 import {
   CAR_CLASSES,
   asCarClass,
+  addCarImagesMutation,
   assignCarToDriverMutation,
   createCarMutation,
+  removeCarImageMutation,
+  reorderCarImagesMutation,
   updateCarMutation,
   useFleet,
   type CarClass,
@@ -440,6 +444,133 @@ function StatCard({
   )
 }
 
+/**
+ * The Farbe field: the swatch, the hex input, and the picker that opens on
+ * the swatch's tap and on nothing else.
+ *
+ * The defect this shape fixes, photographed by the owner on an iPhone at app
+ * 1.4.1: after a picture was set, the picker stood open at the very top of
+ * the vehicle dialog, over the picture, far above the Farbe field it belongs
+ * to. Two things caused it. The popover was uncontrolled, so a re-render of
+ * the dialog's body could leave it mounted and visible without anybody
+ * having tapped the swatch, and its positioner sat unportalled inside the
+ * dialog's scrolling body, so the coordinates floating-ui computed against
+ * the viewport were applied inside a scrolled container and landed at the
+ * top of it.
+ *
+ * So: `open` is state here and only the trigger sets it. Below `md` the
+ * picker is drawn inline directly under the field, in the flow, where it
+ * cannot be positioned wrongly at all. From `md` up it is a portal anchored
+ * to the trigger with a fixed strategy, which is measured against the
+ * viewport the way the numbers are computed. It closes on an outside tap and
+ * on any scroll, because a popover anchored to a control that has scrolled
+ * away is the defect all over again.
+ */
+function ColorField({
+  label,
+  value,
+  disabled,
+  onChange
+}: {
+  label: string
+  value: string
+  disabled?: boolean
+  onChange: (color: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const root = useRef<HTMLDivElement | null>(null)
+  // `ssr: false` because the app is a client shell inside jaen: the first
+  // paint happens in the browser and the value is read there.
+  const inline = useBreakpointValue({base: true, md: false}, {ssr: false}) ?? true
+
+  const close = useCallback(() => setOpen(false), [])
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event: PointerEvent) => {
+      const node = root.current
+      if (node && event.target instanceof Node && !node.contains(event.target)) close()
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    // Scroll closes the portalled picker only. That one is anchored to the
+    // trigger and would otherwise stand where the swatch used to be, which is
+    // the defect itself. The inline picker below `md` sits in the flow under
+    // the field and scrolls with it, and opening it lengthens the dialog's
+    // body, so a scroll listener there would shut it the instant it opened.
+    if (inline) {
+      return () => document.removeEventListener('pointerdown', onPointerDown, true)
+    }
+    const onScroll = () => close()
+    // Capture, so the dialog body's own scroll is heard and not only the page's.
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      window.removeEventListener('scroll', onScroll, true)
+      document.removeEventListener('pointerdown', onPointerDown, true)
+    }
+  }, [open, close, inline])
+
+  const picker = (
+    <>
+      <ColorPicker.Area />
+      <HStack>
+        <ColorPicker.EyeDropper size="xs" variant="outline" />
+        <ColorPicker.Sliders />
+      </HStack>
+    </>
+  )
+
+  return (
+    <Field.Root ref={root}>
+      <Field.Label>{label}</Field.Label>
+      <ColorPicker.Root
+        open={open}
+        onOpenChange={e => setOpen(e.open)}
+        disabled={disabled}
+        value={parseColor(value || DEFAULT_COLOR)}
+        format="rgba"
+        positioning={{placement: 'bottom-start', gutter: 4, strategy: 'fixed'}}
+        onValueChange={e => onChange(e.value.toString('hex'))}>
+        <ColorPicker.HiddenInput />
+        <ColorPicker.Control>
+          <ColorPicker.Input />
+          <ColorPicker.Trigger data-testid="car-color-trigger" />
+        </ColorPicker.Control>
+
+        {inline
+          ? open && (
+              // The parts, not ColorPicker.Content: Content is the popover's
+              // own surface and lives inside a Positioner, and the whole
+              // point below `md` is that there is no positioner to get wrong.
+              <Box
+                mt="2"
+                w="full"
+                display="flex"
+                flexDirection="column"
+                gap="3"
+                p="3"
+                rounded="control"
+                borderWidth="1px"
+                borderColor="border.default"
+                bg="bg.surface"
+                data-testid="car-color-popover"
+                data-color-picker="inline">
+                {picker}
+              </Box>
+            )
+          : open && (
+              <Portal>
+                <ColorPicker.Positioner
+                  data-testid="car-color-popover"
+                  data-color-picker="portal">
+                  <ColorPicker.Content>{picker}</ColorPicker.Content>
+                </ColorPicker.Positioner>
+              </Portal>
+            )}
+      </ColorPicker.Root>
+    </Field.Root>
+  )
+}
+
 interface CarDialogProps {
   open: boolean
   /** Editing this car, or creating one when absent. */
@@ -459,17 +590,85 @@ const emptyForm = (car?: FleetCar): CarInput => ({
   driverId: car?.driverId
 })
 
-/** The picture the car has now, in the shape the field and the mutation take. */
-const imageOf = (car?: FleetCar): CarImageValue | null =>
-  car?.imageFileId && car?.imageUrl && car?.imageThumbUrl
-    ? {
-        imageFileId: car.imageFileId,
-        imageUrl: car.imageUrl,
-        imageThumbUrl: car.imageThumbUrl,
-        imageWidth: car.imageWidth,
-        imageHeight: car.imageHeight
-      }
-    : null
+/**
+ * The gallery the car has now, in the shape the field carries: every stored
+ * picture with its row id, in its order, the first one the cover.
+ */
+const galleryOf = (car?: FleetCar): CarGalleryItem[] =>
+  (car?.images ?? []).map(image => ({
+    id: image.id,
+    fileId: image.fileId,
+    url: image.url,
+    thumbUrl: image.thumbUrl,
+    width: image.width,
+    height: image.height
+  }))
+
+/**
+ * What the dialog has to write to make the car's gallery look like the
+ * draft: the rows to delete, the fresh uploads to add, and whether the
+ * order that comes out of those two differs from the drafted one.
+ *
+ * The adds land at the end, which is where `addCarImages` appends them, so
+ * a plain "upload three more" needs no reorder at all.
+ */
+const galleryPlan = (before: CarGalleryItem[], after: CarGalleryItem[]) => {
+  const kept = new Set(after.map(image => image.id).filter(Boolean))
+  const removed = before.filter(image => image.id && !kept.has(image.id))
+  const added = after.filter(image => !image.id)
+  const resulting = [
+    ...before.filter(image => image.id && kept.has(image.id)).map(image => image.fileId),
+    ...added.map(image => image.fileId)
+  ]
+  const wanted = after.map(image => image.fileId)
+  const reordered = resulting.join('|') !== wanted.join('|')
+  return {removed, added, reordered, wanted}
+}
+
+/**
+ * Makes the car's gallery look like the draft: the removals first, so a
+ * form that swapped one picture for another does not run into the backend's
+ * ceiling, then the fresh uploads, then the order where the two did not
+ * already produce it. `addCarImages` answers the whole gallery, which is how
+ * the fresh rows get their ids for the reorder.
+ */
+async function writeGallery(
+  carId: string,
+  before: CarGalleryItem[],
+  after: CarGalleryItem[]
+): Promise<void> {
+  const plan = galleryPlan(before, after)
+
+  for (const image of plan.removed) {
+    if (image.id) await removeCarImageMutation(image.id)
+  }
+
+  let stored = after.filter(image => image.id)
+  if (plan.added.length) {
+    const rows = await addCarImagesMutation(
+      carId,
+      plan.added.map(image => ({
+        fileId: image.fileId,
+        url: image.url,
+        thumbUrl: image.thumbUrl,
+        width: image.width,
+        height: image.height
+      }))
+    )
+    stored = rows
+  }
+
+  if (plan.reordered) {
+    // The ids in the drafted order. A picture the answer does not name is a
+    // gallery somebody else changed under this form, and the backend refuses
+    // a partial list rather than half applying it.
+    const byFile = new Map(stored.map(row => [row.fileId, row.id]))
+    const ids = plan.wanted.map(fileId => byFile.get(fileId)).filter(Boolean) as string[]
+    if (ids.length === stored.length && ids.length > 1) {
+      await reorderCarImagesMutation(carId, ids)
+    }
+  }
+}
 
 /** One dialog for both: the title and the mutation are the only difference. */
 function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
@@ -477,9 +676,10 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
   const {strings: t} = getI18nFleet(code)
   const {strings: tc} = getI18nCommon(code)
   const [form, setForm] = useState<CarInput>(() => emptyForm(car))
-  // The picture is its own piece of state: it is uploaded while the dialog
-  // stands open and saved with the rest on submit.
-  const [image, setImage] = useState<CarImageValue | null>(() => imageOf(car))
+  // The gallery is its own piece of state: the files are uploaded to the
+  // storage gateway while the dialog stands open and the car's own rows are
+  // written with the rest on submit, so an abandoned form changes nothing.
+  const [gallery, setGallery] = useState<CarGalleryItem[]>(() => galleryOf(car))
   const [touched, setTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
@@ -488,7 +688,7 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
   useEffect(() => {
     if (open) {
       setForm(emptyForm(car))
-      setImage(imageOf(car))
+      setGallery(galleryOf(car))
       setTouched(false)
       setFailure(null)
     }
@@ -511,21 +711,17 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
         // Explicit null takes the car away from its driver, undefined would leave it.
         driverId: form.driverId || null
       }
-      // The picture only when it changed: an untouched dialog must not
-      // rewrite five columns, and clearing it is an explicit null.
-      const before = imageOf(car)
-      const changed =
-        (before?.imageFileId ?? null) !== (image?.imageFileId ?? null)
       if (car) {
-        await updateCarMutation(car.id, changed ? {...input, image} : input)
+        await updateCarMutation(car.id, input)
+        await writeGallery(car.id, galleryOf(car), gallery)
         toaster.success({title: t.CarUpdated})
       } else {
         const id = await createCarMutation(input)
-        // createCar writes no picture, so a new car with one is updated once
-        // more. A car that was created and then failed to take its picture
-        // still exists, which is why this is a second call and not a retry
-        // of the first.
-        if (id && image) await updateCarMutation(id, {image})
+        // createCar writes no picture, so a new car with a gallery takes it
+        // in a second call. A car that was created and then failed to take
+        // its pictures still exists, which is why this is a second call and
+        // not a retry of the first.
+        if (id) await writeGallery(id, [], gallery)
         toaster.success({title: t.CarCreated})
       }
       onSaved()
@@ -559,11 +755,9 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
               <Stack gap="4">
                 <Field.Root>
                   <Field.Label>{t.FieldImage}</Field.Label>
-                  <CarImageField
-                    value={image}
-                    onChange={setImage}
-                    carClass={form.carClass}
-                    licensePlate={form.licensePlate}
+                  <CarImagesField
+                    value={gallery}
+                    onChange={setGallery}
                     disabled={saving}
                     strings={t}
                     onFailure={setFailure}
@@ -616,37 +810,12 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
                       <NativeSelect.Indicator />
                     </NativeSelect.Root>
                   </Field.Root>
-                  <Field.Root>
-                    <Field.Label>{t.FieldColor}</Field.Label>
-                    <ColorPicker.Root
-                      value={parseColor(form.color || DEFAULT_COLOR)}
-                      format="rgba"
-                      onValueChange={e =>
-                        setForm(f => ({...f, color: e.value.toString('hex')}))
-                      }>
-                      <ColorPicker.HiddenInput />
-                      <ColorPicker.Control>
-                        <ColorPicker.Input />
-                        <ColorPicker.Trigger />
-                      </ColorPicker.Control>
-                      {/* No Portal on purpose: inside a Dialog, Chakra's own
-                          "open from dialog" example keeps the positioner in
-                          the dialog's tree so focus and dismissal stay with
-                          the dialog. */}
-                      <ColorPicker.Positioner>
-                        <ColorPicker.Content>
-                          <ColorPicker.Area />
-                          <HStack>
-                            <ColorPicker.EyeDropper
-                              size="xs"
-                              variant="outline"
-                            />
-                            <ColorPicker.Sliders />
-                          </HStack>
-                        </ColorPicker.Content>
-                      </ColorPicker.Positioner>
-                    </ColorPicker.Root>
-                  </Field.Root>
+                  <ColorField
+                    label={t.FieldColor}
+                    value={form.color}
+                    disabled={saving}
+                    onChange={color => setForm(f => ({...f, color}))}
+                  />
                 </SimpleGrid>
                 <Field.Root>
                   <Field.Label>{t.FieldDriver}</Field.Label>

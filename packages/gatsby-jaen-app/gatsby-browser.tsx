@@ -65,3 +65,69 @@ export const onRouteUpdate = ({location}: {location: {pathname: string}}) => {
     : publicViewport
   if (meta.content !== wanted) meta.content = wanted
 }
+
+/**
+ * A view starts at its top (design-consistency.md, rule 12).
+ *
+ * Owner on app 1.4.1: scrolled down on the board, tapped Standorte and the
+ * map opened with its header hidden under the frame's bar. Gatsby's own
+ * handler is no help here. `gatsby-react-router-scroll` reads the position it
+ * saved for the new entry's key and scrolls there synchronously in
+ * `componentDidUpdate`, before the new route has laid anything out, and it
+ * ignores the coordinates a `shouldUpdateScroll` returns entirely (version
+ * 6.13.1, `windowScroll` calls `window.scrollTo(0, position)` with its own
+ * position and uses our answer only as a boolean). So the app answers false
+ * for its own routes and scrolls itself, one frame later, when the new view
+ * has rendered.
+ *
+ * The position is the one Gatsby saved for this history entry: zero for a
+ * push, which is every tap on the tab bar and every swipe between the bar's
+ * places, and the list's own offset for a pop, which is the back out of a
+ * detail. The retry is there because a list restores from the persisted query
+ * cache a frame or two after the route mounts, and a document that is still
+ * short cannot be scrolled to where it will reach; it stops as soon as the
+ * offset is reached, after a second and a half, or the moment the person
+ * scrolls themselves, so it never fights a thumb.
+ */
+const scrollAppView = (y: number) => {
+  let tries = 0
+  let stopped = false
+  const stop = () => {
+    stopped = true
+  }
+  const events = ['wheel', 'touchstart', 'keydown'] as const
+  for (const e of events)
+    window.addEventListener(e, stop, {passive: true, once: true})
+  const done = () => {
+    for (const e of events) window.removeEventListener(e, stop)
+  }
+  const step = () => {
+    if (stopped) return done()
+    window.scrollTo(0, y)
+    if (++tries >= 20 || Math.abs(window.scrollY - y) <= 1) return done()
+    window.setTimeout(step, 75)
+  }
+  window.requestAnimationFrame(step)
+}
+
+export const shouldUpdateScroll = ({
+  routerProps,
+  getSavedScrollPosition
+}: {
+  routerProps: {location: {pathname: string; key?: string}}
+  getSavedScrollPosition: (location: unknown) => [number, number] | number
+}) => {
+  const {location} = routerProps
+  // Outside the app the site keeps Gatsby's behaviour.
+  if (!location.pathname.startsWith('/app')) return true
+  let saved: [number, number] | number = 0
+  try {
+    saved = getSavedScrollPosition(location)
+  } catch {
+    // Swallowed on purpose: session storage can be refused (a locked-down
+    // browser), and a view that starts at its top is the right answer then.
+  }
+  const y = Array.isArray(saved) ? Number(saved[1]) || 0 : Number(saved) || 0
+  scrollAppView(y)
+  return false
+}

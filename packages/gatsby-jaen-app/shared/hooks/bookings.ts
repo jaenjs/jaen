@@ -152,10 +152,13 @@ export interface Booking {
     /** The car's paint, #RRGGBB, for the colour dot on the customer's card. */
     color?: string
     /**
-     * The car's picture. The pylon answers it to a customer only once the
-     * driver said yes (okf/architecture/media.md), so a picture on the row
-     * is itself the sign that the ride is confirmed.
+     * The car's gallery, in its order, the first one the cover. The pylon
+     * answers it to a customer only once the driver said yes
+     * (okf/architecture/media.md), so a picture on the row is itself the
+     * sign that the ride is confirmed.
      */
+    images?: Array<{id?: string; url?: string; thumbUrl?: string}>
+    /** The cover's own two URLs, what a card that fits one picture reads. */
     imageUrl?: string
     imageThumbUrl?: string
   }
@@ -245,6 +248,13 @@ export const mapBooking = (t: any): Booking => {
           licensePlate: text(car.licensePlate),
           carClass: text(car.carClass),
           color: text(car.color),
+          images: Array.isArray(car.carImages)
+            ? car.carImages.map((image: any) => ({
+                id: text(image?.id),
+                url: text(image?.url),
+                thumbUrl: text(image?.thumbUrl) ?? text(image?.url)
+              }))
+            : undefined,
           imageUrl: text(car.imageUrl),
           imageThumbUrl: text(car.imageThumbUrl)
         }
@@ -284,7 +294,7 @@ const bookingSelection = async (): Promise<string> =>
   `{ id ${(await hasTransferField('code')) ? 'code ' : ''}${(await hasTransferField('customerStatus')) ? 'customerStatus language ' : ''}customerId driverId pickupDateTime pickupLocation dropoffLocation subject state requestedAt ` +
   `referenceId price paymentMethode payingParty transferCategory transferType ` +
   `${(await hasTransferField('driverStatus')) ? 'driverStatus ' : ''}` +
-  `car { carName licensePlate carClass color${(await hasCarField('imageThumbUrl')) ? ' imageUrl imageThumbUrl' : ''} } ` +
+  `car { carName licensePlate carClass color${(await hasCarField('carImages')) ? ' carImages { id url thumbUrl }' : ''}${(await hasCarField('imageThumbUrl')) ? ' imageUrl imageThumbUrl' : ''} } ` +
   `details { flightNumber message luggage childSeats } ` +
   `passengers { totalCount } ` +
   `extras { edges { node { type amount } } } ` +

@@ -349,13 +349,3 @@ export const templatePaths = (): string[] => Object.keys(TEMPLATE_ASSETS)
  */
 export const pdfObjectUrl = (pdf: Uint8Array): string =>
   URL.createObjectURL(new Blob([pdf as BlobPart], {type: 'application/pdf'}))
-
-/** The PDF as base64, the shape `uploadTransferDocument(args:{contentBase64})` takes. */
-export const pdfBase64 = (pdf: Uint8Array): string => {
-  let binary = ''
-  const chunk = 0x8000
-  for (let i = 0; i < pdf.length; i += chunk) {
-    binary += String.fromCharCode(...pdf.subarray(i, i + chunk))
-  }
-  return btoa(binary)
-}

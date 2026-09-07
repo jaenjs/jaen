@@ -15,15 +15,15 @@
  * caller lookup starts only behind jaen's own isAuthenticated, so the
  * marketing pages stay as quiet as they were.
  *
- * The same mount registers the app's two sources on jaen's Media tab, for
- * the same reason: /cms/media/ is not inside /app and the sources have to
- * exist wherever an admin opens the tab. See useMediaSources.
+ * The same mount registers the app's two folders on jaen's Media tree, for
+ * the same reason: /cms/media/ is not inside /app and the folders have to
+ * exist wherever an admin opens the tab. See useMediaFolders.
  */
 import {useEffect, useState} from 'react'
 import {useAuth} from 'jaen'
 import {useCaller} from '../../shared/auth'
 import {useFrameMenu} from './useFrameMenu'
-import {useMediaSources} from './useMediaSources'
+import {useMediaFolders} from './useMediaFolders'
 
 declare const __JAEN_APP_BRAND_NAME__: string | null | undefined
 
@@ -54,12 +54,12 @@ export const useBrandName = (): string => {
   return configured ?? host
 }
 
-/** Reads the caller and registers the entries and the media sources. Renders nothing. */
+/** Reads the caller and registers the entries and the media folders. Renders nothing. */
 function Registrar() {
   const caller = useCaller()
   const brand = useBrandName()
   useFrameMenu(caller, brand)
-  useMediaSources(caller)
+  useMediaFolders(caller)
   return null
 }
 

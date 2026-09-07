@@ -1,12 +1,13 @@
 /**
  * A car's picture, or the silhouette of its class.
  *
- * okf/architecture/media.md: a car keeps its picture on the storage gateway
- * and the row carries the two URLs the upload answered. Everywhere the
- * picture appears (the fleet card and its form, the driver picker, the
- * customer's booking detail and the ride card on the map) it appears through
- * this one component, so a car without a picture always falls back the same
- * way instead of leaving a hole in a layout.
+ * okf/architecture/media.md: a car keeps its pictures on the storage gateway
+ * as rows of their own, the first one the cover. Everywhere one picture fits
+ * (the fleet card and its form, the driver picker, the customer's locations
+ * card and the ride card on the map) the cover appears through this one
+ * component, so a car without a picture always falls back the same way
+ * instead of leaving a hole in a layout. Where the customer looks at the car
+ * the whole gallery is drawn instead, by CarGallery beside this.
  *
  * The thumbnail is what a list, a picker and a card show; the full file is
  * asked for only where the picture is the point, which today is the vehicle
@@ -19,12 +20,42 @@ import {FaCarAlt} from '@react-icons/all-files/fa/FaCarAlt'
 import {FaCarSide} from '@react-icons/all-files/fa/FaCarSide'
 import {FaShuttleVan} from '@react-icons/all-files/fa/FaShuttleVan'
 
+/** One picture of a car's gallery, whichever hook the row came from. */
+export interface CarPictureImage {
+  id?: string | null
+  url?: string | null
+  thumbUrl?: string | null
+  width?: number | null
+  height?: number | null
+}
+
 /** What this component needs of a car, whichever hook the row came from. */
 export interface CarPicture {
   licensePlate?: string | null
   carClass?: string | null
+  /**
+   * The whole gallery in its order, the first one the cover
+   * (okf/architecture/media.md, "Many pictures per car"). A read that asks
+   * only for the cover's two URLs leaves it absent, and the two fields
+   * below are then what is drawn.
+   */
+  images?: CarPictureImage[] | null
   imageUrl?: string | null
   imageThumbUrl?: string | null
+}
+
+/**
+ * The cover, the one picture every place that fits one shows: the first of
+ * the gallery, or the cover fields a narrower read answered. Both are the
+ * same picture, so a screen that has either draws it.
+ */
+export const carCover = (car: CarPicture | null | undefined): CarPictureImage | null => {
+  const first = car?.images?.[0]
+  if (first?.url || first?.thumbUrl) return first
+  if (car?.imageUrl || car?.imageThumbUrl) {
+    return {url: car.imageUrl ?? null, thumbUrl: car.imageThumbUrl ?? null}
+  }
+  return null
 }
 
 /**
@@ -59,9 +90,10 @@ export interface CarImageProps {
 }
 
 export function CarImage({car, size = 40, full = false, alt}: CarImageProps) {
+  const cover = carCover(car)
   const src = full
-    ? (car?.imageUrl ?? car?.imageThumbUrl ?? undefined)
-    : (car?.imageThumbUrl ?? car?.imageUrl ?? undefined)
+    ? (cover?.url ?? cover?.thumbUrl ?? undefined)
+    : (cover?.thumbUrl ?? cover?.url ?? undefined)
   const banner = size === 'banner'
   const Fallback = silhouette(car?.carClass)
 

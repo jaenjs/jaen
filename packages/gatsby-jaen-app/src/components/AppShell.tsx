@@ -252,7 +252,24 @@ export function AppShell({children}: AppShellProps) {
         as="main"
         flex="1"
         position="relative"
-        pb={tabBar ? {base: GLASS_TAB_BAR_CLEARANCE, md: 0} : undefined}>
+        pb={tabBar ? {base: GLASS_TAB_BAR_CLEARANCE, md: 0} : undefined}
+        // The height a view gets when it wants the screen and nothing else,
+        // the frame's 4rem off the top and the glass bar's clearance off the
+        // bottom where the bar is on (design-consistency.md, rule 12). It is
+        // declared here because this is the box that carries that padding, so
+        // a view saying h="var(--app-view-h)" is exactly this box's content
+        // and the document never grows past the viewport. The map screen is
+        // the one that reads it; every other view is as tall as it likes.
+        css={
+          tabBar
+            ? {
+                '--app-view-h': `calc(100dvh - 4rem - ${GLASS_TAB_BAR_CLEARANCE})`,
+                '@media (min-width: 48rem)': {
+                  '--app-view-h': 'calc(100dvh - 4rem)'
+                }
+              }
+            : {'--app-view-h': 'calc(100dvh - 4rem)'}
+        }>
         {caller.error ? (
           <Box p="4">
             {/* Offline with nothing stored, the roles could not be read: the

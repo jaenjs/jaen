@@ -46,17 +46,19 @@ const de = {
   AssignDriver: 'Fahrer zuweisen',
   Unassign: 'Fahrer entfernen',
 
-  FieldImage: 'Fahrzeugbild',
-  ImageUpload: 'Bild hochladen',
-  ImageReplace: 'Bild ersetzen',
+  FieldImage: 'Fahrzeugbilder',
+  ImagesUpload: 'Bilder hochladen',
+  ImagesHint: 'Bilder hierher ziehen oder klicken, mehrere auf einmal, PNG oder JPG',
+  ImagesUploading: 'Bilder werden hochgeladen',
+  ImagesTooMany: 'Ein Fahrzeug fasst hoechstens 24 Bilder',
   ImageRemove: 'Bild entfernen',
-  ImageHint: 'Bild hierher ziehen oder klicken, PNG oder JPG',
-  ImageUploading: 'Bild wird hochgeladen',
-  ImageUploaded: 'Bild hochgeladen',
-  ImageRemoved: 'Bild entfernt',
   ImageFailed: 'Bild konnte nicht hochgeladen werden',
   ImageNotAnImage: 'Nur Bilder, PNG oder JPG',
-  ImageAlt: 'Bild von {plate}'
+  ImageAlt: 'Bild von {plate}',
+  GalleryCover: 'Titelbild',
+  GalleryEmpty: 'Noch keine Bilder. Das erste Bild ist das Titelbild.',
+  GalleryEarlier: 'Nach vorne',
+  GalleryLater: 'Nach hinten'
 }
 
 export type FleetStrings = typeof de
@@ -102,17 +104,19 @@ const en: FleetStrings = {
   AssignDriver: 'Assign driver',
   Unassign: 'Remove driver',
 
-  FieldImage: 'Vehicle picture',
-  ImageUpload: 'Upload picture',
-  ImageReplace: 'Replace picture',
+  FieldImage: 'Vehicle pictures',
+  ImagesUpload: 'Upload pictures',
+  ImagesHint: 'Drop pictures here or click, several at once, PNG or JPG',
+  ImagesUploading: 'The pictures are uploading',
+  ImagesTooMany: 'A vehicle carries at most 24 pictures',
   ImageRemove: 'Remove picture',
-  ImageHint: 'Drop a picture here or click, PNG or JPG',
-  ImageUploading: 'The picture is uploading',
-  ImageUploaded: 'Picture uploaded',
-  ImageRemoved: 'Picture removed',
   ImageFailed: 'The picture could not be uploaded',
   ImageNotAnImage: 'Pictures only, PNG or JPG',
-  ImageAlt: 'Picture of {plate}'
+  ImageAlt: 'Picture of {plate}',
+  GalleryCover: 'Cover',
+  GalleryEmpty: 'No pictures yet. The first picture is the cover.',
+  GalleryEarlier: 'Move earlier',
+  GalleryLater: 'Move later'
 }
 
 const tr: FleetStrings = {
@@ -156,17 +160,19 @@ const tr: FleetStrings = {
   AssignDriver: 'Şoför ata',
   Unassign: 'Şoförü kaldır',
 
-  FieldImage: 'Araç fotoğrafı',
-  ImageUpload: 'Fotoğraf yükle',
-  ImageReplace: 'Fotoğrafı değiştir',
+  FieldImage: 'Araç fotoğrafları',
+  ImagesUpload: 'Fotoğraf yükle',
+  ImagesHint: 'Fotoğrafları buraya sürükleyin veya tıklayın, birden fazla, PNG ya da JPG',
+  ImagesUploading: 'Fotoğraflar yükleniyor',
+  ImagesTooMany: 'Bir araç en fazla 24 fotoğraf taşır',
   ImageRemove: 'Fotoğrafı kaldır',
-  ImageHint: 'Fotoğrafı buraya sürükleyin veya tıklayın, PNG ya da JPG',
-  ImageUploading: 'Fotoğraf yükleniyor',
-  ImageUploaded: 'Fotoğraf yüklendi',
-  ImageRemoved: 'Fotoğraf kaldırıldı',
   ImageFailed: 'Fotoğraf yüklenemedi',
   ImageNotAnImage: 'Yalnızca fotoğraf, PNG ya da JPG',
-  ImageAlt: '{plate} fotoğrafı'
+  ImageAlt: '{plate} fotoğrafı',
+  GalleryCover: 'Kapak',
+  GalleryEmpty: 'Henüz fotoğraf yok. İlk fotoğraf kapaktır.',
+  GalleryEarlier: 'Öne al',
+  GalleryLater: 'Arkaya al'
 }
 
 const ar: FleetStrings = {
@@ -210,17 +216,19 @@ const ar: FleetStrings = {
   AssignDriver: 'إسناد سائق',
   Unassign: 'إزالة السائق',
 
-  FieldImage: 'صورة السيارة',
-  ImageUpload: 'رفع صورة',
-  ImageReplace: 'استبدال الصورة',
+  FieldImage: 'صور السيارة',
+  ImagesUpload: 'رفع صور',
+  ImagesHint: 'اسحب الصور إلى هنا أو انقر، عدة صور معاً، PNG أو JPG',
+  ImagesUploading: 'يجري رفع الصور',
+  ImagesTooMany: 'تحمل السيارة 24 صورة كحد أقصى',
   ImageRemove: 'إزالة الصورة',
-  ImageHint: 'اسحب الصورة إلى هنا أو انقر، PNG أو JPG',
-  ImageUploading: 'يجري رفع الصورة',
-  ImageUploaded: 'تم رفع الصورة',
-  ImageRemoved: 'تمت إزالة الصورة',
   ImageFailed: 'تعذّر رفع الصورة',
   ImageNotAnImage: 'الصور فقط، PNG أو JPG',
-  ImageAlt: 'صورة {plate}'
+  ImageAlt: 'صورة {plate}',
+  GalleryCover: 'الصورة الرئيسية',
+  GalleryEmpty: 'لا صور بعد. الصورة الأولى هي الرئيسية.',
+  GalleryEarlier: 'إلى الأمام',
+  GalleryLater: 'إلى الخلف'
 }
 
 export function getI18nFleet(code: I18nCode): {
