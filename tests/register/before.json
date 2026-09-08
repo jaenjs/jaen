@@ -1,0 +1,168 @@
+{
+  "scenario": "before",
+  "site": "/home/snekmin/git/limosen-v3/booklimo.at-storm-build",
+  "signedIn": true,
+  "editOff": {
+    "elapsed": 5.002300000011921,
+    "dispatches": 0,
+    "commits": 2,
+    "unmounts": 0,
+    "replaced": {},
+    "isEditing": false,
+    "types": {},
+    "registerFields": {},
+    "writes": 0,
+    "bytes": 0,
+    "frames": 300,
+    "timerMedian": 50,
+    "timerMax": 50.19999998807907,
+    "hasStore": true,
+    "stacks": [],
+    "error": null,
+    "longTaskCount": 0,
+    "longTaskMax": 0,
+    "longTaskTotal": 0,
+    "dispatchesPerSecond": 0.0,
+    "writesPerSecond": 0.0,
+    "framesPerSecond": 59.97,
+    "busyPerSecond": 0.0,
+    "commitsPerSecond": 0.4
+  },
+  "editable": true,
+  "fields": 41,
+  "editOn": {
+    "elapsed": 5.0315999999940395,
+    "dispatches": 288,
+    "commits": 288,
+    "unmounts": 33120,
+    "replaced": {
+      "FooterTagline": 144,
+      "FooterRights": 144
+    },
+    "isEditing": true,
+    "types": {
+      "pages/field_register": 288
+    },
+    "registerFields": {
+      "FooterTagline": 144,
+      "FooterRights": 144
+    },
+    "writes": 16,
+    "bytes": 44512,
+    "frames": 145,
+    "timerMedian": 72.7000000178814,
+    "timerMax": 115.60000002384186,
+    "hasStore": true,
+    "stacks": [
+      "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613",
+      "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    ],
+    "error": null,
+    "longTaskCount": 1,
+    "longTaskMax": 68,
+    "longTaskTotal": 68,
+    "dispatchesPerSecond": 57.24,
+    "writesPerSecond": 3.18,
+    "framesPerSecond": 28.82,
+    "busyPerSecond": 0.014,
+    "commitsPerSecond": 57.24
+  },
+  "editOnAgain": {
+    "elapsed": 5.03590000000596,
+    "dispatches": 280,
+    "commits": 280,
+    "unmounts": 32200,
+    "replaced": {
+      "FooterTagline": 140,
+      "FooterRights": 140
+    },
+    "isEditing": true,
+    "types": {
+      "pages/field_register": 280
+    },
+    "registerFields": {
+      "FooterTagline": 140,
+      "FooterRights": 140
+    },
+    "writes": 15,
+    "bytes": 41730,
+    "frames": 141,
+    "timerMedian": 74.80000001192093,
+    "timerMax": 117.59999999403954,
+    "hasStore": true,
+    "stacks": [
+      "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613",
+      "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    ],
+    "error": null,
+    "longTaskCount": 0,
+    "longTaskMax": 0,
+    "longTaskTotal": 0,
+    "dispatchesPerSecond": 55.6,
+    "writesPerSecond": 2.98,
+    "framesPerSecond": 28.0,
+    "busyPerSecond": 0.0,
+    "commitsPerSecond": 55.6
+  },
+  "stacks": [
+    {
+      "name": "FooterTagline",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterRights",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterTagline",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterRights",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterTagline",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterRights",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterTagline",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterRights",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterTagline",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterRights",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterTagline",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    },
+    {
+      "name": "FooterRights",
+      "stack": "Error\n    at counted (<anonymous>:41:53)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:27517\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:4480\n    at Object.dispatch (https://booklimo.at/app-427277afb65331081526.js:2:751451)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:47485)\n    at Object.register (https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:49296)\n    at https://booklimo.at/bdca8d2a-059469b53b29380777b5.js:1:113736\n    at li (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:94003)\n    at xs (https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:113958)\n    at https://booklimo.at/framework-a980aaab0edfa42ad93a.js:2:110613"
+    }
+  ],
+  "probeError": null,
+  "hasStore": true,
+  "blurToPaint": [27.6, 14.1, 17.3, 14.9, 14.6, 14.7, 15.6, 14.4],
+  "blurDispatches": 1212,
+  "blurTypes": {
+    "pages/field_register": 1212
+  },
+  "longestTaskAfterClick": [0, 71, 0, 0, 0, 59],
+  "revision": null,
+  "publishedRevision": null,
+  "outbox": 0
+}

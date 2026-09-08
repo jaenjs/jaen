@@ -1,0 +1,66 @@
+{
+  "scenario": "edit",
+  "signedIn": true,
+  "fieldId": "FleetTitle",
+  "original": "Our fleet",
+  "written": {
+    "pageId": "JaenPage /",
+    "fieldType": "IMA:TextField",
+    "fieldName": "FleetTitle",
+    "value": "Our fleet storm-probe"
+  },
+  "persistedAfterEdit": {
+    "value": "Our fleet storm-probe",
+    "outbox": 0
+  },
+  "restoreDispatched": true,
+  "persistedAfterRestore": {
+    "value": "Our fleet",
+    "outbox": 0
+  },
+  "readBack": "Our fleet",
+  "readBackMatches": true,
+  "agentTraffic": [
+    {
+      "status": 200,
+      "sent": "{\"query\":\"query JaenAgentDraft($site: String!, $sinceRevision: Number) {\\n  draft(site: $site, sinceRevision: $sinceRevision) {\\n    site\\n    revision\\n    publishedRevision\\n    changed\\n    full\\n    delta {\\n      pa",
+      "got": "{\"errors\":[{\"message\":\"Cannot query field \\\"discardedRevision\\\" on type \\\"Draft\\\". Did you mean \\\"publishedRevision\\\"?\",\"locations\":[{\"line\":21,\"column\":5}],\"extensions\":{\"code\":\"GRAPHQL_VALIDATION_FAILED\"}},{\"message\":\""
+    },
+    {
+      "status": 200,
+      "sent": "{\"query\":\"query JaenAgentDraft($site: String!, $sinceRevision: Number) {\\n  draft(site: $site, sinceRevision: $sinceRevision) {\\n    site\\n    revision\\n    publishedRevision\\n    changed\\n    full\\n    delta {\\n      pa",
+      "got": "{\"errors\":[{\"message\":\"Cannot query field \\\"discardedRevision\\\" on type \\\"Draft\\\". Did you mean \\\"publishedRevision\\\"?\",\"locations\":[{\"line\":21,\"column\":5}],\"extensions\":{\"code\":\"GRAPHQL_VALIDATION_FAILED\"}},{\"message\":\""
+    },
+    {
+      "status": 200,
+      "sent": "{\"query\":\"query JaenAgentDraft($site: String!, $sinceRevision: Number) {\\n  draft(site: $site, sinceRevision: $sinceRevision) {\\n    site\\n    revision\\n    publishedRevision\\n    changed\\n    full\\n    delta {\\n      pa",
+      "got": "{\"errors\":[{\"message\":\"Cannot query field \\\"discardedRevision\\\" on type \\\"Draft\\\". Did you mean \\\"publishedRevision\\\"?\",\"locations\":[{\"line\":21,\"column\":5}],\"extensions\":{\"code\":\"GRAPHQL_VALIDATION_FAILED\"}},{\"message\":\""
+    },
+    {
+      "status": 200,
+      "sent": "{\"query\":\"query JaenAgentDraft($site: String!, $sinceRevision: Number) {\\n  draft(site: $site, sinceRevision: $sinceRevision) {\\n    site\\n    revision\\n    publishedRevision\\n    changed\\n    full\\n    delta {\\n      pa",
+      "got": "{\"errors\":[{\"message\":\"Cannot query field \\\"discardedRevision\\\" on type \\\"Draft\\\". Did you mean \\\"publishedRevision\\\"?\",\"locations\":[{\"line\":21,\"column\":5}],\"extensions\":{\"code\":\"GRAPHQL_VALIDATION_FAILED\"}},{\"message\":\""
+    },
+    {
+      "status": 200,
+      "sent": "{\"query\":\"query JaenAgentDraft($site: String!, $sinceRevision: Number) {\\n  draft(site: $site, sinceRevision: $sinceRevision) {\\n    site\\n    revision\\n    publishedRevision\\n    changed\\n    full\\n    delta {\\n      pa",
+      "got": "{\"errors\":[{\"message\":\"Cannot query field \\\"discardedRevision\\\" on type \\\"Draft\\\". Did you mean \\\"publishedRevision\\\"?\",\"locations\":[{\"line\":21,\"column\":5}],\"extensions\":{\"code\":\"GRAPHQL_VALIDATION_FAILED\"}},{\"message\":\""
+    },
+    {
+      "status": 200,
+      "sent": "{\"query\":\"query JaenAgentDraft($site: String!, $sinceRevision: Number) {\\n  draft(site: $site, sinceRevision: $sinceRevision) {\\n    site\\n    revision\\n    publishedRevision\\n    changed\\n    full\\n    delta {\\n      pa",
+      "got": "{\"errors\":[{\"message\":\"Cannot query field \\\"discardedRevision\\\" on type \\\"Draft\\\". Did you mean \\\"publishedRevision\\\"?\",\"locations\":[{\"line\":21,\"column\":5}],\"extensions\":{\"code\":\"GRAPHQL_VALIDATION_FAILED\"}},{\"message\":\""
+    },
+    {
+      "status": 200,
+      "sent": "{\"query\":\"mutation JaenAgentSave($site: String!, $changes: [SaveChangesInput!]!, $baseRevision: Number) {\\n  save(site: $site, changes: $changes, baseRevision: $baseRevision) {\\n    revision\\n    savedAt\\n    rebased\\n  ",
+      "got": "{\"data\":{\"save\":{\"revision\":119,\"savedAt\":\"2026-09-08T18:15:44.247Z\",\"rebased\":true,\"overwrote\":[]}}}"
+    },
+    {
+      "status": 200,
+      "sent": "{\"query\":\"query JaenAgentDraft($site: String!, $sinceRevision: Number) {\\n  draft(site: $site, sinceRevision: $sinceRevision) {\\n    site\\n    revision\\n    publishedRevision\\n    changed\\n    full\\n    delta {\\n      pa",
+      "got": "{\"errors\":[{\"message\":\"Cannot query field \\\"discardedRevision\\\" on type \\\"Draft\\\". Did you mean \\\"publishedRevision\\\"?\",\"locations\":[{\"line\":21,\"column\":5}],\"extensions\":{\"code\":\"GRAPHQL_VALIDATION_FAILED\"}},{\"message\":\""
+    }
+  ],
+  "agentCalls": 19
+}

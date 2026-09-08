@@ -1,0 +1,12 @@
+{
+  "scenario": "restore",
+  "field": "FleetTitle",
+  "suffix": " storm-probe",
+  "signedIn": true,
+  "revisionBefore": 119,
+  "before": "Our fleet storm-probe",
+  "revisionAfter": 120,
+  "saveState": "saved",
+  "outbox": 0,
+  "after": "Our fleet"
+}
