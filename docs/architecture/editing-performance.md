@@ -1363,3 +1363,193 @@ person gets, and `09`'s number should keep being taken without one.
   have named it.
 - **One machine, one browser, two widths, one site.** Unchanged.
 - **The Fable 5.1 review of the editing path is still open.**
+
+## Repaired 2026-09-08 at night, and the forty milliseconds have a name
+
+The section above this one ends with "the cause of the blur gap is still not
+named, only narrowed: not the store, not the dispatches, not the machine, and
+not visible to the profiler that could have named it". It has a name now, it
+has two of them, and both are fixed. The blur to the next painted frame on a
+local production build of booklimo.at is a **median of 10.9 to 13.3 ms over
+four runs of ten gestures**, against 34 to 45 ms on the same build before the
+repair and 72 to 76 ms on the deployed site.
+
+The instrument that could not be used is worth saying first, because it is why
+this took three sessions. The V8 sampling profiler makes this gesture more than
+three times faster, so the reading taken with it attached is not the reading a
+person gets. Two instruments that do not do that were used instead:
+`PerformanceObserver` on **long animation frames**, which names a frame's
+scripts and its phases without sampling the stack, and Chromium's own
+**timeline trace** through CDP, including
+`disabled-by-default-devtools.timeline.invalidationTracking`, which says which
+element was invalidated and for what reason. Beside them, the method that
+settles a cause rather than suggesting one: change one thing at a time in the
+live DOM and take the same ten gestures again.
+
+### What was measured, and in what order
+
+`tests/support/blur-bisect.py`, ten real `Tab` gestures out of `FleetTitle` per
+condition, nothing typed, the draft's revision read before and after. Every
+condition is one change to the page as it stands, and the page is reloaded
+between them.
+
+| condition, on the deployed site | what it changed                                    | median  |
+| ------------------------------- | -------------------------------------------------- | ------- |
+| `base`                          | nothing                                            | 72.1 ms |
+| `tab0`                          | every `tabindex="1"` became `tabindex="0"`         | 76.4 ms |
+| `nospell`                       | `spellcheck=false` on all 43 editables             | 65.1 ms |
+| `blurcall`                      | `activeElement.blur()`, no next element looked for | 33.5 ms |
+| `link`                          | Tab from one link to the next, the control         | 6.1 ms  |
+| `base` again                    | nothing                                            | 75.6 ms |
+
+Two hypotheses died there. The **positive tabindex** every field carries
+(`HighlightTooltip` renders `tabIndex={isEditing ? 1 : undefined}`) is a real
+accessibility defect and is not this: turning all 54 of them into `0` made the
+gesture slightly slower, not faster. **Spellcheck** on a contenteditable losing
+focus is not it either. What the split does say is that the gesture has two
+halves: a blur with nothing to focus afterwards cost 33.5 ms and the same blur
+followed by focusing the next field cost 72, so the work is on both sides.
+
+### The first name: the highlighter rebuilt itself on every focus
+
+`packages/jaen/src/contexts/field-highlighter.tsx` created the frame element,
+the tooltip's portal container and a `ResizeObserver` **inside every focus
+handler**, and the blur that followed removed the frame from the document
+again. A new container is a new React portal mount, so the tooltip, its two
+tune selectors and their Chakra tooltips came down and went back up every time
+the caret moved from one field to the next. And the provider handed
+`value={{ref}}`, an object literal, to a context every field consumes, so every
+render of the provider gave all 43 fields a new context value and re-rendered
+every one of them. The provider renders on each focus.
+
+The long animation frame entries said this before it was fixed: the focus
+listener of the next field cost 23.8 to 28.3 ms with 13.4 to 17.4 ms of forced
+style and layout inside it, and a `MessagePort.onmessage` in the framework
+bundle, which is React's scheduler, cost 57.9 to 74.1 ms in the same frames.
+
+What it does now: the frame and the tooltip's container are built once and
+kept, hidden with `display: none` rather than removed, one `ResizeObserver` is
+re-targeted rather than replaced, the tooltip is portalled into a container
+that never changes and only its buttons are state, and the context value is
+memoised. The same listener then costs 10.2 to 14.2 ms with 1.8 to 3.4 ms
+forced, and the median gap fell from 72 to **38.5 ms**.
+
+### The second name: `:has()` on the document root, and it is not jaen's
+
+38 ms is still over two frames, and the trace named the rest exactly.
+
+```
+StyleRecalcInvalidationTracking  reason "Affected by :has()"  HTML
+StyleRecalcInvalidationTracking  reason "Affected by :has()"  BODY
+StyleRecalcInvalidationTracking  reason "Affected by :has()"  DIV#___gatsby
+StyleRecalcInvalidationTracking  reason "Affected by :has()"  DIV#momo
+UpdateLayoutTree                 elementCount 1369            27.3 ms
+```
+
+inside the `keydown` that leaves the field. `packages/gatsby-jaen-app/src/styles/app.css`
+had eleven rules whose subject was `html:has(.jaen-app)`, `body:has(.jaen-app)`,
+`#___gatsby:has(.jaen-app)` or `#momo:has(.jaen-app)`, and that sheet is
+imported by `gatsby-ssr.tsx` and `gatsby-browser.tsx`, so it is loaded on
+**every page of both marketing sites** and not only on the app's own. Chromium
+marks the four subjects as affected by `:has()` and re-evaluates them whenever
+anything anywhere in the document is inserted or removed. Invalidating `html`
+is a style recalculation of the whole document, and the whole document on
+booklimo's home page is 1369 elements.
+
+Deleting those eleven rules from the live sheet changes not one computed style
+on a page that has no `.jaen-app` on it, which is what makes it a clean
+experiment rather than a different page:
+
+| condition | what it changed                                  | median, two runs each |
+| --------- | ------------------------------------------------ | --------------------- |
+| `base`    | nothing                                          | 34.0, 35.8 ms         |
+| `nohas`   | all eleven `:has(.jaen-app)` rules deleted       | **15.2, 16.1 ms**     |
+| `nomomo`  | only the two `#coco`/`#momo` rules deleted       | 25.2, 17.9 ms         |
+| `patched` | only the four `html:has(...) <descendant>` rules | 39.5, 37.2 ms         |
+| `noid`    | the id taken off the highlighter's own tooltip   | 34.2, 38.3 ms         |
+
+The last two rows are the ones worth keeping, because they are how a plausible
+story was refused. The four rules whose subject is a _descendant_ of
+`html:has(.jaen-app)` looked like the expensive ones and are not: removing them
+alone moved nothing. Taking `id="momo"` off jaen's own tooltip, so that the
+sheet's `#momo` rule could no longer name it, moved nothing either. What costs
+is being a `:has()` subject at all: Chromium invalidates every element marked
+for that invalidation set together, wherever the mutation happened.
+
+The repair keeps every rule and changes what decides it. `AppShell` adds
+`jaen-app-open` to the root element in a **layout effect**, which runs before
+the paint of the commit that renders `.jaen-app` itself, so the rules start
+applying no later than the marker they replace; the `/app` routes are client
+only, so neither form of the selector matches before hydration. A class is
+invalidated when the class changes and at no other time.
+
+### Where the number stands
+
+Four runs of ten gestures each on a local production build with both repairs
+in, on booklimo's home page with edit mode on and 43 editable fields:
+
+| run           | gaps, sorted                                         | median  | over one frame |
+| ------------- | ---------------------------------------------------- | ------- | -------------- |
+| base          | 5.7 8.0 9.4 10.1 10.7 11.0 11.6 11.9 12.7 **30.9**   | 10.9 ms | 1 of 10        |
+| control       | 6.0 9.7 10.5 11.7 11.8 12.0 13.3 15.3 18.5 **42.6**  | 11.9 ms | 2 of 10        |
+| base again    | 8.8 10.0 10.0 11.4 11.4 11.5 12.2 13.3 13.8 **35.9** | 11.5 ms | 1 of 10        |
+| control again | 5.6 7.1 9.5 12.8 13.1 13.4 14.0 14.7 15.1 **50.2**   | 13.3 ms | 1 of 10        |
+
+The `control` rows ran the `nohas` mutation, which now finds nothing to delete
+and reports zero rules removed. They are in the table because a control that
+reads the same as the subject is what says the sheet no longer carries the
+rules, rather than a grep saying so.
+
+**The one gesture in ten that is still slow is the first of each run**, 30.9 to
+50.2 ms, and it is the same outlier this file reported in September as "the
+first one or two blurs of a run are slower than the rest, because the field
+highlighter builds its frame the first time a field is focused". It is now
+literally that: `ensureRoots` creates the frame and the tooltip's container on
+the first focus of a page and never again. It is not removed, and a person pays
+it once per page rather than once per field.
+
+### The behaviour, read rather than argued
+
+Keeping DOM nodes that used to be thrown away is a behaviour change under a
+speed change, so `tests/support/highlight-frame.py` reads the highlighter off
+the page. Eleven checks, all green, on the local production build:
+
+- nothing focused, no frame standing
+- the first field focused, the frame's `top`, `left`, `width` and `height`
+  equal to that field's own document rectangle **to the pixel** (685, 498, 443,
+  33), the tooltip carrying its three actions with every one of them the
+  topmost element at its own centre
+- the second field focused, the frame moved to its rectangle (1164, 209, 89, 17) and the actions swapped
+- exactly one frame and one tooltip container standing in every reading, which
+  is the check that would have caught a leak
+- focus off every field, the frame at `display: none`
+- a navigation to `/imprint/` with a field focused, no frame left standing at
+  the old page's coordinates, and the frame working again on the new page
+- the draft's revision 285 before and 285 after, so nothing was written
+
+### What this repair did not do, and what is still open
+
+- **It did not touch the persistence path.** `persist-state.ts`,
+  `remote-state.ts`, the outbox and the agent's save are untouched by both
+  changes. Nothing here can lose an edit, because nothing here decides when one
+  is written.
+- **The positive tabindex stays.** `HighlightTooltip` puts `tabIndex={1}` on
+  every editable field, which takes all 43 of them out of document order into a
+  tab cycle that comes before the site's own navigation. It is measured here as
+  not being a speed problem, and it is an accessibility defect that this run
+  deliberately did not fix, because changing the tab order of every field of a
+  CMS is a behaviour change that wants its own measurement.
+- **`id="momo"` is used twice.** jaen's frame renders its header with that id
+  (`slices/jaen-frame.tsx`) and the field highlighter's tooltip carries the same
+  one. A duplicate id in one document is a defect on its own; it is measured
+  here as not costing anything, and it is left.
+- **The app package exists twice.** `packages/gatsby-jaen-app` here is the copy
+  the two marketing sites link against and `app/` in the taxi checkout is the
+  other. Only this copy is changed, and taxi-app needs
+  `./scripts/sync-app.sh from-jaen` before its own build carries the repair.
+- **The `:has()` finding is bigger than this gap.** Any DOM change anywhere on
+  either site recalculated the style of the whole document, so it was not only
+  the blur that paid: every hover of a field, every toast, every drawer and
+  every render of the app's own screens paid it too. Only the blur was measured.
+- **One machine, one browser, one width, one site.** Apple M1 Max under Asahi,
+  headless chromium at 1440x900, booklimo's home page.
