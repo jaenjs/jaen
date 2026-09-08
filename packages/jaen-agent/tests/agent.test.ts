@@ -333,7 +333,7 @@ const startWorker = async (): Promise<void> => {
       '--var',
       `SITES:${sitesVar}`,
       '--var',
-      'AUTH_CACHE_TTL_MS:0',
+      `AUTH_CACHE_TTL_MS:${authCacheTtlMs}`,
       // Two seconds rather than the deployed five minutes, so the alarm can
       // be watched inside a test run. Nothing else about it differs.
       '--var',
@@ -387,6 +387,16 @@ const stopWorker = async (): Promise<void> => {
   await new Promise(resolve => setTimeout(resolve, 1000))
 }
 
+const OTHER_SITE = 'cache-scope.invalid'
+
+/**
+ * The whole suite runs with the identity cache off, so that a role granted or
+ * revoked between two tests is seen at once. That also means every test above
+ * resolves a caller from scratch, and the one bug this cache ever had cannot
+ * be seen with it off. The last test turns it on.
+ */
+let authCacheTtlMs = 0
+
 let sitesVar = ''
 let devVarsContent = ''
 
@@ -421,6 +431,18 @@ before(async () => {
   writeFileSync(devVars, devVarsContent, {mode: 0o600})
 
   sitesVar = JSON.stringify({
+    // A second site of the other organisation, with no identity facade at
+    // all, so a caller of booklimo is a stranger on it and is refused without
+    // any lookup. It exists for the cache scoping test at the bottom of this
+    // file and nothing is ever written into it.
+    [OTHER_SITE]: {
+      repository: REPOSITORY,
+      branch: BRANCH,
+      issuer: taxiVars.AUTH_ISSUER,
+      organizationId: '339284789469124181',
+      projectIds: ['268283277977065078'],
+      adminRole: 'jaen:admin'
+    },
     [SITE]: {
       repository: REPOSITORY,
       branch: BRANCH,
@@ -1359,4 +1381,47 @@ test('an identity lookup that cannot be made refuses to decide, and does not ref
   const again = await call(DRAFT, {site: SITE}, ADMIN)
 
   assert.equal(again.data?.draft?.site, SITE)
+})
+
+/**
+ * A resolution belongs to a site, and the cache below this file is keyed by
+ * the token.
+ *
+ * The same person is an admin on one site and a stranger on the other, and
+ * both sites sign in against one Zitadel with one project and one client, so
+ * the token cannot tell them apart. Keyed by the token alone, the empty
+ * grants of the site the caller is a stranger on were written under their
+ * token and read back on the site they administer, refusing them there for
+ * the cache's minute. Measured on the deployed agent on 2026-09-08 and it is
+ * the shape of the seven minute lockout of that morning.
+ */
+test('a refusal on one site does not refuse the same caller on another', async () => {
+  // A cold cache, because the poisoning is the FIRST resolution of a token
+  // winning for its minute: every test above has already resolved this token
+  // against booklimo, and a hit is answered out of the entry before
+  // resolveCaller is reached at all. The isolate's map goes with the restart
+  // and the shared tier is the simulated KV under --persist-to.
+  await stopWorker()
+  rmSync(path.join(persistTo, 'v3', 'kv'), {recursive: true, force: true})
+  authCacheTtlMs = 60_000
+  await startWorker()
+
+  try {
+    // The site this caller is a stranger on, asked first. This is what writes
+    // the empty grants under the token.
+    const stranger = await call(DRAFT, {site: OTHER_SITE}, ADMIN)
+
+    assert.equal(stranger.data?.draft, undefined)
+    assert.equal(errorCode(stranger), 'FORBIDDEN')
+
+    // The same token, the same minute, the site it is an admin of.
+    const after = await call(DRAFT, {site: SITE}, ADMIN)
+
+    assert.equal(errorCode(after), undefined)
+    assert.equal(after.data?.draft?.site, SITE)
+  } finally {
+    await stopWorker()
+    authCacheTtlMs = 0
+    await startWorker()
+  }
 })

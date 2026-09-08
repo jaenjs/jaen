@@ -218,7 +218,33 @@ export const resolveCaller = async (
     ctx = undefined
   }
 
-  const cached = ctx?.get(ROLES_CACHE_KEY)
+  /**
+   * The resolution is cached per SITE and not per token, and that is a
+   * correction and not a refinement.
+   *
+   * The cache below the whole of this file is keyed by the SHA-256 of the
+   * bearer, in this isolate and in the KV both, because it remembers an
+   * identity. A resolution is not an identity: the same person is an admin on
+   * one site and a stranger on the other, the facade that answers for one is
+   * not the facade that answers for the other, and both sites sign in against
+   * one Zitadel with one project and one client so the token cannot tell them
+   * apart. Keyed by the token alone, the empty grants of the site a caller is
+   * a stranger on were written under their token and then read back on the
+   * site they are an admin of, refusing them for the cache's minute and being
+   * rewritten by every refresh past half its life. Measured 2026-09-08 on the
+   * deployed agent: the limosen admin, asked for booklimo's draft and then
+   * for limosen's, was refused its own site. That is the shape of the seven
+   * minute lockout of the same morning, which healed on its own once the
+   * calls stopped, and it is why `draft-state.md` could not find a cause on
+   * any identity server.
+   *
+   * The scope is the organisation and the facade, which is everything the
+   * answer depends on, so two sites of one organisation still share it.
+   */
+  const scope = `${entry.organizationId}\n${entry.iamApiUrl ?? ''}`
+  const byScope = (ctx?.get(ROLES_CACHE_KEY) ?? {}) as Record<string, unknown>
+  const cached =
+    byScope && typeof byScope === 'object' ? byScope[scope] : undefined
 
   if (cached && Array.isArray((cached as any).grants)) {
     const hit = cached as {grants: CallerGrant[]; orgs: string[]}
@@ -262,14 +288,19 @@ export const resolveCaller = async (
   // it would hand the next request an answer that was never an answer.
   if (unavailable) return resolved
 
-  ctx?.set(ROLES_CACHE_KEY, {grants, orgs: Array.from(orgs)})
+  const resolvedByScope = {
+    ...(byScope && typeof byScope === 'object' ? byScope : {}),
+    [scope]: {grants, orgs: Array.from(orgs)}
+  }
+
+  ctx?.set(ROLES_CACHE_KEY, resolvedByScope)
 
   const cacheEntry = ctx?.get(AUTH_CACHE_ENTRY_KEY) as
     | AuthCacheEntry
     | undefined
 
   if (cacheEntry && typeof cacheEntry === 'object') {
-    ;(cacheEntry as any).grants = {grants, orgs: Array.from(orgs)}
+    ;(cacheEntry as any).grants = resolvedByScope
 
     // Into the shared tier as well, or the next cold isolate reads the
     // identity out of the KV and pays the facade lookup all over again.

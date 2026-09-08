@@ -1,6 +1,6 @@
 {
   "name": "jaen-agent",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "private": true,
   "description": "The jaen agent: the shared draft of a site in one Durable Object, and the publish that writes one migration into the site's repository.",
   "license": "EUPL-1.2",
