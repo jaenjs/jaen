@@ -1157,6 +1157,11 @@ invalidation could not be read at all, which is the same trap
 - **The parked outbox is never read back.** It is a key in `localStorage` and a
   sentence in this file.
 
+The drawer's label is one word, Verwerfen, Discard, Vazgeç and تجاهل. The
+button said "Discard Changes" for years and a sentence does not fit a
+drawer item, so the whole of it is said in the confirmation, where a
+person has to read it before they answer.
+
 ## Acceptance
 
 - Two editors on booklimo: a change in one reaches the other in under two
