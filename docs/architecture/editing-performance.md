@@ -862,9 +862,21 @@ Edit mode off is the control and is 0.0 dispatches a second, 0.0 writes and
 59.9 frames a second in both readings.
 
 Beside them, on the same runs: eight blurs of a real field, clicked with the
-mouse and left with Tab, caused **1,212 dispatches before and 0 after**, and the
-longest long task in the second after a click on a field was 0, 71, 0, 0, 0 and
-59 ms before and 0 ms on all six clicks after.
+mouse and left with Tab, caused **1,212 dispatches before and 0 after**.
+
+**And a soak.** Three windows of thirty seconds each, ninety seconds of an
+untouched CMS with edit mode on: **0 dispatches, 0 `localStorage` writes, 0
+React fiber deletions, 0 field nodes replaced, 59.8 animation frames a second
+and the 50 ms timer at 50 ms**, with five React commits in each thirty seconds.
+So it is zero and stays zero rather than being quiet for five seconds.
+
+The longest long task in the second after a click on a field is the one reading
+that separates nothing: 0, 71, 0, 0, 0 and 59 ms before, and 0 ms on all six
+clicks in two runs after and 51 to 75 ms in a third taken while the machine was
+busier. Clicking a field is the one gesture with real CMS work behind it, the
+field highlighter rebuilding its frame and portalling a tooltip, and the spread
+is the machine. The notebook records it and warns above 50 ms rather than
+failing on it.
 
 ### Which fields, and how many
 
@@ -989,6 +1001,19 @@ dependency list carrying it is unstable for every field inside a section.
   browser may run after a rendering step, so the 26.9 ms median it reports is an
   upper bound on a task rather than the task. It is recorded and not asserted
   on.
+- **booklimo has no section field anywhere**, so nothing in these runs reached
+  the block path of `useField`, which is the part of the hook this change
+  touched most: the section a write and a registration name is now memoised by
+  its content and the subscription is keyed on the section's path and id. The
+  payloads are byte for byte what they were and the reader is unchanged, and
+  that is an argument rather than a measurement. The comparison the guard turns
+  on has eleven cases of its own in
+  `tests/support/registration-cases.mjs`, driven from the notebook, including
+  the two directions that matter: an alignment tune changed must still be
+  written, and a registration that says what the store says must not be.
+- **No browser gesture in these runs changed a tune**, for the same reason: the
+  tune selector lives in the highlighter's tooltip and reaching it is a second
+  thing that can fail. The cases above cover it instead.
 - **One machine, one browser, one viewport, one page.** Apple M1 Max under
   Asahi, headless chromium at 1440x900, booklimo's home page with forty-one
   editable fields.
