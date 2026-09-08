@@ -16,8 +16,9 @@
  *   2. merges their `data` with the very same deepmerge the build uses
  *      (`gatsby-source-jaen`'s `deepmergeArrayIdMerge` and its `IMA:MdxField`
  *      customMerge), so the merged file replays to what the two replayed to,
- *   3. writes one `{message, createdAt, data}` in jaen's own patch shape,
- *      carrying the two files' `authors` maps as well,
+ *   3. writes one `{message, createdAt, data}` in jaen's own patch shape, and
+ *      the two files' `authors` maps beside it as a local sidecar that is
+ *      never uploaded and never committed,
  *   4. uploads it through jaen's own gateway client, the same
  *      `uploadFileFromNode` every publish uses, with `OSG_TOKEN` from the
  *      environment.
@@ -106,16 +107,6 @@ const main = async () => {
       `draft: the agent's head of ${date}, live.json and live-media.json, ` +
       'as one migration',
     createdAt,
-    /**
-     * Not read by the build, which takes `data` alone, and kept because it is
-     * the only record of who last wrote each of these fields and when. The
-     * shared draft holds that per field in its own store from here on
-     * (`draft-state.md`, the `author:<fieldPath>` keys), and this file is the
-     * only place the head's copy exists. Historical patches carry extra
-     * top-level keys of their own (`_note`, `_sanitisedFrom`), so an unknown
-     * key here is the shape's own precedent rather than a departure from it.
-     */
-    authors: {...(live.authors ?? {}), ...(media.authors ?? {})},
     _note:
       'Written by scripts/head-to-migration.ts. The two head files it was ' +
       'made from were removed from jaen-data and from patches.txt in the ' +
@@ -128,14 +119,37 @@ const main = async () => {
   // a downloaded migration is readable.
   const payload = JSON.stringify(migration, null, 2)
 
-  if (outFile) fs.writeFileSync(outFile, payload)
+  /**
+   * The two files' `authors` maps stay out of the payload, and this is a
+   * safety rule and not a tidiness one.
+   *
+   * A patch is a gateway file, the gateway is private, and that would be the
+   * end of it were the build not a reader: `gatsby-source-jaen` downloads
+   * every gateway file the data names, the patch payloads included, and
+   * writes them into `public/osg/<id>.<ext>`, so a published site serves its
+   * own patch payloads to anybody. booklimo.at serves fourteen of them today.
+   * `authors` names a person and their identity-server id per field, so a
+   * migration carrying it publishes both. The head's authorship is real and
+   * is not thrown away: it is written beside the payload, out of every
+   * repository, and the shared draft holds it per field in its own store
+   * from here on (`draft-state.md`, the `author:<fieldPath>` keys).
+   */
+  const authors = {...(live.authors ?? {}), ...(media.authors ?? {})}
+
+  if (outFile) {
+    fs.writeFileSync(outFile, payload)
+    fs.writeFileSync(
+      outFile.replace(/(\.json)?$/, '.authors.json'),
+      JSON.stringify(authors, null, 2)
+    )
+  }
 
   console.log(
     JSON.stringify({
       bytes: payload.length,
       message: migration.message,
       createdAt: migration.createdAt,
-      authors: Object.keys(migration.authors).length,
+      authors: Object.keys(authors).length,
       pages: (migration.data as {pages?: unknown[]}).pages?.length ?? 0
     })
   )
