@@ -1,0 +1,205 @@
+{
+  "origin": "https://booklimo.at",
+  "live": false,
+  "startedAt": 1788904180.5012012,
+  "checks": [
+    {
+      "name": "nothing focused, no frame standing",
+      "pass": true,
+      "detail": {
+        "present": false
+      }
+    },
+    {
+      "name": "the first field focused, the frame over its own rectangle",
+      "pass": true,
+      "detail": {
+        "frame": {
+          "visible": true,
+          "top": 685,
+          "left": 498,
+          "width": 443,
+          "height": 33,
+          "frames": 1,
+          "tooltips": 1
+        },
+        "field": {
+          "top": 685,
+          "left": 498,
+          "width": 443,
+          "height": 33
+        },
+        "id": "FleetTitle"
+      }
+    },
+    {
+      "name": "the first field's tooltip carries its actions",
+      "pass": true,
+      "detail": [
+        {
+          "label": "Text",
+          "width": 42,
+          "height": 24,
+          "topmost": true
+        },
+        {
+          "label": "Customize",
+          "width": 24,
+          "height": 24,
+          "topmost": true
+        },
+        {
+          "label": "Customize",
+          "width": 24,
+          "height": 24,
+          "topmost": true
+        }
+      ]
+    },
+    {
+      "name": "exactly one frame and one tooltip container stand",
+      "pass": true,
+      "detail": {
+        "frames": 1,
+        "tooltips": 1,
+        "field": "first"
+      }
+    },
+    {
+      "name": "the second field focused, the frame over its own rectangle",
+      "pass": true,
+      "detail": {
+        "frame": {
+          "visible": true,
+          "top": 1164,
+          "left": 209,
+          "width": 89,
+          "height": 17,
+          "frames": 1,
+          "tooltips": 1
+        },
+        "field": {
+          "top": 1164,
+          "left": 209,
+          "width": 89,
+          "height": 17
+        },
+        "id": "FleetPassengersLabel_Mercedes Benz E Class"
+      }
+    },
+    {
+      "name": "the second field's tooltip carries its actions",
+      "pass": true,
+      "detail": [
+        {
+          "label": "Text",
+          "width": 42,
+          "height": 24,
+          "topmost": true
+        },
+        {
+          "label": "Customize",
+          "width": 24,
+          "height": 24,
+          "topmost": true
+        },
+        {
+          "label": "Customize",
+          "width": 24,
+          "height": 24,
+          "topmost": true
+        }
+      ]
+    },
+    {
+      "name": "exactly one frame and one tooltip container stand",
+      "pass": true,
+      "detail": {
+        "frames": 1,
+        "tooltips": 1,
+        "field": "second"
+      }
+    },
+    {
+      "name": "focus off every field, the frame hidden",
+      "pass": true,
+      "detail": {
+        "present": true,
+        "display": "none",
+        "visible": false,
+        "top": 1164,
+        "left": 209,
+        "width": 89,
+        "height": 17,
+        "frames": 1,
+        "tooltips": 1,
+        "buttons": [
+          {
+            "label": "Text",
+            "width": 0,
+            "height": 0,
+            "topmost": false
+          },
+          {
+            "label": "Customize",
+            "width": 0,
+            "height": 0,
+            "topmost": false
+          },
+          {
+            "label": "Customize",
+            "width": 0,
+            "height": 0,
+            "topmost": false
+          }
+        ],
+        "authorChips": 0
+      }
+    },
+    {
+      "name": "after a navigation the frame is not left standing",
+      "pass": true,
+      "detail": {
+        "present": false
+      }
+    },
+    {
+      "name": "and it works again on the new page",
+      "pass": true,
+      "detail": {
+        "frame": {
+          "visible": true,
+          "top": 2609,
+          "left": 160
+        },
+        "field": {
+          "top": 2609,
+          "left": 160,
+          "width": 393,
+          "height": 17
+        },
+        "id": "FooterTagline"
+      }
+    },
+    {
+      "name": "nothing was written",
+      "pass": true,
+      "detail": {
+        "before": 285,
+        "after": 285
+      }
+    }
+  ],
+  "signedIn": true,
+  "revisionBefore": 285,
+  "fieldIds": [
+    "FleetTitle",
+    "FleetPassengersLabel_Mercedes Benz E Class",
+    "FleetLuggageLabel_Mercedes Benz E Class",
+    "FleetPassengersLabel_Mercedes Benz EQE"
+  ],
+  "revisionAfter": 285,
+  "endedAt": 1788904202.7490382,
+  "passed": 11,
+  "failed": 0
+}
