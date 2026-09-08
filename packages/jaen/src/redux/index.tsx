@@ -30,6 +30,7 @@ import status, {statusInitialState} from './slices/status'
 import widget, {widgetInitialState} from './slices/widget'
 
 import {useDeepEqualSelector} from '../utils/use-deep-equal-selector'
+import {setLeaveStoreFlush} from '../utils/on-leave'
 
 export const persistKey = 'jaenjs-state'
 
@@ -123,7 +124,22 @@ export const store = configureStore({
   preloadedState: persistedState
 })
 
-export const {resetState} = persistState(store)
+const persister = persistState(store)
+
+export const {resetState} = persister
+
+/**
+ * Step 2 of the pass out of the page, `utils/on-leave.ts`.
+ *
+ * `persistState` registers its own `visibilitychange` and `pagehide`
+ * listeners and they stay, because the store must be written on the way out
+ * whether or not anything else is registered. What this adds is the ordering
+ * the invariant needs: a field's debounce is flushed into the store BEFORE
+ * this runs, which a listener registered later than the persister's own can
+ * never be. See docs/architecture/editing-performance.md, "The half second
+ * before this file begins".
+ */
+setLeaveStoreFlush(persister.flush)
 
 /**
  * The agent's flusher and poller. Started once, beside `persistState`, so the

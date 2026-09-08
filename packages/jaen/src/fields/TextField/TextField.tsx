@@ -1,6 +1,6 @@
 import {Button, Portal, Text, TextProps, Tooltip} from '@chakra-ui/react'
 import DOMPurify from 'isomorphic-dompurify'
-import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 
 import {FaAlignCenter} from '@react-icons/all-files/fa/FaAlignCenter'
 import {FaAlignJustify} from '@react-icons/all-files/fa/FaAlignJustify'
@@ -23,6 +23,7 @@ import {connectField} from '../../connectors'
 import {useNotificationsContext} from '../../contexts/notifications'
 import {HighlightTooltip} from '../components/HighlightTooltip/HighlightTooltip'
 import {uploadFile} from '../../utils/open-storage-gateway'
+import {registerLeaveFlush} from '../../utils/on-leave'
 
 const cleanRichText = (
   text: string,
@@ -214,16 +215,55 @@ export const TextField = connectField<string, TextFieldProps>(
       return (Wrapper as any).displayName === 'Heading' ? 'h2' : undefined
     }, [value, (Wrapper as any).displayName, definedAsAs])
 
+    /**
+     * What this field last handed the store, and what React was last given as
+     * `__html`.
+     *
+     * A field dispatches while a person types now (see `handleContentInput`),
+     * and `dangerouslySetInnerHTML` re-sets `innerHTML` whenever the string it
+     * is given changes, which puts the caret back at the start of the field.
+     * So the echo of this field's own dispatch is not handed back to React:
+     * while the caret is in the field and the store's value is exactly what
+     * this field put there, React keeps being given the string it already has
+     * and does not touch the DOM.
+     *
+     * The freeze is deliberately narrow. It holds only while the field has
+     * focus, so a value that arrives from anywhere else, another editor's
+     * change over the socket above all, is written into the DOM exactly as it
+     * was before this change, caret and all. And it holds only for this
+     * field's own echo, so nothing can freeze the rendering of a field nobody
+     * is typing into.
+     */
+    const focusedRef = useRef(false)
+    const dispatchedRef = useRef<string | null | undefined>(undefined)
+    const renderedRef = useRef<typeof displayValue>(displayValue)
+
+    if (!focusedRef.current || displayValue !== dispatchedRef.current) {
+      renderedRef.current = displayValue
+    }
+
+    /**
+     * `reason` decides only whether a person is told, and never what is
+     * written: leaving the field is a deliberate act and the toast has always
+     * belonged to it, while a pause in typing and a tab going away are not
+     * moments to put a notification on the screen.
+     */
     const handleTextSave = useDebouncedCallback(
       useCallback(
-        (data: string | null) => {
+        (data: string | null, reason: 'blur' | 'input' | 'leave' = 'blur') => {
           // skip if data has not changed
 
           if (data === value) {
             return
           }
 
+          dispatchedRef.current = data || undefined
+
           jaenField.onUpdateValue(data || undefined)
+
+          if (reason !== 'blur') {
+            return
+          }
 
           toast({
             title: 'Text saved',
@@ -235,6 +275,34 @@ export const TextField = connectField<string, TextFieldProps>(
       ),
       500
     )
+
+    /**
+     * The half second in which an edit is nowhere, closed.
+     *
+     * Everything below the store is safe: `persist-state.ts` writes the whole
+     * store synchronously on `visibilitychange` to hidden and on `pagehide`,
+     * and the outbox that carries an unsent change is part of what it writes.
+     * None of that reached a field, because a field's change is not a store
+     * change until this debounce fires. Measured on the deployed booklimo.at
+     * on 2026-09-08: a tab closed 0 ms or 300 ms after the blur left the
+     * previous value in `localStorage` with an empty outbox, and the object
+     * never heard of the edit. See docs/architecture/draft-state.md, "The one
+     * that failed".
+     *
+     * `registerLeaveFlush` runs this before the store is written rather than
+     * after, which a listener of this component's own could not: the
+     * persister registers its listeners when the redux module loads, long
+     * before any field mounts.
+     */
+    useEffect(() => {
+      if (!jaenField.isEditing) {
+        return
+      }
+
+      return registerLeaveFlush(() => {
+        handleTextSave.flush()
+      })
+    }, [jaenField.isEditing, handleTextSave])
 
     useEffect(() => {
       if (jaenField.isEditing) {
@@ -253,7 +321,30 @@ export const TextField = connectField<string, TextFieldProps>(
 
     const handleContentBlur: React.FocusEventHandler<HTMLSpanElement> =
       useCallback(evt => {
-        handleTextSave(evt.currentTarget.innerHTML)
+        focusedRef.current = false
+        handleTextSave(evt.currentTarget.innerHTML, 'blur')
+      }, [])
+
+    const handleContentFocus: React.FocusEventHandler<HTMLSpanElement> =
+      useCallback(() => {
+        focusedRef.current = true
+      }, [])
+
+    /**
+     * Typing is what makes a change, and leaving the field is not.
+     *
+     * Until 2026-09-08 nothing was dispatched while a person typed: the only
+     * path from a keystroke to the store was the blur above, so a person who
+     * typed a sentence and closed the tab without leaving the field lost all
+     * of it, with nothing anywhere to recover it from. The same debounce
+     * still coalesces the typing into one dispatch, so the cost of this is a
+     * dispatch per half second of quiet rather than one per keystroke, and
+     * the quiet window of the agent's flusher still decides when anything is
+     * sent.
+     */
+    const handleContentInput: React.FormEventHandler<HTMLSpanElement> =
+      useCallback(evt => {
+        handleTextSave(evt.currentTarget.innerHTML, 'input')
       }, [])
 
     const handleFileChange = async (
@@ -475,9 +566,11 @@ export const TextField = connectField<string, TextFieldProps>(
         {...tunes.activeProps}
         asProps={{
           outline: 'none',
-          dangerouslySetInnerHTML: {__html: displayValue},
+          dangerouslySetInnerHTML: {__html: renderedRef.current},
           contentEditable: jaenField.isEditing,
           onBlur: handleContentBlur,
+          onFocus: handleContentFocus,
+          onInput: handleContentInput,
           onPaste: (evt: React.ClipboardEvent<HTMLDivElement>) => {
             evt.preventDefault()
 
