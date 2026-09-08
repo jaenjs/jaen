@@ -1614,3 +1614,214 @@ pull would put a draft back into the published chain.
   the same hazard `draft-state.md` recorded about the app package on the day of
   the deploy. Nothing else on limosen was touched, its working tree is clean,
   and its draft object still answers revision 0.
+
+## Shipped 2026-09-08 in the evening, and discard driven from the control
+
+Everything above this heading was written before any of it was deployed. This is
+the run that put `jaen-agent` 4.4.0 on Cloudflare with discard in it, rebuilt and
+deployed both sites on the client that speaks to it, and drove a discard end to
+end on the live `booklimo.at` from the item in the frame's own menu. booklimo
+only, because that is where this estate tests
+(`okf/decisions/hard-rules.md`); nothing was written on limosen beyond the build
+its own `scripts/deploy.sh` makes.
+
+### The agent
+
+`packages/jaen-agent/scripts/deploy.sh`, which stamps the three version vars a
+bare `wrangler deploy` leaves unset. Both custom domains answered with the stamp
+they were given, read back by the script and again at the end of the run.
+
+| what     | value                                                       |
+| -------- | ----------------------------------------------------------- |
+| version  | `4.4.0`, from 4.3.0                                         |
+| commit   | `091d3f1`                                                   |
+| builtAt  | `2026-09-08T18:49:12Z`                                      |
+| worker   | version id `b3a94725-9955-4e63-9f3d-2e94190ea15b`           |
+| routes   | `jaen-agent.booklimo.at`, `jaen-agent.limosen.at`           |
+| bindings | `DRAFTS` → `JaenDraftObject`, `CACHE` → `6e75d473808c48e7…` |
+
+The Durable Object namespace already existed, so this is a redeploy and not a
+migration. The client's five documents were validated against the agent's own
+generated schema before the deploy, **7 of 7 valid**
+(`tests/support/validate-agent-documents.cjs`, the two discard documents among
+them), and the frame's eleven message ids **77 of 77** parsed and formatted in
+their own locale.
+
+### The first discard on this site was refused, exactly as this file said it
+
+### would be
+
+`discardPreview` on the deployed object answered `canDiscard: false` with
+
+> This site has not been published since the draft store began keeping what a
+> publish wrote, so there is no published state to restore. Publish once and the
+> next discard can undo everything after it.
+
+against `revision 120, publishedRevision 97`. That is the prediction of "What
+that costs on the deployed sites" met on the wire, and it is the right refusal:
+a restore taken from the chain instead would not be what the last migration
+produced.
+
+**So one publish had to be made, and what was in the draft had to be dealt with
+first.** The draft held five fields with another session's or the owner's test
+typing appended to the published text, and a publish takes the draft live, so
+publishing it as it stood would have put that text on the site. Every one of
+those five values is recorded here before it was touched, and the whole draft as
+it stood is kept as `tests/ship/draft-before-publish-120.json`, so nothing a
+person typed is only gone.
+
+| field              | what the draft held, at revision 120         | what the site served |
+| ------------------ | -------------------------------------------- | -------------------- |
+| `ServicesTitle`    | `Our services etst`                          | `Our services`       |
+| `ServicesSubtitle` | `…See details if you like. est`              | without the ` est`   |
+| `AboutP1`          | `…in the industry and technology. djeiflekr` | without the suffix   |
+| `FeedbackBoxText`  | `…so there is nothing to look for.fjebf gf`  | without the suffix   |
+| `FaqSubtitle`      | `…booking, vehicles and service.bebrnf`      | without the suffix   |
+
+`FleetTitle` already held the published value and was left alone. The five were
+set back through the agent's own `save`, one call, five `fieldWrite` changes at
+`baseRevision 120`, `revision 121`, `keys 7`, `overwrote []`. It is housekeeping
+through the mutation and not a person's gesture, and it is written down because
+removing somebody else's unpublished text is exactly the act this design's
+invariant is about: the values are in this file and in that JSON, and what
+replaced each of them is the site's own published text and nothing invented.
+
+### The publish that gave discard something to restore to
+
+| what was asked                    | what the systems answered                                                                                                         |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| exactly one gateway file          | `…/storage/BQACAgQAAx0Ed6zoewACBmhqoFoBWguJq1laqG3vzhGuIrJ-LwACfB8AAlWvCFEhL4bxW8O5xD0E`, 1,816 bytes, sha256 `9e3a72208de07fe6…` |
+| in the shape jaen has always used | top level exactly `createdAt`, `data`, `message`; `data` is `pages`, `site`, `widgets`; no `authors`                              |
+| behind the gate                   | **401** anonymously, **200** to the KRC storage token                                                                             |
+| exactly one commit                | `e1ec2748`, `jaen-data/patches.txt` +1 −0, on `netsnek/booklimo.at`                                                               |
+| the CMS stops saying unpublished  | `revision 121`, `publishedRevision 121`                                                                                           |
+| the site serves what it served    | `booklimo.at/` serves `Our services`, `Short answers about booking, vehicles and service.` and none of the five suffixes          |
+| the object keeps the state now    | `discardPreview` stopped saying "no published state" and started saying "Nothing in the draft differs from the published state"   |
+
+The line was repeated in this checkout by hand as `acffc10`, for the reason every
+publish since the transition has been repeated by hand: GitHub's `main` still
+ends with the two head lines and a pull would put a draft back into the published
+chain.
+
+### The two sites
+
+Both rebuilt and deployed through their own `scripts/deploy.sh`, on the three
+dists built from `091d3f1`. `/`, `/de/` and `/cms/` answer 200 on both,
+`/app/version.json` answers app `1.9.2` at commit `4409131` on both, and
+`tests/15-versions.ipynb` of the taxi platform is **10 PASS 0 FAIL 0 WARN 0
+SKIP**, so the WARN about the brands carrying different app commits that the
+4.0.0 deploy left is gone. booklimo's deployed bundle carries `discardPreview`,
+`discardedRevision`, `jaen-draft.v1` and its own agent host, and **no `headSha`
+and no `blobSha`**.
+
+### Discard, from the item in the menu, on the live booklimo.at
+
+`tests/support/discard-live.py`, signed in as the booklimo human admin, the
+gestures a person's own: the user menu opened, the item clicked, the
+confirmation read and confirmed. Every reading beside them was taken with a
+credential of the run's own against the agent, so what the browser claims and
+what the object holds are two answers and not one. The run is
+`tests/ship/discard-live.json`.
+
+| what the design promises                           | what the live systems answered                                                                                                              |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| the discard item is there again                    | **it is in the user menu**, as `Alle unveröffentlichten Änderungen verwerfen`, the German the account's language selects                    |
+| behind a confirmation that names what will go      | `1 unveröffentlichte Änderung auf 1 Seite werden für alle rückgängig gemacht, geschrieben von Taxi Test Admin, seit 8.9.2026 21:47.`        |
+| out of the agent's count and not the browser's     | `discardPreview` answered `canDiscard: true`, `pages 1`, `fields 1`, the editor by name, `since` the instant of the edit, at `revision 124` |
+| the published state comes back                     | `FleetTitle` is `Our fleet` in the object **and on the screen**, which is what the last migration wrote                                     |
+| `publishedRevision` moves with it                  | `revision 125`, `publishedRevision 125`                                                                                                     |
+| and the discard is readable by every browser       | `discardedRevision 125`, `discardedAt 19:47:37.501Z`, `discardedBy` and `discardedByName` on every `draft` read                             |
+| every editor is told who and when                  | the toast in the discarding browser too: `Taxi Test Admin hat um 21:47 alle unveröffentlichten Änderungen dieser Website verworfen.`        |
+| the backstop can be read back                      | `discardedDraft` answers `found: true`, `revision 124`, 2,091 bytes, 1 page, taken at the same instant                                      |
+| a save from before the discard is refused          | `DRAFT_DISCARDED`, `statusCode 409`, `details.discardedRevision 125`, `details.discardedAt`, `details.discardedByName`, `data: null`        |
+| and the refusal leaves the draft alone             | `revision 125` and `FleetTitle` still `Our fleet` after it                                                                                  |
+| the browser that pressed it applies nothing itself | its outbox is 0 and its `revision` is 125 with `connection: "socket"`, so it took the object's push like everybody else                     |
+
+**The fixture field was set back by the discard itself**, which is the point of
+the reading rather than a convenience: the run typed `Our fleet discard probe`
+into `FleetTitle` at `revision 124` and the discard is what put `Our fleet` back,
+read out of the object afterwards and off the screen.
+
+### The state nobody had seen in the wild, seen
+
+This file records, under "What is not built, and what is not measured", that "a
+draft that differs from the published state in nothing but its revision has its
+stamp corrected by a discard rather than being discarded, which is one storage
+write and no push. Nobody has seen that state in the wild." Somebody has now.
+
+The three notebook runs at the end of this session each typed into a field and
+set it back, so the object stood at `revision 137` against
+`publishedRevision 125` with **nothing** differing from the published state, and
+the CMS was therefore telling every editor there was unpublished work when there
+was none. One `discard` answered
+
+```
+discarded: false, revision 137, previousRevision 137, publishedRevision 137,
+pages 0, fields 0, snapshotRevision 0, snapshotBytes 0,
+reason "Nothing in the draft differs from the published state."
+```
+
+which is the design's sentence exactly: the stamp is corrected, the revision does
+not move, no backstop is written and nothing is pushed. The object answers
+`137 / 137` afterwards. `discardedRevision` stays at 125, which is the real
+discard earlier in this run and not this one, and that is right: nothing was
+invalidated.
+
+### Two small things this run found
+
+- **The invalidating revision travels under `details`.** Pylon's `ServiceError`
+  puts everything beyond the code and the status there, which is where
+  `remote-state.ts` reads it, and a reader who looks for
+  `extensions.discardedRevision` finds nothing. The first cut of the verifier
+  looked in the wrong place and reported `null` beside a message that names 125.
+  Worth knowing before somebody calls the field missing.
+- **The German confirmation has a plural that does not agree.** "1
+  unveröffentlichte Änderung auf 1 Seite **werden** … rückgängig gemacht" should
+  be "wird". The ICU plural picks the noun and the verb is outside it. It is one
+  word in `i18nJaen.ts` and it is not fixed here, because this run's changes to
+  the frame were meant to be none.
+
+### Where the acceptance stands, 2026-09-08 in the evening
+
+| the acceptance                                                 | where it stands                                                                                                                                                      |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| two editors, a change in under two seconds, no commit, no file | measured 2026-09-08 morning at 2.14 s from the blur, unchanged by this run                                                                                           |
+| one gateway file and one commit per publish, one line          | **met again**, once more on the live booklimo.at                                                                                                                     |
+| nothing in `patches.txt` names a draft                         | **met in this checkout** and **still not on GitHub**, where the transition's unpushed commits leave the two head lines in place                                      |
+| byte identical data before and after the transition            | met 2026-09-08, unchanged                                                                                                                                            |
+| every loss scenario of `10-draft-persistence.ipynb`            | **met**, 41 PASS 0 FAIL 0 SKIP 1 WARN against the deployed 4.4.0, stored in `tests/ship/`                                                                            |
+| the CMS still works on `localStorage` alone                    | not re-measurable on a build that carries the option, unchanged                                                                                                      |
+| discard is site wide, undoable from its snapshot, no outbox    | **met, and driven from the CMS's own control on the deployed site**: the item, the confirmation, the restore, the toast, the backstop and the refusal, all read back |
+| importing a patch writes only what differs                     | **not built**                                                                                                                                                        |
+
+### The three notebooks
+
+`tests/09-editing-latency.ipynb` **23 PASS 1 FAIL 4 SKIP 1 WARN**,
+`tests/10-draft-persistence.ipynb` **41 PASS 0 FAIL 0 SKIP 1 WARN** and
+`tests/11-cms-frame.ipynb` **26 PASS 0 FAIL 0 SKIP 0 WARN**, stored in
+`tests/ship/` beside the runs of this design's earlier sessions. `09`'s FAIL is
+the blur to paint gap `editing-performance.md` owns and its SKIPs are the
+rollback, which a build carrying the `agent` option cannot measure. `10` is
+unchanged from the repair's run. `11` lost the WARN it carried about the
+registration storm, because there is no storm left.
+
+`tests/15-versions.ipynb` of the taxi platform, which is that platform's one
+check for whether both brands are current, is **10 PASS 0 FAIL 0 WARN 0 SKIP**.
+
+### What this run did not do
+
+- **Import and restore are still not built.** A discard is undoable in the sense
+  that the backstop is written and can be read (`discardedDraft`) and not in the
+  sense that a person can put it back from the CMS. That is unchanged and it is
+  the largest gap in the three operations.
+- **Two editors on the live site while a discard is made** was not driven. What
+  is measured here is one browser pressing the button and a stale save refused
+  through the agent, which is the same refusal a second editor's outbox meets,
+  and it is not two people.
+- **The parked outbox is still never read back.** `jaenjs-state-discarded` is a
+  key in `localStorage` and a sentence in this file.
+- **A save with no base is still not refused after a discard.**
+- **`patches.txt` on GitHub still names a draft**, and the fix is still the push
+  of the transition's commits that this run may not make.
+- **The Fable 5.1 review of the whole editing path is still open**, and this run
+  adds the deployed discard to what it has to read.
