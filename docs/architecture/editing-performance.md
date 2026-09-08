@@ -334,3 +334,42 @@ flag goes in through an init script now.
 
 That second one is this file's own subject seen from the outside. The store is
 written often enough that an external edit to it does not survive one second.
+
+## The half second before this file begins, measured 2026-09-08
+
+An adversarial run on the deployed booklimo.at found the one loss this file's
+safety argument does not cover, and it is upstream of everything this file
+changed. The measurements and the table are in
+`docs/architecture/draft-state.md`, "Verified adversarially 2026-09-08, and one
+edit was lost"; what belongs here is the cause, because the persistence path of
+a jaen field is this file's subject.
+
+**Nothing is dispatched while a person types.** `TextField` wires `onBlur` to
+`handleContentBlur`, which calls `handleTextSave`, and `handleTextSave` is
+`useDebouncedCallback(…, 500)`. So a field's change becomes a
+`pages/field_write` only on blur, and only half a second after it. Before that
+there is no action, no store change, no outbox entry, and nothing for
+`persist-state.ts` to write.
+
+**So the pair this file relies on cannot help.** "Held by a synchronous write on
+`visibilitychange` to hidden and on `pagehide`, which is the pair iOS Safari
+actually delivers" is true of the store and says nothing about the field. The
+write on the way out writes a store that does not have the edit. Measured on the
+live site: a tab that goes away 0 ms or 300 ms after the blur leaves the
+**previous** value in `localStorage` with an empty outbox, and a real tab close
+at once loses the edit entirely, with a blur before it and without one. At 700 ms
+it is in the outbox and at 2,000 ms it is saved. A reload 200 ms after the blur
+loses it the same way and the field comes back at its old value.
+
+**The notebook steps over the window on purpose.** `run_safety` in
+`tests/support/editing-browser.py` waits 700 ms before it hides the tab, and its
+comment says why. Every hidden-tab and reload check of `10` is therefore taken
+outside the half second in which the loss happens, which is why the suite is
+green and the invariant is not met.
+
+**What would close it**, for whoever takes it and not for this run: call the
+debounced callback's `flush()` on `visibilitychange` to hidden and on `pagehide`
+beside the store's own flush, and dispatch on input rather than only on blur, so
+a person who types and closes the tab without leaving the field is covered too.
+Neither is a regression of the four changes above: the 500 ms debounce is the
+path this file describes as today's, and it was never the part that was measured.
