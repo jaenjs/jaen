@@ -672,3 +672,134 @@ an empty outbox, `FleetTitle` in the draft the `Our fleet test` this run found
 there, and `booklimo.at` serving `Our fleet` to a visitor. The unpublished
 difference between those two is another session's and is left standing the way
 it was found. Nothing was written on limosen.
+
+## Built 2026-09-08: the drawers open on the first click, and their state is outside React
+
+Everything above this heading was written before any of it was built. This is
+the fix for the section above it, measured on a local production build of
+booklimo.at served under its own name, signed in as the booklimo human admin,
+against the live agent, with edit mode on and after a field was typed. booklimo
+only, which is where this estate tests. Nothing was written on limosen.
+
+The storm is **not** this work's. It was measured as the condition the drawers
+have to work under and it is still running: 53.6 to 58.4 React commits a second
+with nobody touching anything, 27.0 to 29.4 animation frames a second, 3.0 to
+3.2 `localStorage` writes a second. Its engine is the render loop in
+`packages/jaen/src/hooks/use-field.ts` and it belongs to the field path.
+
+### Three changes, all of them in the frame's own components
+
+**The open state leaves React.** Both drawers kept their own `useDisclosure`,
+which is state in the component that re-renders 53 to 59 times a second. Nothing
+was ever measured throwing it away, 0 mounts in 177 windows, and a drawer must
+not depend on that: a frame that re-renders is a normal thing.
+`components/JaenFrame/drawer-state.ts` holds it in module scope and hands it out
+through `useSyncExternalStore`, which is the only React state that survives the
+component being thrown away and built again. The two drawers share one value, so
+exactly one stands, which is what lets a single gesture go from one to the other.
+
+**The trigger moves inside its own `Drawer.Root`.** `DrawerLeft` and
+`DrawerRight` put their button outside the root and wired it to `onToggle`, so
+it carried no `aria-controls`, was not excluded from the layer's idea of
+"outside", and focus did not come back to it on close. Ark's root renders no DOM
+of its own, so the markup changed by attributes and not by layout, measured on
+the live DOM: both buttons now carry `data-scope="dialog"`,
+`data-part="trigger"`, `aria-haspopup="dialog"` and `aria-expanded`, at the same
+36x36 box at x 16 and x 1388 they had before.
+
+**The frame routes gestures on its own two buttons while a drawer stands.** This
+is the part worth arguing with, so its reason is written out. Putting the
+trigger inside the root does not on its own make it reachable: the exclusion Ark
+applies is `contains(trigger, target)`, and with the body at
+`pointer-events: none` the target of the gesture is the `<html>` element and
+never the button, so Ark cannot know a trigger was aimed at. Coordinates survive
+where hit testing does not. So `JaenFrame` installs one `pointerdown` listener
+in the capture phase of `window`, active only while a drawer stands, which hit
+tests the two trigger rectangles and routes the gesture itself: the standing
+drawer's own button closes it, the other one switches. Capture runs window
+before document, and this listener is registered when the frame mounts while Ark
+registers its own on the next task after a drawer opens, so this one is reached
+first and `stopImmediatePropagation` keeps the gesture whole rather than letting
+it become a dismissal. The follow-up `click` is swallowed with it, because it
+would land on the backdrop of whatever the gesture just opened.
+
+**What was deliberately not done: the modality was not removed.** Making the
+drawer non-modal would have made the buttons reachable by themselves, and it
+would have taken the focus trap, the `aria-hidden` on the rest of the app and
+the scroll lock with it. The run asserts the page is still inert while a drawer
+stands, `pointer-events: none` on the body and `aria-hidden="true"` on
+`#___gatsby` in 4 of 4 crossings, so what changed is who gets the gesture and
+not what a drawer is.
+
+**The settle window, 400 ms, and what it costs.** A gesture on a trigger inside
+the opening animation is swallowed rather than toggled, because a person who
+clicks again is clicking because the CMS answered late and not because they want
+it shut. The enter animation is 300 ms and the earlier measurement saw an exit
+finish 441 to 589 ms after a close, so 400 ms is the enter animation plus a
+frame. The cost is that a deliberate second click inside 400 ms does nothing, and
+the benefit is that the second click of a burst does not close what the first
+opened.
+
+### Measured, twice, and what the numbers are
+
+`tests/11-cms-frame.ipynb` on `jaen_testkit`, one notebook for the frame, with
+`tests/support/frame-drawer.py` beside it as the verifier and its two runs
+stored in `tests/frame/`. **25 PASS 0 FAIL 0 SKIP 1 WARN**, the WARN being the
+storm, which this work did not touch. Every gesture is `mouse.move`,
+`mouse.down`, `mouse.up` at the button's own coordinates and never
+`locator.click()`, which re-resolves and retries and would hide the failure.
+
+| what the owner's sentence asks                 | before, on the live site   | after, on the local production build                         |
+| ---------------------------------------------- | -------------------------- | ------------------------------------------------------------ |
+| the first click opens the drawer, at 1440      | 109 of 109 already         | **40 of 40**, both drawers, at 1440 and at 390               |
+| and it stays open                              | not asked                  | **40 of 40** still open afterwards, 0 to 7 ms                |
+| a drawer stands, the other button is clicked   | 0 of 56 reached the button | **4 of 4** switched on one click                             |
+| a drawer stands, its own button is clicked     | left 0 of 26 closed        | **10 of 10**, five per drawer                                |
+| a burst of four clicks                         | one click seen             | **12 of 12 clicks seen**, and the next click opens it 6 of 6 |
+| under the storm, dispatched on purpose         | not asked                  | **20 of 20** opened on the first click                       |
+| a standing drawer across five seconds of storm | not asked                  | still open after **236 React commits**, 0 remounts           |
+
+**The storm was reproduced rather than waited for**, which is the only way to
+say anything about a re-render the drawer must survive. jaen's store is a module
+singleton on no global, so the run takes it off react-redux's Provider fiber
+through the devtools hook it installed before React booted, and dispatches
+`pages/field_register` in a `requestAnimationFrame` loop: **11,408 actions over
+85 s**, 52.6 commits a second and 17.6 animation frames a second under it. That
+action and no other, for two reasons. It is the one the register loop actually
+dispatches, so this is the storm and not a storm. And it is one the recorder in
+`remote-state.ts` does not translate into a change, so it reaches no agent and no
+draft, which the run proves rather than claims: the outbox is 0 and the revision
+117 before and after.
+
+**What the run left.** One field was typed into, `FleetTitle`, because that is
+the state the owner reported the failure in, and it was set back and read back
+as the value the run found (`Our fleet test`, another session's). `revision 118`,
+`publishedRevision 97` at the end, an empty outbox, and nothing published. The
+difference between those two revisions is another session's unpublished work and
+is left standing the way it was found.
+
+### What is not established
+
+- **The state surviving an actual remount is argued, not measured.** No remount
+  could be forced from outside: 0 in 40 gestures here and 0 in 177 windows in
+  the measurement above. What is measured is that the drawer stands through 236
+  commits of a storm. That the state survives a remount follows from where it
+  lives, module scope read through `useSyncExternalStore`, and not from a
+  reading.
+- **A burst still ends with the drawer shut** when it runs past the settle
+  window, which four clicks a nominal 100 ms apart do: they really span 452 to
+  480 ms, because every playwright mouse call is a round trip to a main thread
+  the storm keeps busy. That is a toggle toggling and `aria-expanded` promises
+  it. What is asserted instead is that every click is seen and the next one
+  works.
+- **This is one machine, one browser and two widths**, 1440x900 and 390x844, and
+  a local production build rather than the deployed booklimo.at. The deployment
+  carries the old frame until the next site build.
+- **The discard half of the owner's sentence is untouched.** It is located, not
+  fixed: `slices/jaen-frame.tsx` keeps `save` and `discard` only in the branch
+  it takes when `sharedDraft.enabled` is false, so with the agent configured
+  there is no discard item at all. `draft-state.md` says what discard is to
+  become, site wide and behind a confirmation, and that is not this work.
+- **The storm is still there.** Every number above was taken with it running,
+  which is the honest condition, and the notebook WARNs on it so the day it is
+  fixed the reading changes visibly rather than silently.
