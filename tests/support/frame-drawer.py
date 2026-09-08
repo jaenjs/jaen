@@ -72,10 +72,22 @@ LOGIN = os.environ.get("TAXI_HUMAN_ADMIN_BOOKLIMO_LOGIN", "")
 PASSWORD = os.environ.get("TAXI_HUMAN_ADMIN_BOOKLIMO_PASSWORD", "")
 
 
+# The deployed site instead of a local build. Set JAEN_LIVE=1 and the same
+# gestures are driven against https://booklimo.at as it is served to a person:
+# nothing is built or served here and the host resolver rule is dropped.
+LIVE = os.environ.get("JAEN_LIVE") == "1"
+
+
 class Site:
-    """booklimo's own production build, served under its own name."""
+    """booklimo's own production build, served under its own name.
+
+    A no-op under JAEN_LIVE=1, where the deployed site is the subject.
+    """
 
     def __init__(self):
+        if LIVE:
+            self.tmp = self.http = self.tls = None
+            return
         self.tmp = pathlib.Path(tempfile.mkdtemp(prefix="jaen-frame-"))
         subprocess.run(
             ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "2",
@@ -103,6 +115,8 @@ class Site:
         raise RuntimeError("gatsby serve did not answer within ninety seconds")
 
     def stop(self):
+        if LIVE:
+            return
         for process in (self.http, self.tls):
             try:
                 process.terminate()
@@ -816,7 +830,8 @@ async def main():
     from playwright.async_api import async_playwright
 
     only = sys.argv[1] if len(sys.argv) > 1 else None
-    report = {"origin": ORIGIN, "siteDir": SITE_DIR, "only": only, "startedAt": time.time()}
+    report = {"origin": ORIGIN, "siteDir": None if LIVE else SITE_DIR,
+              "live": LIVE, "only": only, "startedAt": time.time()}
     if not LOGIN or not PASSWORD:
         print(json.dumps({"error": "TAXI_HUMAN_ADMIN_BOOKLIMO_* not in the environment"}))
         return
@@ -824,9 +839,10 @@ async def main():
     site = Site()
     try:
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(args=[
+            launch_args = [] if LIVE else [
                 "--host-resolver-rules=MAP booklimo.at 127.0.0.1:%d" % TLS_PORT,
-                "--ignore-certificate-errors"])
+                "--ignore-certificate-errors"]
+            browser = await pw.chromium.launch(args=launch_args)
             context = await browser.new_context(
                 viewport={"width": 1440, "height": 900}, ignore_https_errors=True,
                 locale="de-AT", timezone_id="Europe/Vienna")

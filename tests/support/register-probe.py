@@ -289,10 +289,24 @@ READ_PROBE = """() => {
 }"""
 
 
+# The deployed site instead of a local build. Set JAEN_LIVE=1 to read the same
+# numbers off https://booklimo.at as it is served to a person: nothing is built
+# or served here and the host resolver rule is dropped, so the browser resolves
+# booklimo.at the way any browser does. Everything else about the run, the sign
+# in, the probe and the scenarios, is identical.
+LIVE = os.environ.get("JAEN_LIVE") == "1"
+
+
 class Site:
-    """booklimo's own production build, served under its own name."""
+    """booklimo's own production build, served under its own name.
+
+    A no-op under JAEN_LIVE=1, where the deployed site is the subject.
+    """
 
     def __init__(self):
+        if LIVE:
+            self.tmp = self.http = self.tls = None
+            return
         self.tmp = pathlib.Path(tempfile.mkdtemp(prefix="jaen-register-"))
         subprocess.run(
             ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "2",
@@ -321,6 +335,8 @@ class Site:
         raise RuntimeError("gatsby serve did not answer within ninety seconds")
 
     def stop(self):
+        if LIVE:
+            return
         for process in (self.http, self.tls):
             try:
                 process.terminate()
@@ -331,9 +347,10 @@ class Site:
 
 
 async def new_browser(pw):
-    browser = await pw.chromium.launch(args=[
+    args = [] if LIVE else [
         "--host-resolver-rules=MAP booklimo.at 127.0.0.1:%d" % TLS_PORT,
-        "--ignore-certificate-errors"])
+        "--ignore-certificate-errors"]
+    browser = await pw.chromium.launch(args=args)
     context = await browser.new_context(viewport={"width": 1440, "height": 900},
                                         ignore_https_errors=True,
                                         locale="de-AT", timezone_id="Europe/Vienna")
