@@ -72,11 +72,17 @@ PYLON_TELEMETRY_DISABLED = 1
 # contents:write on both repositories.
 SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"356348844407002709","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.booklimo.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_BOOKLIMO"},"limosen.at":{"repository":"netsnek/limosen.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"339284789469124181","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.limosen.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_LIMOSEN"}}'
 
-# The read cache (`head:<site>`, thirty seconds) and the in-flight lock
-# (`lock:<site>`, fifteen seconds), and the App installation token for its
-# hour. Nothing else, and nothing that is a store of record: every write
-# re-reads GitHub under the lock before it applies anything, so a cold or lost
-# KV is a slower read and never a lost change.
+# Four kinds of key and nothing else. The read cache
+# (`head:<site>:<branch>`, thirty seconds), the in-flight lock (`lock:<site>`,
+# fifteen seconds), the introspected identity of a bearer (`auth:<sha256>`,
+# AUTH_CACHE_TTL_MS, so that a cold isolate does not pay the round trips a warm
+# one already paid), and one word saying that patches.txt already ends with the
+# head files (`patches:<site>:<branch>`, an hour). Plus the App installation
+# token for its hour.
+#
+# Nothing that is a store of record: every write re-reads GitHub before it
+# applies anything and every PUT carries the blob sha it read, so a cold or
+# lost KV is a slower request and never a lost change.
 #
 # Created once with
 #   env -u CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID=92920a0740087f4d54d9201675220d43 \
