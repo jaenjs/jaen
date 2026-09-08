@@ -336,10 +336,27 @@ export class JaenDraftObject {
     }
 
     const meta = await this.meta(site)
+    const beforeMediaField = stable(meta.mediaField)
     const revision = meta.revision + 1
+
+    /**
+     * A write that volunteers no base is treated as maximally stale.
+     *
+     * `rebased` used to be false whenever `baseRevision` was absent, so a
+     * caller that simply did not send one replaced another editor's field,
+     * was told `rebased: false` and `overwrote: []`, and the other editor was
+     * never named. Nothing was lost by it, because a write is applied either
+     * way and this store never rejects one, and the answer said the opposite
+     * of what had happened. The shipped client always sends a base, so this
+     * is a property of the interface rather than a live defect, and an
+     * interface whose safest field is optional is one a second client will
+     * get wrong. An object that holds nothing yet cannot be written onto
+     * stale, which is why revision 0 is not treated as a rebase.
+     */
     const rebased =
-      typeof input.baseRevision === 'number' &&
-      input.baseRevision !== meta.revision
+      typeof input.baseRevision === 'number'
+        ? input.baseRevision !== meta.revision
+        : meta.revision > 0
 
     const author = input.author
     const stampedAt = new Date().toISOString()
@@ -484,6 +501,35 @@ export class JaenDraftObject {
       } as Stored<FieldAuthor>)
 
       touched.push(key)
+    }
+
+    /**
+     * A save that changes nothing does not move the revision.
+     *
+     * The CMS reads `revision > publishedRevision` as "there is something
+     * unpublished", and a write of a value identical to the one already in
+     * the draft used to bump the revision all the same, so a person who
+     * clicked into a field and left it again was told the site had unpublished
+     * changes it did not have. Author keys do not count as a change for the
+     * same reason: nobody wrote a value that is already there, so nobody
+     * should be named as its last writer.
+     *
+     * `overwrote` and `touched` are still answered, because they describe what
+     * the batch asked for, and `keys: 0` is what says nothing was written.
+     */
+    const wroteContent =
+      Array.from(writes.keys()).some(key => !key.startsWith(KEY.author)) ||
+      stable(meta.mediaField) !== beforeMediaField
+
+    if (!wroteContent) {
+      return {
+        revision: meta.revision,
+        rebased,
+        overwrote,
+        touched,
+        keys: 0,
+        savedAt: stampedAt
+      }
     }
 
     meta.revision = revision
