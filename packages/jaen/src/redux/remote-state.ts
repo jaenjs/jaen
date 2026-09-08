@@ -52,6 +52,7 @@ import {
   MEDIA_FIELD_TYPE,
   recordDifference
 } from './apply-change'
+import {setLeaveOutboxFlush} from '../utils/on-leave'
 import {actions as pageActions} from './slices/page'
 import {actions as remoteActions} from './slices/remote'
 import {actions as siteActions} from './slices/site'
@@ -406,8 +407,16 @@ export default (config: AgentConfig) => {
     const scheduleRetry = () => {
       if (retryTimer) clearTimeout(retryTimer)
 
+      // `failures` has already been incremented by the catch that called
+      // this, so the first retry has to read index 0 and not index 1. It read
+      // index 1 until 2026-09-08, which made the first retry five seconds
+      // where this file, editing-performance.md and draft-state.md all say
+      // two. Nothing was lost by it and the queue simply waited longer than
+      // every document claimed.
       const seconds =
-        RETRY_SECONDS[Math.min(failures, RETRY_SECONDS.length - 1)] || 30
+        RETRY_SECONDS[
+          Math.min(Math.max(failures - 1, 0), RETRY_SECONDS.length - 1)
+        ] || 30
 
       retryTimer = setTimeout(() => {
         retryTimer = undefined
@@ -852,6 +861,18 @@ export default (config: AgentConfig) => {
       syncSocket()
     }
 
+    // Step 3 of the pass out of the page, `utils/on-leave.ts`. The two
+    // listeners below stay: they are what this file has always done and they
+    // cover an exit nothing else is registered for. What the pass adds is the
+    // order, so that a field's debounce has become a store change and the
+    // store has been written before this best effort send is attempted, and
+    // so that the send carries the change the person just typed rather than
+    // the one before it.
+    setLeaveOutboxFlush(() => {
+      clearFlush()
+      void flush()
+    })
+
     if (typeof window !== 'undefined') {
       window.addEventListener('online', onOnline)
       window.addEventListener('pagehide', onPageHide)
@@ -866,6 +887,7 @@ export default (config: AgentConfig) => {
 
     return () => {
       stopped = true
+      setLeaveOutboxFlush(undefined)
       unsubscribe()
       clearFlush()
       if (retryTimer) clearTimeout(retryTimer)
