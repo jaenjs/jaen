@@ -28,7 +28,9 @@ import {
   draftDataToState,
   draftStateToData,
   JaenChange,
-  JaenDraftState
+  JaenDraftState,
+  MEDIA_FIELD_TYPE,
+  recordDifference
 } from './apply-change'
 import {actions as pageActions} from './slices/page'
 import {actions as remoteActions} from './slices/remote'
@@ -79,14 +81,15 @@ const isKeystroke = (change: JaenChange): boolean =>
  */
 const recordAction = (
   action: {type: string; payload: any},
-  stateAfter: any
+  stateAfter: any,
+  stateBefore: any
 ): JaenChange | null => {
   const at = new Date().toISOString()
   const payload = action.payload
 
   switch (action.type) {
-    case 'pages/field_write':
-      return {
+    case 'pages/field_write': {
+      const whole: JaenChange = {
         kind: 'fieldWrite',
         pageId: payload.pageId,
         section: payload.section,
@@ -96,6 +99,32 @@ const recordAction = (
         props: payload.props,
         at
       }
+
+      // The catalogue field is written whole by the gallery and sent as the
+      // difference it is. Everything else is a value and goes as it is.
+      if (payload.fieldType !== MEDIA_FIELD_TYPE || payload.section) {
+        return whole
+      }
+
+      const before =
+        stateBefore?.page?.pages?.nodes?.[payload.pageId]?.jaenFields?.[
+          payload.fieldType
+        ]?.[payload.fieldName]?.value
+
+      const difference = recordDifference(before, payload.value)
+
+      if (!difference) return whole
+
+      return {
+        kind: 'fieldMerge',
+        pageId: payload.pageId,
+        fieldType: payload.fieldType,
+        fieldName: payload.fieldName,
+        value: difference.changed,
+        props: {...(payload.props || {}), removed: difference.removed},
+        at
+      }
+    }
 
     case 'pages/section_add':
       return {
@@ -185,13 +214,19 @@ export default (config: AgentConfig) => {
    * never make a dispatch throw, which is why the flusher lives outside it.
    */
   const recordMiddleware = (store: any) => (next: any) => (action: any) => {
+    // The state before the reducer, because a write of the media catalogue is
+    // recorded as the difference from the value it replaced. Reading it after
+    // would diff the new value against itself.
+    const stateBefore =
+      action?.type === 'pages/field_write' ? store.getState() : undefined
+
     const result = next(action)
 
     if (!action || typeof action.type !== 'string') return result
     if (isRemoteWrite(action.type)) return result
 
     try {
-      const change = recordAction(action, store.getState())
+      const change = recordAction(action, store.getState(), stateBefore)
 
       if (change) {
         store.dispatch(remoteActions.record(change))

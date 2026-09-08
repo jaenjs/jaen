@@ -19,6 +19,7 @@ import {IJaenSiteState} from './types'
 
 export type JaenChangeKind =
   | 'fieldWrite'
+  | 'fieldMerge'
   | 'sectionAdd'
   | 'sectionRemove'
   | 'sectionMove'
@@ -34,6 +35,8 @@ export type JaenChangeKind =
  * originating action's payload, which differs per kind and is JSON either way:
  *
  *   fieldWrite     value = the field's value, props = its props
+ *   fieldMerge     value = the entries of a record field that changed,
+ *                  props.removed = the keys that went
  *   sectionAdd     props = {sectionItemType, between}
  *   sectionRemove  props = {between}
  *   sectionMove    props = {between, move}
@@ -140,7 +143,8 @@ const pathKey = (path?: SectionType['path']): string =>
  */
 export const changeKey = (change: JaenChange): string => {
   switch (change.kind) {
-    case 'fieldWrite': {
+    case 'fieldWrite':
+    case 'fieldMerge': {
       const inSection = change.section
         ? `${pathKey(change.section.path)}/${change.section.id ?? ''}/`
         : ''
@@ -224,6 +228,53 @@ export const applyChange = (
             props: change.props
           }
         }
+      }
+
+      break
+    }
+
+    /**
+     * A field that holds a record, written by the keys that changed.
+     *
+     * The media library is the one such field jaen has: the gallery reads
+     * `media_nodes` as one object of every picture in the site and writes the
+     * whole object back on every upload, clone, edit and delete. Sending the
+     * whole object meant an 80 KB request and an 80 KB commit for one new
+     * picture, and it meant that two editors uploading at the same time each
+     * wrote a catalogue without the other's node. The recorder diffs the write
+     * against the value it replaced and sends only the difference, and this
+     * folds it back onto whatever the base holds.
+     */
+    case 'fieldMerge': {
+      if (!change.pageId || !change.fieldType || !change.fieldName) break
+
+      const page = touchPage(state, change.pageId)
+      page.modifiedAt = at
+      page.jaenFields = page.jaenFields || {}
+
+      const field = page.jaenFields[change.fieldType]?.[change.fieldName]
+      const previous = field?.value
+
+      const merged: Record<string, unknown> =
+        previous && typeof previous === 'object' && !Array.isArray(previous)
+          ? {...(previous as Record<string, unknown>)}
+          : {}
+
+      for (const key of (change.props?.removed || []) as string[]) {
+        if (typeof key === 'string') delete merged[key]
+      }
+
+      if (
+        change.value &&
+        typeof change.value === 'object' &&
+        !Array.isArray(change.value)
+      ) {
+        Object.assign(merged, change.value as Record<string, unknown>)
+      }
+
+      page.jaenFields[change.fieldType] = {
+        ...page.jaenFields[change.fieldType],
+        [change.fieldName]: {...field, value: merged}
       }
 
       break
@@ -471,4 +522,57 @@ export const overwrittenFields = (
   }
 
   return out
+}
+
+// --------------------------------------------------------------------------
+// The catalogue field
+// --------------------------------------------------------------------------
+
+/**
+ * The one field in jaen that holds a catalogue rather than a value.
+ *
+ * `gatsby-plugin-jaen`'s media container reads and writes
+ * `useField('media_nodes', 'IMA:MEDIA_NODES')`, so every picture in the
+ * library is one key of it. The agent keeps it in a file of its own,
+ * `jaen-data/live-media.json`, for the same reason this diffs it.
+ */
+export const MEDIA_FIELD_TYPE = 'IMA:MEDIA_NODES'
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+/**
+ * A whole-record field write turned into the difference it actually is, or
+ * null when there is nothing to diff against.
+ *
+ * Null on purpose in two cases, and both fall back to sending the write whole:
+ * a base that is not a record, which is a field the browser has never seen a
+ * remote value for, and a write that changes more than half of it, where the
+ * difference is not smaller than the thing.
+ */
+export const recordDifference = (
+  before: unknown,
+  after: unknown
+): {changed: Record<string, unknown>; removed: string[]} | null => {
+  if (!isRecord(before) || !isRecord(after)) return null
+
+  const changed: Record<string, unknown> = {}
+  const removed: string[] = []
+
+  for (const [key, value] of Object.entries(after)) {
+    if (JSON.stringify(before[key]) !== JSON.stringify(value)) {
+      changed[key] = value
+    }
+  }
+
+  for (const key of Object.keys(before)) {
+    if (!(key in after)) removed.push(key)
+  }
+
+  const touched = Object.keys(changed).length + removed.length
+
+  if (touched === 0) return {changed, removed}
+  if (touched * 2 > Object.keys(before).length + removed.length) return null
+
+  return {changed, removed}
 }

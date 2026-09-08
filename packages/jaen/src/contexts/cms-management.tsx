@@ -20,7 +20,7 @@ import {
   withRedux
 } from '../redux'
 import {actions as remoteActions} from '../redux/slices/remote'
-import {publishSite} from '../clients/agent'
+import {publishSite, warmAuth} from '../clients/agent'
 import {useSharedDraft, SharedDraftState} from '../hooks/use-shared-draft'
 import {actions as pageActions} from '../redux/slices/page'
 import * as statusActions from '../redux/slices/status'
@@ -152,6 +152,13 @@ export const CMSManagementProvider = withRedux(
       if (!jaenAgent) return
 
       dispatch(remoteActions.setActive(true))
+
+      // And the agent is told who is here, once, before anything is saved.
+      // The introspection of a token the agent has not seen lately costs
+      // about two seconds, and this is where that gets paid: in the opening
+      // of the CMS rather than inside the editor's first save. See
+      // docs/architecture/draft-state.md, "The budget".
+      void warmAuth(jaenAgent)
 
       return () => {
         dispatch(remoteActions.setActive(false))

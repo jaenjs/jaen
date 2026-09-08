@@ -44,6 +44,15 @@ export interface SaveAnswer {
   savedAt: string
   rebased: boolean
   overwrote: Array<{field: string}>
+  /** The head files the save wrote. `jaen-data/live.json`, the catalogue, or both. */
+  wrote?: string[]
+}
+
+export interface ViewerAnswer {
+  site: string
+  sub: string
+  name: string
+  at: string
 }
 
 export interface PublishAnswer {
@@ -157,9 +166,19 @@ const SAVE = `mutation JaenAgentSave($site: String!, $changes: [SaveChangesInput
     commitUrl
     savedAt
     rebased
+    wrote
     overwrote {
       field
     }
+  }
+}`
+
+const VIEWER = `query JaenAgentViewer($site: String!) {
+  viewer(site: $site) {
+    site
+    sub
+    name
+    at
   }
 }`
 
@@ -217,6 +236,35 @@ export const saveChanges = async (
   })
 
   return data.save
+}
+
+/**
+ * The CMS saying hello, once, when it opens.
+ *
+ * The agent introspects the bearer before a resolver runs and remembers the
+ * answer for a minute, per token, in a KV every isolate reads. The first call
+ * with a token nobody has introspected lately pays about two seconds for it,
+ * measured against the live agent on 2026-09-08 (3.77 s cold, 1.7 s warm),
+ * and without this that first call is the editor's first save. It answers who
+ * the caller is and reads no repository at all, so the two seconds are spent
+ * while the toolbar is still coming up.
+ *
+ * A failure is not reported anywhere: the call proves nothing the CMS needs
+ * and its only effect is on the clock.
+ */
+export const warmAuth = async (
+  config: AgentConfig
+): Promise<ViewerAnswer | null> => {
+  try {
+    const data = await request<{viewer: ViewerAnswer}>(config, VIEWER, {
+      site: config.site
+    })
+
+    return data.viewer
+  } catch (error) {
+    console.debug('jaen agent: the warm up call did not come back', error)
+    return null
+  }
 }
 
 export const publishSite = async (
