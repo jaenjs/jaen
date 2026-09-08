@@ -80,6 +80,12 @@ export interface IRemoteState {
   saveState: 'idle' | 'pending' | 'saving' | 'saved' | 'offline' | 'error'
   lastSavedAt?: string
   lastError?: string
+  /**
+   * When a read last came back at a revision below the one this browser had,
+   * which is the site's draft object having been lost and replaced. The answer
+   * was not applied, because it is older than what is on the screen.
+   */
+  objectRestartedAt?: string
   /** fieldKey -> who last wrote it, from the agent. */
   authors: JaenAuthors
   /** Fields the last save took from somebody else, for the CMS to report. */

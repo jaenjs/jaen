@@ -593,6 +593,39 @@ export default (config: AgentConfig) => {
           return
         }
 
+        // The object went backwards, which a monotonic revision cannot do
+        // while the object lives. What it means is that the object this
+        // browser was talking to is gone and a new one answered in its place,
+        // at a revision it has not reached yet. Its answer is older than what
+        // is on this screen, so applying it would take an edit away from the
+        // person who made it, and that is the one thing this file is not
+        // allowed to do.
+        //
+        // So the answer is skipped and the object's revision is adopted, which
+        // keeps the next save's base valid and lets everything after the
+        // restart arrive normally. What is not recovered here is what the
+        // other editors had written into the object that died: nothing in a
+        // browser holds that, and the design's answer to it is the snapshot
+        // the object writes outside itself. See docs/architecture/draft-state.md.
+        if (
+          typeof remote.revision === 'number' &&
+          typeof answer.revision === 'number' &&
+          answer.revision < remote.revision
+        ) {
+          console.warn(
+            `jaen agent: the draft went from revision ${remote.revision} back to ${answer.revision}, keeping what is in this browser`
+          )
+
+          store.dispatch(
+            remoteActions.objectRestarted({
+              revision: answer.revision,
+              publishedRevision: answer.publishedRevision
+            })
+          )
+
+          return
+        }
+
         hydrate(answer)
       } catch (error) {
         // A poll that fails changes nothing. The save state belongs to the

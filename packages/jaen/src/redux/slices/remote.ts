@@ -168,6 +168,31 @@ const remoteSlice = createSlice({
       }
     },
 
+    /**
+     * A read came back at a revision below the one this browser already had.
+     *
+     * A revision is monotonic while its object lives, so this is the object
+     * having been lost and replaced. The draft is not touched, because the
+     * answer is older than the screen; the revision is adopted, because the
+     * next save has to carry a base the new object recognises; and the instant
+     * is kept so the CMS and a notebook can say it happened rather than infer
+     * it from a number that moved.
+     */
+    objectRestarted: (
+      state,
+      action: PayloadAction<{
+        revision: number
+        publishedRevision?: number | null
+      }>
+    ) => {
+      state.revision = action.payload.revision
+      state.objectRestartedAt = new Date().toISOString()
+
+      if (typeof action.payload.publishedRevision === 'number') {
+        state.publishedRevision = action.payload.publishedRevision
+      }
+    },
+
     /** A publish was accepted. What it took is live once the build lands. */
     publishQueued: (state, action: PayloadAction<{revision?: number}>) => {
       if (typeof action.payload.revision === 'number') {
