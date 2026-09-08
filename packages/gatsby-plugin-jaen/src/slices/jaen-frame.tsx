@@ -342,15 +342,39 @@ const Slice: React.FC<SliceProps> = props => {
                   }
                 }
               }),
+          /**
+           * The other half of what the two lifecycles make sayable.
+           *
+           * The save state above says whether the draft holds something the
+           * site does not serve; this says the same thing about the control
+           * that would change it. A site whose draft is entirely published
+           * reads "Everything published" rather than inviting a publish that
+           * would write a migration saying what the chain already says. It
+           * stays clickable, because publish with nothing to publish is a
+           * person asking for a rebuild and the agent answers that honestly.
+           *
+           * `hasUnpublished` is false on a site without the agent option too,
+           * where there is no revision to compare, so the label falls back to
+           * the publish-changes wording that site has always had.
+           */
           publish: {
-            label: intl.formatMessage(
-              {
-                id: 'CmsFramePublish',
-                defaultMessage:
-                  '{isPublishing, select, true {Publish in progress} other {Publish changes}}'
-              },
-              {isPublishing: String(manager.isPublishing)}
-            ),
+            label:
+              !manager.isPublishing &&
+              sharedDraft.enabled &&
+              !sharedDraft.hasUnpublished &&
+              typeof sharedDraft.revision === 'number'
+                ? intl.formatMessage({
+                    id: 'CmsFramePublished',
+                    defaultMessage: 'Everything published'
+                  })
+                : intl.formatMessage(
+                    {
+                      id: 'CmsFramePublish',
+                      defaultMessage:
+                        '{isPublishing, select, true {Publish in progress} other {Publish changes}}'
+                    },
+                    {isPublishing: String(manager.isPublishing)}
+                  ),
             isLoading: manager.isPublishing,
             icon: FaGlobe,
             onClick: async () => {
@@ -487,7 +511,9 @@ const Slice: React.FC<SliceProps> = props => {
     sharedDraft.saveState,
     sharedDraft.lastSavedAt,
     sharedDraft.pending,
-    sharedDraft.hasUnpublished
+    sharedDraft.hasUnpublished,
+    sharedDraft.revision,
+    manager.isPublishing
   ])
 
   return (
