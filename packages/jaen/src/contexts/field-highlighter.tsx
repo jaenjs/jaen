@@ -69,88 +69,138 @@ export const FieldHighlighterProvider: React.FC<
 
   useEffect(() => {
     fields.current = []
+    // The frame outlives a page change now, so a navigation with a field still
+    // focused would leave it standing at the old page's coordinates.
+    hideHighlightRef.current()
   }, [props.path])
 
   const tooltipHightRef = useRef<HTMLDivElement | null>(null)
 
-  let resizeObserver = useRef<ResizeObserver | null>(null)
+  const [tooltipButtons, setTooltipButtons] = React.useState<React.ReactNode[]>(
+    []
+  )
 
-  const setHighlight = (element: HTMLElement) => {
+  /**
+   * The frame and the tooltip's container, built once and kept.
+   *
+   * Both used to be created inside `setHighlight` and thrown away by the blur
+   * that followed, so every move of the caret from one field to the next
+   * replaced the container React's tooltip portal was mounted into. A new
+   * container is a new mount: the tooltip, its tune selectors and their Chakra
+   * tooltips came down and went back up on each focus, and that is the largest
+   * part of what the measurement in
+   * `docs/architecture/editing-performance.md` calls the blur to the next
+   * painted frame. Positioning a node that already exists costs a style
+   * recalculation of one element instead.
+   */
+  const frameRootRef = useRef<HTMLDivElement | null>(null)
+  const [tooltipRoot, setTooltipRoot] = React.useState<HTMLDivElement | null>(
+    null
+  )
+
+  const resizeObserver = useRef<ResizeObserver | null>(null)
+  /**
+   * The page scroll at the moment the field was focused, which is what the
+   * observer below adds to a viewport rectangle to get a document one. It is a
+   * ref rather than a closure because the observer outlives the focus that
+   * created it now.
+   */
+  const scrollAt = useRef({left: 0, top: 0})
+
+  /**
+   * `hideHighlight` is declared below, and the effect above runs before it
+   * exists on the first render, so the effect reaches it through a ref.
+   */
+  const hideHighlightRef = useRef<() => void>(() => {})
+
+  const ensureRoots = () => {
     const appRoot = document.getElementById('___gatsby')
 
     if (!appRoot) {
       alert('appRoot root not found, please contact support')
-      return
+      return null
     }
 
-    // let highlighterRoot: HTMLDivElement | null = appRoot.querySelector(
-    //   `.${CLASSNAMES.JAEN_HIGHLIGHT}`
-    // )
+    let frameRoot = frameRootRef.current
 
-    let frameRoot: HTMLDivElement | null = appRoot.querySelector(
-      `.${FIELD_HIGHLIGHTER_CLASSNAMES.JAEN_HIGHLIGHT_FRAME}`
-    )
+    if (!frameRoot || !frameRoot.isConnected) {
+      frameRoot = appRoot.appendChild(document.createElement('div'))
+      frameRoot.classList.add(FIELD_HIGHLIGHTER_CLASSNAMES.JAEN_HIGHLIGHT_FRAME)
+      frameRoot.style.position = 'absolute'
 
-    if (frameRoot) {
-      frameRoot.remove()
+      const tooltipRootNode = frameRoot.appendChild(
+        document.createElement('div')
+      )
+
+      tooltipRootNode.classList.add(
+        FIELD_HIGHLIGHTER_CLASSNAMES.JAEN_HIGHLIGHT_TOOLTIP
+      )
+
+      tooltipRootNode.style.position = 'sticky'
+      // move tooltip above element
+      tooltipRootNode.style.top = `3.5rem`
+      tooltipRootNode.style.pointerEvents = 'none'
+      tooltipRootNode.style.zIndex = '999'
+      tooltipRootNode.style.width = '100%'
+      tooltipRootNode.tabIndex = -1
+
+      frameRootRef.current = frameRoot
+      setTooltipRoot(tooltipRootNode)
     }
 
-    frameRoot = appRoot.appendChild(document.createElement('div'))
-    frameRoot.classList.add(FIELD_HIGHLIGHTER_CLASSNAMES.JAEN_HIGHLIGHT_FRAME)
+    return frameRoot
+  }
+
+  const setHighlight = (element: HTMLElement) => {
+    const frameRoot = ensureRoots()
+
+    if (!frameRoot) return
+
+    frameRoot.style.display = ''
 
     // include scroll
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-
-    frameRoot.style.position = 'absolute'
-
-    const tooltipRoot = frameRoot.appendChild(document.createElement('div'))
-
-    tooltipRoot.classList.add(
-      FIELD_HIGHLIGHTER_CLASSNAMES.JAEN_HIGHLIGHT_TOOLTIP
-    )
-
-    tooltipRoot.style.position = 'sticky'
-
-    // move tooltip above element
-    tooltipRoot.style.top = `3.5rem`
-
-    tooltipRoot.style.pointerEvents = 'none'
-    tooltipRoot.style.zIndex = '999'
-
-    tooltipRoot.tabIndex = -1
-
-    if (resizeObserver.current) {
-      resizeObserver.current.disconnect()
+    scrollAt.current = {
+      left: window.pageXOffset || document.documentElement.scrollLeft,
+      top: window.pageYOffset || document.documentElement.scrollTop
     }
 
-    // Positions
-    // add a observer to the frameRoot to re-position it when the element moves or resizes
-    resizeObserver.current = new ResizeObserver(entries => {
-      const entry = entries[0]
+    if (!resizeObserver.current) {
+      resizeObserver.current = new ResizeObserver(entries => {
+        const entry = entries[0]
 
-      if (!entry) return
+        if (!entry) return
 
-      const elementRect = entry.target.getBoundingClientRect()
+        const elementRect = entry.target.getBoundingClientRect()
+        const root = frameRootRef.current
 
-      if (!frameRoot)
-        throw new Error('elementRect is null. This should not happen.')
+        if (!root) return
 
-      // frameRoot exists because we just created it
-      frameRoot.style.top = `${elementRect.top + scrollTop}px`
-      frameRoot.style.left = `${elementRect.left + scrollLeft}px`
-      frameRoot.style.width = `${elementRect.width}px`
-      frameRoot.style.height = `${elementRect.height}px`
+        root.style.top = `${elementRect.top + scrollAt.current.top}px`
+        root.style.left = `${elementRect.left + scrollAt.current.left}px`
+        root.style.width = `${elementRect.width}px`
+        root.style.height = `${elementRect.height}px`
+      })
+    }
 
-      tooltipRoot.style.width = '100%'
-    })
-
+    resizeObserver.current.disconnect()
     resizeObserver.current.observe(element)
 
     const field = fields.current.find(item => item.ref === element)
 
-    spawnTooltip(field?.tooltipButtons)
+    setTooltipButtons(field?.tooltipButtons ?? [])
   }
+
+  const hideHighlight = () => {
+    const frameRoot = frameRootRef.current
+
+    if (frameRoot) {
+      frameRoot.style.display = 'none'
+    }
+
+    resizeObserver.current?.disconnect()
+  }
+
+  hideHighlightRef.current = hideHighlight
 
   const findClosestParentMatching = (
     element: HTMLElement,
@@ -227,11 +277,9 @@ export const FieldHighlighterProvider: React.FC<
   }, [])
 
   const blurHandler = useCallback((e: FocusEvent) => {
-    const highlightRoot = document.querySelector(
-      `.${FIELD_HIGHLIGHTER_CLASSNAMES.JAEN_HIGHLIGHT_FRAME}`
-    )
+    const highlightRoot = frameRootRef.current
 
-    if (!highlightRoot) return
+    if (!highlightRoot || highlightRoot.style.display === 'none') return
 
     // Check if the blur event is caused by a click on the tooltip
     // check if tooltip ref contains relatedTarget
@@ -252,7 +300,7 @@ export const FieldHighlighterProvider: React.FC<
       return
     }
 
-    highlightRoot.remove()
+    hideHighlight()
   }, [])
 
   const ref = useCallback(
@@ -298,33 +346,38 @@ export const FieldHighlighterProvider: React.FC<
     ]
   )
 
-  const [portaledTooltip, setPortaledTooltip] = React.useState<JSX.Element>()
+  /**
+   * The tooltip, portalled into a container that does not move.
+   *
+   * `createPortal` used to be called inside the focus handler and its result
+   * put into state, which meant a new portal into a new container on every
+   * focus. Here the container is built once and only the buttons change, so
+   * focusing the next field re-renders the tooltip's own contents and touches
+   * nothing else.
+   */
+  const portaledTooltip = React.useMemo(() => {
+    if (!tooltipRoot) return null
 
-  const spawnTooltip = useCallback((tooltipButtons: React.ReactNode[] = []) => {
-    const tooltipRoot = document.querySelector(
-      `.${FIELD_HIGHLIGHTER_CLASSNAMES.JAEN_HIGHLIGHT_TOOLTIP}`
-    )
-
-    if (!tooltipRoot) return
-
-    const portal = createPortal(
+    return createPortal(
       <Tooltip actions={tooltipButtons} ref={tooltipHightRef} />,
       tooltipRoot
     )
+  }, [tooltipRoot, tooltipButtons])
 
-    setPortaledTooltip(portal)
-
-    return () => {
-      setPortaledTooltip(undefined)
-    }
-  }, [])
-
-  // const memoedChildren = React.useMemo(() => {
-  //   return props.children
-  // }, [props.children])
+  /**
+   * The value handed to every field, and it must not change identity.
+   *
+   * It was an object literal, so every render of this provider gave all forty
+   * three fields of a page a new context value and re-rendered every one of
+   * them. The provider renders on each focus, which is how leaving one field
+   * for the next cost a render of the whole page. `ref` is a `useCallback`
+   * over four handlers that never change, so the value below is stable for the
+   * provider's life.
+   */
+  const contextValue = React.useMemo(() => ({ref}), [ref])
 
   return (
-    <FieldHighlighterProviderContext.Provider value={{ref}}>
+    <FieldHighlighterProviderContext.Provider value={contextValue}>
       {portaledTooltip}
       {props.children}
     </FieldHighlighterProviderContext.Provider>
