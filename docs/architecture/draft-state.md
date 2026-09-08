@@ -1823,3 +1823,149 @@ check for whether both brands are current, is **10 PASS 0 FAIL 0 WARN 0 SKIP**.
   of the transition's commits that this run may not make.
 - **The Fable 5.1 review of the whole editing path is still open**, and this run
   adds the deployed discard to what it has to read.
+
+## Verified adversarially 2026-09-08 at night, discard on the live booklimo.at
+
+An Opus session that built none of this drove discard on the deployed site and
+read every claim back off the object, off the storage gateway and off a third
+browser that knew nothing of the first two. The question was the one the section
+above answers for itself: does discard exist for an admin, does its confirmation
+name what will go, does it restore exactly what the last migration produced,
+does a second browser drop its outbox instead of resurrecting the discarded
+fields, can the snapshot it takes be read back, and is somebody without
+`jaen:admin` refused. The default was FAIL on anything that could not be
+reproduced.
+
+**The verdict is PASS on all six**, and the run found three things beside them,
+one of which is the sharpest edge in this whole design and is written up below
+rather than left in a scratchpad.
+
+### How it was driven, so a reader can weigh the readings
+
+Three runs, all on the live `booklimo.at` against `jaen-agent` 4.4.0, the
+fixture this run's own text and never a value already on the site.
+
+| run | what it did                                                                                                       | stored as                                            |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| A   | two browsers, two identities, the discard from the menu, the backstop read back                                   | `tests/adversarial/discard-live-a.json`              |
+| B   | the same again with the tail the first run's own bug cut off: the backstop, the stale save, a third fresh context | `tests/adversarial/discard-live-b.json`              |
+| C   | the second browser watched every 400 ms from before the discard, because a toast outlives itself by seconds       | `tests/adversarial/discard-second-browser-told.json` |
+
+Beside them a role run, `tests/adversarial/discard-role-revoked.json`, and the
+verifiers themselves in `tests/support/verify-discard-adversarial.py`,
+`verify-discard-role.py` and `verify-discard-toast.py`. The gestures in the
+browser are a person's: the user menu opened, the item clicked, the confirmation
+read and confirmed. Every reading beside them was taken with a credential of the
+run's own, so what a screen claims and what the object holds are two answers.
+
+The yardstick for "the published state" is deliberately **not** a screen and not
+the object's own word for it. It is the last migration on the storage gateway,
+`…/storage/BQACAgQAAx0Ed6zoewACBmhqoFoBWguJq1laqG3vzhGuIrJ-LwACfB8AAlWvCFEhL4bxW8O5xD0E`,
+1,816 bytes, sha256 `9e3a72208de07fe6…`, fetched with the KRC storage token and
+parsed.
+
+### The six questions and what the live systems answered
+
+| what was asked                                    | what happened                                                                                                                                                                              |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| discard exists for an admin                       | the item is in the frame's user menu as `Alle unveröffentlichten Änderungen verwerfen` and was clicked in all three runs                                                                   |
+| the confirmation names what will go               | `3 unveröffentlichte Änderungen auf 1 Seite werden für alle rückgängig gemacht, geschrieben von Taxi Test Admin, Taxi Test Customer, seit 8.9.2026 22:38.` and it matched `discardPreview` |
+| and the count is the object's and not a browser's | preview `pages 1 fields 3` at revision 152, the three being exactly the three fields that had reached the object, and never the fourth that was still in a browser                         |
+| it restores exactly the published state           | the restored page node is **equal to the migration's page node** field for field once `modifiedAt` is set aside, `site` and `widgets` equal as well, twice                                 |
+| and the authorship comes back with it             | run B's baseline carried `FleetTitle` written 20:29 by Taxi Test Admin, and after run A's discard it is the publish's own stamp, 18:17:57, in the object                                   |
+| a second browser is told                          | **1.93 s** after the confirm, in words: `Taxi Test Admin hat um 22:53 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand.`          |
+| and drops its outbox rather than resurrecting     | its outbox goes 1 to 0, `discardedRevision` becomes the discard's, the parked key holds the change, and after the network came back and 20 s of settling the object never saw it           |
+| the snapshot before it can be read back           | `discardedDraft` `found: true`, revision 166, 2,090 bytes, carrying `Our services AAA-probe` and `… BBB-saved-probe`, the two values the discard removed                                   |
+| a save from before the discard is refused         | `DRAFT_DISCARDED`, statusCode 409, `details.discardedRevision 167`, and the draft did not move                                                                                             |
+| a non-admin is refused                            | anonymous `AUTH_REQUIRED`, a `krc:customer` machine token, a `krc:driver` machine token and **limosen's own admin** all `FORBIDDEN`, on `discardPreview` and on `discard` alike            |
+| and the refusals changed nothing                  | the draft's revision and every field were the same before and after all eight refused calls                                                                                                |
+| the site is left as it was found                  | a third fresh context, signed in and knowing nothing of the first two, read the published values off the screen, and the live HTML of `/` and `/imprint/` carries no probe string          |
+| and no history was written                        | `netsnek/booklimo.at` main was `e1ec2748` before the first run and `e1ec2748` after the last, `patches.txt` 26 lines throughout, no gateway file                                           |
+
+The second browser is a second identity in runs A and B, the booklimo human
+customer, and a second context of the admin in run C, because run C was made
+after that customer's role had been revoked and a browser that may not read the
+draft is not an editor. What the promise is about is a browser, and that is what
+was measured.
+
+### The gate is on the role and not on the account, proven by taking the role away
+
+The human customer `taxi-test-customer-krc` held `jaen:admin` at the start of
+this run. Its own browser token was asked for `discardPreview` and answered.
+The role was then taken off its existing authorization `389619073622742619`
+through `idm.booklimo.at` (`updateAuthorization`, `jaen:admin, krc:customer` to
+`krc:customer`, read back from the directory), and seventy five seconds later,
+past the agent's sixty second introspection cache, **the same token** was
+`FORBIDDEN` on `discardPreview` and on `discard`. Nothing else about the account
+changed.
+
+**That role should not have been there.** "Two editors on the live booklimo.at"
+above says the customer was granted `jaen:admin` for that run and "revoked after
+it, read back as `krc:customer` alone". The directory said otherwise this
+evening: the grant was still on the account eight hours later. It is revoked
+now, and the reading is in `tests/adversarial/discard-role-revoked.json`. A run
+that grants a role on a real identity server has to read the revocation back
+from the directory and not from its own intention.
+
+### The sharpest edge, found because somebody else was editing at the same time
+
+Throughout this verification the site's draft was being written by **another
+session**, signed in as the same booklimo human admin, from a browser that is
+not this run's: the object's revision moved on its own ten times in six minutes
+before the first browser of this run existed, and again between every reading.
+One of those edits was a change to the imprint page's MDX field.
+
+A site wide discard is site wide. This run's third discard, made to prove that a
+non-admin cannot make one, was made while that session's imprint edit was
+unpublished, and it removed it. Nothing about the operation misbehaved. That is
+what the design says discard does, and it is why the design says the operation
+is an admin's and behind a confirmation naming what will go. Two things follow
+and neither is theoretical any more.
+
+- **The backstop is the only copy, and it has one slot.** The draft that was
+  removed is kept here as
+  `tests/adversarial/discard-backstop-170-other-session.json`, 26,321 bytes,
+  taken at 20:47:54.200Z at revision 170, because the next discard on this site
+  overwrites `draft-discard:booklimo.at` and the run that made the edit has no
+  way of knowing it happened. **Restore is not built**, so nobody can put it
+  back from the CMS. This is the largest open item of the three operations and
+  this run met it in the wild rather than in a paragraph.
+- **A run that discards on a live site must first read what it would discard.**
+  `discardPreview` names the editors, and an editor who is not this run is a
+  reason to stop rather than a detail. This run did not do that before its third
+  discard, which is how the imprint edit was lost, and it is written down as the
+  mistake it was.
+
+The same traffic is why one fixture reading looks odd and is worth naming rather
+than smoothing: in run B the field typed as `Our fleet AAA-probe` was read back
+out of the object one second later as `Our fleetx`. The `x` is nobody's in this
+run. It is the other session writing the same field, last writer wins, exactly
+as the object promises. The count in that run's confirmation, two rather than
+three, is the same cause read from the other end.
+
+### Two smaller things, and one thing this run did not establish
+
+- **The refusals answer HTTP 200.** `AUTH_REQUIRED` and `FORBIDDEN` on
+  `discardPreview` and `discard` arrive as a GraphQL error carrying
+  `extensions.statusCode` 401 and 403, on a 200 response. Earlier notes in this
+  file record "401 anonymously" for other calls of the same agent. The refusal
+  itself is correct and distinct, which is what `okf/decisions/hard-rules.md`
+  asks for. A client that decides on the HTTP status alone would read a refusal
+  as a success.
+- **An author survives a field that does not exist.** The published state
+  carries `JaenPage //IMA:TextField/ProbeField` in its authors map while no
+  such field is in any page, and a discard restores it faithfully. Harmless,
+  and it says the authorship map is not pruned against the state it belongs to.
+- **The stale confirmation was not exercised in the browser.** `atRevision` one
+  behind is measured in the agent's own suite and this run did not reproduce it
+  on the live site, because doing so needs a dirty draft and every dirty draft
+  on this site this evening belonged partly to somebody else. Import and restore
+  were not exercised either, because they do not exist.
+
+The idm facade cost this run twenty minutes and it is not this design's:
+`users` and `usersByRole` answered with one node, the caller's own, for the
+booklimo machine admin token, and `authorizations` paged the same node fifty
+times against a `totalCount` of 47. The KRC organisation manager token answers
+both correctly. It is the shape of the rule
+`okf/decisions/hard-rules.md` already carries about an empty identity answer,
+seen once more.

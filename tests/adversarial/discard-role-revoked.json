@@ -1,0 +1,76 @@
+{
+  "startedAt": 1788900530.7920206,
+  "gotCustomerToken": true,
+  "roleBefore": {
+    "authorization": {
+      "id": "389619073622742619",
+      "userId": "389619070703507059",
+      "userName": "taxi-test-customer-krc",
+      "roleKeys": ["jaen:admin", "krc:customer"],
+      "state": "AUTHORIZATION_STATE_ACTIVE"
+    }
+  },
+  "previewWithRole": {
+    "data": {
+      "discardPreview": {
+        "revision": 171,
+        "publishedRevision": 171,
+        "canDiscard": false,
+        "reason": "Nothing in the draft differs from the published state.",
+        "pages": 0,
+        "fields": 0
+      }
+    }
+  },
+  "revoke": {
+    "data": {
+      "updateAuthorization": {
+        "ok": true,
+        "message": null,
+        "authorizationId": "389619073622742619"
+      }
+    }
+  },
+  "roleAfter": {
+    "authorization": {
+      "id": "389619073622742619",
+      "userId": "389619070703507059",
+      "userName": "taxi-test-customer-krc",
+      "roleKeys": ["krc:customer"],
+      "state": "AUTHORIZATION_STATE_ACTIVE"
+    }
+  },
+  "previewAfterRevoke": {
+    "errors": [
+      {
+        "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
+        "code": "FORBIDDEN",
+        "statusCode": 403
+      }
+    ],
+    "data": null
+  },
+  "discardAfterRevoke": {
+    "errors": [
+      {
+        "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
+        "code": "FORBIDDEN",
+        "statusCode": 403
+      }
+    ],
+    "data": null
+  },
+  "draftAroundIt": {
+    "before": {
+      "revision": 171,
+      "publishedRevision": 171,
+      "discardedRevision": 171
+    },
+    "after": {
+      "revision": 181,
+      "publishedRevision": 171,
+      "discardedRevision": 171
+    }
+  },
+  "endedAt": 1788900624.7759416
+}

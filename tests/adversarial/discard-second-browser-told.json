@@ -1,0 +1,152 @@
+{
+  "startedAt": 1788900778.875439,
+  "field": "ServicesSubtitle",
+  "signedIn": [true, true],
+  "editing": [true, true],
+  "typed": {
+    "before": "Get a quick overview. See details if you like."
+  },
+  "preview": {
+    "discardPreview": {
+      "revision": 182,
+      "canDiscard": true,
+      "pages": 1,
+      "fields": 1,
+      "editors": [
+        {
+          "name": "Taxi Test Admin"
+        }
+      ]
+    }
+  },
+  "menuItem": true,
+  "discardAt": 1788900809.1833308,
+  "toastsB": [
+    {
+      "afterSeconds": 1.93,
+      "text": "Unveröffentlichte Änderungen verworfen\nTaxi Test Admin hat um 22:53 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand."
+    },
+    {
+      "afterSeconds": 1.93,
+      "text": "Unveröffentlichte Änderungen verworfen"
+    },
+    {
+      "afterSeconds": 1.93,
+      "text": "Taxi Test Admin hat um 22:53 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand."
+    }
+  ],
+  "bState": {
+    "active": true,
+    "outbox": [],
+    "nextId": 1,
+    "saveState": "idle",
+    "connection": "socket",
+    "authors": {
+      "JaenPage //IMA:TextField/AboutP1": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T18:54:06.289Z"
+      },
+      "JaenPage //IMA:TextField/FaqSubtitle": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T18:54:06.289Z"
+      },
+      "JaenPage //IMA:TextField/FeedbackBoxText": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T18:54:06.289Z"
+      },
+      "JaenPage //IMA:TextField/FleetTitle": {
+        "sub": "389619062902101595",
+        "name": "Taxi Test Admin",
+        "at": "2026-09-08T18:17:57.475Z"
+      },
+      "JaenPage //IMA:TextField/ProbeField": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T09:42:05.899Z"
+      },
+      "JaenPage //IMA:TextField/ServicesSubtitle": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T18:54:06.289Z"
+      },
+      "JaenPage //IMA:TextField/ServicesTitle": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T18:54:06.289Z"
+      },
+      "JaenPage //page": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T09:44:25.579Z"
+      }
+    },
+    "lastOverwrote": [],
+    "revision": 183,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "discardedAt": "2026-09-08T20:53:29.319Z",
+    "discardedBy": "Taxi Test Admin"
+  },
+  "objectAfter": {
+    "draft": {
+      "revision": 183,
+      "publishedRevision": 183,
+      "discardedRevision": 183,
+      "delta": {
+        "pages": {
+          "JaenPage /": {
+            "childPages": [],
+            "modifiedAt": "2026-09-08T18:54:06.289Z",
+            "jaenFields": {
+              "IMA:TextField": {
+                "FleetTitle": {
+                  "value": "Our fleet",
+                  "props": {
+                    "id": "FleetTitle"
+                  }
+                },
+                "ServicesTitle": {
+                  "value": "Our services",
+                  "props": {
+                    "id": "ServicesTitle"
+                  }
+                },
+                "ServicesSubtitle": {
+                  "value": "Get a quick overview. See details if you like.",
+                  "props": {
+                    "id": "ServicesSubtitle"
+                  }
+                },
+                "AboutP1": {
+                  "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+                  "props": {
+                    "id": "AboutP1"
+                  }
+                },
+                "FeedbackBoxText": {
+                  "value": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+                  "props": {
+                    "id": "FeedbackBoxText"
+                  }
+                },
+                "FaqSubtitle": {
+                  "value": "Short answers about booking, vehicles and service.",
+                  "props": {
+                    "id": "FaqSubtitle"
+                  }
+                }
+              }
+            },
+            "id": "JaenPage /",
+            "childPagesOrder": [],
+            "jaenPageMetadata": {}
+          }
+        }
+      }
+    }
+  },
+  "endedAt": 1788900845.648188
+}

@@ -1,0 +1,2543 @@
+{
+  "found": true,
+  "revision": 170,
+  "takenAt": "2026-09-08T20:47:54.200Z",
+  "bytes": 26321,
+  "pages": 2,
+  "data": {
+    "pages": [
+      {
+        "childPages": [],
+        "modifiedAt": "2026-09-08T20:43:58.321Z",
+        "jaenFields": {
+          "IMA:TextField": {
+            "FleetTitle": {
+              "value": "Our fleet",
+              "props": {
+                "id": "FleetTitle"
+              }
+            },
+            "ServicesTitle": {
+              "value": "Our services",
+              "props": {
+                "id": "ServicesTitle"
+              }
+            },
+            "ServicesSubtitle": {
+              "value": "Get a quick overview. See details if you like.",
+              "props": {
+                "id": "ServicesSubtitle"
+              }
+            },
+            "AboutP1": {
+              "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+              "props": {
+                "id": "AboutP1"
+              }
+            },
+            "FeedbackBoxText": {
+              "value": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+              "props": {
+                "id": "FeedbackBoxText"
+              }
+            },
+            "FaqSubtitle": {
+              "value": "Short answers about booking, vehicles and service.",
+              "props": {
+                "id": "FaqSubtitle"
+              }
+            }
+          }
+        },
+        "id": "JaenPage /",
+        "childPagesOrder": [],
+        "jaenPageMetadata": {}
+      },
+      {
+        "childPages": [],
+        "modifiedAt": "2026-09-08T20:46:50.422Z",
+        "jaenFields": {
+          "IMA:MdxField": {
+            "documentation": {
+              "value": {
+                "type": "root",
+                "children": [
+                  {
+                    "type": "heading",
+                    "depth": 1,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Imprint",
+                        "position": {
+                          "start": {
+                            "line": 1,
+                            "column": 3,
+                            "offset": 2
+                          },
+                          "end": {
+                            "line": 1,
+                            "column": 10,
+                            "offset": 9
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 1,
+                        "column": 1,
+                        "offset": 0
+                      },
+                      "end": {
+                        "line": 1,
+                        "column": 10,
+                        "offset": 9
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Information required by section 5 of the Austrian E-Commerce Act (ECG) and section 14 of the Austrian Commercial Code (UGB), disclosure required by section 25 of the Austrian Media Act (MedienG).",
+                        "position": {
+                          "start": {
+                            "line": 3,
+                            "column": 1,
+                            "offset": 11
+                          },
+                          "end": {
+                            "line": 3,
+                            "column": 196,
+                            "offset": 206
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 3,
+                        "column": 1,
+                        "offset": 11
+                      },
+                      "end": {
+                        "line": 3,
+                        "column": 196,
+                        "offset": 206
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "strong",
+                        "children": [
+                          {
+                            "type": "text",
+                            "value": "KRC Limousinenservice KG",
+                            "position": {
+                              "start": {
+                                "line": 5,
+                                "column": 3,
+                                "offset": 210
+                              },
+                              "end": {
+                                "line": 5,
+                                "column": 27,
+                                "offset": 234
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 5,
+                            "column": 1,
+                            "offset": 208
+                          },
+                          "end": {
+                            "line": 5,
+                            "column": 29,
+                            "offset": 236
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": "\n",
+                        "position": {
+                          "start": {
+                            "line": 5,
+                            "column": 29,
+                            "offset": 236
+                          },
+                          "end": {
+                            "line": 6,
+                            "column": 1,
+                            "offset": 237
+                          }
+                        }
+                      },
+                      {
+                        "type": "emphasis",
+                        "children": [
+                          {
+                            "type": "text",
+                            "value": "Limited partnership (Kommanditgesellschaft, KG)",
+                            "position": {
+                              "start": {
+                                "line": 6,
+                                "column": 2,
+                                "offset": 238
+                              },
+                              "end": {
+                                "line": 6,
+                                "column": 49,
+                                "offset": 285
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 6,
+                            "column": 1,
+                            "offset": 237
+                          },
+                          "end": {
+                            "line": 6,
+                            "column": 50,
+                            "offset": 286
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 5,
+                        "column": 1,
+                        "offset": 208
+                      },
+                      "end": {
+                        "line": 6,
+                        "column": 50,
+                        "offset": 286
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Registered office and business address",
+                        "position": {
+                          "start": {
+                            "line": 8,
+                            "column": 8,
+                            "offset": 295
+                          },
+                          "end": {
+                            "line": 8,
+                            "column": 46,
+                            "offset": 333
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 8,
+                        "column": 1,
+                        "offset": 288
+                      },
+                      "end": {
+                        "line": 8,
+                        "column": 46,
+                        "offset": 333
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Bürgerspitalwiese 10/18",
+                                "position": {
+                                  "start": {
+                                    "line": 10,
+                                    "column": 3,
+                                    "offset": 337
+                                  },
+                                  "end": {
+                                    "line": 10,
+                                    "column": 26,
+                                    "offset": 360
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 10,
+                                "column": 3,
+                                "offset": 337
+                              },
+                              "end": {
+                                "line": 10,
+                                "column": 26,
+                                "offset": 360
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 10,
+                            "column": 1,
+                            "offset": 335
+                          },
+                          "end": {
+                            "line": 10,
+                            "column": 26,
+                            "offset": 360
+                          }
+                        }
+                      },
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "1110 Vienna, Austria",
+                                "position": {
+                                  "start": {
+                                    "line": 11,
+                                    "column": 3,
+                                    "offset": 363
+                                  },
+                                  "end": {
+                                    "line": 11,
+                                    "column": 23,
+                                    "offset": 383
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 11,
+                                "column": 3,
+                                "offset": 363
+                              },
+                              "end": {
+                                "line": 11,
+                                "column": 23,
+                                "offset": 383
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 11,
+                            "column": 1,
+                            "offset": 361
+                          },
+                          "end": {
+                            "line": 11,
+                            "column": 23,
+                            "offset": 383
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 10,
+                        "column": 1,
+                        "offset": 335
+                      },
+                      "end": {
+                        "line": 11,
+                        "column": 23,
+                        "offset": 383
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Contact",
+                        "position": {
+                          "start": {
+                            "line": 13,
+                            "column": 8,
+                            "offset": 392
+                          },
+                          "end": {
+                            "line": 13,
+                            "column": 15,
+                            "offset": 399
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 13,
+                        "column": 1,
+                        "offset": 385
+                      },
+                      "end": {
+                        "line": 13,
+                        "column": 15,
+                        "offset": 399
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Phone: +43 699 109 983 52",
+                                "position": {
+                                  "start": {
+                                    "line": 15,
+                                    "column": 3,
+                                    "offset": 403
+                                  },
+                                  "end": {
+                                    "line": 15,
+                                    "column": 28,
+                                    "offset": 428
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 15,
+                                "column": 3,
+                                "offset": 403
+                              },
+                              "end": {
+                                "line": 15,
+                                "column": 28,
+                                "offset": 428
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 15,
+                            "column": 1,
+                            "offset": 401
+                          },
+                          "end": {
+                            "line": 15,
+                            "column": 28,
+                            "offset": 428
+                          }
+                        }
+                      },
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "E-mail: ",
+                                "position": {
+                                  "start": {
+                                    "line": 16,
+                                    "column": 3,
+                                    "offset": 431
+                                  },
+                                  "end": {
+                                    "line": 16,
+                                    "column": 11,
+                                    "offset": 439
+                                  }
+                                }
+                              },
+                              {
+                                "type": "link",
+                                "title": null,
+                                "url": "mailto:office@krclimo.at",
+                                "children": [
+                                  {
+                                    "type": "text",
+                                    "value": "office@krclimo.at",
+                                    "position": {
+                                      "start": {
+                                        "line": 16,
+                                        "column": 12,
+                                        "offset": 440
+                                      },
+                                      "end": {
+                                        "line": 16,
+                                        "column": 29,
+                                        "offset": 457
+                                      }
+                                    }
+                                  }
+                                ],
+                                "position": {
+                                  "start": {
+                                    "line": 16,
+                                    "column": 11,
+                                    "offset": 439
+                                  },
+                                  "end": {
+                                    "line": 16,
+                                    "column": 56,
+                                    "offset": 484
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 16,
+                                "column": 3,
+                                "offset": 431
+                              },
+                              "end": {
+                                "line": 16,
+                                "column": 56,
+                                "offset": 484
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 16,
+                            "column": 1,
+                            "offset": 429
+                          },
+                          "end": {
+                            "line": 16,
+                            "column": 56,
+                            "offset": 484
+                          }
+                        }
+                      },
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Web: ",
+                                "position": {
+                                  "start": {
+                                    "line": 17,
+                                    "column": 3,
+                                    "offset": 487
+                                  },
+                                  "end": {
+                                    "line": 17,
+                                    "column": 8,
+                                    "offset": 492
+                                  }
+                                }
+                              },
+                              {
+                                "type": "link",
+                                "title": null,
+                                "url": "https://booklimo.at",
+                                "children": [
+                                  {
+                                    "type": "text",
+                                    "value": "https://booklimo.at",
+                                    "position": {
+                                      "start": {
+                                        "line": 17,
+                                        "column": 9,
+                                        "offset": 493
+                                      },
+                                      "end": {
+                                        "line": 17,
+                                        "column": 28,
+                                        "offset": 512
+                                      }
+                                    }
+                                  }
+                                ],
+                                "position": {
+                                  "start": {
+                                    "line": 17,
+                                    "column": 8,
+                                    "offset": 492
+                                  },
+                                  "end": {
+                                    "line": 17,
+                                    "column": 50,
+                                    "offset": 534
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 17,
+                                "column": 3,
+                                "offset": 487
+                              },
+                              "end": {
+                                "line": 17,
+                                "column": 50,
+                                "offset": 534
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 17,
+                            "column": 1,
+                            "offset": 485
+                          },
+                          "end": {
+                            "line": 17,
+                            "column": 50,
+                            "offset": 534
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 15,
+                        "column": 1,
+                        "offset": 401
+                      },
+                      "end": {
+                        "line": 17,
+                        "column": 50,
+                        "offset": 534
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Companies register and register court",
+                        "position": {
+                          "start": {
+                            "line": 19,
+                            "column": 8,
+                            "offset": 543
+                          },
+                          "end": {
+                            "line": 19,
+                            "column": 45,
+                            "offset": 580
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 19,
+                        "column": 1,
+                        "offset": 536
+                      },
+                      "end": {
+                        "line": 19,
+                        "column": 45,
+                        "offset": 580
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Company register number (FN): ",
+                                "position": {
+                                  "start": {
+                                    "line": 21,
+                                    "column": 3,
+                                    "offset": 584
+                                  },
+                                  "end": {
+                                    "line": 21,
+                                    "column": 33,
+                                    "offset": 614
+                                  }
+                                }
+                              },
+                              {
+                                "type": "strong",
+                                "children": [
+                                  {
+                                    "type": "text",
+                                    "value": "415884 w",
+                                    "position": {
+                                      "start": {
+                                        "line": 21,
+                                        "column": 35,
+                                        "offset": 616
+                                      },
+                                      "end": {
+                                        "line": 21,
+                                        "column": 43,
+                                        "offset": 624
+                                      }
+                                    }
+                                  }
+                                ],
+                                "position": {
+                                  "start": {
+                                    "line": 21,
+                                    "column": 33,
+                                    "offset": 614
+                                  },
+                                  "end": {
+                                    "line": 21,
+                                    "column": 45,
+                                    "offset": 626
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 21,
+                                "column": 3,
+                                "offset": 584
+                              },
+                              "end": {
+                                "line": 21,
+                                "column": 45,
+                                "offset": 626
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 21,
+                            "column": 1,
+                            "offset": 582
+                          },
+                          "end": {
+                            "line": 21,
+                            "column": 45,
+                            "offset": 626
+                          }
+                        }
+                      },
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Register court: Commercial Court of Vienna (Handelsgericht Wien)",
+                                "position": {
+                                  "start": {
+                                    "line": 22,
+                                    "column": 3,
+                                    "offset": 629
+                                  },
+                                  "end": {
+                                    "line": 22,
+                                    "column": 67,
+                                    "offset": 693
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 22,
+                                "column": 3,
+                                "offset": 629
+                              },
+                              "end": {
+                                "line": 22,
+                                "column": 67,
+                                "offset": 693
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 22,
+                            "column": 1,
+                            "offset": 627
+                          },
+                          "end": {
+                            "line": 22,
+                            "column": 67,
+                            "offset": 693
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 21,
+                        "column": 1,
+                        "offset": 582
+                      },
+                      "end": {
+                        "line": 22,
+                        "column": 67,
+                        "offset": 693
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "VAT identification number",
+                        "position": {
+                          "start": {
+                            "line": 24,
+                            "column": 8,
+                            "offset": 702
+                          },
+                          "end": {
+                            "line": 24,
+                            "column": 33,
+                            "offset": 727
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 24,
+                        "column": 1,
+                        "offset": 695
+                      },
+                      "end": {
+                        "line": 24,
+                        "column": 33,
+                        "offset": 727
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "ATU68911136",
+                                "position": {
+                                  "start": {
+                                    "line": 26,
+                                    "column": 3,
+                                    "offset": 731
+                                  },
+                                  "end": {
+                                    "line": 26,
+                                    "column": 14,
+                                    "offset": 742
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 26,
+                                "column": 3,
+                                "offset": 731
+                              },
+                              "end": {
+                                "line": 26,
+                                "column": 14,
+                                "offset": 742
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 26,
+                            "column": 1,
+                            "offset": 729
+                          },
+                          "end": {
+                            "line": 26,
+                            "column": 14,
+                            "offset": 742
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 26,
+                        "column": 1,
+                        "offset": 729
+                      },
+                      "end": {
+                        "line": 26,
+                        "column": 14,
+                        "offset": 742
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Object of the company",
+                        "position": {
+                          "start": {
+                            "line": 28,
+                            "column": 8,
+                            "offset": 751
+                          },
+                          "end": {
+                            "line": 28,
+                            "column": 29,
+                            "offset": 772
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 28,
+                        "column": 1,
+                        "offset": 744
+                      },
+                      "end": {
+                        "line": 28,
+                        "column": 29,
+                        "offset": 772
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Rental car and taxi services",
+                                "position": {
+                                  "start": {
+                                    "line": 30,
+                                    "column": 3,
+                                    "offset": 776
+                                  },
+                                  "end": {
+                                    "line": 30,
+                                    "column": 31,
+                                    "offset": 804
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 30,
+                                "column": 3,
+                                "offset": 776
+                              },
+                              "end": {
+                                "line": 30,
+                                "column": 31,
+                                "offset": 804
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 30,
+                            "column": 1,
+                            "offset": 774
+                          },
+                          "end": {
+                            "line": 30,
+                            "column": 31,
+                            "offset": 804
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 30,
+                        "column": 1,
+                        "offset": 774
+                      },
+                      "end": {
+                        "line": 30,
+                        "column": 31,
+                        "offset": 804
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Persons authorised to represent the company",
+                        "position": {
+                          "start": {
+                            "line": 32,
+                            "column": 8,
+                            "offset": 813
+                          },
+                          "end": {
+                            "line": 32,
+                            "column": 51,
+                            "offset": 856
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 32,
+                        "column": 1,
+                        "offset": 806
+                      },
+                      "end": {
+                        "line": 32,
+                        "column": 51,
+                        "offset": 856
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Koraç Altunok, general partner (Komplementär) with unlimited liability, authorised to represent the company individually",
+                                "position": {
+                                  "start": {
+                                    "line": 34,
+                                    "column": 3,
+                                    "offset": 860
+                                  },
+                                  "end": {
+                                    "line": 34,
+                                    "column": 123,
+                                    "offset": 980
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 34,
+                                "column": 3,
+                                "offset": 860
+                              },
+                              "end": {
+                                "line": 34,
+                                "column": 123,
+                                "offset": 980
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 34,
+                            "column": 1,
+                            "offset": 858
+                          },
+                          "end": {
+                            "line": 34,
+                            "column": 123,
+                            "offset": 980
+                          }
+                        }
+                      },
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Trade law managing director: Koraç Altunok",
+                                "position": {
+                                  "start": {
+                                    "line": 35,
+                                    "column": 3,
+                                    "offset": 983
+                                  },
+                                  "end": {
+                                    "line": 35,
+                                    "column": 45,
+                                    "offset": 1025
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 35,
+                                "column": 3,
+                                "offset": 983
+                              },
+                              "end": {
+                                "line": 35,
+                                "column": 45,
+                                "offset": 1025
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 35,
+                            "column": 1,
+                            "offset": 981
+                          },
+                          "end": {
+                            "line": 35,
+                            "column": 45,
+                            "offset": 1025
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 34,
+                        "column": 1,
+                        "offset": 858
+                      },
+                      "end": {
+                        "line": 35,
+                        "column": 45,
+                        "offset": 1025
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Trade licence and applicable regulations",
+                        "position": {
+                          "start": {
+                            "line": 37,
+                            "column": 8,
+                            "offset": 1034
+                          },
+                          "end": {
+                            "line": 37,
+                            "column": 48,
+                            "offset": 1074
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 37,
+                        "column": 1,
+                        "offset": 1027
+                      },
+                      "end": {
+                        "line": 37,
+                        "column": 48,
+                        "offset": 1074
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Passenger transport by motor car (rental car and taxi trade), granted in Austria",
+                                "position": {
+                                  "start": {
+                                    "line": 39,
+                                    "column": 3,
+                                    "offset": 1078
+                                  },
+                                  "end": {
+                                    "line": 39,
+                                    "column": 83,
+                                    "offset": 1158
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 39,
+                                "column": 3,
+                                "offset": 1078
+                              },
+                              "end": {
+                                "line": 39,
+                                "column": 83,
+                                "offset": 1158
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 39,
+                            "column": 1,
+                            "offset": 1076
+                          },
+                          "end": {
+                            "line": 39,
+                            "column": 83,
+                            "offset": 1158
+                          }
+                        }
+                      },
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Austrian Trade Act 1994 (Gewerbeordnung 1994) and Occasional Transport Act 1996 (Gelegenheitsverkehrs-Gesetz 1996), available at ",
+                                "position": {
+                                  "start": {
+                                    "line": 40,
+                                    "column": 3,
+                                    "offset": 1161
+                                  },
+                                  "end": {
+                                    "line": 40,
+                                    "column": 132,
+                                    "offset": 1290
+                                  }
+                                }
+                              },
+                              {
+                                "type": "link",
+                                "title": null,
+                                "url": "https://www.ris.bka.gv.at",
+                                "children": [
+                                  {
+                                    "type": "text",
+                                    "value": "https://www.ris.bka.gv.at",
+                                    "position": {
+                                      "start": {
+                                        "line": 40,
+                                        "column": 133,
+                                        "offset": 1291
+                                      },
+                                      "end": {
+                                        "line": 40,
+                                        "column": 158,
+                                        "offset": 1316
+                                      }
+                                    }
+                                  }
+                                ],
+                                "position": {
+                                  "start": {
+                                    "line": 40,
+                                    "column": 132,
+                                    "offset": 1290
+                                  },
+                                  "end": {
+                                    "line": 40,
+                                    "column": 186,
+                                    "offset": 1344
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 40,
+                                "column": 3,
+                                "offset": 1161
+                              },
+                              "end": {
+                                "line": 40,
+                                "column": 186,
+                                "offset": 1344
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 40,
+                            "column": 1,
+                            "offset": 1159
+                          },
+                          "end": {
+                            "line": 40,
+                            "column": 186,
+                            "offset": 1344
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 39,
+                        "column": 1,
+                        "offset": 1076
+                      },
+                      "end": {
+                        "line": 40,
+                        "column": 186,
+                        "offset": 1344
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Supervisory and licensing authority",
+                        "position": {
+                          "start": {
+                            "line": 42,
+                            "column": 8,
+                            "offset": 1353
+                          },
+                          "end": {
+                            "line": 42,
+                            "column": 43,
+                            "offset": 1388
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 42,
+                        "column": 1,
+                        "offset": 1346
+                      },
+                      "end": {
+                        "line": 42,
+                        "column": 43,
+                        "offset": 1388
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Municipal administration of the City of Vienna (Magistrat der Stadt Wien)",
+                                "position": {
+                                  "start": {
+                                    "line": 44,
+                                    "column": 3,
+                                    "offset": 1392
+                                  },
+                                  "end": {
+                                    "line": 44,
+                                    "column": 76,
+                                    "offset": 1465
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 44,
+                                "column": 3,
+                                "offset": 1392
+                              },
+                              "end": {
+                                "line": 44,
+                                "column": 76,
+                                "offset": 1465
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 44,
+                            "column": 1,
+                            "offset": 1390
+                          },
+                          "end": {
+                            "line": 44,
+                            "column": 76,
+                            "offset": 1465
+                          }
+                        }
+                      },
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "District office for the 11th district [to be confirmed by the owner]",
+                                "position": {
+                                  "start": {
+                                    "line": 45,
+                                    "column": 3,
+                                    "offset": 1468
+                                  },
+                                  "end": {
+                                    "line": 45,
+                                    "column": 72,
+                                    "offset": 1537
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 45,
+                                "column": 3,
+                                "offset": 1468
+                              },
+                              "end": {
+                                "line": 45,
+                                "column": 72,
+                                "offset": 1537
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 45,
+                            "column": 1,
+                            "offset": 1466
+                          },
+                          "end": {
+                            "line": 45,
+                            "column": 72,
+                            "offset": 1537
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 44,
+                        "column": 1,
+                        "offset": 1390
+                      },
+                      "end": {
+                        "line": 45,
+                        "column": 72,
+                        "offset": 1537
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 6,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Chamber membership",
+                        "position": {
+                          "start": {
+                            "line": 47,
+                            "column": 8,
+                            "offset": 1546
+                          },
+                          "end": {
+                            "line": 47,
+                            "column": 26,
+                            "offset": 1564
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 47,
+                        "column": 1,
+                        "offset": 1539
+                      },
+                      "end": {
+                        "line": 47,
+                        "column": 26,
+                        "offset": 1564
+                      }
+                    }
+                  },
+                  {
+                    "type": "list",
+                    "ordered": false,
+                    "start": null,
+                    "spread": false,
+                    "children": [
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Vienna Chamber of Commerce (Wirtschaftskammer Wien)",
+                                "position": {
+                                  "start": {
+                                    "line": 49,
+                                    "column": 3,
+                                    "offset": 1568
+                                  },
+                                  "end": {
+                                    "line": 49,
+                                    "column": 54,
+                                    "offset": 1619
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 49,
+                                "column": 3,
+                                "offset": 1568
+                              },
+                              "end": {
+                                "line": 49,
+                                "column": 54,
+                                "offset": 1619
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 49,
+                            "column": 1,
+                            "offset": 1566
+                          },
+                          "end": {
+                            "line": 49,
+                            "column": 54,
+                            "offset": 1619
+                          }
+                        }
+                      },
+                      {
+                        "type": "listItem",
+                        "spread": false,
+                        "checked": null,
+                        "children": [
+                          {
+                            "type": "paragraph",
+                            "children": [
+                              {
+                                "type": "text",
+                                "value": "Vienna trade group for passenger transport by motor car (Fachgruppe Wien der Beförderungsgewerbe mit Personenkraftwagen)",
+                                "position": {
+                                  "start": {
+                                    "line": 50,
+                                    "column": 3,
+                                    "offset": 1622
+                                  },
+                                  "end": {
+                                    "line": 50,
+                                    "column": 123,
+                                    "offset": 1742
+                                  }
+                                }
+                              }
+                            ],
+                            "position": {
+                              "start": {
+                                "line": 50,
+                                "column": 3,
+                                "offset": 1622
+                              },
+                              "end": {
+                                "line": 50,
+                                "column": 123,
+                                "offset": 1742
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 50,
+                            "column": 1,
+                            "offset": 1620
+                          },
+                          "end": {
+                            "line": 50,
+                            "column": 123,
+                            "offset": 1742
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 49,
+                        "column": 1,
+                        "offset": 1566
+                      },
+                      "end": {
+                        "line": 50,
+                        "column": 123,
+                        "offset": 1742
+                      }
+                    }
+                  },
+                  {
+                    "type": "thematicBreak",
+                    "position": {
+                      "start": {
+                        "line": 52,
+                        "column": 1,
+                        "offset": 1744
+                      },
+                      "end": {
+                        "line": 52,
+                        "column": 4,
+                        "offset": 1747
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Disclosure under section 25 of the Austrian Media Act",
+                        "position": {
+                          "start": {
+                            "line": 54,
+                            "column": 4,
+                            "offset": 1752
+                          },
+                          "end": {
+                            "line": 54,
+                            "column": 57,
+                            "offset": 1805
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 54,
+                        "column": 1,
+                        "offset": 1749
+                      },
+                      "end": {
+                        "line": 54,
+                        "column": 57,
+                        "offset": 1805
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "strong",
+                        "children": [
+                          {
+                            "type": "text",
+                            "value": "Media owner, editor, publisher and producer",
+                            "position": {
+                              "start": {
+                                "line": 56,
+                                "column": 3,
+                                "offset": 1809
+                              },
+                              "end": {
+                                "line": 56,
+                                "column": 46,
+                                "offset": 1852
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 56,
+                            "column": 1,
+                            "offset": 1807
+                          },
+                          "end": {
+                            "line": 56,
+                            "column": 48,
+                            "offset": 1854
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": ": KRC Limousinenservice KG, Bürgerspitalwiese 10/18, 1110 Vienna, Austria.",
+                        "position": {
+                          "start": {
+                            "line": 56,
+                            "column": 48,
+                            "offset": 1854
+                          },
+                          "end": {
+                            "line": 56,
+                            "column": 122,
+                            "offset": 1928
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 56,
+                        "column": 1,
+                        "offset": 1807
+                      },
+                      "end": {
+                        "line": 56,
+                        "column": 122,
+                        "offset": 1928
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "strong",
+                        "children": [
+                          {
+                            "type": "text",
+                            "value": "Editorial office",
+                            "position": {
+                              "start": {
+                                "line": 58,
+                                "column": 3,
+                                "offset": 1932
+                              },
+                              "end": {
+                                "line": 58,
+                                "column": 19,
+                                "offset": 1948
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 58,
+                            "column": 1,
+                            "offset": 1930
+                          },
+                          "end": {
+                            "line": 58,
+                            "column": 21,
+                            "offset": 1950
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": ": see business address.",
+                        "position": {
+                          "start": {
+                            "line": 58,
+                            "column": 21,
+                            "offset": 1950
+                          },
+                          "end": {
+                            "line": 58,
+                            "column": 44,
+                            "offset": 1973
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 58,
+                        "column": 1,
+                        "offset": 1930
+                      },
+                      "end": {
+                        "line": 58,
+                        "column": 44,
+                        "offset": 1973
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "strong",
+                        "children": [
+                          {
+                            "type": "text",
+                            "value": "Editorial policy",
+                            "position": {
+                              "start": {
+                                "line": 60,
+                                "column": 3,
+                                "offset": 1977
+                              },
+                              "end": {
+                                "line": 60,
+                                "column": 19,
+                                "offset": 1993
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 60,
+                            "column": 1,
+                            "offset": 1975
+                          },
+                          "end": {
+                            "line": 60,
+                            "column": 21,
+                            "offset": 1995
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": ": information about KRC Limousinenservice KG, its vehicles and its services in passenger transport, and the booking of those services. Beyond that this website pursues no political, ideological or religious purpose.",
+                        "position": {
+                          "start": {
+                            "line": 60,
+                            "column": 21,
+                            "offset": 1995
+                          },
+                          "end": {
+                            "line": 60,
+                            "column": 236,
+                            "offset": 2210
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 60,
+                        "column": 1,
+                        "offset": 1975
+                      },
+                      "end": {
+                        "line": 60,
+                        "column": 236,
+                        "offset": 2210
+                      }
+                    }
+                  },
+                  {
+                    "type": "thematicBreak",
+                    "position": {
+                      "start": {
+                        "line": 62,
+                        "column": 1,
+                        "offset": 2212
+                      },
+                      "end": {
+                        "line": 62,
+                        "column": 4,
+                        "offset": 2215
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Online dispute resolution and consumer arbitration",
+                        "position": {
+                          "start": {
+                            "line": 64,
+                            "column": 4,
+                            "offset": 2220
+                          },
+                          "end": {
+                            "line": 64,
+                            "column": 54,
+                            "offset": 2270
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 64,
+                        "column": 1,
+                        "offset": 2217
+                      },
+                      "end": {
+                        "line": 64,
+                        "column": 54,
+                        "offset": 2270
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "The European Commission provides a platform for online dispute resolution (ODR): ",
+                        "position": {
+                          "start": {
+                            "line": 66,
+                            "column": 1,
+                            "offset": 2272
+                          },
+                          "end": {
+                            "line": 66,
+                            "column": 82,
+                            "offset": 2353
+                          }
+                        }
+                      },
+                      {
+                        "type": "link",
+                        "title": null,
+                        "url": "https://ec.europa.eu/consumers/odr",
+                        "children": [
+                          {
+                            "type": "text",
+                            "value": "https://ec.europa.eu/consumers/odr",
+                            "position": {
+                              "start": {
+                                "line": 66,
+                                "column": 83,
+                                "offset": 2354
+                              },
+                              "end": {
+                                "line": 66,
+                                "column": 117,
+                                "offset": 2388
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 66,
+                            "column": 82,
+                            "offset": 2353
+                          },
+                          "end": {
+                            "line": 66,
+                            "column": 154,
+                            "offset": 2425
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": ". Our e-mail address for complaints is stated above under Contact.",
+                        "position": {
+                          "start": {
+                            "line": 66,
+                            "column": 154,
+                            "offset": 2425
+                          },
+                          "end": {
+                            "line": 66,
+                            "column": 220,
+                            "offset": 2491
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 66,
+                        "column": 1,
+                        "offset": 2272
+                      },
+                      "end": {
+                        "line": 66,
+                        "column": 220,
+                        "offset": 2491
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "We are neither obliged nor willing to take part in dispute resolution proceedings before a consumer arbitration body under the Austrian Alternative Dispute Resolution Act (AStG), unless we are required to do so by law.",
+                        "position": {
+                          "start": {
+                            "line": 68,
+                            "column": 1,
+                            "offset": 2493
+                          },
+                          "end": {
+                            "line": 68,
+                            "column": 219,
+                            "offset": 2711
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 68,
+                        "column": 1,
+                        "offset": 2493
+                      },
+                      "end": {
+                        "line": 68,
+                        "column": 219,
+                        "offset": 2711
+                      }
+                    }
+                  },
+                  {
+                    "type": "thematicBreak",
+                    "position": {
+                      "start": {
+                        "line": 70,
+                        "column": 1,
+                        "offset": 2713
+                      },
+                      "end": {
+                        "line": 70,
+                        "column": 4,
+                        "offset": 2716
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Liability for the content of this website",
+                        "position": {
+                          "start": {
+                            "line": 72,
+                            "column": 4,
+                            "offset": 2721
+                          },
+                          "end": {
+                            "line": 72,
+                            "column": 45,
+                            "offset": 2762
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 72,
+                        "column": 1,
+                        "offset": 2718
+                      },
+                      "end": {
+                        "line": 72,
+                        "column": 45,
+                        "offset": 2762
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "We prepare the content of this website with the greatest possible care and endeavour to provide correct and current information. We cannot guarantee that the content is accurate, complete or up to date. As a service provider we are not obliged under sections 13 to 17 ECG to monitor third party information transmitted or stored by us, or to investigate circumstances that indicate unlawful activity.",
+                        "position": {
+                          "start": {
+                            "line": 74,
+                            "column": 1,
+                            "offset": 2764
+                          },
+                          "end": {
+                            "line": 74,
+                            "column": 401,
+                            "offset": 3164
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 74,
+                        "column": 1,
+                        "offset": 2764
+                      },
+                      "end": {
+                        "line": 74,
+                        "column": 401,
+                        "offset": 3164
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "If you notice content on this website that infringes applicable law, please write to ",
+                        "position": {
+                          "start": {
+                            "line": 76,
+                            "column": 1,
+                            "offset": 3166
+                          },
+                          "end": {
+                            "line": 76,
+                            "column": 86,
+                            "offset": 3251
+                          }
+                        }
+                      },
+                      {
+                        "type": "link",
+                        "title": null,
+                        "url": "mailto:office@krclimo.at",
+                        "children": [
+                          {
+                            "type": "text",
+                            "value": "office@krclimo.at",
+                            "position": {
+                              "start": {
+                                "line": 76,
+                                "column": 87,
+                                "offset": 3252
+                              },
+                              "end": {
+                                "line": 76,
+                                "column": 104,
+                                "offset": 3269
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 76,
+                            "column": 86,
+                            "offset": 3251
+                          },
+                          "end": {
+                            "line": 76,
+                            "column": 131,
+                            "offset": 3296
+                          }
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": ". We remove unlawful content without delay once we become aware of it.",
+                        "position": {
+                          "start": {
+                            "line": 76,
+                            "column": 131,
+                            "offset": 3296
+                          },
+                          "end": {
+                            "line": 76,
+                            "column": 201,
+                            "offset": 3366
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 76,
+                        "column": 1,
+                        "offset": 3166
+                      },
+                      "end": {
+                        "line": 76,
+                        "column": 201,
+                        "offset": 3366
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Liability for links on this website",
+                        "position": {
+                          "start": {
+                            "line": 78,
+                            "column": 4,
+                            "offset": 3371
+                          },
+                          "end": {
+                            "line": 78,
+                            "column": 39,
+                            "offset": 3406
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 78,
+                        "column": 1,
+                        "offset": 3368
+                      },
+                      "end": {
+                        "line": 78,
+                        "column": 39,
+                        "offset": 3406
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "This website contains links to third party websites over whose content we have no influence. The respective provider is solely responsible for that external content. No infringement was apparent at the time the links were set. Permanent monitoring of linked pages is not reasonable without concrete evidence of an infringement. We remove a link without delay once we become aware of an infringement.",
+                        "position": {
+                          "start": {
+                            "line": 80,
+                            "column": 1,
+                            "offset": 3408
+                          },
+                          "end": {
+                            "line": 80,
+                            "column": 400,
+                            "offset": 3807
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 80,
+                        "column": 1,
+                        "offset": 3408
+                      },
+                      "end": {
+                        "line": 80,
+                        "column": 400,
+                        "offset": 3807
+                      }
+                    }
+                  },
+                  {
+                    "type": "heading",
+                    "depth": 2,
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "Copyright",
+                        "position": {
+                          "start": {
+                            "line": 82,
+                            "column": 4,
+                            "offset": 3812
+                          },
+                          "end": {
+                            "line": 82,
+                            "column": 13,
+                            "offset": 3821
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 82,
+                        "column": 1,
+                        "offset": 3809
+                      },
+                      "end": {
+                        "line": 82,
+                        "column": 13,
+                        "offset": 3821
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "The content of this website, in particular texts, photographs, graphics, logos and layout, is protected by copyright. Any use beyond the limits of the Austrian Copyright Act requires our prior written consent. Downloads and copies of this page are permitted for private, non commercial use only.",
+                        "position": {
+                          "start": {
+                            "line": 84,
+                            "column": 1,
+                            "offset": 3823
+                          },
+                          "end": {
+                            "line": 84,
+                            "column": 296,
+                            "offset": 4118
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 84,
+                        "column": 1,
+                        "offset": 3823
+                      },
+                      "end": {
+                        "line": 84,
+                        "column": 296,
+                        "offset": 4118
+                      }
+                    }
+                  },
+                  {
+                    "type": "thematicBreak",
+                    "position": {
+                      "start": {
+                        "line": 86,
+                        "column": 1,
+                        "offset": 4120
+                      },
+                      "end": {
+                        "line": 86,
+                        "column": 4,
+                        "offset": 4123
+                      }
+                    }
+                  },
+                  {
+                    "type": "paragraph",
+                    "children": [
+                      {
+                        "type": "emphasis",
+                        "children": [
+                          {
+                            "type": "text",
+                            "value": "Last updated: 7 September 2026",
+                            "position": {
+                              "start": {
+                                "line": 88,
+                                "column": 2,
+                                "offset": 4126
+                              },
+                              "end": {
+                                "line": 88,
+                                "column": 32,
+                                "offset": 4156
+                              }
+                            }
+                          }
+                        ],
+                        "position": {
+                          "start": {
+                            "line": 88,
+                            "column": 1,
+                            "offset": 4125
+                          },
+                          "end": {
+                            "line": 88,
+                            "column": 33,
+                            "offset": 4157
+                          }
+                        }
+                      }
+                    ],
+                    "position": {
+                      "start": {
+                        "line": 88,
+                        "column": 1,
+                        "offset": 4125
+                      },
+                      "end": {
+                        "line": 88,
+                        "column": 33,
+                        "offset": 4157
+                      }
+                    }
+                  }
+                ],
+                "position": {
+                  "start": {
+                    "line": 1,
+                    "column": 1,
+                    "offset": 0
+                  },
+                  "end": {
+                    "line": 89,
+                    "column": 1,
+                    "offset": 4158
+                  }
+                }
+              },
+              "props": {}
+            }
+          }
+        },
+        "id": "JaenPage /imprint/"
+      }
+    ],
+    "site": {
+      "siteMetadata": {}
+    },
+    "widgets": []
+  }
+}
