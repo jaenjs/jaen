@@ -919,6 +919,37 @@ would drop the agent's two publish commits. The orchestrator pushes.
   still unexercised.
 - **The blur to paint gap**, 24.3 ms against one frame, unchanged and unfixed.
 
+## Three operations that rewrite the shared draft
+
+Import, discard and restore are one kind of thing: an act that changes the
+draft for everybody at once. All three snapshot first, push to every
+editor, and invalidate the outboxes, because a browser that folds its
+unsent changes back on top would otherwise resurrect part of what was
+just undone. The invalidation is a revision the operation carries, and a
+client at or below it drops its outbox and its local copy instead of
+reapplying them.
+
+**Import of a patch, the default.** A migration file only ever carried
+what its publish changed, so a missing field means no opinion and never a
+deletion. The file is compared against the draft and only the fields that
+differ are written, which makes importing a file that mostly matches
+almost free: no writes, no revision bump, no push. Applying a patch to
+the draft is the same operation the build performs when it replays the
+chain, so it uses the very reducer the browser and the build share.
+
+**Restore from a snapshot, explicit.** There a missing page may mean the
+page was deleted, so it is a mode you have to ask for, it says what it
+will remove before it does it, and it snapshots first.
+
+**Discard.** Per browser discard stops meaning anything once a draft is
+shared, because a change reaches the object in a second or two. What the
+button becomes is "Discard all unpublished changes", site wide, an
+admin's, behind a confirmation that names what will go: how many pages,
+whose edits, since when. The published state is restored from the
+snapshot publish keeps rather than by replaying the chain, so the result
+is exactly what the last migration produced. The other editors are told
+who discarded and when, not merely reverted under their hands.
+
 ## Acceptance
 
 - Two editors on booklimo: a change in one reaches the other in under two
@@ -934,6 +965,10 @@ would drop the agent's two publish commits. The orchestrator pushes.
   the object restarted between two saves.
 - With the agent option removed the CMS still works on `localStorage`
   alone, which is the rollback.
+- Discard exists, is site wide, is undoable from its snapshot, and leaves
+  no editor's outbox to resurrect what it removed.
+- Importing a patch writes only the fields that differ and deletes
+  nothing.
 
 ### Where the acceptance stands, 2026-09-08 after the deploy
 
