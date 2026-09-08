@@ -51,6 +51,10 @@ import path from 'node:path'
 import test, {after, before} from 'node:test'
 import {fileURLToPath} from 'node:url'
 
+import deepmerge from 'deepmerge'
+
+import {deepmergeArrayIdMerge} from '../src/deepmerge.ts'
+
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const PACKAGE = path.resolve(HERE, '..')
 
@@ -102,6 +106,8 @@ const taxiVars = readEnvFile(
 const ADMIN = tokens.TAXI_TOKEN_ADMIN_BOOKLIMO ?? ''
 const CUSTOMER = tokens.TAXI_TOKEN_CUSTOMER_BOOKLIMO ?? ''
 const FOREIGN = tokens.TAXI_TOKEN_ADMIN ?? ''
+/** osg-krc, the KRC organisation's storage machine user. See the before hook. */
+const OSG_TOKEN = tokens.OSG_TOKEN_BOOKLIMO ?? ''
 
 const githubToken = (): string =>
   execFileSync('gh', ['auth', 'token'], {encoding: 'utf8'}).trim()
@@ -112,6 +118,7 @@ for (const [name, value] of Object.entries({
   TAXI_TOKEN_ADMIN_BOOKLIMO: ADMIN,
   TAXI_TOKEN_CUSTOMER_BOOKLIMO: CUSTOMER,
   TAXI_TOKEN_ADMIN: FOREIGN,
+  OSG_TOKEN_BOOKLIMO: OSG_TOKEN,
   AUTH_ISSUER: taxiVars.AUTH_ISSUER,
   AUTH_KEY: taxiVars.AUTH_KEY,
   'gh auth token': GITHUB_TOKEN
@@ -141,7 +148,10 @@ const gh = async (route: string, init?: RequestInit): Promise<any> => {
 
   if (!res.ok) {
     throw new Error(
-      `github ${route} answered ${res.status}: ${JSON.stringify(json).slice(0, 300)}`
+      `github ${route} answered ${res.status}: ${JSON.stringify(json).slice(
+        0,
+        300
+      )}`
     )
   }
 
@@ -187,8 +197,12 @@ const VIEWER = `query V($site: String!) {
   viewer(site: $site) { site sub name at }
 }`
 
-const PUBLISH = `mutation P($site: String!) {
-  publish(site: $site) { queued headSha workflow runUrl reason }
+const PUBLISH = `mutation P($site: String!, $message: String) {
+  publish(site: $site, message: $message) {
+    published revision publishedRevision
+    migrationUrl migrationBytes commitSha commitUrl publishedAt
+    queued workflow runUrl reason
+  }
 }`
 
 const errorCode = (answer: {errors?: any[]}): string | undefined =>
@@ -244,6 +258,12 @@ before(async () => {
       // and the lookup is only reached when the caller's token asserts no
       // roles at all.
       `ORG_USER_MANAGER_TOKEN=${ADMIN}`,
+      // The brand's storage machine user, osg-krc, which holds storage:write.
+      // Introspected at accounts.netsnek.com before this suite was written
+      // rather than tried: active, organisation 356348844407002709,
+      // storage:read, storage:write, storage:sign. Never the build user
+      // osg-build-krc, which holds storage:read alone and cannot upload.
+      `OSG_TOKEN_BOOKLIMO=${OSG_TOKEN}`,
       ''
     ].join('\n'),
     {mode: 0o600}
@@ -257,7 +277,8 @@ before(async () => {
       organizationId: ORG_BOOKLIMO,
       projectIds: ['268283277977065078'],
       adminRole: 'jaen:admin',
-      iamApiUrl: 'https://idm.booklimo.at/graphql'
+      iamApiUrl: 'https://idm.booklimo.at/graphql',
+      osgTokenVar: 'OSG_TOKEN_BOOKLIMO'
     }
   })
 
@@ -505,20 +526,6 @@ test('a stale save is rebased onto the current head, not rejected', async () => 
   assert.ok(fieldValue(read.data.draft.data, 'agentTestOne'))
 })
 
-test('publish commits nothing and says so when the site has no workflow', async () => {
-  const before_ = (await call(DRAFT, {site: SITE}, ADMIN)).data.draft.headSha
-
-  const answer = await call(PUBLISH, {site: SITE}, ADMIN)
-
-  assert.equal(answer.errors, undefined)
-  assert.equal(answer.data.publish.queued, false)
-  assert.ok(answer.data.publish.reason)
-
-  const after_ = (await call(DRAFT, {site: SITE}, ADMIN)).data.draft.headSha
-
-  assert.equal(after_, before_)
-})
-
 // --------------------------------------------------------------------------
 // The warm up call
 // --------------------------------------------------------------------------
@@ -742,4 +749,289 @@ test('patches.txt ends with live.json and then live-media.json', async () => {
   // Exactly once each, or the build would read the same file twice.
   assert.equal(lines.filter(l => l === 'live.json').length, 1)
   assert.equal(lines.filter(l => l === 'live-media.json').length, 1)
+})
+
+// --------------------------------------------------------------------------
+// Publish: the only writer of history
+// --------------------------------------------------------------------------
+//
+// What these prove, which is the acceptance list of
+// docs/architecture/draft-state.md: a publish produces exactly one gateway
+// file and one commit, the line it appends is the only change to
+// patches.txt, the chain still replays afterwards, and a second publish
+// appends rather than replacing.
+//
+// The draft is seeded through the agent's own `save`, which writes the site's
+// Durable Object and no repository at all. That is the point of the whole
+// design and it is worth asserting on its own: the seeding below moves the
+// branch head by nothing, and every commit these tests see was made by a
+// publish.
+//
+// **Two files reach the live storage gateway per run and stay there.** The
+// gateway has no delete, so this suite uploads the smallest thing that proves
+// the path: a migration carrying the marker field below and whatever the
+// site's draft object holds, which on a fresh object is only what these tests
+// saved into it. They are owned by the KRC organisation, stamped from the
+// token that sent them, and readable by nobody outside it.
+
+const PUBLISH_FIELD = 'agentPublishMarker'
+
+/**
+ * The save document this section drives, declared here rather than reused
+ * from the top of the file.
+ *
+ * These tests are about publish and must not fail because the draft half's
+ * own document moved: a save answers the object's revision now and no commit
+ * sha, and the selection below is the whole of what seeding needs.
+ */
+const SAVE_INTO_DRAFT = `mutation SD($site: String!, $changes: [SaveChangesInput!]!, $baseRevision: Number) {
+  save(site: $site, changes: $changes, baseRevision: $baseRevision) {
+    revision savedAt rebased
+  }
+}`
+
+/** One field write into the site's draft object. No repository is touched. */
+const seedDraft = async (marker: string): Promise<number> => {
+  const answer = await call(
+    SAVE_INTO_DRAFT,
+    {
+      site: SITE,
+      changes: [
+        {
+          kind: 'fieldWrite',
+          pageId: PAGE,
+          fieldType: FIELD_TYPE,
+          fieldName: PUBLISH_FIELD,
+          value: marker,
+          at: new Date().toISOString()
+        }
+      ],
+      baseRevision: null
+    },
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+
+  return answer.data.save.revision
+}
+
+const patchLines = async (): Promise<string[]> => {
+  const file = await gh(
+    `/repos/${REPOSITORY}/contents/jaen-data%2Fpatches.txt?ref=${BRANCH}`
+  )
+
+  return Buffer.from(file.content, 'base64')
+    .toString('utf8')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+}
+
+const branchHead = async (): Promise<string> =>
+  (await gh(`/repos/${REPOSITORY}/git/ref/heads/${BRANCH}`)).object.sha
+
+const commitsBetween = async (from: string, to: string): Promise<any[]> =>
+  (await gh(`/repos/${REPOSITORY}/compare/${from}...${to}`)).commits ?? []
+
+/** A gateway file, read with the site's own storage credential. */
+const readGatewayJson = async (url: string): Promise<any> => {
+  const res = await fetch(url, {
+    headers: {Authorization: `Bearer ${OSG_TOKEN}`, 'User-Agent': UA}
+  })
+
+  assert.equal(res.status, 200, `${url} reads back ${res.status}`)
+
+  return JSON.parse(await res.text())
+}
+
+/**
+ * The chain, replayed the way `gatsby-source-jaen` replays it.
+ *
+ * A remote line is fetched off the gateway with the site's own credential, a
+ * local line is read out of `jaen-data/` on the branch, and each payload's
+ * `data` is deepmerged onto the accumulated one under the two options the
+ * build uses: `deepmergeArrayIdMerge` and the `IMA:MdxField` customMerge. It
+ * is a copy of that loop and not an import of it, because the build's own
+ * module reaches for gatsby's reporter and its cache.
+ */
+const replayChain = async (lines: string[]): Promise<any> => {
+  let merged: any = {pages: [], site: {}, widgets: []}
+
+  for (const line of lines) {
+    if (line.startsWith('#')) continue
+
+    let payload: any
+
+    if (/^https?:\/\//.test(line)) {
+      payload = await readGatewayJson(line)
+    } else {
+      const file = await gh(
+        `/repos/${REPOSITORY}/contents/${encodeURIComponent(
+          `jaen-data/${line}`
+        )}?ref=${BRANCH}`
+      )
+
+      payload = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'))
+    }
+
+    merged = deepmerge(merged, payload.data, {
+      arrayMerge: deepmergeArrayIdMerge,
+      customMerge: (key: string) =>
+        key === 'IMA:MdxField'
+          ? (target: any, source: any) => ({...target, ...source})
+          : undefined
+    })
+  }
+
+  return merged
+}
+
+const publishedField = (data: any): unknown =>
+  data?.pages?.find((page: any) => page.id === PAGE)?.jaenFields?.[
+    FIELD_TYPE
+  ]?.[PUBLISH_FIELD]?.value
+
+let firstMigrationUrl = ''
+
+test('a save into the draft moves no branch and writes no commit', async () => {
+  const headBefore = await branchHead()
+
+  await seedDraft('published one')
+
+  assert.equal(await branchHead(), headBefore)
+})
+
+test('a publish writes one gateway file, one line and one commit', async () => {
+  const linesBefore = await patchLines()
+  const headBefore = await branchHead()
+
+  const answer = await call(
+    PUBLISH,
+    {site: SITE, message: 'the first publish of the test branch'},
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+
+  const result = answer.data.publish
+
+  assert.equal(result.published, true)
+  assert.ok(typeof result.revision === 'number' && result.revision > 0)
+  assert.equal(result.publishedRevision, result.revision)
+  assert.match(result.migrationUrl, /^https:\/\/osg\.[^/]+\/storage\/.+/)
+  assert.match(result.commitSha, /^[0-9a-f]{40}$/)
+  assert.ok(result.migrationBytes > 0)
+
+  firstMigrationUrl = result.migrationUrl
+
+  // One file on the gateway, in jaen's own patch shape.
+  const migration = await readGatewayJson(result.migrationUrl)
+
+  assert.equal(migration.message, 'the first publish of the test branch')
+  assert.ok(migration.createdAt)
+  assert.deepEqual(Object.keys(migration).sort(), [
+    'createdAt',
+    'data',
+    'message'
+  ])
+  // The build downloads every gateway file the data names into public/osg/,
+  // so a patch payload is served to anybody. A migration therefore carries no
+  // authors even though the draft it was taken from holds them per field.
+  assert.equal('authors' in migration, false)
+  assert.equal(publishedField(migration.data), 'published one')
+
+  // One line, appended, and nothing else about the file touched.
+  assert.deepEqual(await patchLines(), [...linesBefore, result.migrationUrl])
+
+  // One commit, in the publishing editor's name.
+  const commits = await commitsBetween(headBefore, await branchHead())
+
+  assert.equal(commits.length, 1)
+  assert.equal(commits[0].sha, result.commitSha)
+  assert.match(commits[0].commit.message, /^jaen: publish /)
+  assert.ok(commits[0].commit.message.includes(result.migrationUrl))
+  assert.equal(
+    commits[0].files === undefined || commits[0].files.length <= 1,
+    true
+  )
+
+  const viewer = await call(VIEWER, {site: SITE}, ADMIN)
+
+  assert.equal(commits[0].commit.author.name, viewer.data.viewer.name)
+  assert.equal(commits[0].commit.committer.name, 'jaen-agent')
+})
+
+test('a publish with nothing new writes no file, no line and no commit', async () => {
+  const linesBefore = await patchLines()
+  const headBefore = await branchHead()
+
+  const answer = await call(PUBLISH, {site: SITE}, ADMIN)
+
+  assert.equal(answer.errors, undefined)
+  assert.equal(answer.data.publish.published, false)
+  assert.equal(answer.data.publish.migrationUrl, null)
+  assert.match(answer.data.publish.reason, /already published/i)
+
+  assert.deepEqual(await patchLines(), linesBefore)
+  assert.equal(await branchHead(), headBefore)
+})
+
+test('a second publish appends rather than replacing', async () => {
+  await seedDraft('published two')
+
+  const linesBefore = await patchLines()
+  const headBefore = await branchHead()
+
+  const answer = await call(
+    PUBLISH,
+    {site: SITE, message: 'the second publish of the test branch'},
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+
+  const result = answer.data.publish
+
+  assert.equal(result.published, true)
+  assert.notEqual(result.migrationUrl, firstMigrationUrl)
+
+  const linesAfter = await patchLines()
+
+  // The first migration is still there, where it was, and the second is after
+  // it. Appending and never rewriting is the whole rule of this file: every
+  // earlier line is somebody's published content.
+  assert.deepEqual(linesAfter, [...linesBefore, result.migrationUrl])
+  assert.equal(linesAfter.indexOf(firstMigrationUrl), linesBefore.length - 1)
+  assert.equal(linesAfter.filter(l => l === firstMigrationUrl).length, 1)
+  assert.equal((await commitsBetween(headBefore, await branchHead())).length, 1)
+
+  const migration = await readGatewayJson(result.migrationUrl)
+
+  assert.equal(publishedField(migration.data), 'published two')
+})
+
+test('the chain still replays, and its last word is the second publish', async () => {
+  const lines = await patchLines()
+
+  assert.ok(lines.length >= 2)
+
+  // Every line resolves and the whole file merges, which is what a build
+  // does. The two migrations this run appended are the tail of it.
+  const merged = await replayChain(lines)
+
+  assert.equal(publishedField(merged), 'published two')
+  assert.ok(merged.pages.length > 0)
+})
+
+test('a publish is refused anonymously and to a caller without the role', async () => {
+  const anonymous = await call(PUBLISH, {site: SITE})
+
+  assert.equal(anonymous.data?.publish, undefined)
+  assert.equal(errorCode(anonymous), 'AUTH_REQUIRED')
+
+  const customer = await call(PUBLISH, {site: SITE}, CUSTOMER)
+
+  assert.equal(customer.data?.publish, undefined)
+  assert.equal(errorCode(customer), 'FORBIDDEN')
 })

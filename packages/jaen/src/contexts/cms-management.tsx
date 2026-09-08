@@ -624,10 +624,9 @@ export const CMSManagementProvider = withRedux(
               confirmText: 'Publish',
               cancelText: 'Cancel'
             },
-            `Update ${
-              Object.values((store.getState() as RootState).page.pages.nodes)
-                .length
-            } pages`
+            `Update ${Object.values(
+              (store.getState() as RootState).page.pages.nodes
+            ).length} pages`
           )
 
           if (!message) return

@@ -6,6 +6,10 @@
     "lib": ["ES2022"],
     "strict": true,
     "noEmit": true,
+    // The test file drives the same deepmerge the build replays the chain
+    // with, and node runs it by stripping types, so the import names the .ts
+    // it actually loads.
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
