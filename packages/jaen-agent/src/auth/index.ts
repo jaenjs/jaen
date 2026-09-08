@@ -35,6 +35,36 @@ export class ForbiddenError extends ServiceError {
 }
 
 /**
+ * The third answer, and the one this file did not have until 2026-09-08.
+ *
+ * A caller's roles are read from the token's own claims where the issuer
+ * asserts them and, failing that, from one lookup through the site's identity
+ * facade. A lookup that fails answers the same empty list as a lookup that
+ * succeeds and finds nothing, and until this existed the guard read both as
+ * "this person holds no roles" and refused the person.
+ *
+ * `okf/decisions/hard-rules.md` has the rule and it is there because it cost
+ * a morning: "an empty identity answer is never evidence that the directory
+ * is empty". `private-storage.md` draws the same line for the gateway, where
+ * a failed introspection is a 500 and never a 401, "a broken credential
+ * served as 'you are not signed in' is the failure that hides longest".
+ *
+ * So a decision that depended on a lookup that failed is not made at all.
+ * The editor is told the identity service could not be reached, the CMS keeps
+ * the change in its outbox and retries, and nothing is lost. Refusing the
+ * person instead is what happened on the live booklimo.at on 2026-09-08, for
+ * seven minutes and sixteen calls, to an account that held `jaen:admin`
+ * throughout.
+ */
+export class IdentityUnavailableError extends ServiceError {
+  constructor(
+    message = 'The identity service could not be reached, so this call cannot be decided.'
+  ) {
+    super(message, {statusCode: 503, code: 'IDENTITY_UNAVAILABLE'})
+  }
+}
+
+/**
  * What pylon v3's `useAuth` leaves on the context.
  *
  * `auth` is `{openidConfig}` on every request, an anonymous one included, and
@@ -142,6 +172,12 @@ export interface ResolvedCaller {
   grants: CallerGrant[]
   /** Every organisation the caller is known to belong to. */
   orgs: Set<string>
+  /**
+   * The identity facade was asked and could not answer, so what is above is
+   * what the token said and nothing more. A refusal built on it would be a
+   * guess. Never true when the claims alone settled the question.
+   */
+  unavailable?: boolean
 }
 
 /**
@@ -157,8 +193,15 @@ export interface ResolvedCaller {
  *      with the Worker's own ORG_USER_MANAGER_TOKEN and never with the
  *      caller's token, which answers both the roles and the `resourceOwner`.
  *
- * A failed lookup answers nothing, which is a caller with no roles and never
- * an admin. Cached on the request, and with the token for its minute.
+ * A lookup that fails is told apart from a lookup that finds nothing: the
+ * first sets `unavailable` and the second does not, and only the second is a
+ * caller with no roles. A resolution carrying `unavailable` is never cached,
+ * on the request or in the shared tier, because a transient that is written
+ * into a sixty second cache is a lockout that outlives its own cause: KV's
+ * expiry has a minute as its floor, so one failed lookup used to refuse the
+ * person for at least that long, and every refresh past half the entry's life
+ * re-ran the same failing lookup. Otherwise cached on the request, and with
+ * the token for its minute.
  */
 export const resolveCaller = async (
   entry: SiteEntry
@@ -203,14 +246,21 @@ export const resolveCaller = async (
   // Nothing said which roles the caller holds, or nothing said where the
   // account lives. Either leaves the site check unable to decide, so ask the
   // facade once. It answers both.
+  let unavailable = false
+
   if (grants.length === 0 || orgs.size === 0) {
     const facade = await facadeGrants(entry, callerId() as string)
 
+    unavailable = facade.unavailable === true
     grants = grants.length === 0 ? facade.grants : grants
     for (const org of facade.orgs) orgs.add(org)
   }
 
-  const resolved: ResolvedCaller = {grants, orgs}
+  const resolved: ResolvedCaller = {grants, orgs, unavailable}
+
+  // A resolution the facade could not confirm is this request's alone. Caching
+  // it would hand the next request an answer that was never an answer.
+  if (unavailable) return resolved
 
   ctx?.set(ROLES_CACHE_KEY, {grants, orgs: Array.from(orgs)})
 
@@ -249,7 +299,7 @@ const FACADE_QUERY = `query JaenAgentCaller($id: String!) {
 const facadeGrants = async (
   entry: SiteEntry,
   userId: string
-): Promise<{grants: CallerGrant[]; orgs: string[]}> => {
+): Promise<{grants: CallerGrant[]; orgs: string[]; unavailable?: boolean}> => {
   const url = entry.iamApiUrl
   // One token per site, the way the taxi pylons hold theirs: the facade
   // answers for the organisation of the token it is sent, so limosen's
@@ -259,6 +309,9 @@ const facadeGrants = async (
       ? (env()[entry.orgManagerTokenVar] as string | undefined)
       : undefined) || env().ORG_USER_MANAGER_TOKEN
 
+  // Nothing to ask with. That is a configuration this deployment was given
+  // and not a transient, so it is not `unavailable`: an agent with no facade
+  // configured decides on the claims alone, which is what it has always done.
   if (!url || !bearer || !userId) return {grants: [], orgs: []}
 
   try {
@@ -278,12 +331,35 @@ const facadeGrants = async (
     const json = (await res.json().catch(() => ({}))) as any
     const user = json?.data?.user
 
-    if (!res.ok || !user) {
+    // A GraphQL error, a non-2xx, or a body with neither a user nor an
+    // explicit null. `user: null` is the facade saying it does not know this
+    // account, which is an answer and is a refusal; anything else is the
+    // facade failing to answer, and the two must not be confused. Measured
+    // 2026-09-08: asked with a token of the wrong organisation this facade
+    // answers `INTERNAL_SERVER_ERROR`, which is exactly the case that used to
+    // be read as "no roles".
+    const errored =
+      !res.ok ||
+      (Array.isArray(json?.errors) && json.errors.length > 0) ||
+      !json ||
+      typeof json !== 'object' ||
+      !('data' in json) ||
+      json.data === null ||
+      json.data === undefined
+
+    if (errored) {
       console.error(
-        'jaen-agent: the grant lookup answered nothing for',
+        'jaen-agent: the grant lookup could not be made for',
         userId,
         json?.errors?.[0]?.message ?? `HTTP ${res.status}`
       )
+      return {grants: [], orgs: [], unavailable: true}
+    }
+
+    if (!user) {
+      // The facade answered, and it does not know this account. That is a
+      // real refusal: the facade is scoped to the site's organisation, so an
+      // account of the other brand is simply not there.
       return {grants: [], orgs: []}
     }
 
@@ -297,7 +373,7 @@ const facadeGrants = async (
     return {grants, orgs}
   } catch (error) {
     console.error('jaen-agent: the grant lookup failed', error)
-    return {grants: [], orgs: []}
+    return {grants: [], orgs: [], unavailable: true}
   }
 }
 
@@ -357,13 +433,24 @@ export const requireSiteAdmin = async (
   if (!callerId()) throw new AuthRequiredError()
 
   const role = entry.adminRole || DEFAULT_ADMIN_ROLE
-  const {grants, orgs} = await resolveCaller(entry)
+  const {grants, orgs, unavailable} = await resolveCaller(entry)
 
   const allowed = grants.some(grant => {
     if (grant.key !== role) return false
     if (grant.orgs.length > 0) return grant.orgs.includes(entry.organizationId)
     return orgs.has(entry.organizationId)
   })
+
+  // The claims may still carry the grant, and where they do the lookup was
+  // only ever asked for the organisation: a caller who is allowed is allowed
+  // whatever the facade did. It is a refusal that must not be built on a
+  // lookup that failed.
+  if (!allowed && unavailable) {
+    throw new IdentityUnavailableError(
+      `The identity service for ${siteKey} could not be reached, so whether ` +
+        `this account holds ${role} is unknown. Nothing was changed.`
+    )
+  }
 
   if (!allowed) {
     throw new ForbiddenError(
