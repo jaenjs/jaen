@@ -53,17 +53,54 @@ git or the gateway.
 Its keys, which is also why a field save is cheap:
 
 ```
-meta                → revision, publishedRevision, updatedAt, publishedSha
+meta                → revision, publishedRevision, updatedAt, the snapshot
 page:<pageId>       → that page's fields
 media:<nodeId>      → one media node
 author:<fieldPath>  → who wrote it last, and when
 ```
 
 A save writes only the keys it touched and bumps `revision`. A reader asks
-for everything above a revision. The per value limit of an object's store
-is small, on the order of 128 KB, which is the reason the catalogue is one
-key per node rather than one blob, and the exact figures are confirmed
-against Cloudflare's documentation in the build, not taken from memory.
+for everything above a revision.
+
+### What a Durable Object actually allows
+
+Confirmed against `developers.cloudflare.com/durable-objects/platform/limits`
+and `.../reference/durable-objects-migrations`, read 2026-09-08, because the
+catalogue's shape was argued from a remembered number and a remembered number
+is not a measurement. The paragraph above used to say "the per value limit of
+an object's store is small, on the order of 128 KB". That is the figure of the
+**key-value backed** object, and this object is not one.
+
+| what                  | SQLite backed (this object)      | key-value backed (the old kind) |
+| --------------------- | -------------------------------- | ------------------------------- |
+| one key and its value | 2 MB, key and value **together** | 128 KiB value, 2 KiB key        |
+| one object            | 10 GB                            | unlimited                       |
+| objects per class     | unlimited                        | unlimited                       |
+| one `put` of many     | 128 pairs                        | 128 pairs                       |
+| WebSocket message     | 32 MiB received                  | 32 MiB received                 |
+| socket attachment     | 16,384 bytes                     | 16,384 bytes                    |
+| CPU per request       | 30 s, configurable to 5 min      | 30 s                            |
+| alarm handler         | 15 minutes of wall time          | 15 minutes                      |
+
+There is no choice to make between the two: Cloudflare recommends the SQLite
+backend for every new namespace and an account without an existing key-value
+backed namespace **cannot create one at all**, which this account has not. So
+`wrangler.toml` says `new_sqlite_classes`.
+
+The larger ceiling does not change the key layout, and it is worth saying why
+the design's reason was wrong while its conclusion was right. booklimo's whole
+draft is about 120 KB and its catalogue 118,617 bytes of that, so one blob
+would fit inside 2 MB comfortably. What makes a field save cheap is not the
+ceiling but that a save writes only the keys it touched: with one blob, every
+picture and every text change would write the whole 118 KB catalogue, which is
+exactly the cost this design set out to remove. One key per node also lets two
+editors add a picture each without either holding the whole catalogue, which is
+what makes the merge safe rather than merely small.
+
+Two figures do bind. The 128 pair limit of one `put` is why a write that
+touches more nodes than that is chunked, which a whole-catalogue write does.
+And the 16 KB socket attachment is why a socket carries the editor's subject
+and name and nothing else.
 
 Editors are pushed to over a WebSocket held by the object, so the polling
 of the first build goes away. A poll remains as the fallback for a browser
@@ -73,6 +110,123 @@ The object sets an alarm on itself and writes a snapshot of the draft
 every few minutes and when the last editor leaves, into one file that is
 **not** part of the chain. That is the backstop against losing the object,
 and it costs a handful of writes a day rather than thousands.
+
+### Built 2026-09-08, the object itself, and what it cost
+
+`packages/jaen-agent/src/draft/`, four files, and `src/store.ts` deleted with
+the commit-on-save path it carried. Everything above this heading was written
+before any of it was built.
+
+**The four operations, and the two beside them.** `src/draft/store.ts` declares
+`read`, `write`, `subscribe` and `snapshot` and nothing Cloudflare shaped, and
+`src/draft/durable.ts` is the only file in the agent that names a Durable
+Object at all. Two operations stand beside the four and are named in the file
+rather than hidden. `markPublished` is one, because `publishedRevision` lives in
+the object and only publish may set it, and a `write` that set it would bump the
+revision it had just published; the publish session reached the same conclusion
+independently on the same day, which is the argument that it is a property of
+the design and not of this implementation. `connect` is the other, and it is
+transport: `subscribe` mints the handle, the stream itself is a WebSocket the
+browser holds, and a promise of an async iterable cannot cross a Worker's
+request boundary. A single process implementation upgrades the same way.
+
+**The object applies the changes, the Worker does not.** `write` sends the
+batch into the object, which loads the pages, the site metadata and the widgets
+it needs, runs the agent's own `applyChanges`, and writes back only the keys
+whose serialisation changed. That is what makes "two editors cannot save onto
+stale bases" true rather than hoped for: the read, the apply and the write
+happen inside one single threaded actor, so there is no window between them.
+The first build's answer to the same problem was a KV lock with no
+compare-and-set and a blob sha on a GitHub PUT.
+
+**The catalogue never enters the applied document.** A `fieldMerge` of
+`IMA:MEDIA_NODES` is handled as key operations, one `media:<id>` per picture
+added and one tombstone per picture removed, so a picture costs three keys (the
+node, its author, `meta`) and never reads the other 139. A whole-catalogue
+`fieldWrite` is still accepted, for a client that cannot send a merge, and it
+tombstones everything it does not name.
+
+**A delta, or the whole draft, and the object says which.** A reader with no
+revision, a revision older than the pruning window, or a revision **above** the
+object's own gets `full: true` and replaces its copy. The last of those is what
+a lost or rebuilt object looks like from the outside, and answering it with a
+delta would leave the browser holding edits the object has never heard of as
+though they were shared. The client's own half of that is
+[the second place safety won](#the-second-place-safety-won-a-revision-that-goes-backwards).
+
+**The ticket, and why the socket carries no token.** A browser's WebSocket
+constructor sets no header, so a credential can ride in a query parameter or in
+a subprotocol, and a query parameter lands in every proxy log, in a `Referer`
+and in a shared link. So `subscribe` is an ordinary GraphQL mutation,
+authorised the one way, and it answers a random single use ticket that lives
+for a minute; the socket is `GET /draft/<site>` with `jaen-draft.v1` and
+`ticket.<id>` offered as subprotocols, and the object checks the ticket because
+it is the only thing that knows what it minted. The socket then carries
+revisions and never content, so there is one read path and one authorisation
+path for the data.
+
+**Where the snapshot goes, which is a deliberate departure.** This file asks
+for "one file that is not part of the chain".
+`okf/decisions/hard-rules.md` is narrower and wins: a draft "reaches no
+repository and no gateway file". The two sentences disagree about the
+snapshot's home, so it goes where both hold, a KV entry
+(`draft-snapshot:<site>`, with `:previous` beside it so a bad write is not the
+only copy), which is neither a repository nor a gateway file, is not in the
+chain and cannot be reached by a build. It keeps the purpose, a backstop in a
+different storage system from the one it backs up. A namespace of its own would
+be tidier than sharing the auth cache's and is not worth a migration today.
+
+`publishedSha` of the key layout above is **not** stored, because publish hands
+the object a revision and nothing else, and the commit sha is in the answer
+publish already returns. A field nothing can fill is worse than no field.
+
+**Two things the run found rather than assumed**, both of which would have been
+quiet losses:
+
+- A tombstone was pruned by the snapshot's revision, so every alarm pushed
+  every reader into a full answer, and on a two second alarm the delta could
+  not be read at all. Tombstones carry their own timestamp now and are kept for
+  an hour, which is how far behind a reader may be and still be told what went.
+- The alarm wrote back the `meta` it had read before its own KV write. A
+  Durable Object's input gate closes around a **storage** operation and the
+  snapshot's write is a KV fetch, so a save can land inside that window and the
+  alarm would put the older revision back. A revision handed out twice is two
+  editors' work under one number. The alarm re-reads `meta` under the storage
+  gate and stamps only the snapshot fields.
+
+**Measured, and how.** `packages/jaen-agent/tests/agent.test.ts`, twenty four
+tests, all green, 78 s, against a local `wrangler dev` with the object's
+storage in a directory of the run's own, the real accounts.netsnek.com and a
+throwaway branch of `netsnek/booklimo.at`. A save writes three storage keys and
+moves no branch, asserted by reading the branch head before and after. Six
+concurrent saves get six consecutive revisions and every one of the six fields
+is in the draft afterwards, five of them rebased and none refused. The whole
+runtime is stopped and started between two saves and the draft and the counter
+both continue. The alarm snapshots on its own, with the interval at two seconds
+for the run rather than the deployed five minutes, and nothing else about it
+differs.
+
+**What is not proven, and is the reviewer's to weigh.**
+
+- Nothing is deployed. Everything above is `wrangler dev` on this machine, on
+  the runtime workerd falls back to (`2025-07-18`, because the installed
+  wrangler is older than this file's compatibility date). Hibernation, the auto
+  response and the alarm's real cadence are worth measuring once on the deployed
+  Worker.
+- Two writers are one identity. accounts.netsnek.com offers no password grant
+  and booklimo has exactly one machine account with `jaen:admin`, so a second
+  identity would have to be granted the role by the test itself and a run that
+  died would leave that grant behind on a real identity server. What is proven
+  is what the object guarantees, that concurrent writes each get a revision and
+  none is lost; that `overwrote` names the **other** editor needs two people and
+  belongs to the live CMS run.
+- The pruning window is an hour of wall clock. An editor whose CMS has been
+  open longer than that and who missed a deletion in between is answered with
+  the whole draft, which is correct and costs one 77 KB answer. Nobody has
+  measured how often that happens in a working day.
+- The object is addressed by `idFromName(site)` and its storage is a Cloudflare
+  managed thing. There is no measured drill for "the object is lost": the
+  snapshot exists, and reading one back into a new object is not built.
 
 ## Publish: the only writer of history
 
@@ -339,9 +493,19 @@ subscribe(site)              → a stream of revisions
 snapshot(site)               → the whole draft, for the alarm and for publish
 ```
 
-One implementation on a Durable Object today. One on a single process with
-SQLite the day the estate wants its own machine, where the guarantee is
-free because there is only one process. Cloudflare's own runtime, workerd,
+Two operations stand beside those four and are declared with them, because
+hiding them would make the interface look narrower than it is:
+`markPublished(site, revision)`, which only the publish path calls and which
+cannot be a `write` because a write bumps the revision, and
+`connect(site, request)`, which is the transport that turns the handle
+`subscribe` mints into the socket the object pushes down. Every
+implementation has to provide both.
+
+One implementation on a Durable Object today, `src/draft/object.ts` behind
+`src/draft/durable.ts`, and those two files are the only ones in the agent
+that name a Cloudflare type. One on a single process with SQLite the day the
+estate wants its own machine, where the guarantee is free because there is
+only one process. Cloudflare's own runtime, workerd,
 is open source and implements the same actor model on a VPS, so even the
 Worker itself is portable. The interface is a requirement of this design,
 not an afterthought.
@@ -490,14 +654,25 @@ they are pointed at the migration instead. The two files are kept outside every
 repository, beside the site at `booklimo.at-transition-before.head/`, together
 with the authors map, so nothing is lost while that is arranged.
 
-### What this transition deliberately did not do
+### What this transition deliberately did not do, and what has since been done
 
-The agent's commit-on-save path is still in `packages/jaen-agent/src/store.ts`
-and the agent Worker is still deployed. Taking it out is the next step and this
-one is its precondition, which is the order this section asks for. Nothing
-reaches it any more, because no site carries the option, but a deployed agent
-that still knows how to write to a repository is not the same thing as one that
-cannot.
+Written on the day of the transition: "the agent's commit-on-save path is still
+in `packages/jaen-agent/src/store.ts` and the agent Worker is still deployed.
+Taking it out is the next step and this one is its precondition, which is the
+order this section asks for."
+
+That step is taken. `src/store.ts` is deleted, with the head patch, the split
+between `live.json` and `live-media.json`, the blob sha lock and the
+`patches.txt` head lines that went with it; `src/document.ts` is two constants;
+and the GitHub client is left for the one thing that writes history, which is
+publish. The agent is version 4.0.0 for it.
+
+What is still true of the sentence above: **nothing is deployed**. The Worker
+serving `jaen-agent.booklimo.at` and `jaen-agent.limosen.at` today is 3.1.0,
+which still knows how to write to a repository, and no site carries the agent
+option so nothing reaches it. Deploying 4.0.0 also creates the Durable Object
+namespace for the first time, which is a migration and not a redeploy, and it
+belongs with the run that puts the agent option back on booklimo.
 
 ## Acceptance
 
