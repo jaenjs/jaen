@@ -13,7 +13,12 @@
  *      and never rejected;
  *   3. the agent refuses another site's admin, a caller without the role, and
  *      an anonymous call;
- *   4. a poll whose sinceSha is still the head costs an answer with no body.
+ *   4. a poll whose sinceSha is still the head costs an answer with no body;
+   5. a text save writes jaen-data/live.json and never the media catalogue,
+      and a picture writes jaen-data/live-media.json and never the pages;
+   6. a fieldMerge adds and removes keys of the catalogue without carrying
+      the keys it does not touch, so two editors keep both pictures;
+   7. the cheap warm up call answers who is calling and reads no repository.
  *
  * The branch is created before and deleted after, so nothing of this reaches
  * booklimo.at's main. Nothing runs against limosen.at at all.
@@ -173,9 +178,13 @@ const DRAFT = `query D($site: String!, $sinceSha: String) {
 
 const SAVE = `mutation S($site: String!, $changes: [SaveChangesInput!]!, $baseSha: String) {
   save(site: $site, changes: $changes, baseSha: $baseSha) {
-    headSha blobSha commitSha commitUrl savedAt rebased
+    headSha blobSha commitSha commitUrl savedAt rebased wrote
     overwrote { field previousAuthor previousAt }
   }
+}`
+
+const VIEWER = `query V($site: String!) {
+  viewer(site: $site) { site sub name at }
 }`
 
 const PUBLISH = `mutation P($site: String!) {
@@ -399,6 +408,15 @@ test('a save is one commit in the editor s name, and reads back', async () => {
   assert.match(answer.data.save.commitSha, /^[0-9a-f]{40}$/)
   assert.ok(answer.data.save.commitUrl.startsWith('https://github.com/'))
 
+  // booklimo.at's live.json still carries the media catalogue, because it was
+  // written before the split existed. The first save after it lifts the
+  // catalogue into its own file, once, and every save after this one writes
+  // one file.
+  assert.deepEqual(answer.data.save.wrote, [
+    'jaen-data/live.json',
+    'jaen-data/live-media.json'
+  ])
+
   secondHead = answer.data.save.headSha
 
   // The commit is in the repository, and its author is the editor rather than
@@ -423,7 +441,7 @@ test('a save is one commit in the editor s name, and reads back', async () => {
   assert.ok(read.data.draft.authors[`${PAGE}/${FIELD_TYPE}/agentTestOne`])
 })
 
-test('the head patch is the last line of patches.txt', async () => {
+test('the head patches are the last lines of patches.txt', async () => {
   const file = await gh(
     `/repos/${REPOSITORY}/contents/jaen-data%2Fpatches.txt?ref=${BRANCH}`
   )
@@ -434,7 +452,9 @@ test('the head patch is the last line of patches.txt', async () => {
     .map(line => line.trim())
     .filter(Boolean)
 
-  assert.equal(lines[lines.length - 1], 'live.json')
+  // The catalogue file is listed after the pages file, so a picture saved
+  // into it wins its own field in the build's merge.
+  assert.deepEqual(lines.slice(-2), ['live.json', 'live-media.json'])
 })
 
 test('a poll whose sinceSha is the head answers with no body', async () => {
@@ -497,4 +517,229 @@ test('publish commits nothing and says so when the site has no workflow', async 
   const after_ = (await call(DRAFT, {site: SITE}, ADMIN)).data.draft.headSha
 
   assert.equal(after_, before_)
+})
+
+// --------------------------------------------------------------------------
+// The warm up call
+// --------------------------------------------------------------------------
+
+test('viewer answers who is calling and touches no repository', async () => {
+  const answer = await call(VIEWER, {site: SITE}, ADMIN)
+
+  assert.equal(answer.errors, undefined)
+  assert.equal(answer.data.viewer.site, SITE)
+  assert.match(answer.data.viewer.sub, /^\d+$/)
+  assert.ok(answer.data.viewer.name)
+
+  // It is the same guard as everything else: nobody gets it anonymously.
+  const anonymous = await call(VIEWER, {site: SITE})
+
+  assert.equal(errorCode(anonymous), 'AUTH_REQUIRED')
+})
+
+// --------------------------------------------------------------------------
+// The split: the pages and the catalogue in two files
+// --------------------------------------------------------------------------
+
+const MEDIA_PAGE = 'JaenPage /cms/media/'
+const MEDIA_TYPE = 'IMA:MEDIA_NODES'
+
+const readJson = async (path: string): Promise<any> => {
+  const file = await gh(
+    `/repos/${REPOSITORY}/contents/${encodeURIComponent(path)}?ref=${BRANCH}`
+  )
+
+  return JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'))
+}
+
+const mediaNodes = (data: any): Record<string, any> =>
+  data?.pages?.find((page: any) => page.id === MEDIA_PAGE)?.jaenFields?.[
+    MEDIA_TYPE
+  ]?.media_nodes?.value || {}
+
+const node = (id: string) => ({
+  id,
+  createdAt: new Date().toISOString(),
+  description: id,
+  fileType: 'image/png',
+  url: `https://osg.netsnek.com/storage/${id}`,
+  width: 4,
+  height: 4,
+  revisions: []
+})
+
+let firstPicture = ''
+
+test('a picture writes the catalogue and never the pages', async () => {
+  firstPicture = `agent-test-${Date.now()}-a`
+
+  const answer = await call(
+    SAVE,
+    {
+      site: SITE,
+      changes: [
+        {
+          kind: 'fieldMerge',
+          pageId: MEDIA_PAGE,
+          fieldType: MEDIA_TYPE,
+          fieldName: 'media_nodes',
+          value: {[firstPicture]: node(firstPicture)},
+          props: {removed: []},
+          at: new Date().toISOString()
+        }
+      ]
+    },
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+  assert.deepEqual(answer.data.save.wrote, ['jaen-data/live-media.json'])
+
+  const media = await readJson('jaen-data/live-media.json')
+  const pages = await readJson('jaen-data/live.json')
+
+  assert.ok(mediaNodes(media.data)[firstPicture])
+  // The pages file carries no catalogue at all any more.
+  assert.equal(Object.keys(mediaNodes(pages.data)).length, 0)
+
+  // The agent answers one document, both files merged.
+  const read = await call(DRAFT, {site: SITE}, ADMIN)
+
+  assert.ok(mediaNodes(read.data.draft.data)[firstPicture])
+  assert.ok(fieldValue(read.data.draft.data, 'agentTestOne'))
+})
+
+test('a second picture writes only the catalogue', async () => {
+  const second = `agent-test-${Date.now()}-b`
+
+  const pagesBefore = await gh(
+    `/repos/${REPOSITORY}/contents/jaen-data%2Flive.json?ref=${BRANCH}`
+  )
+
+  const answer = await call(
+    SAVE,
+    {
+      site: SITE,
+      changes: [
+        {
+          kind: 'fieldMerge',
+          pageId: MEDIA_PAGE,
+          fieldType: MEDIA_TYPE,
+          fieldName: 'media_nodes',
+          value: {[second]: node(second)},
+          props: {removed: []},
+          at: new Date().toISOString()
+        }
+      ]
+    },
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+  assert.deepEqual(answer.data.save.wrote, ['jaen-data/live-media.json'])
+
+  const pagesAfter = await gh(
+    `/repos/${REPOSITORY}/contents/jaen-data%2Flive.json?ref=${BRANCH}`
+  )
+
+  // Byte for byte the same file: a picture does not touch the pages.
+  assert.equal(pagesAfter.sha, pagesBefore.sha)
+
+  // The merge kept the picture that was already there, which is the whole
+  // point of sending the difference rather than the catalogue.
+  const media = await readJson('jaen-data/live-media.json')
+  const nodes = mediaNodes(media.data)
+
+  assert.ok(nodes[firstPicture])
+  assert.ok(nodes[second])
+})
+
+test('a text change writes only the pages', async () => {
+  const mediaBefore = await gh(
+    `/repos/${REPOSITORY}/contents/jaen-data%2Flive-media.json?ref=${BRANCH}`
+  )
+
+  const value = `agent test split ${Date.now()}`
+
+  const answer = await call(
+    SAVE,
+    {
+      site: SITE,
+      changes: [
+        {
+          kind: 'fieldWrite',
+          pageId: PAGE,
+          fieldType: FIELD_TYPE,
+          fieldName: 'agentTestThree',
+          value,
+          props: {},
+          at: new Date().toISOString()
+        }
+      ]
+    },
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+  assert.deepEqual(answer.data.save.wrote, ['jaen-data/live.json'])
+
+  const mediaAfter = await gh(
+    `/repos/${REPOSITORY}/contents/jaen-data%2Flive-media.json?ref=${BRANCH}`
+  )
+
+  assert.equal(mediaAfter.sha, mediaBefore.sha)
+
+  const read = await call(DRAFT, {site: SITE}, ADMIN)
+
+  assert.equal(fieldValue(read.data.draft.data, 'agentTestThree'), value)
+  assert.ok(mediaNodes(read.data.draft.data)[firstPicture])
+})
+
+test('a merge removes a key without carrying the rest', async () => {
+  const answer = await call(
+    SAVE,
+    {
+      site: SITE,
+      changes: [
+        {
+          kind: 'fieldMerge',
+          pageId: MEDIA_PAGE,
+          fieldType: MEDIA_TYPE,
+          fieldName: 'media_nodes',
+          value: {},
+          props: {removed: [firstPicture]},
+          at: new Date().toISOString()
+        }
+      ]
+    },
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+  assert.deepEqual(answer.data.save.wrote, ['jaen-data/live-media.json'])
+
+  const read = await call(DRAFT, {site: SITE}, ADMIN)
+  const nodes = mediaNodes(read.data.draft.data)
+
+  assert.equal(nodes[firstPicture], undefined)
+  // Everything the site had before this run is still there. The catalogue on
+  // booklimo.at is 140 nodes and the merge carried one id.
+  assert.ok(Object.keys(nodes).length > 100)
+})
+
+test('patches.txt ends with live.json and then live-media.json', async () => {
+  const file = await gh(
+    `/repos/${REPOSITORY}/contents/jaen-data%2Fpatches.txt?ref=${BRANCH}`
+  )
+
+  const lines = Buffer.from(file.content, 'base64')
+    .toString('utf8')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+
+  assert.deepEqual(lines.slice(-2), ['live.json', 'live-media.json'])
+  // Exactly once each, or the build would read the same file twice.
+  assert.equal(lines.filter(l => l === 'live.json').length, 1)
+  assert.equal(lines.filter(l => l === 'live-media.json').length, 1)
 })
