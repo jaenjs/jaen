@@ -130,3 +130,95 @@ the agent option removed the CMS still saves to `localStorage` alone.
   window, and a picture still does at once.
 - The shared draft's own budget in `draft-state.md` is re-measured after
   the change and does not get worse.
+
+## The baseline, measured 2026-09-08
+
+Taken before anything in the persistence path was changed, by the two
+notebooks this file names, on an Apple M1 Max under Asahi. `tests/09` is the
+cost, `tests/10` is the safety. Both end red on purpose: their acceptance
+checks are written against the target below rather than against the code as it
+stands, so the same notebooks are the gate after the change.
+
+**How it was measured.** The node halves bundle `packages/jaen/src/redux`
+itself with the repository's own esbuild and drive the real store, the real
+`persist-state`, the real recorder and the real flusher, with only the browser
+globals and the agent's HTTP replaced (`tests/support/editing-harness.ts` and
+`editing-shim.ts`). One scenario per process, because the store is a module
+singleton. The browser halves serve booklimo's own production build under its
+own origin, `gatsby serve` behind a socat TLS listener with a chromium told to
+resolve booklimo.at to it, and sign in as the booklimo human admin
+(`tests/support/editing-browser.py`). The live agent commits what they type and
+they set the field back, reading the value back out of a browser whose storage
+was emptied first, so the proof is the repository's answer. Nothing was written
+on limosen.
+
+**The payload is 77 KB, not 120.** booklimo's draft is 1,899 bytes of pages and
+118,617 bytes of catalogue on disk, and those files are written pretty printed.
+What the store holds, and therefore what `JSON.stringify` produces, is 77,090
+bytes. The share the catalogue takes of it is larger than this file assumed:
+the same store without the catalogue's page is **742 bytes**, so the catalogue
+is 99.0% of everything that is copied and stringified on every dispatch.
+
+**One blur is four whole-store writes, and 309 KB.** Measured over sixty blurs
+in node, with the flusher's stubbed round trip: four `localStorage` writes per
+blur (the field write, the recorder's `remote/record` nested inside it,
+`saveStarted` and `saveSucceeded`), 309,253 bytes written per blur, and the sum
+of the dispatches a blur causes blocking the main thread for a median of 18.8
+ms and a p95 of 27.2 ms. Read those milliseconds as a shape and not as a
+verdict: a node property assignment is not a browser storage write.
+
+**In the browser the same work is cheap.** The four steps of `saveState` on a
+payload of the real size, timed inside chromium and amortised over sixty runs
+because `performance.now()` is clamped to a tenth of a millisecond: 0.457 ms
+for one whole-store save, so 1.8 ms for a blur's four. On this machine the four
+serialisations alone are not a frame.
+
+**What the real CMS costs is something else entirely.** Signed in on the local
+production build against the live agent, one blur measured 24.0 ms and 24.8 ms
+from the blur event to the next painted frame in two runs, over one frame at 16
+ms, and in the four seconds after it the store was written **185 and 187
+times**, 14.4 and 14.6 MB, with a longest long task of 51 ms.
+
+The cause is not the blur. With edit mode on and nobody touching anything, the
+store is written about **forty-seven times a second**, and the persisted
+payload is byte for byte identical between those writes, so nothing is being
+saved: they are dispatches that change no state. Two hundred and thirty-six
+writes in five seconds, against **zero** in the same five seconds with edit
+mode off. Resolved through the build's own source map, the stack is
+`redux/persist-state.js:36` under `hooks/use-field.js:85` (`register`) under
+`connectors/connect-field.js:45` under `fields/TextField/TextField.js:110`,
+which is a text field's registration effect.
+
+That is a second cause of the lag the owner reported and this plan does not
+name it. Change 1 would hide most of its cost by coalescing those writes into
+one idle callback, and the dispatch storm and the React work it drags with it
+would still be there. It is written down rather than fixed, because that run
+was the baseline. Whoever builds the four changes should decide whether a fifth
+belongs beside them, and the reviewer should see that the persistence path was
+not the whole answer.
+
+**The safety half is green today, except the two acceptances.**
+`tests/10-draft-persistence.ipynb` reads every value back rather than a flag.
+Green: the payload carries the unsent change and the edit, an edit survives the
+browser being started again, a hidden tab has it in storage in the same frame,
+an edit made offline is kept and drains when the agent returns, an `online`
+event drains it in 25 ms, a poll arriving mid-edit does not overwrite an unsent
+change, discard drops the outbox and keeps the head and the authors, and
+without the `agent` option the CMS still saves to `localStorage` alone with
+nothing leaving the browser. In the browser, against the live agent: an edit
+survives a hidden tab and a reload, an edit made offline drains, a second
+editor reads it out of the repository, and the field was back to the value the
+run found when it was read out of an emptied browser.
+
+Red, both of them acceptance of a change not yet made: the persisted payload
+still carries the catalogue (change 2), and three field writes 120 ms apart
+still become three commits instead of one (change 3).
+
+**One observation beside the plan.** The first retry after a failed save is at
+five seconds, not the two this file and `draft-state.md` both claim:
+`RETRY_SECONDS` is indexed with a failure count that has already been
+incremented. Nothing is lost by it, the queue only waits longer than the
+documents say, and the notebook records it as a WARN rather than a failure.
+
+The stored runs of both notebooks are in `tests/baseline/`, and the review this
+file asks for is still open.
