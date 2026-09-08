@@ -1,0 +1,213 @@
+{
+  "scenario": "forced20",
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FaqSubtitle",
+  "otherField": "ServicesSubtitle",
+  "rounds_asked": 1,
+  "startedAt": "2026-09-08T23:22:28.147387+00:00",
+  "objectBefore": {
+    "revision": 400,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:07:05.345Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "A.signedIn": true,
+  "A.draftSeen": true,
+  "A.editable": true,
+  "A.armed": true,
+  "A.stateAtStart": {
+    "revision": 400,
+    "publishedRevision": 183,
+    "applied": 400,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "baseline": "Short answers about booking, vehicles and service.",
+  "objectAtStart": {
+    "revision": 400,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:07:05.345Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "startedAt": "2026-09-08T23:22:44.940974+00:00",
+      "stateBefore": {
+        "revision": 400,
+        "publishedRevision": 183,
+        "applied": 400,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "idle",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 401,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:22:45.004Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a0",
+      "save": {
+        "revision": 402,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 402,
+        "publishedRevision": 183,
+        "applied": 402,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 402,
+        "publishedRevision": 183,
+        "applied": 402,
+        "staleAnswers": 1,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0",
+      "dom": "Short answers about booking, vehicles and service. a0",
+      "object": "Short answers about booking, vehicles and service. a0",
+      "expected": "Short answers about booking, vehicles and service. a0",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    }
+  ],
+  "warns": [],
+  "summary": {
+    "distinctValues": [
+      "Short answers about booking, vehicles and service.",
+      "Short answers about booking, vehicles and service. a0"
+    ],
+    "reverts": [],
+    "byHydrate": [],
+    "hydrates": 1,
+    "hydratesThatMovedTheField": [],
+    "revertedToBaseline": []
+  },
+  "rowCount": 7,
+  "callCount": 3,
+  "calls": [
+    {
+      "op": "Draft",
+      "sentAt": 5712.3,
+      "sentIso": "2026-09-08T23:22:45.043Z",
+      "sinceRevision": 400,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 400,
+        "publishedRevision": 183,
+        "applied": 400,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "idle",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 5768.3,
+      "answeredIso": "2026-09-08T23:22:45.099Z",
+      "status": 200,
+      "answer": {
+        "revision": 401,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service."
+      },
+      "deliveredAt": 8207.2,
+      "deliveredIso": "2026-09-08T23:22:47.538Z",
+      "heldMs": 2438.9,
+      "clientAtDelivery": {
+        "revision": 402,
+        "publishedRevision": 183,
+        "applied": 402,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 7920.8,
+      "sentIso": "2026-09-08T23:22:47.252Z",
+      "sinceRevision": null,
+      "baseRevision": 400,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0"
+      ],
+      "clientAtSend": {
+        "revision": 400,
+        "publishedRevision": 183,
+        "applied": 400,
+        "staleAnswers": null,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 7979.8,
+      "answeredIso": "2026-09-08T23:22:47.311Z",
+      "status": 200,
+      "answer": {
+        "revision": 402,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 7979.8
+    }
+  ],
+  "roundsOk": 1,
+  "roundsRun": 1,
+  "revertsByHydrate": [],
+  "hydratesThatMovedTheField": [],
+  "verdict": "PASS",
+  "objectAfter": {
+    "revision": 402,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:22:47.269Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "draftFieldsAfter": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like. o0",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service. a0",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+  },
+  "endedAt": "2026-09-08T23:22:52.881384+00:00"
+}

@@ -1,0 +1,294 @@
+{
+  "scenario": "focused",
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FaqSubtitle",
+  "otherField": "ServicesSubtitle",
+  "rounds_asked": 5,
+  "startedAt": "2026-09-08T23:28:43.969197+00:00",
+  "objectBefore": {
+    "revision": 460,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:28:38.439Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "A.signedIn": true,
+  "A.draftSeen": true,
+  "A.editable": true,
+  "A.armed": true,
+  "A.stateAtStart": {
+    "revision": 460,
+    "publishedRevision": 183,
+    "applied": 460,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "baseline": "Short answers about booking, vehicles and service.",
+  "rounds": [
+    {
+      "round": 0,
+      "marker": " c0",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "otherWrote": "Short answers about booking, vehicles and service. OTHER",
+      "otherAnswer": {
+        "revision": 461,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:28:58.290Z",
+        "overwrote": []
+      },
+      "focusedAfter": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "domWhileFocused": "Short answers about booking, vehicles and service. c0",
+      "storeWhileFocused": "Short answers about booking, vehicles and service. c0",
+      "visibleIsMine": true,
+      "caretStillInField": true,
+      "domAfterKeystroke": "Short answers about booking, vehicles and service. c0ZZ",
+      "keystrokesAtTheEnd": true,
+      "objectAfter": "Short answers about booking, vehicles and service. c0ZZ",
+      "storeAfterBlur": "Short answers about booking, vehicles and service. c0ZZ",
+      "ok": true
+    },
+    {
+      "round": 1,
+      "marker": " c1",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "otherWrote": "Short answers about booking, vehicles and service. c0ZZ OTHER",
+      "otherAnswer": {
+        "revision": 464,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:29:10.715Z",
+        "overwrote": [
+          {
+            "field": "JaenPage //IMA:TextField/FaqSubtitle"
+          }
+        ]
+      },
+      "focusedAfter": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "domWhileFocused": "Short answers about booking, vehicles and service. c0ZZ c1",
+      "storeWhileFocused": "Short answers about booking, vehicles and service. c0ZZ c1",
+      "visibleIsMine": true,
+      "caretStillInField": true,
+      "domAfterKeystroke": "Short answers about booking, vehicles and service. c0ZZ c1ZZ",
+      "keystrokesAtTheEnd": true,
+      "objectAfter": "Short answers about booking, vehicles and service. c0ZZ c1ZZ",
+      "storeAfterBlur": "Short answers about booking, vehicles and service. c0ZZ c1ZZ",
+      "ok": true
+    },
+    {
+      "round": 2,
+      "marker": " c2",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "otherWrote": "Short answers about booking, vehicles and service. c0ZZ c1ZZ OTHER",
+      "otherAnswer": {
+        "revision": 467,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:29:23.066Z",
+        "overwrote": [
+          {
+            "field": "JaenPage //IMA:TextField/FaqSubtitle"
+          }
+        ]
+      },
+      "focusedAfter": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "domWhileFocused": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2",
+      "storeWhileFocused": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2",
+      "visibleIsMine": true,
+      "caretStillInField": true,
+      "domAfterKeystroke": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ",
+      "keystrokesAtTheEnd": true,
+      "objectAfter": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ",
+      "storeAfterBlur": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ",
+      "ok": true
+    },
+    {
+      "round": 3,
+      "marker": " c3",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "otherWrote": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ OTHER",
+      "otherAnswer": {
+        "revision": 470,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:29:35.463Z",
+        "overwrote": [
+          {
+            "field": "JaenPage //IMA:TextField/FaqSubtitle"
+          }
+        ]
+      },
+      "focusedAfter": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "domWhileFocused": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3",
+      "storeWhileFocused": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3",
+      "visibleIsMine": true,
+      "caretStillInField": true,
+      "domAfterKeystroke": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ",
+      "keystrokesAtTheEnd": true,
+      "objectAfter": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ",
+      "storeAfterBlur": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ",
+      "ok": true
+    },
+    {
+      "round": 4,
+      "marker": " c4",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "otherWrote": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ OTHER",
+      "otherAnswer": {
+        "revision": 473,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:29:47.841Z",
+        "overwrote": [
+          {
+            "field": "JaenPage //IMA:TextField/FaqSubtitle"
+          }
+        ]
+      },
+      "focusedAfter": {
+        "tag": "SPAN",
+        "editable": "true",
+        "id": "FaqSubtitle"
+      },
+      "domWhileFocused": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ c4",
+      "storeWhileFocused": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ c4",
+      "visibleIsMine": true,
+      "caretStillInField": true,
+      "domAfterKeystroke": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ c4ZZ",
+      "keystrokesAtTheEnd": true,
+      "objectAfter": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ c4ZZ",
+      "storeAfterBlur": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ c4ZZ",
+      "ok": true
+    }
+  ],
+  "summary": {
+    "distinctValues": [
+      "Short answers about booking, vehicles and service. OTHER",
+      "Short answers about booking, vehicles and service. c0",
+      "Short answers about booking, vehicles and service. c0ZZ",
+      "Short answers about booking, vehicles and service. c0ZZ c1",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ OTHER",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ OTHER",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ OTHER",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ c4",
+      "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ c4ZZ"
+    ],
+    "reverts": [],
+    "byHydrate": [],
+    "hydrates": 5,
+    "hydratesThatMovedTheField": [
+      {
+        "at": "2026-09-08T23:29:23.153Z",
+        "from": "Short answers about booking, vehicles and service. c0ZZ c1ZZ",
+        "to": "Short answers about booking, vehicles and service. c0ZZ c1ZZ OTHER",
+        "client": {
+          "revision": 466,
+          "publishedRevision": 183,
+          "applied": 466,
+          "staleAnswers": null,
+          "outbox": 0,
+          "saveState": "saved",
+          "connection": "socket"
+        }
+      },
+      {
+        "at": "2026-09-08T23:29:35.548Z",
+        "from": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ",
+        "to": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ OTHER",
+        "client": {
+          "revision": 469,
+          "publishedRevision": 183,
+          "applied": 469,
+          "staleAnswers": null,
+          "outbox": 0,
+          "saveState": "saved",
+          "connection": "socket"
+        }
+      },
+      {
+        "at": "2026-09-08T23:29:47.929Z",
+        "from": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ",
+        "to": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ OTHER",
+        "client": {
+          "revision": 472,
+          "publishedRevision": 183,
+          "applied": 472,
+          "staleAnswers": null,
+          "outbox": 0,
+          "saveState": "saved",
+          "connection": "socket"
+        }
+      }
+    ],
+    "revertedToBaseline": []
+  },
+  "warns": [],
+  "verdict": "PASS",
+  "objectAfter": {
+    "revision": 475,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:29:54.482Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "draftFieldsAfter": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like.",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service. c0ZZ c1ZZ c2ZZ c3ZZ c4ZZ",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+  },
+  "endedAt": "2026-09-08T23:29:59.953701+00:00"
+}

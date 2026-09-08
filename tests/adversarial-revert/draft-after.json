@@ -1,0 +1,57 @@
+{
+  "revisionBefore": 400,
+  "revisionAfter": 486,
+  "publishedRevisionBefore": 183,
+  "publishedRevisionAfter": 183,
+  "fields": {
+    "AboutP1": {
+      "before": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+      "after": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+      "identical": true
+    },
+    "AboutP2": {
+      "before": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+      "after": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+      "identical": true
+    },
+    "AboutP3": {
+      "before": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+      "after": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+      "identical": true
+    },
+    "FaqSubtitle": {
+      "before": "Short answers about booking, vehicles and service.",
+      "after": "Short answers about booking, vehicles and service.",
+      "identical": true
+    },
+    "FaqTitle": {
+      "before": null,
+      "after": "Frequently asked questions",
+      "identical": false,
+      "note": "not in the draft before this run; restored to the published value the site serves",
+      "published": "Frequently asked questions",
+      "equalsPublished": true
+    },
+    "FeedbackBoxText": {
+      "before": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+      "after": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+      "identical": true
+    },
+    "FleetTitle": {
+      "before": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+      "after": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+      "identical": true
+    },
+    "ServicesSubtitle": {
+      "before": "Get a quick overview. See details if you like.",
+      "after": "Get a quick overview. See details if you like.",
+      "identical": true
+    },
+    "ServicesTitle": {
+      "before": "Our services",
+      "after": "Our services",
+      "identical": true
+    }
+  },
+  "ok": true
+}

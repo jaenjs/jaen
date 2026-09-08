@@ -1,0 +1,2664 @@
+{
+  "scenario": "forced20",
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FaqSubtitle",
+  "otherField": "ServicesSubtitle",
+  "rounds_asked": 20,
+  "startedAt": "2026-09-08T23:23:01.031912+00:00",
+  "objectBefore": {
+    "revision": 404,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:22:57.870Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "A.signedIn": true,
+  "A.draftSeen": true,
+  "A.editable": true,
+  "A.armed": true,
+  "A.stateAtStart": {
+    "revision": 404,
+    "publishedRevision": 183,
+    "applied": 404,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "baseline": "Short answers about booking, vehicles and service.",
+  "objectAtStart": {
+    "revision": 404,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:22:57.870Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "startedAt": "2026-09-08T23:23:13.057281+00:00",
+      "stateBefore": {
+        "revision": 404,
+        "publishedRevision": 183,
+        "applied": 404,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "idle",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 405,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:23:13.115Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a0",
+      "save": {
+        "revision": 406,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 406,
+        "publishedRevision": 183,
+        "applied": 406,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 406,
+        "publishedRevision": 183,
+        "applied": 406,
+        "staleAnswers": 1,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0",
+      "dom": "Short answers about booking, vehicles and service. a0",
+      "object": "Short answers about booking, vehicles and service. a0",
+      "expected": "Short answers about booking, vehicles and service. a0",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 1,
+      "startedAt": "2026-09-08T23:23:20.796983+00:00",
+      "stateBefore": {
+        "revision": 406,
+        "publishedRevision": 183,
+        "applied": 406,
+        "staleAnswers": 1,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 407,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:23:20.855Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a1",
+      "save": {
+        "revision": 408,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 408,
+        "publishedRevision": 183,
+        "applied": 408,
+        "staleAnswers": 1,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 408,
+        "publishedRevision": 183,
+        "applied": 408,
+        "staleAnswers": 2,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1",
+      "dom": "Short answers about booking, vehicles and service. a0 a1",
+      "object": "Short answers about booking, vehicles and service. a0 a1",
+      "expected": "Short answers about booking, vehicles and service. a0 a1",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 2,
+      "startedAt": "2026-09-08T23:23:28.458120+00:00",
+      "stateBefore": {
+        "revision": 408,
+        "publishedRevision": 183,
+        "applied": 408,
+        "staleAnswers": 2,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 409,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:23:28.525Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a2",
+      "save": {
+        "revision": 410,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 410,
+        "publishedRevision": 183,
+        "applied": 410,
+        "staleAnswers": 2,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 410,
+        "publishedRevision": 183,
+        "applied": 410,
+        "staleAnswers": 3,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 3,
+      "startedAt": "2026-09-08T23:23:36.097023+00:00",
+      "stateBefore": {
+        "revision": 410,
+        "publishedRevision": 183,
+        "applied": 410,
+        "staleAnswers": 3,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 411,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:23:36.168Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a3",
+      "save": {
+        "revision": 412,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 412,
+        "publishedRevision": 183,
+        "applied": 412,
+        "staleAnswers": 3,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 412,
+        "publishedRevision": 183,
+        "applied": 412,
+        "staleAnswers": 4,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 4,
+      "startedAt": "2026-09-08T23:23:43.736202+00:00",
+      "stateBefore": {
+        "revision": 412,
+        "publishedRevision": 183,
+        "applied": 412,
+        "staleAnswers": 4,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 413,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:23:43.799Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a4",
+      "save": {
+        "revision": 414,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 414,
+        "publishedRevision": 183,
+        "applied": 414,
+        "staleAnswers": 4,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 414,
+        "publishedRevision": 183,
+        "applied": 414,
+        "staleAnswers": 5,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 5,
+      "startedAt": "2026-09-08T23:23:51.350282+00:00",
+      "stateBefore": {
+        "revision": 414,
+        "publishedRevision": 183,
+        "applied": 414,
+        "staleAnswers": 5,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 415,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:23:51.416Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a5",
+      "save": {
+        "revision": 416,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 416,
+        "publishedRevision": 183,
+        "applied": 416,
+        "staleAnswers": 5,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 416,
+        "publishedRevision": 183,
+        "applied": 416,
+        "staleAnswers": 6,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 6,
+      "startedAt": "2026-09-08T23:23:58.991404+00:00",
+      "stateBefore": {
+        "revision": 416,
+        "publishedRevision": 183,
+        "applied": 416,
+        "staleAnswers": 6,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 417,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:23:59.060Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a6",
+      "save": {
+        "revision": 418,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 418,
+        "publishedRevision": 183,
+        "applied": 418,
+        "staleAnswers": 6,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 418,
+        "publishedRevision": 183,
+        "applied": 418,
+        "staleAnswers": 7,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 7,
+      "startedAt": "2026-09-08T23:24:06.639139+00:00",
+      "stateBefore": {
+        "revision": 418,
+        "publishedRevision": 183,
+        "applied": 418,
+        "staleAnswers": 7,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 419,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:24:06.702Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a7",
+      "save": {
+        "revision": 420,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 420,
+        "publishedRevision": 183,
+        "applied": 420,
+        "staleAnswers": 7,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 420,
+        "publishedRevision": 183,
+        "applied": 420,
+        "staleAnswers": 8,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 8,
+      "startedAt": "2026-09-08T23:24:14.254366+00:00",
+      "stateBefore": {
+        "revision": 420,
+        "publishedRevision": 183,
+        "applied": 420,
+        "staleAnswers": 8,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 421,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:24:14.315Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a8",
+      "save": {
+        "revision": 422,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 422,
+        "publishedRevision": 183,
+        "applied": 422,
+        "staleAnswers": 8,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 422,
+        "publishedRevision": 183,
+        "applied": 422,
+        "staleAnswers": 9,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 9,
+      "startedAt": "2026-09-08T23:24:21.890993+00:00",
+      "stateBefore": {
+        "revision": 422,
+        "publishedRevision": 183,
+        "applied": 422,
+        "staleAnswers": 9,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 423,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:24:21.959Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a9",
+      "save": {
+        "revision": 424,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 424,
+        "publishedRevision": 183,
+        "applied": 424,
+        "staleAnswers": 9,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 424,
+        "publishedRevision": 183,
+        "applied": 424,
+        "staleAnswers": 10,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 10,
+      "startedAt": "2026-09-08T23:24:29.546163+00:00",
+      "stateBefore": {
+        "revision": 424,
+        "publishedRevision": 183,
+        "applied": 424,
+        "staleAnswers": 10,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 425,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:24:29.609Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a10",
+      "save": {
+        "revision": 426,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 426,
+        "publishedRevision": 183,
+        "applied": 426,
+        "staleAnswers": 10,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 426,
+        "publishedRevision": 183,
+        "applied": 426,
+        "staleAnswers": 11,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 11,
+      "startedAt": "2026-09-08T23:24:37.224331+00:00",
+      "stateBefore": {
+        "revision": 426,
+        "publishedRevision": 183,
+        "applied": 426,
+        "staleAnswers": 11,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 427,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:24:37.280Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a11",
+      "save": {
+        "revision": 428,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 428,
+        "publishedRevision": 183,
+        "applied": 428,
+        "staleAnswers": 11,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 428,
+        "publishedRevision": 183,
+        "applied": 428,
+        "staleAnswers": 12,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 12,
+      "startedAt": "2026-09-08T23:24:44.910356+00:00",
+      "stateBefore": {
+        "revision": 428,
+        "publishedRevision": 183,
+        "applied": 428,
+        "staleAnswers": 12,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 429,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:24:44.993Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a12",
+      "save": {
+        "revision": 430,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 430,
+        "publishedRevision": 183,
+        "applied": 430,
+        "staleAnswers": 12,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 430,
+        "publishedRevision": 183,
+        "applied": 430,
+        "staleAnswers": 13,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 13,
+      "startedAt": "2026-09-08T23:24:52.607383+00:00",
+      "stateBefore": {
+        "revision": 430,
+        "publishedRevision": 183,
+        "applied": 430,
+        "staleAnswers": 13,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 431,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:24:52.663Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a13",
+      "save": {
+        "revision": 432,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 432,
+        "publishedRevision": 183,
+        "applied": 432,
+        "staleAnswers": 13,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 432,
+        "publishedRevision": 183,
+        "applied": 432,
+        "staleAnswers": 14,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 14,
+      "startedAt": "2026-09-08T23:25:00.326183+00:00",
+      "stateBefore": {
+        "revision": 432,
+        "publishedRevision": 183,
+        "applied": 432,
+        "staleAnswers": 14,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 433,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:25:00.376Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a14",
+      "save": {
+        "revision": 434,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 434,
+        "publishedRevision": 183,
+        "applied": 434,
+        "staleAnswers": 14,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 434,
+        "publishedRevision": 183,
+        "applied": 434,
+        "staleAnswers": 15,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 15,
+      "startedAt": "2026-09-08T23:25:08.013082+00:00",
+      "stateBefore": {
+        "revision": 434,
+        "publishedRevision": 183,
+        "applied": 434,
+        "staleAnswers": 15,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 435,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:25:08.081Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a15",
+      "save": {
+        "revision": 436,
+        "rebased": false,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 436,
+        "publishedRevision": 183,
+        "applied": 436,
+        "staleAnswers": 15,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 436,
+        "publishedRevision": 183,
+        "applied": 436,
+        "staleAnswers": 16,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 16,
+      "startedAt": "2026-09-08T23:25:15.783005+00:00",
+      "stateBefore": {
+        "revision": 436,
+        "publishedRevision": 183,
+        "applied": 436,
+        "staleAnswers": 16,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 437,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:25:15.841Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a16",
+      "save": {
+        "revision": 438,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 438,
+        "publishedRevision": 183,
+        "applied": 438,
+        "staleAnswers": 16,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 438,
+        "publishedRevision": 183,
+        "applied": 438,
+        "staleAnswers": 17,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 17,
+      "startedAt": "2026-09-08T23:25:23.438997+00:00",
+      "stateBefore": {
+        "revision": 438,
+        "publishedRevision": 183,
+        "applied": 438,
+        "staleAnswers": 17,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 439,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:25:23.511Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a17",
+      "save": {
+        "revision": 440,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 440,
+        "publishedRevision": 183,
+        "applied": 440,
+        "staleAnswers": 17,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 440,
+        "publishedRevision": 183,
+        "applied": 440,
+        "staleAnswers": 18,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 18,
+      "startedAt": "2026-09-08T23:25:31.170047+00:00",
+      "stateBefore": {
+        "revision": 440,
+        "publishedRevision": 183,
+        "applied": 440,
+        "staleAnswers": 18,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 441,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:25:31.223Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a18",
+      "save": {
+        "revision": 442,
+        "rebased": true,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 442,
+        "publishedRevision": 183,
+        "applied": 442,
+        "staleAnswers": 18,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 442,
+        "publishedRevision": 183,
+        "applied": 442,
+        "staleAnswers": 19,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    },
+    {
+      "round": 19,
+      "startedAt": "2026-09-08T23:25:38.866063+00:00",
+      "stateBefore": {
+        "revision": 442,
+        "publishedRevision": 183,
+        "applied": 442,
+        "staleAnswers": 19,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "holdArmed": true,
+      "secondEditor": {
+        "revision": 443,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T23:25:38.964Z",
+        "overwrote": []
+      },
+      "answerHeld": true,
+      "typed": " a19",
+      "save": {
+        "revision": 444,
+        "rebased": false,
+        "keys": null
+      },
+      "stateAfterSave": {
+        "revision": 444,
+        "publishedRevision": 183,
+        "applied": 444,
+        "staleAnswers": 19,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "released": true,
+      "stateAfterRelease": {
+        "revision": 444,
+        "publishedRevision": 183,
+        "applied": 444,
+        "staleAnswers": 20,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "store": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19",
+      "dom": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19",
+      "object": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19",
+      "expected": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19",
+      "storeOk": true,
+      "objectOk": true,
+      "domCarriesMarker": true,
+      "appliedWentBackwards": false,
+      "staleAnswersDelta": 1,
+      "ok": true
+    }
+  ],
+  "warns": [],
+  "summary": {
+    "distinctValues": [
+      "Short answers about booking, vehicles and service.",
+      "Short answers about booking, vehicles and service. a0",
+      "Short answers about booking, vehicles and service. a0 a1",
+      "Short answers about booking, vehicles and service. a0 a1 a2",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18",
+      "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19"
+    ],
+    "reverts": [],
+    "byHydrate": [],
+    "hydrates": 20,
+    "hydratesThatMovedTheField": [],
+    "revertedToBaseline": []
+  },
+  "rowCount": 123,
+  "callCount": 64,
+  "calls": [
+    {
+      "op": "Draft",
+      "sentAt": 4641.3,
+      "sentIso": "2026-09-08T23:23:13.143Z",
+      "sinceRevision": 404,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 404,
+        "publishedRevision": 183,
+        "applied": 404,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "idle",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 4680.7,
+      "answeredIso": "2026-09-08T23:23:13.183Z",
+      "status": 200,
+      "answer": {
+        "revision": 405,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service."
+      },
+      "deliveredAt": 7195.3,
+      "deliveredIso": "2026-09-08T23:23:15.697Z",
+      "heldMs": 2514.6,
+      "clientAtDelivery": {
+        "revision": 406,
+        "publishedRevision": 183,
+        "applied": 406,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 6919.9,
+      "sentIso": "2026-09-08T23:23:15.422Z",
+      "sinceRevision": null,
+      "baseRevision": 404,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0"
+      ],
+      "clientAtSend": {
+        "revision": 404,
+        "publishedRevision": 183,
+        "applied": 404,
+        "staleAnswers": null,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 7004.1,
+      "answeredIso": "2026-09-08T23:23:15.506Z",
+      "status": 200,
+      "answer": {
+        "revision": 406,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 7004.1
+    },
+    {
+      "op": "Draft",
+      "sentAt": 12427.4,
+      "sentIso": "2026-09-08T23:23:20.929Z",
+      "sinceRevision": 406,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 406,
+        "publishedRevision": 183,
+        "applied": 406,
+        "staleAnswers": 1,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 12519.6,
+      "answeredIso": "2026-09-08T23:23:21.021Z",
+      "status": 200,
+      "answer": {
+        "revision": 407,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0"
+      },
+      "deliveredAt": 14859.8,
+      "deliveredIso": "2026-09-08T23:23:23.362Z",
+      "heldMs": 2340.2,
+      "clientAtDelivery": {
+        "revision": 408,
+        "publishedRevision": 183,
+        "applied": 408,
+        "staleAnswers": 1,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 14568.6,
+      "sentIso": "2026-09-08T23:23:23.070Z",
+      "sinceRevision": null,
+      "baseRevision": 406,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1"
+      ],
+      "clientAtSend": {
+        "revision": 406,
+        "publishedRevision": 183,
+        "applied": 406,
+        "staleAnswers": 1,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 14619.1,
+      "answeredIso": "2026-09-08T23:23:23.121Z",
+      "status": 200,
+      "answer": {
+        "revision": 408,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 14619.1
+    },
+    {
+      "op": "Draft",
+      "sentAt": 20046.9,
+      "sentIso": "2026-09-08T23:23:28.549Z",
+      "sinceRevision": 408,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 408,
+        "publishedRevision": 183,
+        "applied": 408,
+        "staleAnswers": 2,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 20102.7,
+      "answeredIso": "2026-09-08T23:23:28.605Z",
+      "status": 200,
+      "answer": {
+        "revision": 409,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1"
+      },
+      "deliveredAt": 22499.6,
+      "deliveredIso": "2026-09-08T23:23:31.001Z",
+      "heldMs": 2396.9,
+      "clientAtDelivery": {
+        "revision": 410,
+        "publishedRevision": 183,
+        "applied": 410,
+        "staleAnswers": 2,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 22194.5,
+      "sentIso": "2026-09-08T23:23:30.696Z",
+      "sinceRevision": null,
+      "baseRevision": 408,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2"
+      ],
+      "clientAtSend": {
+        "revision": 408,
+        "publishedRevision": 183,
+        "applied": 408,
+        "staleAnswers": 2,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 22232.4,
+      "answeredIso": "2026-09-08T23:23:30.734Z",
+      "status": 200,
+      "answer": {
+        "revision": 410,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 22232.4
+    },
+    {
+      "op": "Draft",
+      "sentAt": 27689.9,
+      "sentIso": "2026-09-08T23:23:36.192Z",
+      "sinceRevision": 410,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 410,
+        "publishedRevision": 183,
+        "applied": 410,
+        "staleAnswers": 3,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 27742.9,
+      "answeredIso": "2026-09-08T23:23:36.245Z",
+      "status": 200,
+      "answer": {
+        "revision": 411,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2"
+      },
+      "deliveredAt": 30141.5,
+      "deliveredIso": "2026-09-08T23:23:38.643Z",
+      "heldMs": 2398.6,
+      "clientAtDelivery": {
+        "revision": 412,
+        "publishedRevision": 183,
+        "applied": 412,
+        "staleAnswers": 3,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 29840.8,
+      "sentIso": "2026-09-08T23:23:38.343Z",
+      "sinceRevision": null,
+      "baseRevision": 410,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3"
+      ],
+      "clientAtSend": {
+        "revision": 410,
+        "publishedRevision": 183,
+        "applied": 410,
+        "staleAnswers": 3,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 29884,
+      "answeredIso": "2026-09-08T23:23:38.386Z",
+      "status": 200,
+      "answer": {
+        "revision": 412,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 29884
+    },
+    {
+      "op": "Draft",
+      "sentAt": 35320.7,
+      "sentIso": "2026-09-08T23:23:43.823Z",
+      "sinceRevision": 412,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 412,
+        "publishedRevision": 183,
+        "applied": 412,
+        "staleAnswers": 4,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 35370.9,
+      "answeredIso": "2026-09-08T23:23:43.873Z",
+      "status": 200,
+      "answer": {
+        "revision": 413,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3"
+      },
+      "deliveredAt": 37754.8,
+      "deliveredIso": "2026-09-08T23:23:46.257Z",
+      "heldMs": 2383.9,
+      "clientAtDelivery": {
+        "revision": 414,
+        "publishedRevision": 183,
+        "applied": 414,
+        "staleAnswers": 4,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 37465.8,
+      "sentIso": "2026-09-08T23:23:45.968Z",
+      "sinceRevision": null,
+      "baseRevision": 412,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4"
+      ],
+      "clientAtSend": {
+        "revision": 412,
+        "publishedRevision": 183,
+        "applied": 412,
+        "staleAnswers": 4,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 37515.7,
+      "answeredIso": "2026-09-08T23:23:46.018Z",
+      "status": 200,
+      "answer": {
+        "revision": 414,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 37515.7
+    },
+    {
+      "op": "Draft",
+      "sentAt": 42937.2,
+      "sentIso": "2026-09-08T23:23:51.439Z",
+      "sinceRevision": 414,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 414,
+        "publishedRevision": 183,
+        "applied": 414,
+        "staleAnswers": 5,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 42992.2,
+      "answeredIso": "2026-09-08T23:23:51.494Z",
+      "status": 200,
+      "answer": {
+        "revision": 415,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4"
+      },
+      "deliveredAt": 45401.1,
+      "deliveredIso": "2026-09-08T23:23:53.903Z",
+      "heldMs": 2408.9,
+      "clientAtDelivery": {
+        "revision": 416,
+        "publishedRevision": 183,
+        "applied": 416,
+        "staleAnswers": 5,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 45095.5,
+      "sentIso": "2026-09-08T23:23:53.597Z",
+      "sinceRevision": null,
+      "baseRevision": 414,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5"
+      ],
+      "clientAtSend": {
+        "revision": 414,
+        "publishedRevision": 183,
+        "applied": 414,
+        "staleAnswers": 5,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 45140.5,
+      "answeredIso": "2026-09-08T23:23:53.642Z",
+      "status": 200,
+      "answer": {
+        "revision": 416,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 45140.5
+    },
+    {
+      "op": "Draft",
+      "sentAt": 50581.9,
+      "sentIso": "2026-09-08T23:23:59.084Z",
+      "sinceRevision": 416,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 416,
+        "publishedRevision": 183,
+        "applied": 416,
+        "staleAnswers": 6,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 50635.1,
+      "answeredIso": "2026-09-08T23:23:59.137Z",
+      "status": 200,
+      "answer": {
+        "revision": 417,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5"
+      },
+      "deliveredAt": 53045,
+      "deliveredIso": "2026-09-08T23:24:01.547Z",
+      "heldMs": 2409.9,
+      "clientAtDelivery": {
+        "revision": 418,
+        "publishedRevision": 183,
+        "applied": 418,
+        "staleAnswers": 6,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 52738.6,
+      "sentIso": "2026-09-08T23:24:01.240Z",
+      "sinceRevision": null,
+      "baseRevision": 416,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6"
+      ],
+      "clientAtSend": {
+        "revision": 416,
+        "publishedRevision": 183,
+        "applied": 416,
+        "staleAnswers": 6,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 52787.6,
+      "answeredIso": "2026-09-08T23:24:01.289Z",
+      "status": 200,
+      "answer": {
+        "revision": 418,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 52787.6
+    },
+    {
+      "op": "Draft",
+      "sentAt": 58226.1,
+      "sentIso": "2026-09-08T23:24:06.728Z",
+      "sinceRevision": 418,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 418,
+        "publishedRevision": 183,
+        "applied": 418,
+        "staleAnswers": 7,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 58283.5,
+      "answeredIso": "2026-09-08T23:24:06.785Z",
+      "status": 200,
+      "answer": {
+        "revision": 419,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6"
+      },
+      "deliveredAt": 60653.6,
+      "deliveredIso": "2026-09-08T23:24:09.155Z",
+      "heldMs": 2370.1,
+      "clientAtDelivery": {
+        "revision": 420,
+        "publishedRevision": 183,
+        "applied": 420,
+        "staleAnswers": 7,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 60365.4,
+      "sentIso": "2026-09-08T23:24:08.867Z",
+      "sinceRevision": null,
+      "baseRevision": 418,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7"
+      ],
+      "clientAtSend": {
+        "revision": 418,
+        "publishedRevision": 183,
+        "applied": 418,
+        "staleAnswers": 7,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 60444,
+      "answeredIso": "2026-09-08T23:24:08.946Z",
+      "status": 200,
+      "answer": {
+        "revision": 420,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 60444
+    },
+    {
+      "op": "Draft",
+      "sentAt": 65835.8,
+      "sentIso": "2026-09-08T23:24:14.338Z",
+      "sinceRevision": 420,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 420,
+        "publishedRevision": 183,
+        "applied": 420,
+        "staleAnswers": 8,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 65881.5,
+      "answeredIso": "2026-09-08T23:24:14.383Z",
+      "status": 200,
+      "answer": {
+        "revision": 421,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7"
+      },
+      "deliveredAt": 68283.7,
+      "deliveredIso": "2026-09-08T23:24:16.785Z",
+      "heldMs": 2402.2,
+      "clientAtDelivery": {
+        "revision": 422,
+        "publishedRevision": 183,
+        "applied": 422,
+        "staleAnswers": 8,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 67987.5,
+      "sentIso": "2026-09-08T23:24:16.489Z",
+      "sinceRevision": null,
+      "baseRevision": 420,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8"
+      ],
+      "clientAtSend": {
+        "revision": 420,
+        "publishedRevision": 183,
+        "applied": 420,
+        "staleAnswers": 8,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 68051.4,
+      "answeredIso": "2026-09-08T23:24:16.553Z",
+      "status": 200,
+      "answer": {
+        "revision": 422,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 68051.4
+    },
+    {
+      "op": "Draft",
+      "sentAt": 73482.8,
+      "sentIso": "2026-09-08T23:24:21.985Z",
+      "sinceRevision": 422,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 422,
+        "publishedRevision": 183,
+        "applied": 422,
+        "staleAnswers": 9,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 73534,
+      "answeredIso": "2026-09-08T23:24:22.036Z",
+      "status": 200,
+      "answer": {
+        "revision": 423,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8"
+      },
+      "deliveredAt": 75941.9,
+      "deliveredIso": "2026-09-08T23:24:24.444Z",
+      "heldMs": 2407.9,
+      "clientAtDelivery": {
+        "revision": 424,
+        "publishedRevision": 183,
+        "applied": 424,
+        "staleAnswers": 9,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 75631.6,
+      "sentIso": "2026-09-08T23:24:24.133Z",
+      "sinceRevision": null,
+      "baseRevision": 422,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9"
+      ],
+      "clientAtSend": {
+        "revision": 422,
+        "publishedRevision": 183,
+        "applied": 422,
+        "staleAnswers": 9,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 75679.1,
+      "answeredIso": "2026-09-08T23:24:24.181Z",
+      "status": 200,
+      "answer": {
+        "revision": 424,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 75679.1
+    },
+    {
+      "op": "Draft",
+      "sentAt": 81131.5,
+      "sentIso": "2026-09-08T23:24:29.633Z",
+      "sinceRevision": 424,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 424,
+        "publishedRevision": 183,
+        "applied": 424,
+        "staleAnswers": 10,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 81193.3,
+      "answeredIso": "2026-09-08T23:24:29.695Z",
+      "status": 200,
+      "answer": {
+        "revision": 425,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9"
+      },
+      "deliveredAt": 83638.2,
+      "deliveredIso": "2026-09-08T23:24:32.140Z",
+      "heldMs": 2444.9,
+      "clientAtDelivery": {
+        "revision": 426,
+        "publishedRevision": 183,
+        "applied": 426,
+        "staleAnswers": 10,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 83329.2,
+      "sentIso": "2026-09-08T23:24:31.831Z",
+      "sinceRevision": null,
+      "baseRevision": 424,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10"
+      ],
+      "clientAtSend": {
+        "revision": 424,
+        "publishedRevision": 183,
+        "applied": 424,
+        "staleAnswers": 10,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 83374.5,
+      "answeredIso": "2026-09-08T23:24:31.876Z",
+      "status": 200,
+      "answer": {
+        "revision": 426,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 83374.5
+    },
+    {
+      "op": "Draft",
+      "sentAt": 88804.9,
+      "sentIso": "2026-09-08T23:24:37.307Z",
+      "sinceRevision": 426,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 426,
+        "publishedRevision": 183,
+        "applied": 426,
+        "staleAnswers": 11,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 88865.5,
+      "answeredIso": "2026-09-08T23:24:37.367Z",
+      "status": 200,
+      "answer": {
+        "revision": 427,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10"
+      },
+      "deliveredAt": 91282.4,
+      "deliveredIso": "2026-09-08T23:24:39.784Z",
+      "heldMs": 2416.9,
+      "clientAtDelivery": {
+        "revision": 428,
+        "publishedRevision": 183,
+        "applied": 428,
+        "staleAnswers": 11,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 90997.5,
+      "sentIso": "2026-09-08T23:24:39.499Z",
+      "sinceRevision": null,
+      "baseRevision": 426,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11"
+      ],
+      "clientAtSend": {
+        "revision": 426,
+        "publishedRevision": 183,
+        "applied": 426,
+        "staleAnswers": 11,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 91046.5,
+      "answeredIso": "2026-09-08T23:24:39.548Z",
+      "status": 200,
+      "answer": {
+        "revision": 428,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 91046.5
+    },
+    {
+      "op": "Draft",
+      "sentAt": 96513.9,
+      "sentIso": "2026-09-08T23:24:45.016Z",
+      "sinceRevision": 428,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 428,
+        "publishedRevision": 183,
+        "applied": 428,
+        "staleAnswers": 12,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 96567.1,
+      "answeredIso": "2026-09-08T23:24:45.069Z",
+      "status": 200,
+      "answer": {
+        "revision": 429,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11"
+      },
+      "deliveredAt": 99009.2,
+      "deliveredIso": "2026-09-08T23:24:47.511Z",
+      "heldMs": 2442.1,
+      "clientAtDelivery": {
+        "revision": 430,
+        "publishedRevision": 183,
+        "applied": 430,
+        "staleAnswers": 12,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 98711.5,
+      "sentIso": "2026-09-08T23:24:47.213Z",
+      "sinceRevision": null,
+      "baseRevision": 428,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12"
+      ],
+      "clientAtSend": {
+        "revision": 428,
+        "publishedRevision": 183,
+        "applied": 428,
+        "staleAnswers": 12,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 98759.7,
+      "answeredIso": "2026-09-08T23:24:47.262Z",
+      "status": 200,
+      "answer": {
+        "revision": 430,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 98759.7
+    },
+    {
+      "op": "Draft",
+      "sentAt": 104187.5,
+      "sentIso": "2026-09-08T23:24:52.689Z",
+      "sinceRevision": 430,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 430,
+        "publishedRevision": 183,
+        "applied": 430,
+        "staleAnswers": 13,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 104245.6,
+      "answeredIso": "2026-09-08T23:24:52.747Z",
+      "status": 200,
+      "answer": {
+        "revision": 431,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12"
+      },
+      "deliveredAt": 106703.3,
+      "deliveredIso": "2026-09-08T23:24:55.205Z",
+      "heldMs": 2457.7,
+      "clientAtDelivery": {
+        "revision": 432,
+        "publishedRevision": 183,
+        "applied": 432,
+        "staleAnswers": 13,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 106380.7,
+      "sentIso": "2026-09-08T23:24:54.883Z",
+      "sinceRevision": null,
+      "baseRevision": 430,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13"
+      ],
+      "clientAtSend": {
+        "revision": 430,
+        "publishedRevision": 183,
+        "applied": 430,
+        "staleAnswers": 13,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 106434.8,
+      "answeredIso": "2026-09-08T23:24:54.937Z",
+      "status": 200,
+      "answer": {
+        "revision": 432,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 106434.8
+    },
+    {
+      "op": "Draft",
+      "sentAt": 111899.5,
+      "sentIso": "2026-09-08T23:25:00.401Z",
+      "sinceRevision": 432,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 432,
+        "publishedRevision": 183,
+        "applied": 432,
+        "staleAnswers": 14,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 111953.6,
+      "answeredIso": "2026-09-08T23:25:00.456Z",
+      "status": 200,
+      "answer": {
+        "revision": 433,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13"
+      },
+      "deliveredAt": 114411.5,
+      "deliveredIso": "2026-09-08T23:25:02.913Z",
+      "heldMs": 2457.9,
+      "clientAtDelivery": {
+        "revision": 434,
+        "publishedRevision": 183,
+        "applied": 434,
+        "staleAnswers": 14,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 114088.4,
+      "sentIso": "2026-09-08T23:25:02.590Z",
+      "sinceRevision": null,
+      "baseRevision": 432,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14"
+      ],
+      "clientAtSend": {
+        "revision": 432,
+        "publishedRevision": 183,
+        "applied": 432,
+        "staleAnswers": 14,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 114147.3,
+      "answeredIso": "2026-09-08T23:25:02.649Z",
+      "status": 200,
+      "answer": {
+        "revision": 434,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 114147.3
+    },
+    {
+      "op": "Draft",
+      "sentAt": 119604.5,
+      "sentIso": "2026-09-08T23:25:08.106Z",
+      "sinceRevision": 434,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 434,
+        "publishedRevision": 183,
+        "applied": 434,
+        "staleAnswers": 15,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 119664.1,
+      "answeredIso": "2026-09-08T23:25:08.166Z",
+      "status": 200,
+      "answer": {
+        "revision": 435,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14"
+      },
+      "deliveredAt": 122183.7,
+      "deliveredIso": "2026-09-08T23:25:10.686Z",
+      "heldMs": 2519.6,
+      "clientAtDelivery": {
+        "revision": 436,
+        "publishedRevision": 183,
+        "applied": 436,
+        "staleAnswers": 15,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 121806.7,
+      "sentIso": "2026-09-08T23:25:10.308Z",
+      "sinceRevision": null,
+      "baseRevision": 435,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15"
+      ],
+      "clientAtSend": {
+        "revision": 435,
+        "publishedRevision": 183,
+        "applied": 435,
+        "staleAnswers": 15,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 121855.7,
+      "answeredIso": "2026-09-08T23:25:10.358Z",
+      "status": 200,
+      "answer": {
+        "revision": 436,
+        "rebased": false,
+        "keys": null
+      },
+      "deliveredAt": 121855.7
+    },
+    {
+      "op": "Draft",
+      "sentAt": 127363.9,
+      "sentIso": "2026-09-08T23:25:15.866Z",
+      "sinceRevision": 436,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 436,
+        "publishedRevision": 183,
+        "applied": 436,
+        "staleAnswers": 16,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 127417.5,
+      "answeredIso": "2026-09-08T23:25:15.919Z",
+      "status": 200,
+      "answer": {
+        "revision": 437,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15"
+      },
+      "deliveredAt": 129841.8,
+      "deliveredIso": "2026-09-08T23:25:18.344Z",
+      "heldMs": 2424.3,
+      "clientAtDelivery": {
+        "revision": 438,
+        "publishedRevision": 183,
+        "applied": 438,
+        "staleAnswers": 16,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 129546.8,
+      "sentIso": "2026-09-08T23:25:18.049Z",
+      "sinceRevision": null,
+      "baseRevision": 436,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
+      ],
+      "clientAtSend": {
+        "revision": 436,
+        "publishedRevision": 183,
+        "applied": 436,
+        "staleAnswers": 16,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 129611.2,
+      "answeredIso": "2026-09-08T23:25:18.113Z",
+      "status": 200,
+      "answer": {
+        "revision": 438,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 129611.2
+    },
+    {
+      "op": "Draft",
+      "sentAt": 135033.5,
+      "sentIso": "2026-09-08T23:25:23.535Z",
+      "sinceRevision": 438,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 438,
+        "publishedRevision": 183,
+        "applied": 438,
+        "staleAnswers": 17,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 135088.8,
+      "answeredIso": "2026-09-08T23:25:23.591Z",
+      "status": 200,
+      "answer": {
+        "revision": 439,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16"
+      },
+      "deliveredAt": 137547.6,
+      "deliveredIso": "2026-09-08T23:25:26.049Z",
+      "heldMs": 2458.8,
+      "clientAtDelivery": {
+        "revision": 440,
+        "publishedRevision": 183,
+        "applied": 440,
+        "staleAnswers": 17,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 137229.9,
+      "sentIso": "2026-09-08T23:25:25.732Z",
+      "sinceRevision": null,
+      "baseRevision": 438,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17"
+      ],
+      "clientAtSend": {
+        "revision": 438,
+        "publishedRevision": 183,
+        "applied": 438,
+        "staleAnswers": 17,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 137277.4,
+      "answeredIso": "2026-09-08T23:25:25.779Z",
+      "status": 200,
+      "answer": {
+        "revision": 440,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 137277.4
+    },
+    {
+      "op": "Draft",
+      "sentAt": 142746.5,
+      "sentIso": "2026-09-08T23:25:31.248Z",
+      "sinceRevision": 440,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 440,
+        "publishedRevision": 183,
+        "applied": 440,
+        "staleAnswers": 18,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 142799.5,
+      "answeredIso": "2026-09-08T23:25:31.301Z",
+      "status": 200,
+      "answer": {
+        "revision": 441,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17"
+      },
+      "deliveredAt": 145262.5,
+      "deliveredIso": "2026-09-08T23:25:33.764Z",
+      "heldMs": 2463,
+      "clientAtDelivery": {
+        "revision": 442,
+        "publishedRevision": 183,
+        "applied": 442,
+        "staleAnswers": 18,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 144932.4,
+      "sentIso": "2026-09-08T23:25:33.434Z",
+      "sinceRevision": null,
+      "baseRevision": 440,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18"
+      ],
+      "clientAtSend": {
+        "revision": 440,
+        "publishedRevision": 183,
+        "applied": 440,
+        "staleAnswers": 18,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 144994.2,
+      "answeredIso": "2026-09-08T23:25:33.496Z",
+      "status": 200,
+      "answer": {
+        "revision": 442,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 144994.2
+    },
+    {
+      "op": "Draft",
+      "sentAt": 150489.2,
+      "sentIso": "2026-09-08T23:25:38.991Z",
+      "sinceRevision": 442,
+      "baseRevision": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 442,
+        "publishedRevision": 183,
+        "applied": 442,
+        "staleAnswers": 19,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      },
+      "held": true,
+      "answeredAt": 150535.9,
+      "answeredIso": "2026-09-08T23:25:39.038Z",
+      "status": 200,
+      "answer": {
+        "revision": 443,
+        "changed": true,
+        "full": false,
+        "fieldValue": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18"
+      },
+      "deliveredAt": 153113.9,
+      "deliveredIso": "2026-09-08T23:25:41.616Z",
+      "heldMs": 2578,
+      "clientAtDelivery": {
+        "revision": 444,
+        "publishedRevision": 183,
+        "applied": 444,
+        "staleAnswers": 19,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 152726.6,
+      "sentIso": "2026-09-08T23:25:41.228Z",
+      "sinceRevision": null,
+      "baseRevision": 443,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19"
+      ],
+      "clientAtSend": {
+        "revision": 443,
+        "publishedRevision": 183,
+        "applied": 443,
+        "staleAnswers": 19,
+        "outbox": 1,
+        "saveState": "saving",
+        "connection": "socket"
+      },
+      "held": false,
+      "answeredAt": 152769.9,
+      "answeredIso": "2026-09-08T23:25:41.272Z",
+      "status": 200,
+      "answer": {
+        "revision": 444,
+        "rebased": false,
+        "keys": null
+      },
+      "deliveredAt": 152769.9
+    }
+  ],
+  "roundsOk": 20,
+  "roundsRun": 20,
+  "revertsByHydrate": [],
+  "hydratesThatMovedTheField": [],
+  "verdict": "PASS",
+  "objectAfter": {
+    "revision": 444,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:25:41.246Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "draftFieldsAfter": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like. o0 o1 o2 o3 o4 o5 o6 o7 o8 o9 o10 o11 o12 o13 o14 o15 o16 o17 o18 o19",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service. a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+  },
+  "endedAt": "2026-09-08T23:25:47.078277+00:00"
+}

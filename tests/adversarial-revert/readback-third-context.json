@@ -1,0 +1,138 @@
+{
+  "scenario": "readback",
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FaqSubtitle",
+  "otherField": "ServicesSubtitle",
+  "rounds_asked": 20,
+  "startedAt": "2026-09-08T23:31:34.243115+00:00",
+  "objectBefore": {
+    "revision": 481,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:31:01.152Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "C.signedIn": true,
+  "C.draftSeen": true,
+  "C.editable": true,
+  "C.armed": true,
+  "C.stateAtStart": {
+    "revision": 481,
+    "publishedRevision": 183,
+    "applied": 481,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "fromThirdContext": {
+    "FaqSubtitle": {
+      "store": "Short answers about booking, vehicles and service. p0",
+      "dom": "Short answers about booking, vehicles and service. p0"
+    },
+    "FaqTitle": {
+      "store": "Frequently asked questions p4",
+      "dom": "Frequently asked questions p4"
+    },
+    "FeedbackBoxText": {
+      "store": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for. p3",
+      "dom": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for. p3"
+    },
+    "ServicesSubtitle": {
+      "store": "Get a quick overview. See details if you like. p1",
+      "dom": "Get a quick overview. See details if you like. p1"
+    },
+    "ServicesTitle": {
+      "store": "Our services p2",
+      "dom": "Our services p2"
+    }
+  },
+  "stateOfThirdContext": {
+    "revision": 481,
+    "publishedRevision": 183,
+    "applied": 481,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "fromTheObject": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services p2",
+    "ServicesSubtitle": "Get a quick overview. See details if you like. p1",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for. p3",
+    "FaqSubtitle": "Short answers about booking, vehicles and service. p0",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+    "FaqTitle": "Frequently asked questions p4"
+  },
+  "objectMeta": {
+    "revision": 481,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:31:01.152Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "agree": {
+    "FaqSubtitle": {
+      "wanted": "Short answers about booking, vehicles and service. p0",
+      "thirdContext": "Short answers about booking, vehicles and service. p0",
+      "object": "Short answers about booking, vehicles and service. p0",
+      "ok": true
+    },
+    "ServicesSubtitle": {
+      "wanted": "Get a quick overview. See details if you like. p1",
+      "thirdContext": "Get a quick overview. See details if you like. p1",
+      "object": "Get a quick overview. See details if you like. p1",
+      "ok": true
+    },
+    "ServicesTitle": {
+      "wanted": "Our services p2",
+      "thirdContext": "Our services p2",
+      "object": "Our services p2",
+      "ok": true
+    },
+    "FeedbackBoxText": {
+      "wanted": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for. p3",
+      "thirdContext": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for. p3",
+      "object": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for. p3",
+      "ok": true
+    },
+    "FaqTitle": {
+      "wanted": "Frequently asked questions p4",
+      "thirdContext": "Frequently asked questions p4",
+      "object": "Frequently asked questions p4",
+      "ok": true
+    }
+  },
+  "verdict": "PASS",
+  "objectAfter": {
+    "revision": 481,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:31:01.152Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "draftFieldsAfter": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services p2",
+    "ServicesSubtitle": "Get a quick overview. See details if you like. p1",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for. p3",
+    "FaqSubtitle": "Short answers about booking, vehicles and service. p0",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+    "FaqTitle": "Frequently asked questions p4"
+  },
+  "endedAt": "2026-09-08T23:31:53.366060+00:00"
+}

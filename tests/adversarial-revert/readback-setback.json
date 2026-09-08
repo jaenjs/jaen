@@ -1,0 +1,178 @@
+{
+  "scenario": "readback",
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FaqSubtitle",
+  "otherField": "ServicesSubtitle",
+  "rounds_asked": 20,
+  "startedAt": "2026-09-08T23:32:35.039729+00:00",
+  "objectBefore": {
+    "revision": 486,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:32:16.467Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "C.signedIn": true,
+  "C.draftSeen": true,
+  "C.editable": true,
+  "C.armed": true,
+  "C.stateAtStart": {
+    "revision": 486,
+    "publishedRevision": 183,
+    "applied": 486,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "fromThirdContext": {
+    "AboutP1": {
+      "store": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+      "dom": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh"
+    },
+    "AboutP2": {
+      "store": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+      "dom": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej"
+    },
+    "AboutP3": {
+      "store": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+      "dom": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+    },
+    "FaqSubtitle": {
+      "store": "Short answers about booking, vehicles and service.",
+      "dom": "Short answers about booking, vehicles and service."
+    },
+    "FaqTitle": {
+      "store": "Frequently asked questions",
+      "dom": "Frequently asked questions"
+    },
+    "FeedbackBoxText": {
+      "store": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+      "dom": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for."
+    },
+    "FleetTitle": {
+      "store": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+      "dom": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd"
+    },
+    "ServicesSubtitle": {
+      "store": "Get a quick overview. See details if you like.",
+      "dom": "Get a quick overview. See details if you like."
+    },
+    "ServicesTitle": {
+      "store": "Our services",
+      "dom": "Our services"
+    }
+  },
+  "stateOfThirdContext": {
+    "revision": 486,
+    "publishedRevision": 183,
+    "applied": 486,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "fromTheObject": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like.",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service.",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+    "FaqTitle": "Frequently asked questions"
+  },
+  "objectMeta": {
+    "revision": 486,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:32:16.467Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "agree": {
+    "FaqSubtitle": {
+      "wanted": "Short answers about booking, vehicles and service.",
+      "thirdContext": "Short answers about booking, vehicles and service.",
+      "object": "Short answers about booking, vehicles and service.",
+      "ok": true
+    },
+    "ServicesSubtitle": {
+      "wanted": "Get a quick overview. See details if you like.",
+      "thirdContext": "Get a quick overview. See details if you like.",
+      "object": "Get a quick overview. See details if you like.",
+      "ok": true
+    },
+    "ServicesTitle": {
+      "wanted": "Our services",
+      "thirdContext": "Our services",
+      "object": "Our services",
+      "ok": true
+    },
+    "FeedbackBoxText": {
+      "wanted": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+      "thirdContext": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+      "object": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+      "ok": true
+    },
+    "FleetTitle": {
+      "wanted": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+      "thirdContext": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+      "object": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+      "ok": true
+    },
+    "AboutP1": {
+      "wanted": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+      "thirdContext": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+      "object": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+      "ok": true
+    },
+    "AboutP2": {
+      "wanted": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+      "thirdContext": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+      "object": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+      "ok": true
+    },
+    "AboutP3": {
+      "wanted": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+      "thirdContext": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+      "object": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+      "ok": true
+    },
+    "FaqTitle": {
+      "wanted": "Frequently asked questions",
+      "thirdContext": "Frequently asked questions",
+      "object": "Frequently asked questions",
+      "ok": true
+    }
+  },
+  "verdict": "PASS",
+  "objectAfter": {
+    "revision": 486,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:32:16.467Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "draftFieldsAfter": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like.",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service.",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+    "FaqTitle": "Frequently asked questions"
+  },
+  "endedAt": "2026-09-08T23:32:54.014697+00:00"
+}

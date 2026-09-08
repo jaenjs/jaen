@@ -1,0 +1,463 @@
+{
+  "scenario": "two",
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FaqSubtitle",
+  "otherField": "ServicesSubtitle",
+  "rounds_asked": 6,
+  "startedAt": "2026-09-08T23:26:57.102982+00:00",
+  "objectBefore": {
+    "revision": 446,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:26:39.087Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "A.signedIn": true,
+  "A.draftSeen": true,
+  "A.editable": true,
+  "A.armed": true,
+  "A.stateAtStart": {
+    "revision": 446,
+    "publishedRevision": 183,
+    "applied": 446,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "B.signedIn": true,
+  "B.draftSeen": true,
+  "B.editable": true,
+  "B.armed": true,
+  "B.stateAtStart": {
+    "revision": 446,
+    "publishedRevision": 183,
+    "applied": 446,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "baseline": {
+    "FaqSubtitle": "Short answers about booking, vehicles and service.",
+    "ServicesSubtitle": "Get a quick overview. See details if you like."
+  },
+  "convergedA": {
+    "FaqSubtitle": {
+      "store": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+      "dom": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5"
+    },
+    "ServicesSubtitle": {
+      "store": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5",
+      "dom": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+    }
+  },
+  "convergedB": {
+    "FaqSubtitle": {
+      "store": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+      "dom": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5"
+    },
+    "ServicesSubtitle": {
+      "store": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5",
+      "dom": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+    }
+  },
+  "object": {
+    "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+    "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+  },
+  "expected": {
+    "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+    "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "expected": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0"
+      },
+      "A": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0",
+          "dom": "Short answers about booking, vehicles and service. A0"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0",
+          "dom": "Get a quick overview. See details if you like. B0"
+        }
+      },
+      "B": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0",
+          "dom": "Short answers about booking, vehicles and service. A0"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0",
+          "dom": "Get a quick overview. See details if you like. B0"
+        }
+      },
+      "object": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0"
+      },
+      "stateA": {
+        "revision": 448,
+        "publishedRevision": 183,
+        "applied": 448,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "stateB": {
+        "revision": 448,
+        "publishedRevision": 183,
+        "applied": 448,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "aKeptItsOwn": true,
+      "bKeptItsOwn": true,
+      "objectHasBoth": true,
+      "ok": true
+    },
+    {
+      "round": 1,
+      "expected": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1"
+      },
+      "A": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1",
+          "dom": "Short answers about booking, vehicles and service. A0 A1"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1",
+          "dom": "Get a quick overview. See details if you like. B0 B1"
+        }
+      },
+      "B": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1",
+          "dom": "Short answers about booking, vehicles and service. A0 A1"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1",
+          "dom": "Get a quick overview. See details if you like. B0 B1"
+        }
+      },
+      "object": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1"
+      },
+      "stateA": {
+        "revision": 450,
+        "publishedRevision": 183,
+        "applied": 450,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "stateB": {
+        "revision": 450,
+        "publishedRevision": 183,
+        "applied": 450,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "aKeptItsOwn": true,
+      "bKeptItsOwn": true,
+      "objectHasBoth": true,
+      "ok": true
+    },
+    {
+      "round": 2,
+      "expected": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2"
+      },
+      "A": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1 A2",
+          "dom": "Short answers about booking, vehicles and service. A0 A1 A2"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1 B2",
+          "dom": "Get a quick overview. See details if you like. B0 B1 B2"
+        }
+      },
+      "B": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1 A2",
+          "dom": "Short answers about booking, vehicles and service. A0 A1 A2"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1 B2",
+          "dom": "Get a quick overview. See details if you like. B0 B1 B2"
+        }
+      },
+      "object": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2"
+      },
+      "stateA": {
+        "revision": 452,
+        "publishedRevision": 183,
+        "applied": 452,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "stateB": {
+        "revision": 452,
+        "publishedRevision": 183,
+        "applied": 452,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "aKeptItsOwn": true,
+      "bKeptItsOwn": true,
+      "objectHasBoth": true,
+      "ok": true
+    },
+    {
+      "round": 3,
+      "expected": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3"
+      },
+      "A": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1 A2 A3",
+          "dom": "Short answers about booking, vehicles and service. A0 A1 A2 A3"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1 B2 B3",
+          "dom": "Get a quick overview. See details if you like. B0 B1 B2 B3"
+        }
+      },
+      "B": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1 A2 A3",
+          "dom": "Short answers about booking, vehicles and service. A0 A1 A2 A3"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1 B2 B3",
+          "dom": "Get a quick overview. See details if you like. B0 B1 B2 B3"
+        }
+      },
+      "object": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3"
+      },
+      "stateA": {
+        "revision": 454,
+        "publishedRevision": 183,
+        "applied": 454,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "stateB": {
+        "revision": 454,
+        "publishedRevision": 183,
+        "applied": 454,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "aKeptItsOwn": true,
+      "bKeptItsOwn": true,
+      "objectHasBoth": true,
+      "ok": true
+    },
+    {
+      "round": 4,
+      "expected": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4"
+      },
+      "A": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4",
+          "dom": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4",
+          "dom": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4"
+        }
+      },
+      "B": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4",
+          "dom": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4",
+          "dom": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4"
+        }
+      },
+      "object": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4"
+      },
+      "stateA": {
+        "revision": 456,
+        "publishedRevision": 183,
+        "applied": 456,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "stateB": {
+        "revision": 456,
+        "publishedRevision": 183,
+        "applied": 456,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "aKeptItsOwn": true,
+      "bKeptItsOwn": true,
+      "objectHasBoth": true,
+      "ok": true
+    },
+    {
+      "round": 5,
+      "expected": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+      },
+      "A": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+          "dom": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5",
+          "dom": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+        }
+      },
+      "B": {
+        "FaqSubtitle": {
+          "store": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+          "dom": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5"
+        },
+        "ServicesSubtitle": {
+          "store": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5",
+          "dom": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+        }
+      },
+      "object": {
+        "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+        "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+      },
+      "stateA": {
+        "revision": 458,
+        "publishedRevision": 183,
+        "applied": 458,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "stateB": {
+        "revision": 458,
+        "publishedRevision": 183,
+        "applied": 458,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved",
+        "connection": "socket",
+        "isEditing": true
+      },
+      "aKeptItsOwn": true,
+      "bKeptItsOwn": true,
+      "objectHasBoth": true,
+      "ok": true
+    }
+  ],
+  "summaryA": {
+    "distinctValues": [
+      "Short answers about booking, vehicles and service. A0",
+      "Short answers about booking, vehicles and service. A0 A1",
+      "Short answers about booking, vehicles and service. A0 A1 A2",
+      "Short answers about booking, vehicles and service. A0 A1 A2 A3",
+      "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4",
+      "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5"
+    ],
+    "reverts": [],
+    "byHydrate": [],
+    "hydrates": 6,
+    "hydratesThatMovedTheField": [],
+    "revertedToBaseline": []
+  },
+  "summaryB": {
+    "distinctValues": [
+      "Get a quick overview. See details if you like. B0",
+      "Get a quick overview. See details if you like. B0 B1",
+      "Get a quick overview. See details if you like. B0 B1 B2",
+      "Get a quick overview. See details if you like. B0 B1 B2 B3",
+      "Get a quick overview. See details if you like. B0 B1 B2 B3 B4",
+      "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5"
+    ],
+    "reverts": [],
+    "byHydrate": [],
+    "hydrates": 8,
+    "hydratesThatMovedTheField": [],
+    "revertedToBaseline": []
+  },
+  "warnsA": [],
+  "warnsB": [],
+  "verdict": "PASS",
+  "objectAfter": {
+    "revision": 458,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T23:27:52.998Z",
+    "updatedBy": "389619070703507059",
+    "full": true,
+    "changed": true
+  },
+  "draftFieldsAfter": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like. B0 B1 B2 B3 B4 B5",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service. A0 A1 A2 A3 A4 A5",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+  },
+  "endedAt": "2026-09-08T23:28:05.684134+00:00"
+}
