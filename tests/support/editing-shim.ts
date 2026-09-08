@@ -199,6 +199,7 @@ export const fire = (target: 'window' | 'document', type: string): number => {
         url: 'https://agent.example.invalid/graphql',
         site: 'booklimo.at',
         pollMs: 5000,
-        activePollMs: 1500,
-        debounceMs: 800
+        activePollMs: 1500
+        // No `debounceMs`, exactly as booklimo's own gatsby-config passes
+        // none, so the harness waits out the window the code ships with.
       }
