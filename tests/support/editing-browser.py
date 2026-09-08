@@ -997,6 +997,37 @@ OUTBOX = """() => {
 }""" % PERSIST_KEY
 
 
+async def sign_in_again(page):
+    """Sign in in a tab that has no `sessionStorage` of its own.
+
+    A new tab is a new `sessionStorage`, which is where the OIDC session lives,
+    so the CMS in it is anonymous however signed in the profile is. The
+    provider still holds its own cookie, so `/login/` usually completes without
+    a form and `sign_in`, which waits for the provider's page, times out on
+    exactly that silent case.
+    """
+    await page.goto(ORIGIN + "/login/", wait_until="domcontentloaded")
+
+    for _ in range(45):
+        try:
+            if await page.evaluate(HAS_SESSION):
+                return True
+        except Exception:
+            # The provider redirects while this asks, and an execution context
+            # destroyed by a navigation is the redirect and not a failure.
+            pass
+
+        if "accounts.netsnek.com" in page.url:
+            try:
+                return await sign_in(page)
+            except Exception:
+                return False
+
+        await page.wait_for_timeout(1000)
+
+    return False
+
+
 async def run_losses(pw, args):
     """The tab going away inside the field's own debounce, which is where an
     edit used to be lost.
@@ -1091,7 +1122,7 @@ async def run_losses(pw, args):
 
         # A new tab has no sessionStorage of its own, so the CMS is signed out
         # in it and the outbox cannot drain until somebody signs in again.
-        signed = await sign_in(page)
+        signed = await sign_in_again(page)
         out["close"]["signedInAgain"] = signed
 
         if signed:
