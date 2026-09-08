@@ -177,6 +177,51 @@ FIELD_VALUE = """() => {
   }
 }""" % (PERSIST_KEY, HOME_PAGE, FIELD_NAME)
 
+# The one field the draft holds.
+#
+# `FIELD_VALUE` above reads a fixed path, `JaenPage /` and `FleetTitle`, which is
+# what the first build's draft happened to carry: the old agent's head was the
+# whole replayed chain plus every edit made through it, so every field of the
+# site was in it. The draft object starts EMPTY and holds only what is
+# unpublished, so before this run writes anything there is no field in it at all
+# and a fixed path answers null. That is the design working, not a fault, and it
+# is why this reader exists: after one write the draft holds exactly one field
+# and this names it.
+DRAFT_FIELD = """() => {
+  try {
+    const state = JSON.parse(localStorage.getItem('KEY') || 'null')
+    const nodes = state?.page?.pages?.nodes || {}
+    for (const pageId of Object.keys(nodes)) {
+      const fields = nodes[pageId]?.jaenFields || {}
+      for (const fieldType of Object.keys(fields)) {
+        for (const fieldName of Object.keys(fields[fieldType] || {})) {
+          const entry = fields[fieldType][fieldName]
+          if (entry && typeof entry.value !== 'undefined') {
+            return {pageId, fieldType, fieldName, value: entry.value}
+          }
+        }
+      }
+    }
+    return null
+  } catch (error) {
+    return null
+  }
+}""".replace('KEY', PERSIST_KEY)
+
+
+def draft_field_at(ident):
+    """The value of one named field of the draft, or null when it is not in it."""
+    return """() => {
+  try {
+    const state = JSON.parse(localStorage.getItem('%s') || 'null')
+    const entry = state?.page?.pages?.nodes?.['%s']?.jaenFields?.['%s']?.['%s']
+    return entry && typeof entry.value !== 'undefined' ? entry.value : null
+  } catch (error) {
+    return null
+  }
+}""" % (PERSIST_KEY, ident["pageId"], ident["fieldType"], ident["fieldName"])
+
+
 SET_EDITING = """() => {
   // `status.isEditing` is part of the persisted store, so this is the same
   // mechanism a reload uses to come back into edit mode. It is set here rather
@@ -190,6 +235,24 @@ SET_EDITING = """() => {
 }""" % (PERSIST_KEY, PERSIST_KEY)
 
 
+# The same edit, as a script that runs before the page's own scripts.
+#
+# `SET_EDITING` above is evaluated inside a live page and is overwritten by
+# the next dispatch of the store (see `enter_editing`). This one is handed to
+# playwright's `add_init_script`, so it has already run when the store reads
+# `localStorage` on boot.
+SET_EDITING_AT_BOOT = """(() => {
+  try {
+    const raw = localStorage.getItem('%s')
+    const state = raw ? JSON.parse(raw) : {}
+    state.status = {...(state.status || {}), isEditing: true}
+    localStorage.setItem('%s', JSON.stringify(state))
+  } catch (error) {
+    // A storage the browser refuses is a run that skips, not one that throws.
+  }
+})()""" % (PERSIST_KEY, PERSIST_KEY)
+
+
 async def wait_for_store(page, timeout=40):
     """Wait until the store has written itself once, so it can be amended."""
     for _ in range(timeout):
@@ -200,17 +263,42 @@ async def wait_for_store(page, timeout=40):
 
 
 async def enter_editing(page):
-    """Edit mode, and with it the poller.
+    """Edit mode, and with it the fields a person can type into.
 
-    The poller runs while the CMS is mounted or `status.isEditing` is set, so a
-    plain page view of the site polls nothing and hydrates no draft. Setting the
-    flag in the persisted store and reloading is the same door a reload uses.
+    `status.isEditing` is part of the persisted store, so putting it there and
+    reloading is the same door a reload uses. What changed on 2026-09-08 is
+    **when** it can be put there.
+
+    Writing it into a live page does not survive any more. The store persists
+    itself on every dispatch, and with the agent option back the poll dispatches
+    every 1,500 ms, so the running page writes its own `isEditing: false` over
+    the edit inside a second: measured five readings in five seconds, all false,
+    without a reload in between. On a site with no agent nothing dispatches and
+    the same edit survived, which is why this worked until the agent came back
+    and why it then failed as "no editable field on the page" rather than as a
+    fault anybody could read.
+
+    So the flag goes in through an init script, which runs before any script of
+    the page on every navigation and therefore before the store is created. It
+    stays on the context for the rest of the run, which is what an editor with
+    the CMS open has anyway.
     """
     await page.goto(ORIGIN + "/", wait_until="domcontentloaded")
     await wait_for_store(page)
-    await page.evaluate(SET_EDITING)
+    await page.context.add_init_script(SET_EDITING_AT_BOOT)
     await page.reload(wait_until="domcontentloaded")
-    return await wait_for_draft(page)
+    state = await wait_for_draft(page)
+    await wait_for_editable(page)
+    return await page.evaluate(READ_STATE) or state
+
+
+async def wait_for_editable(page, timeout=30):
+    """Wait until edit mode has produced fields, which is what it is for."""
+    for _ in range(timeout):
+        if await page.locator('[contenteditable="true"]').count():
+            return True
+        await page.wait_for_timeout(1000)
+    return False
 
 
 async def wait_for_draft(page, timeout=60):
@@ -230,17 +318,46 @@ async def wait_for_draft(page, timeout=60):
     return await page.evaluate(READ_STATE)
 
 
-async def has_agent(page):
-    """Whether this build carries the agent option at all.
+_CARRIES_AGENT = None
 
-    The transition of `docs/architecture/draft-state.md` removed it from both
-    sites, so `__JAEN_AGENT__` is undefined, `agentConfig()` answers null and the
-    CMS keeps its draft in `localStorage` alone. Every scenario that needs a
-    shared draft skips on this rather than timing out on a wait that can never
-    finish.
+
+def carries_agent():
+    """Whether the build this run serves carries the `agent` plugin option.
+
+    It reads the built bundle and not the page, because there is nothing in the
+    page to read: `__JAEN_AGENT__` is a webpack define, so it is substituted for
+    its literal value at compile time and never exists as a runtime global. A
+    `page.evaluate` that asks for `typeof __JAEN_AGENT__` runs its own script
+    outside webpack and is therefore answered `undefined` on every build,
+    including one that carries the option. That is what this function used to
+    do, and it made ten checks of the two notebooks SKIP with "this build
+    carries no agent option" against a build that carried one.
+
+    So: the option's own shape in the bundle, `agent:{url:"…jaen-agent…"`, with
+    the minifier's freedom about spaces allowed for. The transition of
+    `docs/architecture/draft-state.md` removes the option and this then answers
+    false, which is the rollback and the reason the guard exists at all.
     """
-    return await page.evaluate(
-        "() => typeof __JAEN_AGENT__ !== 'undefined' && Boolean(__JAEN_AGENT__)")
+    global _CARRIES_AGENT
+    if _CARRIES_AGENT is not None:
+        return _CARRIES_AGENT
+
+    marker = re.compile(r'agent\s*:\s*\{\s*url\s*:\s*"[^"]*jaen-agent')
+    _CARRIES_AGENT = False
+    public = pathlib.Path(SITE_DIR) / "public"
+    for chunk in sorted(public.glob("*.js")):
+        try:
+            if marker.search(chunk.read_text(errors="ignore")):
+                _CARRIES_AGENT = True
+                break
+        except OSError:
+            continue
+    return _CARRIES_AGENT
+
+
+async def has_agent(page):
+    """Kept for the call sites, which pass the page they are on."""
+    return carries_agent()
 
 
 async def wait_for_saved(page, timeout=60):
@@ -478,19 +595,40 @@ async def run_blur(pw, args):
         return {"scenario": "blur", "skipped": "no draft arrived from the agent",
                 "remote": (state or {}).get("remote"), "notes": notes[-25:]}
 
-    original = await page.evaluate(FIELD_VALUE)
     await page.wait_for_timeout(3000)
 
-    handle = await editable_for(page, original)
+    # The value this run starts from comes off the DOM and not out of the store.
+    # The draft object holds what is unpublished and nothing else, so before this
+    # run writes anything it is empty and the store carries no field at all: what
+    # the person is looking at is the built page, which is the published chain.
+    # The first non-empty editable is the field, the same way `localBlur` picks
+    # one.
+    handle = None
+
+    for _ in range(30):
+        for candidate in await page.locator('[contenteditable="true"]').all():
+            text = (await candidate.inner_text()).strip()
+            if text:
+                handle = candidate
+                break
+        if handle is not None:
+            break
+        await page.wait_for_timeout(1000)
 
     if handle is None:
         await browser.close()
         return {"scenario": "blur", "skipped": "the field was not editable",
-                "original": original, "notes": notes}
+                "original": None, "notes": notes}
+
+    original = (await handle.inner_text()).strip()
 
     marker = " probe"
     probe = await type_and_leave(page, handle, marker)
-    written = await page.evaluate(FIELD_VALUE)
+    # Which field it was is only knowable after the write, because the draft was
+    # empty before it. Everything below reads that one field by name, so the run
+    # does not depend on which field the theme renders first.
+    ident = await page.evaluate(DRAFT_FIELD)
+    written = ident["value"] if ident else None
     saved = await wait_for_saved(page)
 
     # Set back, and prove it by reading the value out of a browser that has no
@@ -505,13 +643,13 @@ async def run_blur(pw, args):
         await page.keyboard.type(original or "", delay=30)
         await page.keyboard.press("Tab")
         await page.wait_for_timeout(2000)
-        restored = await page.evaluate(FIELD_VALUE)
+        restored = await page.evaluate(draft_field_at(ident)) if ident else None
         await wait_for_saved(page)
 
     await page.evaluate("() => localStorage.removeItem('%s')" % PERSIST_KEY)
     await page.goto(ORIGIN + "/", wait_until="domcontentloaded")
     await wait_for_draft(page)
-    read_back = await page.evaluate(FIELD_VALUE)
+    read_back = await page.evaluate(draft_field_at(ident)) if ident else None
 
     await browser.close()
 
@@ -524,6 +662,8 @@ async def run_blur(pw, args):
 
     return {
         "scenario": "blur",
+        "field": ident and {key: ident[key] for key in
+                            ("pageId", "fieldType", "fieldName")},
         "original": original,
         "written": written,
         "restored": restored,
@@ -561,6 +701,18 @@ async def run_local_blur(pw, args):
     beyond the field, which it does anyway and reads back out of a browser whose
     storage was emptied first.
     """
+    # This scenario measures the rollback, so it needs a build that has no agent
+    # option. On one that has it the CMS talks to the shared draft and every
+    # assertion here would be measuring something else while claiming to measure
+    # the escape. A run that cannot be taken says so.
+    if carries_agent():
+        return {"scenario": "localBlur",
+                "skipped": "this build carries the agent option, and the escape "
+                           "can only be measured on one that does not; the "
+                           "rollback was measured on 2026-09-08 against the "
+                           "build the transition left behind",
+                "carriesAgent": True}
+
     browser, context = await new_browser(pw)
     page = await context.new_page()
     notes = []
@@ -576,7 +728,7 @@ async def run_local_blur(pw, args):
         await browser.close()
         return {"scenario": "localBlur", "skipped": "the human admin did not sign in"}
 
-    carries_agent = await has_agent(page)
+    agent_in_build = await has_agent(page)
 
     await enter_editing(page)
     await page.wait_for_timeout(3000)
@@ -600,7 +752,7 @@ async def run_local_blur(pw, args):
     if handle is None:
         await browser.close()
         return {"scenario": "localBlur", "skipped": "no editable field on the page",
-                "carriesAgent": carries_agent, "notes": notes}
+                "carriesAgent": agent_in_build, "notes": notes}
 
     original = (await handle.inner_text()).strip()
 
@@ -675,7 +827,7 @@ async def run_local_blur(pw, args):
 
     return {
         "scenario": "localBlur",
-        "carriesAgent": carries_agent,
+        "carriesAgent": agent_in_build,
         "agentRequests": agent_requests[:10],
         "original": original,
         "written": written,
