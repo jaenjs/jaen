@@ -180,10 +180,7 @@ const remoteSlice = createSlice({
      */
     objectRestarted: (
       state,
-      action: PayloadAction<{
-        revision: number
-        publishedRevision?: number | null
-      }>
+      action: PayloadAction<{revision: number; publishedRevision?: number | null}>
     ) => {
       state.revision = action.payload.revision
       state.objectRestartedAt = new Date().toISOString()

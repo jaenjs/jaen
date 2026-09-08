@@ -29,9 +29,8 @@ for (const level of ['log', 'debug', 'info', 'warn'] as const) {
     }
 
     process.stderr.write(
-      args
-        .map(arg => (typeof arg === 'string' ? arg : String(arg)))
-        .join(' ') + '\n'
+      args.map(arg => (typeof arg === 'string' ? arg : String(arg))).join(' ') +
+        '\n'
     )
   }
 }
@@ -449,7 +448,9 @@ export const fire = (target: 'window' | 'document', type: string): number => {
       return {
         status: 200,
         json: async () => ({
-          errors: [{message: 'Cannot query field "subscribe" on type "Mutation"'}]
+          errors: [
+            {message: 'Cannot query field "subscribe" on type "Mutation"'}
+          ]
         })
       }
     }
