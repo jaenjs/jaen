@@ -20,7 +20,14 @@ import {
   withRedux
 } from '../redux'
 import {actions as remoteActions} from '../redux/slices/remote'
-import {publishSite, warmAuth} from '../clients/agent'
+import {
+  discardDraft as discardSharedDraft,
+  fetchDiscardPreview,
+  publishSite,
+  warmAuth,
+  type DiscardAnswer,
+  type DiscardPreviewAnswer
+} from '../clients/agent'
 import {useSharedDraft, SharedDraftState} from '../hooks/use-shared-draft'
 import {actions as pageActions} from '../redux/slices/page'
 import * as statusActions from '../redux/slices/status'
@@ -75,7 +82,22 @@ interface CMSManagementContextData {
   draft: {
     save: () => void
     import: () => Promise<void>
-    discard: () => void
+    /**
+     * Site wide with the agent configured, this browser's own without it.
+     *
+     * A per browser discard stopped meaning anything once the draft became
+     * shared: a change reaches the object a second or two after it is typed,
+     * so "discard my changes" would leave them in every other editor's CMS.
+     * With the agent it is the whole site's unpublished work, restored from
+     * the state the last publish kept, and it answers what it did. Without the
+     * agent it is what it always was.
+     *
+     * `atRevision` is the revision the confirmation named, and the agent
+     * refuses a confirmation about a draft that has moved since.
+     */
+    discard: (atRevision?: number) => Promise<DiscardAnswer | null>
+    /** What a site wide discard would undo. Null without the agent. */
+    discardPreview: () => Promise<DiscardPreviewAnswer | null>
     publish: () => void
   }
 
@@ -114,7 +136,8 @@ const CMSManagementContext = createContext<CMSManagementContextData>({
   draft: {
     save: () => {},
     import: () => Promise.resolve(),
-    discard: () => {},
+    discard: () => Promise.resolve(null),
+    discardPreview: () => Promise.resolve(null),
     publish: () => {}
   },
   sharedDraft: {
@@ -593,15 +616,61 @@ export const CMSManagementProvider = withRedux(
       })
     }, [])
 
-    const discardDraft = useCallback(() => {
-      dispatch(pageActions.discardAllChanges())
-      dispatch(siteActions.discardAllChanges())
-      dispatch(widgetActions.discardAllChanges())
+    /**
+     * What a site wide discard would undo, asked of the agent every time.
+     *
+     * Never counted in this browser: the draft is shared, so what is here is
+     * not what will go, and a confirmation that named this browser's own count
+     * would be wrong in exactly the case that matters, two people editing.
+     */
+    const discardPreview =
+      useCallback(async (): Promise<DiscardPreviewAnswer | null> => {
+        if (!jaenAgent) return null
 
-      // reset status
-      setIsEditing(false)
-      setIsPublishing(false)
-    }, [setIsEditing, setIsPublishing])
+        return await fetchDiscardPreview(jaenAgent)
+      }, [])
+
+    /**
+     * Discard, which is two different acts depending on where the draft lives.
+     *
+     * With the agent it is the site's, and this browser does **not** apply it
+     * to itself: the object pushes the new revision to every editor, this one
+     * included, and the ordinary invalidation path in `remote-state` drops the
+     * outbox, parks it and reads the draft whole. One path for everybody,
+     * including the person who pressed the button, and no second implementation
+     * of "put the draft back" in the browser that happened to ask for it.
+     *
+     * Without the agent it is what it always was: this browser's own store,
+     * cleared.
+     */
+    const discardDraft = useCallback(
+      async (atRevision?: number): Promise<DiscardAnswer | null> => {
+        if (jaenAgent) {
+          const answer = await discardSharedDraft(jaenAgent, atRevision)
+
+          if (answer.discarded) {
+            // Edit mode is left alone. The person is still editing, the fields
+            // under them are simply the published ones again, and dropping
+            // them out of edit mode would be a second surprise on top of the
+            // first.
+            setIsPublishing(false)
+          }
+
+          return answer
+        }
+
+        dispatch(pageActions.discardAllChanges())
+        dispatch(siteActions.discardAllChanges())
+        dispatch(widgetActions.discardAllChanges())
+
+        // reset status
+        setIsEditing(false)
+        setIsPublishing(false)
+
+        return null
+      },
+      [setIsEditing, setIsPublishing]
+    )
 
     const publishDraft = useCallback(async () => {
       // With the agent configured, publish is the only writer of history: the
@@ -811,6 +880,7 @@ export const CMSManagementProvider = withRedux(
             save: saveDraft,
             import: importDraft,
             discard: discardDraft,
+            discardPreview,
             publish: publishDraft
           },
           sharedDraft
