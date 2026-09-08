@@ -1246,6 +1246,13 @@ Both are monotonic. The only two operations that may move them down are the two
 that say the object's history was replaced, `objectRestarted` and
 `draftDiscarded`, and both set them together and deliberately.
 
+`remote.staleAnswers` counts them, and it counts every answer a browser did not
+need rather than only the ones that would have reverted something: a CMS that
+comes up with a poll and a socket asks twice and one of the two answers is
+already held by the time it lands, which is why the browser run stored here
+starts at two before anything is forced. The gate asserts the **increment**
+across the released answer for that reason, and not the number.
+
 **The gate, in one sentence.** An answer is applied only when its revision is
 strictly above `appliedRevision` **and** at least `revision`, read against the
 store at the instant the answer arrives; anything else is counted in
