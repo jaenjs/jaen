@@ -1,0 +1,333 @@
+{
+  "notebook": "09-editing-latency",
+  "started": 1788906139.3423007,
+  "testkit_version": "1.0.0",
+  "counts": {
+    "PASS": 22,
+    "FAIL": 3,
+    "SKIP": 4,
+    "WARN": 0,
+    "TOTAL": 29
+  },
+  "checks": [
+    {
+      "index": 1,
+      "name": "the head the transition kept is beside the site",
+      "status": "PASS",
+      "evidence": "live.json at /home/snekmin/git/limosen-v3/booklimo.at-transition-before.head. live-media.json at /home/snekmin/git/limosen-v3/booklimo.at-transition-before.head",
+      "detail": "",
+      "section": "the fixture",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906139.3432424
+    },
+    {
+      "index": 2,
+      "name": "it builds into one draft",
+      "status": "PASS",
+      "evidence": "2 pages, 80213 B of draft. the draft fixture at /tmp/jaen-editing/booklimo-draft.json",
+      "detail": "",
+      "section": "the fixture",
+      "notebook": "09-editing-latency",
+      "duration_ms": 1,
+      "timestamp": 1788906139.3446996
+    },
+    {
+      "index": 3,
+      "name": "the draft carries pages and a catalogue",
+      "status": "PASS",
+      "evidence": "pages in the draft. 140 media nodes",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 1,
+      "timestamp": 1788906139.481491
+    },
+    {
+      "index": 4,
+      "name": "the catalogue is the draft, by weight",
+      "status": "PASS",
+      "evidence": "the pages 1899 B, the catalogue 118617 B on disk. the catalogue compact is 76359 B. the catalogue is 62 times the pages",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906139.4820805
+    },
+    {
+      "index": 5,
+      "name": "the catalogue holds the 140 nodes the acceptance names",
+      "status": "PASS",
+      "evidence": "media nodes in booklimo's draft",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906139.482104
+    },
+    {
+      "index": 6,
+      "name": "the harness bundles out of the jaen source",
+      "status": "PASS",
+      "evidence": "bundled 1771480 B",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 68,
+      "timestamp": 1788906139.5732958
+    },
+    {
+      "index": 7,
+      "name": "one blur is one storage write, not four",
+      "status": "PASS",
+      "evidence": "state 77116 B, 140 media nodes. whole-store writes per blur, median 1, max 1. 1332 B written per blur, against 309,253 B in the baseline",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 36774,
+      "timestamp": 1788906176.3485227
+    },
+    {
+      "index": 8,
+      "name": "the write is one pass over the state, not three",
+      "status": "PASS",
+      "evidence": "the old four steps 0.943 ms, the one pass 0.015 ms, 939 B against 77116 B. one stringify with a replacer against a clone, a walk and two stringifies",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906176.3487918
+    },
+    {
+      "index": 9,
+      "name": "the catalogue is what is being copied",
+      "status": "PASS",
+      "evidence": "without the catalogue the store is 768 B of 77116. the catalogue is 99.0% of the payload",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906176.3489506
+    },
+    {
+      "index": 10,
+      "name": "a blur blocks the main thread for less than one frame (node)",
+      "status": "PASS",
+      "evidence": "median 3.27 ms, p95 6.60 ms over 60 blurs. p95 of the whole blur, four serialisations included",
+      "detail": "",
+      "section": "acceptance, node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 1,
+      "timestamp": 1788906176.4234242
+    },
+    {
+      "index": 11,
+      "name": "a payload of the pre-change size is prepared for the browser",
+      "status": "PASS",
+      "evidence": "the browser gets 77105 B of store",
+      "detail": "",
+      "section": "the persistence path in the browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 456,
+      "timestamp": 1788906176.9166481
+    },
+    {
+      "index": 12,
+      "name": "the persistence path costs, measured in chromium",
+      "status": "PASS",
+      "evidence": "77105 B, one whole-store save 0.480 ms (batch), 60 samples. after change 1, one pass on the same payload: 0.237 ms; with change 2 as well, 0.013 ms and 8.... the browser measured something",
+      "detail": "",
+      "section": "the persistence path in the browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 1871,
+      "timestamp": 1788906178.788292
+    },
+    {
+      "index": 13,
+      "name": "one blur in the browser is under one frame of work",
+      "status": "PASS",
+      "evidence": "before 1.920 ms for a blur, after 0.013 ms. one frame at 16 ms",
+      "detail": "",
+      "section": "the persistence path in the browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906178.7883306
+    },
+    {
+      "index": 14,
+      "name": "a field is typed, left, and set back on the live agent",
+      "status": "FAIL",
+      "evidence": "the edit reached the store. expected dudhdtttttOur fleet test dudhd, observed . the field was set back",
+      "detail": "",
+      "section": "the real CMS",
+      "notebook": "09-editing-latency",
+      "duration_ms": 54821,
+      "timestamp": 1788906233.6490264
+    },
+    {
+      "index": 15,
+      "name": "the value read back out of an emptied browser is the one found",
+      "status": "FAIL",
+      "evidence": "expected dudhdtttttOur fleet test dudhd, observed dudhdtttttOur fleet &nbsp;test &nbsp;dudhd ...",
+      "detail": "",
+      "section": "the real CMS",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906233.6492352
+    },
+    {
+      "index": 16,
+      "name": "a field is typed and left in the CMS, and set back",
+      "status": "SKIP",
+      "evidence": "this build carries the agent option, and the escape can only be measured on one that does not...",
+      "detail": "",
+      "section": "the real CMS, no agent",
+      "notebook": "09-editing-latency",
+      "duration_ms": 1500,
+      "timestamp": 1788906235.192219
+    },
+    {
+      "index": 17,
+      "name": "the escape holds: nothing left the browser",
+      "status": "SKIP",
+      "evidence": "the browser half did not run",
+      "detail": "",
+      "section": "the real CMS, no agent",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906235.194201
+    },
+    {
+      "index": 18,
+      "name": "the writes a blur causes collapsed against the baseline",
+      "status": "SKIP",
+      "evidence": "the browser half did not run",
+      "detail": "",
+      "section": "the real CMS, no agent",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906235.1944225
+    },
+    {
+      "index": 19,
+      "name": "the blur to paint gap, which change 1 does not fix",
+      "status": "SKIP",
+      "evidence": "the browser half did not run",
+      "detail": "",
+      "section": "the real CMS, no agent",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906235.19446
+    },
+    {
+      "index": 20,
+      "name": "a blur is painted within one frame",
+      "status": "FAIL",
+      "evidence": "blur to the next painted frame: 103.8 ms. one frame at 16 ms",
+      "detail": "",
+      "section": "acceptance, browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906235.2378933
+    },
+    {
+      "index": 21,
+      "name": "the writes after a blur are what the deferred writer allows",
+      "status": "PASS",
+      "evidence": "3 writes, 0.083 MB, in the four seconds after the blur. longest long task 58 ms. at most one write per 250 ms deadline over four seconds",
+      "detail": "",
+      "section": "acceptance, browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906235.237936
+    },
+    {
+      "index": 22,
+      "name": "the bytes a blur writes collapsed",
+      "status": "PASS",
+      "evidence": "0.083 MB in the four seconds after the blur, against 14.4 MB in the baseline",
+      "detail": "",
+      "section": "acceptance, browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906235.2379587
+    },
+    {
+      "index": 23,
+      "name": "the comparison that decides whether a registration is a dispatch",
+      "status": "PASS",
+      "evidence": "11 cases. cases that answered wrongly",
+      "detail": "",
+      "section": "the storm at rest",
+      "notebook": "09-editing-latency",
+      "duration_ms": 47,
+      "timestamp": 1788906235.3617642
+    },
+    {
+      "index": 24,
+      "name": "the dispatches at rest, with edit mode on and off",
+      "status": "PASS",
+      "evidence": "edit off: 0.0 dispatches/s, 0.0 writes/s, 59.7 frames/s, timer 50 ms. edit on: 0.0 dispatches/s, 0.0 writes/s, 59.7 frames/s, timer 50 ms. by action type, edit on: {}. edit mode produced editable fields",
+      "detail": "",
+      "section": "the storm at rest",
+      "notebook": "09-editing-latency",
+      "duration_ms": 63098,
+      "timestamp": 1788906298.4599795
+    },
+    {
+      "index": 25,
+      "name": "ACCEPTANCE: at rest with edit mode on the store is written zero times",
+      "status": "PASS",
+      "evidence": "dispatches in five seconds (editOn). localStorage writes in five seconds (editOn). dispatches in five seconds (editOnAgain). localStorage writes in five seconds (editOnAgain)",
+      "detail": "",
+      "section": "the storm at rest",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906298.460112
+    },
+    {
+      "index": 26,
+      "name": "and nothing is remounted or torn down while it stands still",
+      "status": "PASS",
+      "evidence": "0 React fiber deletions, 1 commits, replaced field nodes {}. React fiber deletions in five seconds. field DOM nodes replaced in five seconds",
+      "detail": "",
+      "section": "the storm at rest",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906298.4602711
+    },
+    {
+      "index": 27,
+      "name": "the main thread is idle enough to answer a person",
+      "status": "PASS",
+      "evidence": "59.5 animation frames a second, a 50 ms timer at 50 ms. animation frames a second with edit mode on. a 50 ms timer fires at under 60 ms",
+      "detail": "",
+      "section": "the storm at rest",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906298.4603868
+    },
+    {
+      "index": 28,
+      "name": "a blur costs no dispatch of its own and is painted in a frame",
+      "status": "PASS",
+      "evidence": "8 blurs: median 13.8 ms to the next painted frame, median 23.8 ms of main thread held. 0 dispatches during the blur round, {}. dispatches caused by leaving a field, over eight blurs",
+      "detail": "",
+      "section": "the storm at rest",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906298.4605534
+    },
+    {
+      "index": 29,
+      "name": "and the second after a click carries no long task",
+      "status": "PASS",
+      "evidence": "longest long task in the second after each click: [0, 0, 0, 0, 0, 0]. the longest long task after a click, in milliseconds",
+      "detail": "",
+      "section": "the storm at rest",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788906298.460649
+    }
+  ]
+}

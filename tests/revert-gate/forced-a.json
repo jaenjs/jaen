@@ -1,0 +1,460 @@
+{
+  "scenario": "forced",
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FaqSubtitle",
+  "otherField": "ServicesSubtitle",
+  "startedAt": "2026-09-08T22:04:03.457882+00:00",
+  "objectBefore": {
+    "revision": 285,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T21:48:59.305Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "draftFieldsBefore": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like.",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service.",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+  },
+  "signedIn": true,
+  "draftSeen": true,
+  "editable": true,
+  "armed": true,
+  "stateAtStart": {
+    "revision": 285,
+    "publishedRevision": 183,
+    "applied": 285,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "fieldAtStart": "Short answers about booking, vehicles and service.",
+  "objectAtStart": {
+    "revision": 285,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T21:48:59.305Z",
+    "updatedBy": "389619062902101595",
+    "full": true,
+    "changed": true
+  },
+  "holdArmed": true,
+  "otherFieldBefore": "Get a quick overview. See details if you like.",
+  "secondEditorWrite": {
+    "data": {
+      "save": {
+        "revision": 286,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T22:04:32.217Z",
+        "overwrote": []
+      }
+    }
+  },
+  "secondEditorMarker": " r5072",
+  "answerHeld": true,
+  "stateWhileHeld": {
+    "revision": 285,
+    "publishedRevision": 183,
+    "applied": 285,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "saveAnswer": {
+    "op": "Save",
+    "sentAt": 8256.2,
+    "sentIso": "2026-09-08T22:04:34.925Z",
+    "sinceRevision": null,
+    "baseRevision": 285,
+    "changes": 1,
+    "changeValues": [
+      "FaqSubtitle=Short answers about booking, vehicles and service. AAA"
+    ],
+    "clientAtSend": {
+      "revision": 285,
+      "publishedRevision": 183,
+      "applied": 285,
+      "staleAnswers": null,
+      "outbox": 1,
+      "saveState": "saving"
+    },
+    "held": false,
+    "answeredAt": 8304.3,
+    "answeredIso": "2026-09-08T22:04:34.973Z",
+    "status": 200,
+    "answer": {
+      "revision": 287,
+      "rebased": true,
+      "keys": null
+    },
+    "deliveredAt": 8304.3
+  },
+  "stateAfterSave": {
+    "revision": 287,
+    "publishedRevision": 183,
+    "applied": 287,
+    "staleAnswers": null,
+    "outbox": 0,
+    "saveState": "saved",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "storeAfterSave": {
+    "store": "Short answers about booking, vehicles and service. AAA",
+    "dom": "Short answers about booking, vehicles and service. AAA"
+  },
+  "objectAfterSave": "Short answers about booking, vehicles and service. AAA",
+  "released": true,
+  "stateAfterRelease": {
+    "revision": 287,
+    "publishedRevision": 183,
+    "applied": 287,
+    "staleAnswers": 1,
+    "outbox": 0,
+    "saveState": "saved",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "storeAfterRelease": {
+    "store": "Short answers about booking, vehicles and service. AAA",
+    "dom": "Short answers about booking, vehicles and service. AAA"
+  },
+  "onScreenAfterRelease": "Short answers about booking, vehicles and service. AAA",
+  "objectAfterRelease": "Short answers about booking, vehicles and service. AAA",
+  "focusedAfterRelease": {
+    "tag": "SPAN",
+    "editable": "true",
+    "id": "BookingTitle"
+  },
+  "stateAfterSettle": {
+    "revision": 287,
+    "publishedRevision": 183,
+    "applied": 287,
+    "staleAnswers": 1,
+    "outbox": 0,
+    "saveState": "saved",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "storeAfterSettle": {
+    "store": "Short answers about booking, vehicles and service. AAA",
+    "dom": "Short answers about booking, vehicles and service. AAA"
+  },
+  "onScreenAfterSettle": "Short answers about booking, vehicles and service. AAA",
+  "objectAfterSettle": "Short answers about booking, vehicles and service. AAA",
+  "calls": [
+    {
+      "op": "Draft",
+      "sentAt": 5586.1,
+      "sentIso": "2026-09-08T22:04:32.255Z",
+      "sinceRevision": 285,
+      "baseRevision": null,
+      "changes": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 285,
+        "publishedRevision": 183,
+        "applied": 285,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "idle"
+      },
+      "held": true,
+      "answeredAt": 5639.9,
+      "answeredIso": "2026-09-08T22:04:32.309Z",
+      "status": 200,
+      "answer": {
+        "revision": 286,
+        "publishedRevision": 183,
+        "changed": true,
+        "full": false,
+        "discardedRevision": 183,
+        "fieldValue": "Short answers about booking, vehicles and service."
+      },
+      "deliveredAt": 9070.4,
+      "deliveredIso": "2026-09-08T22:04:35.739Z",
+      "heldMs": 3430.5,
+      "clientAtDelivery": {
+        "revision": 287,
+        "publishedRevision": 183,
+        "applied": 287,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved"
+      }
+    },
+    {
+      "op": "Save",
+      "sentAt": 8256.2,
+      "sentIso": "2026-09-08T22:04:34.925Z",
+      "sinceRevision": null,
+      "baseRevision": 285,
+      "changes": 1,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. AAA"
+      ],
+      "clientAtSend": {
+        "revision": 285,
+        "publishedRevision": 183,
+        "applied": 285,
+        "staleAnswers": null,
+        "outbox": 1,
+        "saveState": "saving"
+      },
+      "held": false,
+      "answeredAt": 8304.3,
+      "answeredIso": "2026-09-08T22:04:34.973Z",
+      "status": 200,
+      "answer": {
+        "revision": 287,
+        "rebased": true,
+        "keys": null
+      },
+      "deliveredAt": 8304.3
+    },
+    {
+      "op": "Draft",
+      "sentAt": 8323.3,
+      "sentIso": "2026-09-08T22:04:34.992Z",
+      "sinceRevision": 285,
+      "baseRevision": null,
+      "changes": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 287,
+        "publishedRevision": 183,
+        "applied": 285,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved"
+      },
+      "held": false,
+      "answeredAt": 8351.9,
+      "answeredIso": "2026-09-08T22:04:35.021Z",
+      "status": 200,
+      "answer": {
+        "revision": 287,
+        "publishedRevision": 183,
+        "changed": true,
+        "full": false,
+        "discardedRevision": 183,
+        "fieldValue": "Short answers about booking, vehicles and service. AAA"
+      },
+      "deliveredAt": 8351.9
+    },
+    {
+      "op": "Draft",
+      "sentAt": 31364.8,
+      "sentIso": "2026-09-08T22:04:58.034Z",
+      "sinceRevision": 287,
+      "baseRevision": null,
+      "changes": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 287,
+        "publishedRevision": 183,
+        "applied": 287,
+        "staleAnswers": 1,
+        "outbox": 0,
+        "saveState": "saved"
+      },
+      "held": false,
+      "answeredAt": 31416.9,
+      "answeredIso": "2026-09-08T22:04:58.086Z",
+      "status": 200,
+      "answer": {
+        "revision": 287,
+        "publishedRevision": 183,
+        "changed": false,
+        "full": false,
+        "discardedRevision": 183,
+        "fieldValue": null
+      },
+      "deliveredAt": 31416.9
+    }
+  ],
+  "rows": [
+    {
+      "at": 5306.4,
+      "iso": "2026-09-08T22:04:31.975Z",
+      "client": {
+        "revision": 285,
+        "publishedRevision": 183,
+        "applied": 285,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "idle"
+      },
+      "store": "Short answers about booking, vehicles and service.",
+      "dom": "Short answers about booking, vehicles and service.",
+      "actions": {}
+    },
+    {
+      "at": 7251,
+      "iso": "2026-09-08T22:04:33.920Z",
+      "client": {
+        "revision": 285,
+        "publishedRevision": 183,
+        "applied": 285,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "idle"
+      },
+      "store": "Short answers about booking, vehicles and service. AAA",
+      "dom": "Short answers about booking, vehicles and service. AAA",
+      "actions": {
+        "pages/field_write": 1
+      }
+    },
+    {
+      "at": 7252,
+      "iso": "2026-09-08T22:04:33.921Z",
+      "client": {
+        "revision": 285,
+        "publishedRevision": 183,
+        "applied": 285,
+        "staleAnswers": null,
+        "outbox": 1,
+        "saveState": "pending"
+      },
+      "store": "Short answers about booking, vehicles and service. AAA",
+      "dom": "Short answers about booking, vehicles and service. AAA",
+      "actions": {
+        "remote/record": 1
+      }
+    },
+    {
+      "at": 8253.9,
+      "iso": "2026-09-08T22:04:34.923Z",
+      "client": {
+        "revision": 285,
+        "publishedRevision": 183,
+        "applied": 285,
+        "staleAnswers": null,
+        "outbox": 1,
+        "saveState": "saving"
+      },
+      "store": "Short answers about booking, vehicles and service. AAA",
+      "dom": "Short answers about booking, vehicles and service. AAA",
+      "actions": {
+        "remote/saveStarted": 1
+      }
+    },
+    {
+      "at": 8307.4,
+      "iso": "2026-09-08T22:04:34.976Z",
+      "client": {
+        "revision": 287,
+        "publishedRevision": 183,
+        "applied": 285,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved"
+      },
+      "store": "Short answers about booking, vehicles and service. AAA",
+      "dom": "Short answers about booking, vehicles and service. AAA",
+      "actions": {
+        "remote/saveSucceeded": 1
+      }
+    },
+    {
+      "at": 8354.7,
+      "iso": "2026-09-08T22:04:35.024Z",
+      "client": {
+        "revision": 287,
+        "publishedRevision": 183,
+        "applied": 287,
+        "staleAnswers": null,
+        "outbox": 0,
+        "saveState": "saved"
+      },
+      "store": "Short answers about booking, vehicles and service. AAA",
+      "dom": "Short answers about booking, vehicles and service. AAA",
+      "actions": {
+        "pages/hydrateFromRemote": 1,
+        "site/hydrateFromRemote": 1,
+        "widget/hydrateFromRemote": 1,
+        "remote/remoteHydrated": 1
+      }
+    },
+    {
+      "at": 9074.4,
+      "iso": "2026-09-08T22:04:35.743Z",
+      "client": {
+        "revision": 287,
+        "publishedRevision": 183,
+        "applied": 287,
+        "staleAnswers": 1,
+        "outbox": 0,
+        "saveState": "saved"
+      },
+      "store": "Short answers about booking, vehicles and service. AAA",
+      "dom": "Short answers about booking, vehicles and service. AAA",
+      "actions": {
+        "pages/field_register": 2,
+        "remote/staleAnswerSkipped": 1
+      }
+    }
+  ],
+  "warns": [],
+  "error": null,
+  "summary": {
+    "distinctValues": [
+      "Short answers about booking, vehicles and service.",
+      "Short answers about booking, vehicles and service. AAA"
+    ],
+    "reverts": [],
+    "byHydrate": [],
+    "hydrates": 1,
+    "hydratesThatMovedTheField": [],
+    "revertedToBaseline": []
+  },
+  "servedFrom": "a local production build",
+  "restored": {
+    "FaqSubtitle": {
+      "wroteRevision": 288,
+      "wanted": "Short answers about booking, vehicles and service.",
+      "readBack": "Short answers about booking, vehicles and service.",
+      "ok": true
+    },
+    "ServicesSubtitle": {
+      "wroteRevision": 289,
+      "wanted": "Get a quick overview. See details if you like.",
+      "readBack": "Get a quick overview. See details if you like.",
+      "ok": true
+    }
+  },
+  "draftFieldsAfter": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like.",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service.",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+  },
+  "objectAfter": {
+    "revision": 289,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T22:05:24.141Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "endedAt": "2026-09-08T22:05:24.344630+00:00"
+}
