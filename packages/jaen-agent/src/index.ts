@@ -31,20 +31,10 @@ import type {JaenChangeInput} from './apply-change'
 import {cachedIntrospection} from './auth/cache'
 import {editor as callerEditor, requireSiteAdmin} from './auth'
 import {env, site as siteEntry, USER_AGENT} from './env'
-import {headFilesDraft} from './head-files-draft'
-import {publish as publishSite, useDraftSource} from './publish'
+import {durableDraftStore} from './draft/durable'
+import {publish as publishSite} from './publish'
 import {readHead, readHeadSha, save as saveToRepository} from './store'
 import type {FieldAuthors} from './types'
-
-/**
- * The draft store publish reads.
- *
- * One line, and it is the seam `draft-state.md` asks for: the Durable Object
- * implementation of the same interface replaces the argument here and nothing
- * in ./publish moves. Until it lands the interim reader stands in, see
- * ./head-files-draft.
- */
-useDraftSource(headFilesDraft)
 
 // --------------------------------------------------------------------------
 // The answers
@@ -327,12 +317,13 @@ export const graphql = {
       const entry = siteEntry(site)
       const admin = await requireSiteAdmin(site, entry)
 
-      const outcome = await publishSite(site, entry, {
+      // The store is built here and passed in, so ./publish names no
+      // Cloudflare type and a single process implementation of the same four
+      // operations is one line's change.
+      return await publishSite(durableDraftStore(env()), site, entry, {
         editor: {sub: admin.sub, name: admin.name, email: admin.email},
         message: message ?? null
       })
-
-      return outcome
     }
   }
 }

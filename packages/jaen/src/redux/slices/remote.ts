@@ -145,10 +145,7 @@ const remoteSlice = createSlice({
      */
     revisionSeen: (
       state,
-      action: PayloadAction<{
-        revision: number
-        publishedRevision?: number | null
-      }>
+      action: PayloadAction<{revision: number; publishedRevision?: number | null}>
     ) => {
       state.revision = action.payload.revision
 
@@ -158,7 +155,10 @@ const remoteSlice = createSlice({
     },
 
     /** A publish was accepted. What it took is live once the build lands. */
-    publishQueued: (state, action: PayloadAction<{revision?: number}>) => {
+    publishQueued: (
+      state,
+      action: PayloadAction<{revision?: number}>
+    ) => {
       if (typeof action.payload.revision === 'number') {
         state.publishedRevision = action.payload.revision
       } else if (typeof state.revision === 'number') {

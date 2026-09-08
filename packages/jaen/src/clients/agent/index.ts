@@ -326,17 +326,9 @@ export const draftSocketUrl = (config: AgentConfig): string | null => {
   if (!base) return null
 
   try {
-    const url = new URL(
-      base,
-      typeof location === 'undefined' ? undefined : location.href
-    )
+    const url = new URL(base, typeof location === 'undefined' ? undefined : location.href)
 
-    url.protocol =
-      url.protocol === 'http:'
-        ? 'ws:'
-        : url.protocol === 'https:'
-          ? 'wss:'
-          : url.protocol
+    url.protocol = url.protocol === 'http:' ? 'ws:' : url.protocol === 'https:' ? 'wss:' : url.protocol
 
     if (!config.socketUrl) {
       url.pathname = url.pathname.replace(/\/graphql\/?$/, '') + '/draft'

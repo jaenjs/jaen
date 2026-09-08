@@ -20,6 +20,12 @@
  *
  * Nothing else in this service may write to a repository.
  *
+ * The draft store is `./draft/store`, four operations for the editors and
+ * `markPublished` beside them, which only this path calls. Publish knows no
+ * Cloudflare type and no Durable Object, which is the escape the design asks
+ * for: a store over one process with SQLite implements the same interface and
+ * nothing here moves.
+ *
  * **The order is the safety.** The gateway file is written before the commit,
  * so a failure between the two leaves a file nothing names, which costs a few
  * kilobytes on the gateway and changes no site. The commit is made before the
@@ -31,6 +37,7 @@
  * chain does not name, or name a file that is not there.
  */
 import {PATCHES_PATH} from './document'
+import type {DraftStore} from './draft/store'
 import {siteBranch, sitePath, type SiteEntry} from './env'
 import {readBackMigration, uploadMigration} from './gateway'
 import {
@@ -55,63 +62,6 @@ export interface DraftData {
   site: JaenSiteState
   widgets: JaenWidget[]
 }
-
-/**
- * What publish knows about a draft, and the whole of it.
- *
- * `docs/architecture/draft-state.md` puts the draft in one Durable Object per
- * site behind four operations, `read`, `write`, `subscribe` and `snapshot`,
- * so that the day the estate wants its own machine the same interface is
- * implemented on one process with SQLite. Publish uses `snapshot` and none of
- * the other three.
- */
-export interface DraftSnapshot {
-  /** The object's revision this snapshot was taken at. */
-  revision: number
-  /** The revision the last publish took, or null when nothing was published. */
-  publishedRevision: number | null
-  data: DraftData
-}
-
-/**
- * The store, as publish sees it.
- *
- * `markPublished` is a fifth operation and the design asks for four. It is
- * here rather than expressed as a `write` of the `meta` key because a write
- * bumps the revision, and a publish that bumps the revision it has just
- * published either claims the new revision is published, which is a lie the
- * moment an editor's save lands in the same instant, or leaves
- * `revision > publishedRevision` immediately after a publish, which tells
- * every editor there is something unpublished when there is not. The toolbar
- * may say neither. Recording the mark without touching the counter is the
- * only shape that cannot lie, so the interface grows by one operation instead
- * of the answer growing an error.
- */
-export interface DraftSource {
-  snapshot: (siteKey: string, entry: SiteEntry) => Promise<DraftSnapshot>
-  markPublished: (
-    siteKey: string,
-    entry: SiteEntry,
-    mark: {revision: number; sha: string; url: string; at: string}
-  ) => Promise<void>
-}
-
-let source: DraftSource | null = null
-
-/**
- * The draft store registers itself here.
- *
- * One implementation on a Durable Object today, one on a single process with
- * SQLite the day Cloudflare is left. Publish is written against the interface
- * above and changes not at all when the implementation does, which is the
- * requirement `draft-state.md` makes of this design rather than an
- * afterthought.
- */
-export const useDraftSource = (implementation: DraftSource): void => {
-  source = implementation
-}
-
-export const draftSource = (): DraftSource | null => source
 
 // --------------------------------------------------------------------------
 // The migration
@@ -216,6 +166,7 @@ const defaultMessage = (draft: DraftData, editorName: string): string =>
   `Publish ${draft.pages?.length ?? 0} pages, by ${editorName}`
 
 export const publish = async (
+  store: DraftStore,
   siteKey: string,
   entry: SiteEntry,
   input: {
@@ -223,32 +174,21 @@ export const publish = async (
     message?: string | null
   }
 ): Promise<PublishOutcome> => {
-  const store = draftSource()
-
-  if (!store) {
-    // Not an error. An agent with no draft store cannot publish and must not
-    // pretend otherwise, and a caller that is told so can still fall back on
-    // the CMS's own migration path.
-    return {
-      published: false,
-      revision: null,
-      publishedRevision: null,
-      migrationUrl: null,
-      migrationBytes: null,
-      commitSha: null,
-      commitUrl: null,
-      publishedAt: null,
-      queued: false,
-      workflow: entry.publishWorkflow ?? null,
-      runUrl: null,
-      reason:
-        'This agent has no draft store, so there is no draft to publish. ' +
-        'See docs/architecture/draft-state.md.'
-    }
-  }
-
   const branch = siteBranch(entry)
-  const snapshot = await store.snapshot(siteKey, entry)
+
+  // The whole draft, and then the object's own reading of what is published.
+  // `read` at the snapshot's own revision answers `changed: false` with no
+  // delta, which is the cheapest question the object takes, and it is the one
+  // answer that carries `publishedRevision`.
+  const snapshot = await store.snapshot(siteKey)
+  const state = await store.read(siteKey, snapshot.revision)
+  const publishedRevision = state.publishedRevision || 0
+
+  const draft: DraftData = {
+    pages: snapshot.data?.pages ?? [],
+    site: snapshot.data?.site ?? {siteMetadata: {}},
+    widgets: snapshot.data?.widgets ?? []
+  }
 
   const build = async (
     outcome: Omit<PublishOutcome, 'queued' | 'workflow' | 'runUrl'> & {
@@ -293,54 +233,44 @@ export const publish = async (
     }
   }
 
-  // Nothing has changed since the last publish. A migration would be a file
-  // and a line and a commit that say the same thing the chain already says,
-  // which is exactly the file and commit explosion this design was written to
-  // stop. The build is still dispatched, because "publish" with nothing to
-  // publish is a person asking for the site to be rebuilt.
-  if (
-    snapshot.publishedRevision !== null &&
-    snapshot.publishedRevision === snapshot.revision
-  ) {
-    return await build({
+  const nothing = (reason: string) =>
+    build({
       published: false,
       revision: snapshot.revision,
-      publishedRevision: snapshot.publishedRevision,
+      publishedRevision,
       migrationUrl: null,
       migrationBytes: null,
       commitSha: null,
       commitUrl: null,
       publishedAt: null,
-      reason: 'Everything in the draft is already published.'
+      reason
     })
+
+  // Nothing has changed since the last publish. A migration would be a file, a
+  // line and a commit saying what the chain already says, which is exactly the
+  // file and commit explosion this design was written to stop. The build is
+  // still dispatched, because "publish" with nothing to publish is a person
+  // asking for the site to be rebuilt.
+  if (publishedRevision > 0 && publishedRevision >= snapshot.revision) {
+    return await nothing('Everything in the draft is already published.')
   }
 
   const empty =
-    (snapshot.data.pages?.length ?? 0) === 0 &&
-    (snapshot.data.widgets?.length ?? 0) === 0 &&
-    Object.keys(snapshot.data.site?.siteMetadata ?? {}).length === 0
+    draft.pages.length === 0 &&
+    draft.widgets.length === 0 &&
+    Object.keys(draft.site?.siteMetadata ?? {}).length === 0
 
   if (empty) {
-    return await build({
-      published: false,
-      revision: snapshot.revision,
-      publishedRevision: snapshot.publishedRevision,
-      migrationUrl: null,
-      migrationBytes: null,
-      commitSha: null,
-      commitUrl: null,
-      publishedAt: null,
-      reason:
-        'The draft is empty, so there is nothing to publish. An empty ' +
+    return await nothing(
+      'The draft is empty, so there is nothing to publish. An empty ' +
         'migration would be a line in the chain that says nothing.'
-    })
+    )
   }
 
   const at = new Date().toISOString()
   const migration = buildMigration(
-    snapshot.data,
-    (input.message ?? '').trim() ||
-      defaultMessage(snapshot.data, input.editor.name),
+    draft,
+    (input.message ?? '').trim() || defaultMessage(draft, input.editor.name),
     at
   )
   const payload = serialiseMigration(migration)
@@ -411,17 +341,12 @@ export const publish = async (
 
   // Last, and deliberately after the commit: a failure here understates what
   // is live and never overstates it.
-  await store.markPublished(siteKey, entry, {
-    revision: snapshot.revision,
-    sha: written.commitSha,
-    url: uploaded.url,
-    at
-  })
+  const meta = await store.markPublished(siteKey, snapshot.revision)
 
   return await build({
     published: true,
     revision: snapshot.revision,
-    publishedRevision: snapshot.revision,
+    publishedRevision: meta?.publishedRevision ?? snapshot.revision,
     migrationUrl: uploaded.url,
     migrationBytes: uploaded.bytes,
     commitSha: written.commitSha || null,

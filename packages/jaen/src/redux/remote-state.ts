@@ -528,9 +528,7 @@ export default (config: AgentConfig) => {
         return SOCKET_SAFETY_POLL_MS
       }
 
-      return isVisible() ||
-        inFlight ||
-        (state().remote?.outbox?.length || 0) > 0
+      return isVisible() || inFlight || (state().remote?.outbox?.length || 0) > 0
         ? config.activePollMs
         : config.pollMs
     }
@@ -565,10 +563,7 @@ export default (config: AgentConfig) => {
           // telling it about its own save, which is every save it makes. The
           // read is skipped and the mark is moved, which is what keeps a busy
           // editor from asking for a delta after each of their own writes.
-          if (
-            typeof remote?.revision === 'number' &&
-            revision <= remote.revision
-          ) {
+          if (typeof remote?.revision === 'number' && revision <= remote.revision) {
             if (typeof publishedRevision === 'number') {
               store.dispatch(
                 remoteActions.revisionSeen({revision, publishedRevision})
