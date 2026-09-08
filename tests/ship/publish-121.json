@@ -1,0 +1,17 @@
+{
+  "data": {
+    "publish": {
+      "published": true,
+      "revision": 121,
+      "publishedRevision": 121,
+      "migrationUrl": "https://osg.netsnek.com/storage/BQACAgQAAx0Ed6zoewACBmhqoFoBWguJq1laqG3vzhGuIrJ-LwACfB8AAlWvCFEhL4bxW8O5xD0E",
+      "migrationBytes": 1816,
+      "commitSha": "e1ec274824c2d6ec52b832037a4fab30d8d1931e",
+      "commitUrl": "https://github.com/netsnek/booklimo.at/commit/e1ec274824c2d6ec52b832037a4fab30d8d1931e",
+      "publishedAt": "2026-09-08T18:54:56.830Z",
+      "queued": false,
+      "workflow": null,
+      "reason": "This site names no publish workflow, so the build is run by the operator. The migration is in the chain and the next build takes it."
+    }
+  }
+}

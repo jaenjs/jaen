@@ -1,0 +1,300 @@
+{
+  "notebook": "11-cms-frame",
+  "started": 1788897133.4170866,
+  "testkit_version": "1.0.0",
+  "counts": {
+    "PASS": 26,
+    "FAIL": 0,
+    "SKIP": 0,
+    "WARN": 0,
+    "TOTAL": 26
+  },
+  "checks": [
+    {
+      "index": 1,
+      "name": "the open state is outside React, in one place both drawers read",
+      "status": "PASS",
+      "evidence": "the store is read through useSyncExternalStore. the state is module scope, so a remount cannot reach it. DrawerLeft keeps no state of its own. DrawerLeft reads the shared state. DrawerRight keeps no state of its own. DrawerRight reads the shared state",
+      "detail": "",
+      "section": "the source",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897133.4240632
+    },
+    {
+      "index": 2,
+      "name": "each trigger is inside its own Drawer.Root",
+      "status": "PASS",
+      "evidence": "DrawerLeft: the trigger is inside the root. DrawerLeft registers its trigger with the router. DrawerRight: the trigger is inside the root. DrawerRight registers its trigger with the router",
+      "detail": "",
+      "section": "the source",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897133.4241385
+    },
+    {
+      "index": 3,
+      "name": "the frame mounts the gesture router once",
+      "status": "PASS",
+      "evidence": "mounted by JaenFrame. a capture listener on window, which runs before the document. the opening animation has a settle window",
+      "detail": "",
+      "section": "the source",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897133.4241886
+    },
+    {
+      "index": 4,
+      "name": "the verifier drove the browser",
+      "status": "PASS",
+      "evidence": "signed in as the booklimo human admin. the run reached the end. stored in tests/frame/run.json",
+      "detail": "",
+      "section": "the run",
+      "notebook": "11-cms-frame",
+      "duration_ms": 324564,
+      "timestamp": 1788897457.9948683
+    },
+    {
+      "index": 5,
+      "name": "edit mode is on and the page is the CMS",
+      "status": "PASS",
+      "evidence": "edit mode entered. 43 editable fields on the page",
+      "detail": "",
+      "section": "the run",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897457.9949996
+    },
+    {
+      "index": 6,
+      "name": "the storm is present, which is the condition the drawers work under",
+      "status": "PASS",
+      "evidence": "0.2 commits/s, 59.8 frames/s, 0.0 localStorage writes/s with nobody typing. the storm is gone, which is the field path's work and not the frame's",
+      "detail": "",
+      "section": "the run",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897457.995232
+    },
+    {
+      "index": 7,
+      "name": "the left trigger is inside its own drawer",
+      "status": "PASS",
+      "evidence": "data-scope. data-part. aria-haspopup. aria-expanded is false. at x 16 y 14, 36x36",
+      "detail": "",
+      "section": "the trigger",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0049324
+    },
+    {
+      "index": 8,
+      "name": "the right trigger is inside its own drawer",
+      "status": "PASS",
+      "evidence": "data-scope. data-part. aria-haspopup. aria-expanded is false. at x 1388 y 14, 36x36",
+      "detail": "",
+      "section": "the trigger",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0049675
+    },
+    {
+      "index": 9,
+      "name": "1440x900: the left drawer opens on the first click and stays open",
+      "status": "PASS",
+      "evidence": "every round started with nothing open. 10 of 10 opened on the first click. 10 of 10 still open afterwards. open at 0 to 0 ms, median 0",
+      "detail": "",
+      "section": "the first click",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0133345
+    },
+    {
+      "index": 10,
+      "name": "1440x900: the right drawer opens on the first click and stays open",
+      "status": "PASS",
+      "evidence": "every round started with nothing open. 10 of 10 opened on the first click. 10 of 10 still open afterwards. open at 0 to 0 ms, median 0",
+      "detail": "",
+      "section": "the first click",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0133796
+    },
+    {
+      "index": 11,
+      "name": "390x844: the left drawer opens on the first click and stays open",
+      "status": "PASS",
+      "evidence": "every round started with nothing open. 10 of 10 opened on the first click. 10 of 10 still open afterwards. open at 0 to 0 ms, median 0",
+      "detail": "",
+      "section": "the first click",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0134215
+    },
+    {
+      "index": 12,
+      "name": "390x844: the right drawer opens on the first click and stays open",
+      "status": "PASS",
+      "evidence": "every round started with nothing open. 10 of 10 opened on the first click. 10 of 10 still open afterwards. open at 0 to 0 ms, median 0",
+      "detail": "",
+      "section": "the first click",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0134585
+    },
+    {
+      "index": 13,
+      "name": "the drawers are never remounted, at either width",
+      "status": "PASS",
+      "evidence": "0 remounts and 0 insertions over 40 gestures",
+      "detail": "",
+      "section": "the first click",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.013493
+    },
+    {
+      "index": 14,
+      "name": "one gesture goes from one drawer to the other",
+      "status": "PASS",
+      "evidence": "4 of 4. left to right. right to left. left to right. right to left",
+      "detail": "",
+      "section": "one drawer to the other",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0212364
+    },
+    {
+      "index": 15,
+      "name": "the page is still inert while a drawer stands, and the frame takes the gesture",
+      "status": "PASS",
+      "evidence": "body pointer-events. #___gatsby aria-hidden. the window listener saw the gesture. the document listener did not, so the router stopped it. body pointer-events. #___gatsby aria-hidden. the window listener saw the gesture. the document listener did not, so the router stopped it. body pointer-events. #___gatsby aria-hidden. the window listener saw the gesture. the document listener did not, so the router stopped it. body pointer-events. #___gatsby aria-hidden. the window listener saw the gesture. the document listener did not, so the router stopped it",
+      "detail": "",
+      "section": "one drawer to the other",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0213697
+    },
+    {
+      "index": 16,
+      "name": "the left drawer closes on its own button",
+      "status": "PASS",
+      "evidence": "5 of 5. under the pointer at the trigger while open: svg",
+      "detail": "",
+      "section": "the button that opened it",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.021494
+    },
+    {
+      "index": 17,
+      "name": "the right drawer closes on its own button",
+      "status": "PASS",
+      "evidence": "5 of 5. under the pointer at the trigger while open: button",
+      "detail": "",
+      "section": "the button that opened it",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0215163
+    },
+    {
+      "index": 18,
+      "name": "a burst on the left button leaves it working",
+      "status": "PASS",
+      "evidence": "the next click opened it 3 of 3 times. every click of the burst was seen. every click of the burst was seen. every click of the burst was seen. 4 clicks a nominal 100 ms apart really span [388, 410, 375] ms. open at the end of the burst: 2 of 3, which is the toggle",
+      "detail": "",
+      "section": "a burst",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.028873
+    },
+    {
+      "index": 19,
+      "name": "a burst on the right button leaves it working",
+      "status": "PASS",
+      "evidence": "the next click opened it 3 of 3 times. every click of the burst was seen. every click of the burst was seen. every click of the burst was seen. 4 clicks a nominal 150 ms apart really span [562, 542, 562] ms. open at the end of the burst: 0 of 3, which is the toggle",
+      "detail": "",
+      "section": "a burst",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0289454
+    },
+    {
+      "index": 20,
+      "name": "the storm was dispatched into jaen's own store",
+      "status": "PASS",
+      "evidence": "the loop started. 15624 actions dispatched over 78 s. under it: 51.4 commits/s, 25.8 frames/s",
+      "detail": "",
+      "section": "the storm",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0381026
+    },
+    {
+      "index": 21,
+      "name": "nothing of the storm reached the agent",
+      "status": "PASS",
+      "evidence": "the outbox is 0 before and after. the draft revision is 128 before and after",
+      "detail": "",
+      "section": "the storm",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0381308
+    },
+    {
+      "index": 22,
+      "name": "under the storm the left drawer opens on the first click",
+      "status": "PASS",
+      "evidence": "10 of 10. and stayed open",
+      "detail": "",
+      "section": "the storm",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0381484
+    },
+    {
+      "index": 23,
+      "name": "under the storm the right drawer opens on the first click",
+      "status": "PASS",
+      "evidence": "10 of 10. and stayed open",
+      "detail": "",
+      "section": "the storm",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.038162
+    },
+    {
+      "index": 24,
+      "name": "a standing drawer survives the storm",
+      "status": "PASS",
+      "evidence": "it opened. still open after five seconds of the storm. 252 React commits in those five seconds. and no remount of either trigger",
+      "detail": "",
+      "section": "the storm",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0381992
+    },
+    {
+      "index": 25,
+      "name": "the field this run typed into is set back",
+      "status": "PASS",
+      "evidence": "read back as 'Our fleet'. the run's own suffix is gone",
+      "detail": "",
+      "section": "what the run left",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0469837
+    },
+    {
+      "index": 26,
+      "name": "the run published nothing",
+      "status": "PASS",
+      "evidence": "publishedRevision 125 throughout. the outbox is empty, so nothing is unsent. revision 129, publishedRevision 125 at the end",
+      "detail": "",
+      "section": "what the run left",
+      "notebook": "11-cms-frame",
+      "duration_ms": 0,
+      "timestamp": 1788897458.0470195
+    }
+  ]
+}

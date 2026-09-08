@@ -1,0 +1,295 @@
+{
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FleetTitle",
+  "startedAt": 1788896818.332788,
+  "signedIn": true,
+  "editing": true,
+  "before": {
+    "draft": {
+      "revision": 123,
+      "publishedRevision": 121,
+      "changed": true,
+      "full": true,
+      "discardedRevision": 0,
+      "discardedAt": null,
+      "discardedBy": null,
+      "discardedByName": null,
+      "delta": {
+        "pages": {
+          "JaenPage /": {
+            "childPages": [],
+            "modifiedAt": "2026-09-08T19:29:40.917Z",
+            "jaenFields": {
+              "IMA:TextField": {
+                "FleetTitle": {
+                  "value": "Our fleet",
+                  "props": {"id": "FleetTitle"}
+                },
+                "ServicesTitle": {
+                  "value": "Our services",
+                  "props": {"id": "ServicesTitle"}
+                },
+                "ServicesSubtitle": {
+                  "value": "Get a quick overview. See details if you like.",
+                  "props": {"id": "ServicesSubtitle"}
+                },
+                "AboutP1": {
+                  "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+                  "props": {"id": "AboutP1"}
+                },
+                "FeedbackBoxText": {
+                  "value": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+                  "props": {"id": "FeedbackBoxText"}
+                },
+                "FaqSubtitle": {
+                  "value": "Short answers about booking, vehicles and service.",
+                  "props": {"id": "FaqSubtitle"}
+                }
+              }
+            },
+            "id": "JaenPage /",
+            "childPagesOrder": [],
+            "jaenPageMetadata": {}
+          }
+        }
+      }
+    },
+    "field": "Our fleet",
+    "browser": {
+      "outbox": 0,
+      "revision": 123,
+      "publishedRevision": 121,
+      "saveState": "idle",
+      "connection": "socket"
+    }
+  },
+  "typed": {
+    "target": {"x": 719.9921875, "y": 701.5, "text": "Our fleet"},
+    "object": {
+      "draft": {
+        "revision": 124,
+        "publishedRevision": 121,
+        "changed": true,
+        "full": true,
+        "discardedRevision": 0,
+        "discardedAt": null,
+        "discardedBy": null,
+        "discardedByName": null,
+        "delta": {
+          "pages": {
+            "JaenPage /": {
+              "childPages": [],
+              "modifiedAt": "2026-09-08T19:47:28.184Z",
+              "jaenFields": {
+                "IMA:TextField": {
+                  "FleetTitle": {
+                    "value": "Our fleet discard probe",
+                    "props": {"id": "FleetTitle"}
+                  },
+                  "ServicesTitle": {
+                    "value": "Our services",
+                    "props": {"id": "ServicesTitle"}
+                  },
+                  "ServicesSubtitle": {
+                    "value": "Get a quick overview. See details if you like.",
+                    "props": {"id": "ServicesSubtitle"}
+                  },
+                  "AboutP1": {
+                    "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+                    "props": {"id": "AboutP1"}
+                  },
+                  "FeedbackBoxText": {
+                    "value": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+                    "props": {"id": "FeedbackBoxText"}
+                  },
+                  "FaqSubtitle": {
+                    "value": "Short answers about booking, vehicles and service.",
+                    "props": {"id": "FaqSubtitle"}
+                  }
+                }
+              },
+              "id": "JaenPage /",
+              "childPagesOrder": [],
+              "jaenPageMetadata": {}
+            }
+          }
+        }
+      },
+      "field": "Our fleet discard probe"
+    },
+    "browser": {
+      "outbox": 0,
+      "revision": 124,
+      "publishedRevision": 121,
+      "saveState": "saved",
+      "connection": "socket"
+    }
+  },
+  "preview": {
+    "revision": 124,
+    "publishedRevision": 121,
+    "canDiscard": true,
+    "reason": null,
+    "pages": 1,
+    "fields": 1,
+    "pagesAdded": [],
+    "pagesRemoved": [],
+    "mediaAdded": 0,
+    "mediaRemoved": 0,
+    "siteChanged": false,
+    "widgetsChanged": 0,
+    "editors": [
+      {
+        "sub": "<sub of the booklimo human admin>",
+        "name": "Taxi Test Admin",
+        "at": "2026-09-08T19:47:28.184Z"
+      }
+    ],
+    "since": "2026-09-08T19:47:28.184Z",
+    "publishedAt": "2026-09-08T18:54:56.486Z",
+    "takenAt": "2026-09-08T19:47:32.371Z"
+  },
+  "menu": {"itemVisible": true},
+  "confirm": {
+    "text": "Alle unveröffentlichten Änderungen verwerfen\n\n1 unveröffentlichte Änderung auf 1 Seite werden für alle rückgängig gemacht, geschrieben von Taxi Test Admin, seit 8.9.2026 21:47. Die Website geht auf den Stand der letzten Veröffentlichung zurück.\n\nWeiter bearbeiten\nAlles verwerfen",
+    "buttonFound": true
+  },
+  "after": {
+    "draft": {
+      "revision": 125,
+      "publishedRevision": 125,
+      "changed": true,
+      "full": true,
+      "discardedRevision": 125,
+      "discardedAt": "2026-09-08T19:47:37.501Z",
+      "discardedBy": "<sub of the booklimo human admin>",
+      "discardedByName": "Taxi Test Admin",
+      "delta": {
+        "pages": {
+          "JaenPage /": {
+            "childPages": [],
+            "modifiedAt": "2026-09-08T18:54:06.289Z",
+            "jaenFields": {
+              "IMA:TextField": {
+                "FleetTitle": {
+                  "value": "Our fleet",
+                  "props": {"id": "FleetTitle"}
+                },
+                "ServicesTitle": {
+                  "value": "Our services",
+                  "props": {"id": "ServicesTitle"}
+                },
+                "ServicesSubtitle": {
+                  "value": "Get a quick overview. See details if you like.",
+                  "props": {"id": "ServicesSubtitle"}
+                },
+                "AboutP1": {
+                  "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+                  "props": {"id": "AboutP1"}
+                },
+                "FeedbackBoxText": {
+                  "value": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+                  "props": {"id": "FeedbackBoxText"}
+                },
+                "FaqSubtitle": {
+                  "value": "Short answers about booking, vehicles and service.",
+                  "props": {"id": "FaqSubtitle"}
+                }
+              }
+            },
+            "id": "JaenPage /",
+            "childPagesOrder": [],
+            "jaenPageMetadata": {}
+          }
+        }
+      }
+    },
+    "field": "Our fleet",
+    "browser": {
+      "outbox": 0,
+      "revision": 125,
+      "publishedRevision": 125,
+      "saveState": "saved",
+      "connection": "socket"
+    },
+    "onScreen": "Our fleet"
+  },
+  "restored": true,
+  "toast": [
+    "Unveröffentlichte Änderungen verworfen\nTaxi Test Admin hat um 21:47 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand.",
+    "Unveröffentlichte Änderungen verworfen\nTaxi Test Admin hat um 21:47 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand.",
+    "Unveröffentlichte Änderungen verworfen",
+    "Taxi Test Admin hat um 21:47 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand."
+  ],
+  "backstop": {
+    "site": "booklimo.at",
+    "found": true,
+    "revision": 124,
+    "takenAt": "2026-09-08T19:47:37.501Z",
+    "bytes": 2091,
+    "pages": 1
+  },
+  "staleSave": {
+    "baseRevision": 124,
+    "errors": [
+      {
+        "message": "The unpublished changes of booklimo.at were discarded at revision 125 by Taxi Test Admin. This save was made against revision 124 or older, so it would put back part of what was discarded and is refused.",
+        "code": "DRAFT_DISCARDED",
+        "discardedRevision": null
+      }
+    ],
+    "data": null,
+    "draftAfter": {
+      "revision": 125,
+      "publishedRevision": 125,
+      "changed": true,
+      "full": true,
+      "discardedRevision": 125,
+      "discardedAt": "2026-09-08T19:47:37.501Z",
+      "discardedBy": "<sub of the booklimo human admin>",
+      "discardedByName": "Taxi Test Admin",
+      "delta": {
+        "pages": {
+          "JaenPage /": {
+            "childPages": [],
+            "modifiedAt": "2026-09-08T18:54:06.289Z",
+            "jaenFields": {
+              "IMA:TextField": {
+                "FleetTitle": {
+                  "value": "Our fleet",
+                  "props": {"id": "FleetTitle"}
+                },
+                "ServicesTitle": {
+                  "value": "Our services",
+                  "props": {"id": "ServicesTitle"}
+                },
+                "ServicesSubtitle": {
+                  "value": "Get a quick overview. See details if you like.",
+                  "props": {"id": "ServicesSubtitle"}
+                },
+                "AboutP1": {
+                  "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+                  "props": {"id": "AboutP1"}
+                },
+                "FeedbackBoxText": {
+                  "value": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+                  "props": {"id": "FeedbackBoxText"}
+                },
+                "FaqSubtitle": {
+                  "value": "Short answers about booking, vehicles and service.",
+                  "props": {"id": "FaqSubtitle"}
+                }
+              }
+            },
+            "id": "JaenPage /",
+            "childPagesOrder": [],
+            "jaenPageMetadata": {}
+          }
+        }
+      }
+    },
+    "fieldAfter": "Our fleet"
+  },
+  "endedAt": 1788896868.2214782
+}

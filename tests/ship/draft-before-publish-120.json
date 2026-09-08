@@ -1,0 +1,57 @@
+{
+  "revision": 120,
+  "publishedRevision": 97,
+  "delta": {
+    "pages": {
+      "JaenPage /": {
+        "childPages": [],
+        "modifiedAt": "2026-09-08T18:17:57.475Z",
+        "jaenFields": {
+          "IMA:TextField": {
+            "FleetTitle": {
+              "value": "Our fleet",
+              "props": {
+                "id": "FleetTitle"
+              }
+            },
+            "ServicesTitle": {
+              "value": "Our services etst",
+              "props": {
+                "id": "ServicesTitle"
+              }
+            },
+            "ServicesSubtitle": {
+              "value": "Get a quick overview. See details if you like. est",
+              "props": {
+                "id": "ServicesSubtitle"
+              }
+            },
+            "AboutP1": {
+              "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology. djeiflekr",
+              "props": {
+                "id": "AboutP1"
+              }
+            },
+            "FeedbackBoxText": {
+              "value": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.fjebf gf",
+              "props": {
+                "id": "FeedbackBoxText"
+              }
+            },
+            "FaqSubtitle": {
+              "value": "Short answers about booking, vehicles and service.bebrnf",
+              "props": {
+                "id": "FaqSubtitle"
+              }
+            }
+          }
+        },
+        "id": "JaenPage /",
+        "childPagesOrder": [],
+        "jaenPageMetadata": {}
+      }
+    },
+    "site": null,
+    "widgets": []
+  }
+}
