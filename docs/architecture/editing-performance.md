@@ -301,3 +301,36 @@ gap a person feels is a different number with a different cause and this file
 now carries both.
 
 The two runs are stored in `tests/draft-object/` beside `tests/baseline/`.
+
+## Against the deployed agent, 2026-09-08
+
+`jaen-agent` 4.0.0 is on Cloudflare with its Durable Object and both sites carry
+the `agent` option again (`draft-state.md`, "Deployed 2026-09-08"), so the ten
+browser checks that had nothing to talk to have something to talk to. The runs
+are stored in `tests/deployed/`.
+
+`09` **17 PASS 1 FAIL 4 SKIP**, `10` **35 PASS 0 FAIL 0 SKIP 2 WARN**. `10` has
+no skips at all for the first time.
+
+**The gap is 24.3 ms**, against the baseline's 24.0 and 24.8 and the no-agent
+run's 25.0, so the shared draft costs nothing here and the cause is still the
+registration storm this file named. It is a FAIL in `09` rather than the WARN
+`localBlur` records, because the `acceptance, browser` check is written against
+the target and this run did not fix it. **The acceptance at the top of this file
+is red and stays red until the dispatches go, not the writes.** Beside it, in
+the four seconds after the blur, 13 store writes and 9,054 B against the
+baseline's 185 and 14.4 MB, and a longest long task of 66 ms.
+
+**Two bugs in `tests/support/editing-browser.py` this run found**, both of which
+turned a real check into a silent skip and neither of which is a fault of jaen.
+`has_agent` asked the page for `typeof __JAEN_AGENT__`, which is a webpack define
+and therefore never a runtime global, so it could only ever answer false and ten
+checks skipped against a build that carried the option. And edit mode could not
+be entered while the agent was up: the harness wrote `status.isEditing` into the
+persisted store and reloaded, and the running page wrote its own `false` back
+over it within a second, five readings in five seconds, because the store
+persists itself on every dispatch and the poll dispatches every 1,500 ms. The
+flag goes in through an init script now.
+
+That second one is this file's own subject seen from the outside. The store is
+written often enough that an external edit to it does not survive one second.

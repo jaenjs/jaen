@@ -704,6 +704,221 @@ option so nothing reaches it. Deploying 4.0.0 also creates the Durable Object
 namespace for the first time, which is a migration and not a redeploy, and it
 belongs with the run that puts the agent option back on booklimo.
 
+## Deployed 2026-09-08, and the whole path driven from a browser
+
+Everything above this heading was written before any of it was deployed. This is
+the run that put `jaen-agent` 4.0.0 on Cloudflare, put the `agent` option back
+into both sites, and drove one real publish end to end on the live booklimo.at.
+booklimo only, because that is where this estate tests
+(`okf/decisions/hard-rules.md`); nothing was written on limosen beyond its own
+configuration.
+
+### The agent
+
+`packages/jaen-agent/scripts/deploy.sh`, which stamps the three version vars a
+bare `wrangler deploy` leaves unset. Both custom domains answered with the stamp
+they were given, read back by the script and again at the end of the run:
+
+| what     | value                                                       |
+| -------- | ----------------------------------------------------------- |
+| version  | `4.0.0`, from 3.1.0                                         |
+| commit   | `f4aae0a`                                                   |
+| builtAt  | `2026-09-08T08:12:03Z`                                      |
+| worker   | version id `444594d0-d85e-452a-a8fa-dad53ae7fd5e`           |
+| routes   | `jaen-agent.booklimo.at`, `jaen-agent.limosen.at`           |
+| bindings | `DRAFTS` → `JaenDraftObject`, `CACHE` → `6e75d473808c48e7…` |
+
+This deploy **created the Durable Object namespace**, through the
+`[[migrations]] new_sqlite_classes = ["JaenDraftObject"]` of `wrangler.toml`. It
+is a migration and not a redeploy, and it is why it belongs with the run that
+gives a site something to talk to.
+
+**The two secrets the publish path needs were set first**, `OSG_TOKEN_BOOKLIMO`
+and `OSG_TOKEN_LIMOSEN`, and both credentials were introspected at
+`accounts.netsnek.com` before they were used rather than tried: `osg-krc`,
+active, organisation `356348844407002709`, `storage:read`, `storage:write`,
+`storage:sign`; `osg-limosen`, active, organisation `339284789469124181`, the
+same three. The introspection needs a `User-Agent` header or Cloudflare answers
+in front of the identity server. Neither is `osg-build-<brand>`, which
+`private-storage.md` gave `storage:read` alone on purpose.
+
+**The deployed schema was diffed against the built one before the deploy**, which
+`okf/decisions/hard-rules.md` asks for because a field that is deployed and not
+in the tree is already lost. At the root nothing goes: `Query` is `version`,
+`viewer`, `draft` on both, and `Mutation` gains `subscribe` beside `save` and
+`publish`. Below the root the redesign is exactly as breaking as it is meant to
+be, and it is listed here so a reader can see what was traded:
+
+| type         | 3.1.0                                                                 | 4.0.0                                                                                     |
+| ------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `Draft`      | `site headSha blobSha changed data authors readAt`                    | `site revision publishedRevision changed full delta updatedAt updatedBy snapshot… readAt` |
+| `SaveResult` | `headSha blobSha commitSha commitUrl savedAt rebased overwrote wrote` | `revision rebased overwrote touched keys savedAt`                                         |
+
+The client that speaks the new shape ships in the same run and in the same
+build, so no site ever ran one half against the other. The five documents of
+`packages/jaen/src/clients/agent` were validated against the generated schema
+before the deploy, five of five.
+
+**The first calls against the deployed object**, with the booklimo machine admin:
+`viewer` answers, `draft(site: "booklimo.at")` answers `revision 0`,
+`publishedRevision 0`, `full: true` on an object that had never existed, and the
+same query anonymously is `AUTH_REQUIRED` with status 401. The object is real on
+Cloudflare and the gate is on it.
+
+### The two sites
+
+The `agent` option is back in `booklimo.at/gatsby-config.ts` (`2328258`) and
+`limosen.at/gatsby-config.ts` (`dbb7645`), pointing at each brand's own agent
+host, with `pollMs: 5000` and `activePollMs: 1500` now described for what they
+have become: the fallback for a browser whose socket was refused. Both sites
+built and deployed through their own `scripts/deploy.sh`.
+
+Read back on the systems that serve: `/`, `/de/` and `/cms/` answer 200 on both
+brands, `/app/version.json` answers app `1.8.1` on both, and the deployed bundles
+carry `jaen-agent.<brand>`, `jaen-draft.v1`, `sinceRevision`, `baseRevision` and
+`publishedRevision`, with **no `headSha` and no `blobSha` anywhere** in either.
+
+The two brands' app `commit` stamps differ, `c8fc10d` on limosen and `2f7ae84` on
+booklimo, and `tests/15-versions.ipynb` is green with that as its one WARN, which
+is what it is for: it compares versions and warns on commits. The cause is not
+this work. Another run was committing in `~/git/taxi-app` and syncing its
+in-flight app into `packages/gatsby-jaen-app` of this checkout while these builds
+ran, and limosen was built before that landed and booklimo after it. limosen was
+deliberately **not** rebuilt to make the two agree, because that would have put
+another run's unfinished work on the production brand to fix a cosmetic stamp.
+
+### The two notebooks, against the deployed agent
+
+`tests/09-editing-latency.ipynb` **17 PASS 1 FAIL 4 SKIP**, and
+`tests/10-draft-persistence.ipynb` **35 PASS 0 FAIL 0 SKIP 2 WARN**, both stored
+with their run in `tests/deployed/` beside `tests/baseline/` and
+`tests/draft-object/`.
+
+`10` has **no SKIPs at all**, which is the point of the run: the five it carried
+were its browser half, and every one of them now runs against the live object.
+`09`'s one FAIL is the blur to paint gap, 24.3 ms against one frame at 16, whose
+cause `editing-performance.md` names and which this run did not fix. It is not
+made worse by the shared draft: the baseline measured 24.0 and 24.8 and the run
+with no agent 25.0. `09`'s four SKIPs are all `localBlur`, the rollback, which
+can only be measured on a build that carries no `agent` option.
+
+**Two bugs in the browser harness, both of which turned a real check into a
+silent skip.** They are worth recording because either one would have let this
+whole half of the suite pass as "skipped" forever.
+
+- `has_agent` asked the page for `typeof __JAEN_AGENT__`. That is a webpack
+  define: it is substituted for its literal value at compile time and never
+  exists as a runtime global, so a `page.evaluate` outside webpack is answered
+  `undefined` on **every** build. Ten checks skipped with "this build carries no
+  agent option" against a build that carried one. It reads the built bundle now.
+- Edit mode could not be entered at all while the agent was up. The harness wrote
+  `status.isEditing` into the persisted store and reloaded; the store persists
+  itself on every dispatch and the poll dispatches every 1,500 ms, so the running
+  page wrote its own `isEditing: false` over the edit within a second, measured
+  five readings in five seconds with no reload between them. On a site with no
+  agent nothing dispatches and the same edit survived, which is why it worked
+  until the agent came back. The flag goes in through an init script now, which
+  runs before any script of the page and therefore before the store is created.
+
+Neither is a fault of jaen and neither changes a number. The second is worth a
+thought for the CMS itself, though: it is the same registration storm
+`editing-performance.md` names, seen from the outside.
+
+### Two editors on the live booklimo.at, which is the acceptance
+
+Browser A is the booklimo human admin. Browser B is the booklimo human customer,
+`taxi-test-customer-krc`, granted `jaen:admin` for the run by adding the role to
+its existing authorization `389619073622742619` through `idm.booklimo.at`
+(`krc:customer` → `jaen:admin, krc:customer`) and **revoked after it**, read back
+as `krc:customer` alone. Adding a role to the authorization that was already
+there, rather than creating one, is what makes the revocation exact.
+
+| what the design promises                       | what the live systems answered                                                                                          |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| a change reaches the other editor in under 2 s | **2.14 s** and **2.13 s** in two runs, from the blur to the value being in the other browser's store, and on its screen |
+| over the object's socket                       | both browsers reported `connection: "socket"`, so the frames came from the object and the poll carried nothing          |
+| and it says who wrote it                       | the second editor's `authors` names `Taxi Test Admin`, sub `389619062902101595`, with the instant                       |
+| and it produces no commit                      | `netsnek/booklimo.at` main was `57ad80f0` before the edits and `57ad80f0` after them                                    |
+| and no gateway file                            | no upload is made on a save at all: the only writer of the gateway in the agent is `publish.ts`                         |
+
+**On the two seconds.** 2.14 s is over the acceptance, by 140 ms, and the reading
+is deliberately taken from the blur and not from the save: it contains the
+client's own quiet window before the change is even sent (change 3 of
+`editing-performance.md`, one second by default), the round trip into the object,
+the frame back out and the delta read that follows it. Measured from the save
+instead it is inside the budget. Two readings 10 ms apart is a narrow sample and
+what it says is that the socket path costs about a second on top of the window,
+not that it is fast or slow. Whoever tightens this should take the window and not
+the socket: it is the larger half and it is a constant.
+
+The snapshot alarm ran on Cloudflare on its own, unprompted: `snapshotRevision 11`
+and `snapshotBytes 440` while the object was at revision 12. That is the backstop
+writing itself in the deployed runtime, which had only ever been measured under
+`wrangler dev`.
+
+### One real publish, end to end, through the CMS's own control
+
+Made from browser A by opening the frame's user menu, clicking the item that read
+**"Änderungen veröffentlichen"** (the German the account's language selects, and
+the translation this design added), typing the migration's message into the
+prompt and confirming. Not a GraphQL call: the control a person uses.
+
+| what was asked                      | what happened                                                                                                                     |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| exactly one gateway file            | `…/storage/BQACAgQAAx0Ed6zoewACBiNqn83f2sfCzdNgKC8wMWhpqmarkQACMh4AAlWvAAFRpiu82iLnNiA9BA`, 582 bytes, sha256 `322b54ac8f6b7977…` |
+| in the shape jaen has always used   | top-level keys exactly `createdAt`, `data`, `message`, no `authors`; `data` is `pages`, `site`, `widgets`; one page, one field    |
+| behind the gate                     | 401 `AUTH_REQUIRED` anonymously, 200 to the KRC storage token                                                                     |
+| exactly one commit                  | `46f713cb`, one file changed, `jaen-data/patches.txt` **+1 −0**                                                                   |
+| in the publishing editor's name     | author `Taxi Test Admin`, committer `jaen-agent`, the body naming the migration URL, the revision and the publisher               |
+| exactly one line                    | `patches.txt` 20 lines → 21, the migration's URL appended and nothing else moved                                                  |
+| the CMS stops saying unpublished    | `revision 12`, `publishedRevision 12` in the browser afterwards                                                                   |
+| the site carries it after the build | `booklimo.at/` served `Our fleet, published live`                                                                                 |
+
+Then the field was set back the same way and published again, so the site serves
+what it served before this run: migration
+`…/storage/BQACAgQAAx0Ed6zoewACBiZqn9AR0kh9NbVrvlw7Sr3cUUJfaAACNR4AAlWvAAFRzqo6BQWiFwQ9BA`,
+560 bytes, sha256 `bd54ac2d0983a197…`, commit `517b573d`, `patches.txt` 21 → 22,
+`revision 13` and `publishedRevision 13`, and after the build `booklimo.at/`
+serves `Our fleet` again with **zero** occurrences of the marker anywhere in it.
+
+### The one thing this run had to work around, and it is not small
+
+**GitHub's `main` and this checkout hold two different chains.** The transition of
+2026-09-08 replaced booklimo's two head lines with one migration in three local
+commits that were never pushed, so `netsnek/booklimo.at` main still ends with
+
+```
+live.json
+live-media.json
+```
+
+which is the CMS's draft inside the published chain and is exactly what
+`okf/decisions/hard-rules.md` forbids. The agent publishes against GitHub, so
+both migrations above were appended to **that** chain, correctly and as one line
+each. The site is built from this checkout, so each line was repeated here by
+hand as its own commit (`cf42c4d` and `920a5ae`) rather than pulled: a pull would
+have brought the two head lines with it and put an unpublished draft on the site.
+The URLs are identical either way and no content differs.
+
+That is a workaround and it is not a fix. **Pushing the transition's commits is
+what fixes it**, and until that happens two things are true: a build from GitHub
+main would serve a draft, and a force push of this checkout's main over GitHub's
+would drop the agent's two publish commits. The orchestrator pushes.
+
+### What is still not measured
+
+- **Hibernation.** The object was live throughout the run and never idled long
+  enough to be evicted and woken. The alarm and the socket are measured on
+  Cloudflare; hibernation is not.
+- **A lost object.** The snapshot is written and has never been read back into a
+  new object. There is still no drill for that.
+- **Two editors racing on the live agent.** The two-browser run is one writer and
+  one reader. That `overwrote` names the _other_ editor is measured in the
+  notebook against the object, not with two people on the live site.
+- **The publish retry loop.** Two publishes racing on `patches.txt` is written and
+  still unexercised.
+- **The blur to paint gap**, 24.3 ms against one frame, unchanged and unfixed.
+
 ## Acceptance
 
 - Two editors on booklimo: a change in one reaches the other in under two
@@ -719,3 +934,14 @@ belongs with the run that puts the agent option back on booklimo.
   the object restarted between two saves.
 - With the agent option removed the CMS still works on `localStorage`
   alone, which is the rollback.
+
+### Where the acceptance stands, 2026-09-08 after the deploy
+
+| the acceptance                                                 | where it stands                                                                                                                              |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| two editors, a change in under two seconds, no commit, no file | **measured, and 140 ms over**: 2.14 s and 2.13 s from the blur over the socket, the branch head unmoved, no gateway write on a save          |
+| one gateway file and one commit per publish, one line          | **met**, twice, on the live booklimo.at through the CMS's own control                                                                        |
+| nothing in `patches.txt` names a draft                         | **met in this checkout** and **not yet on GitHub**, where the transition's unpushed commits leave `live.json` and `live-media.json` in place |
+| byte identical data before and after the transition            | met 2026-09-08, four builds, sha256 `061e5491f389e376…`                                                                                      |
+| every loss scenario of `10-draft-persistence.ipynb`            | **met**, 35 PASS 0 FAIL 0 SKIP against the deployed agent                                                                                    |
+| the CMS still works on `localStorage` alone                    | met 2026-09-08 against the build the transition left; not re-measurable on a build that carries the option                                   |
