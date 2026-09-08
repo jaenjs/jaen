@@ -334,21 +334,33 @@ export const save = async (
     let lastError: unknown
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const head = await headSha(entry, branch)
-      const rebased = Boolean(input.baseSha) && input.baseSha !== head
-
       // Only the file the changes belong to is read. A picture never opens
       // the pages and a text change never opens the catalogue, which is one
-      // round trip and 80 KB of parsing each way.
-      let media = mediaChanges.length
-        ? await readPart(entry, MEDIA_PATH, head, emptyMediaPatch)
-        : null
+      // round trip and the whole catalogue's parsing each way.
+      //
+      // The file is read at the branch and not at a pinned commit, so the
+      // head lookup runs beside it rather than in front of it. The branch is
+      // at least as fresh as the sha, and what makes the write safe is the
+      // blob sha on the PUT, not the ref the read named. That turns the two
+      // round trips a save opened with into one.
+      const [head, firstRead] = await Promise.all([
+        headSha(entry, branch),
+        mediaChanges.length
+          ? readPart(entry, MEDIA_PATH, branch, emptyMediaPatch)
+          : readPart(entry, LIVE_PATH, branch, emptyPatch)
+      ])
+
+      const rebased = Boolean(input.baseSha) && input.baseSha !== head
+
+      let media = mediaChanges.length ? firstRead : null
 
       const needMain = mainChanges.length > 0 || media?.text === null
 
-      let main = needMain
-        ? await readPart(entry, LIVE_PATH, head, emptyPatch)
-        : null
+      let main = mediaChanges.length
+        ? needMain
+          ? await readPart(entry, LIVE_PATH, branch, emptyPatch)
+          : null
+        : firstRead
 
       let mainPatch = main?.patch
       let carried = false
@@ -363,7 +375,7 @@ export const save = async (
         // inside live.json. It moves out here, once, in the same save.
         if (carried) {
           if (!media) {
-            media = await readPart(entry, MEDIA_PATH, head, emptyMediaPatch)
+            media = await readPart(entry, MEDIA_PATH, branch, emptyMediaPatch)
           }
 
           if (media.text === null) media.patch = split.media
@@ -484,7 +496,7 @@ export const save = async (
         // `patches.txt` is touched only when the two head files are not
         // already its last two lines, in that order: once per site after the
         // first save, and once more when the catalogue is split off.
-        await ensureHeadLines(entry, branch, input.author, {
+        await ensureHeadLines(siteKey, entry, branch, input.author, {
           media: wrote.includes(MEDIA_PATH)
         })
 
@@ -528,13 +540,34 @@ export const save = async (
  * wanted tail is `live.json` alone until the catalogue file has been written,
  * and both from then on, which the file itself remembers: a line already in
  * patches.txt names a file already in the repository.
+ *
+ * The answer is remembered in KV, because reading patches.txt on every save
+ * was one GitHub round trip out of four for a file that changes twice in the
+ * life of a site. The memory is not a store of record and losing it costs one
+ * read: it says nothing but "the lines were in order the last time somebody
+ * looked", it is keyed by the tail it saw, and it lapses after an hour so
+ * that a maintainer who edits patches.txt by hand is noticed without anybody
+ * having to tell the agent.
  */
+const PATCHES_MEMORY_TTL_SECONDS = 3600
+
 const ensureHeadLines = async (
+  siteKey: string,
   entry: SiteEntry,
   branch: string,
   author: CommitAuthor,
   options: {media: boolean}
 ): Promise<void> => {
+  const kv = cache()
+  const memory = `patches:${siteKey}:${branch}`
+
+  if (kv) {
+    const seen = await kv.get(memory).catch(() => null)
+
+    // `both` covers every save; `live` covers one that wrote no catalogue.
+    if (seen === 'both' || (seen === 'live' && !options.media)) return
+  }
+
   const path = sitePath(entry, PATCHES_PATH)
   const file = await readFile(entry, path, branch)
   const current = file?.text ?? ''
@@ -544,20 +577,28 @@ const ensureHeadLines = async (
     .map(line => line.trim())
     .includes(MEDIA_LINE)
 
+  const both = options.media || listed
+
   const {text, changed} = withHeadLines(
     current,
-    options.media || listed ? HEAD_LINES : [LIVE_LINE]
+    both ? HEAD_LINES : [LIVE_LINE]
   )
 
-  if (!changed) return
+  if (changed) {
+    await writeFile(entry, {
+      path,
+      branch,
+      text,
+      sha: file?.sha ?? null,
+      message: 'jaen: record the head patches in patches.txt',
+      author: {name: author.name, email: author.email},
+      committer: COMMITTER
+    })
+  }
 
-  await writeFile(entry, {
-    path,
-    branch,
-    text,
-    sha: file?.sha ?? null,
-    message: 'jaen: record the head patches in patches.txt',
-    author: {name: author.name, email: author.email},
-    committer: COMMITTER
-  })
+  await kv
+    ?.put(memory, both ? 'both' : 'live', {
+      expirationTtl: PATCHES_MEMORY_TTL_SECONDS
+    })
+    .catch(() => undefined)
 }
