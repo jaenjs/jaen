@@ -890,9 +890,15 @@ async def run_safety(pw, args):
     await page.keyboard.type(typed, delay=30)
     await page.keyboard.press("Tab")
 
-    # The field's own 500 ms debounce has to pass before anything is written at
-    # all, and then the tab goes away without a moment more.
-    await page.wait_for_timeout(700)
+    # The tab goes away with nothing waited out at all.
+    #
+    # This used to wait 700 ms, so that the field's own 500 ms debounce had
+    # fired before the tab was hidden, and every hidden-tab and reload check
+    # below was therefore taken outside the half second in which an edit was
+    # lost. The adversarial run of 2026-09-08 measured that window on the live
+    # site and found the loss there; `utils/on-leave.ts` closes it by flushing
+    # the field's debounce before the store is written, and this is where that
+    # is checked from now on. See the `losses` scenario for the whole table.
     await page.evaluate("""() => {
       Object.defineProperty(document, 'visibilityState', {get: () => 'hidden', configurable: true})
       document.dispatchEvent(new Event('visibilitychange'))
@@ -968,6 +974,152 @@ async def run_safety(pw, args):
     return out
 
 
+HIDE = """() => {
+  Object.defineProperty(document, 'visibilityState', {get: () => 'hidden', configurable: true})
+  document.dispatchEvent(new Event('visibilitychange'))
+  window.dispatchEvent(new Event('pagehide'))
+}"""
+
+SHOW = """() => {
+  Object.defineProperty(document, 'visibilityState', {get: () => 'visible', configurable: true})
+  document.dispatchEvent(new Event('visibilitychange'))
+}"""
+
+OUTBOX = """() => {
+  try {
+    const s = JSON.parse(localStorage.getItem('%s') || 'null')
+    return {outbox: (s?.remote?.outbox || []).length,
+            saveState: s?.remote?.saveState ?? null,
+            revision: s?.remote?.revision ?? null}
+  } catch (error) {
+    return null
+  }
+}""" % PERSIST_KEY
+
+
+async def run_losses(pw, args):
+    """The tab going away inside the field's own debounce, which is where an
+    edit used to be lost.
+
+    The question is narrower than `safety`'s: not whether an edit that has
+    reached the store survives, but whether it reaches the store at all when
+    the tab goes away at once. Measured on the deployed booklimo.at on
+    2026-09-08 and it did not, at 0 ms and at 300 ms after the blur and on a
+    real `page.close()` with no blur at all. `packages/jaen/src/utils/on-leave.ts`
+    and `TextField`'s input dispatch are the repair and this is its gate.
+
+    Every reading is the value in `localStorage` at the instant the tab is
+    hidden, which is what a browser that never comes back would have left
+    behind, and the field is set back at the end.
+    """
+    out = {"scenario": "losses", "hides": [], "close": None}
+    browser, context = await new_browser(pw)
+    page = await context.new_page()
+
+    if not await sign_in(page):
+        await browser.close()
+        return dict(out, skipped="the human admin did not sign in")
+
+    state = await enter_editing(page)
+
+    if not state or state.get("remote", {}).get("revision") is None:
+        await browser.close()
+        return dict(out, skipped="no draft arrived from the agent",
+                    remote=(state or {}).get("remote"))
+
+    original = await page.evaluate(FIELD_VALUE)
+    out["original"] = original
+    await page.wait_for_timeout(3000)
+
+    on_screen = original
+
+    # `blur` says whether the person left the field before the tab went. The
+    # `False` row is the one nothing covered at all: a person who types a
+    # sentence and closes the tab with the caret still in the field.
+    for delay, blur in ((0, True), (300, True), (0, False)):
+        typed = "%s l%d%s" % (original, delay, "" if blur else "n")
+        handle = await editable_for(page, on_screen)
+
+        if handle is None:
+            await browser.close()
+            return dict(out, skipped="the field carrying %r was not editable" % on_screen)
+
+        await handle.click()
+        await page.keyboard.press("Control+a")
+        await page.keyboard.type(typed, delay=30)
+
+        if blur:
+            await page.keyboard.press("Tab")
+
+        if delay:
+            await page.wait_for_timeout(delay)
+
+        await page.evaluate(HIDE)
+        in_storage = await page.evaluate(FIELD_VALUE)
+        when_hidden = await page.evaluate(OUTBOX)
+        await page.evaluate(SHOW)
+        await page.wait_for_timeout(3000)
+        await wait_for_saved(page, timeout=30)
+
+        out["hides"].append({
+            "delayMs": delay, "blurred": blur, "typed": typed,
+            "inStorageWhenHidden": in_storage,
+            "stateWhenHidden": when_hidden,
+            "lostAtHide": in_storage != typed,
+            "afterDrain": await page.evaluate(FIELD_VALUE)})
+        on_screen = typed
+
+    # One real close of the tab, with no blur and nothing waited out. A second
+    # tab of the same context reads the same localStorage, which is what a
+    # browser that comes back would read.
+    typed = "%s close" % original
+    handle = await editable_for(page, on_screen)
+
+    if handle is not None:
+        await handle.click()
+        await page.keyboard.press("Control+a")
+        await page.keyboard.type(typed, delay=30)
+        await page.close()
+
+        page = await context.new_page()
+        await page.goto(ORIGIN + "/", wait_until="domcontentloaded")
+        await page.wait_for_timeout(3000)
+        out["close"] = {
+            "typed": typed,
+            "inStorageAfterClose": await page.evaluate(FIELD_VALUE),
+            "state": await page.evaluate(OUTBOX)}
+
+        # A new tab has no sessionStorage of its own, so the CMS is signed out
+        # in it and the outbox cannot drain until somebody signs in again.
+        signed = await sign_in(page)
+        out["close"]["signedInAgain"] = signed
+
+        if signed:
+            await enter_editing(page)
+            await wait_for_saved(page, timeout=60)
+            out["close"]["afterDrain"] = await page.evaluate(FIELD_VALUE)
+
+    # set back, and read it out of a browser whose storage was emptied
+    on_screen = await page.evaluate(FIELD_VALUE)
+    handle = await editable_for(page, on_screen)
+
+    if handle is not None:
+        await handle.click()
+        await page.keyboard.press("Control+a")
+        await page.keyboard.type(original or "", delay=30)
+        await page.keyboard.press("Tab")
+        await page.wait_for_timeout(2500)
+        await wait_for_saved(page)
+
+    await page.evaluate("() => localStorage.removeItem('%s')" % PERSIST_KEY)
+    await page.goto(ORIGIN + "/", wait_until="domcontentloaded")
+    await wait_for_draft(page)
+    out["readBack"] = await page.evaluate(FIELD_VALUE)
+
+    await browser.close()
+    return out
+
+
 async def main():
     command = sys.argv[1] if len(sys.argv) > 1 else "cost"
     args = json.loads(sys.argv[2]) if len(sys.argv) > 2 else {}
@@ -986,6 +1138,8 @@ async def main():
                 answer = await run_local_blur(pw, args)
             elif command == "safety":
                 answer = await run_safety(pw, args)
+            elif command == "losses":
+                answer = await run_losses(pw, args)
             else:
                 answer = {"error": "unknown command %s" % command}
     finally:
