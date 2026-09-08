@@ -919,6 +919,39 @@ would drop the agent's two publish commits. The orchestrator pushes.
   still unexercised.
 - **The blur to paint gap**, 24.3 ms against one frame, unchanged and unfixed.
 
+## A field sometimes reverts, owner 2026-09-08
+
+"When editing a field it sometimes resets it to the version it had
+before." That is the invariant of this whole design failing, so it
+outranks every latency item beside it.
+
+The mechanism to prove or refute first, because the shape of the code
+points at it. A poll or a socket push hands the client a draft read out
+of the object and `hydrate` writes it over the page nodes, folding this
+browser's **outbox** back on top so an unsent change survives. A change
+that has already been saved is no longer in the outbox: `saveSucceeded`
+removes it. So a read that the object answered _before_ that save was
+applied, and that arrives _after_ it succeeded, carries the field's old
+value with nothing left to fold back over it, and the old value is
+written into the store. The window is one network round trip wide, which
+is exactly "sometimes".
+
+Two more candidates worth measuring rather than assuming: a hydrate that
+lands while the person still has the field focused, where the visible
+text is the component's own state and the store's value replaces it under
+their hands; and a socket push that is not held while a save of this
+browser is in flight, where the poll is.
+
+What the fix has to be, whichever it is: a client applies nothing whose
+revision is not strictly greater than the highest it has already applied,
+counting the revisions its own saves were given, and a field that has
+focus is never overwritten from the outside, the value waits until the
+person leaves it.
+
+The gate is a notebook scenario and not a code reading: type into a
+field, let a read that was answered before the keystroke arrive after it,
+and prove the typed value is what the object and the screen both hold.
+
 ## Three operations that rewrite the shared draft
 
 Import, discard and restore are one kind of thing: an act that changes the
@@ -1141,6 +1174,8 @@ invalidation could not be read at all, which is the same trap
   alone, which is the rollback.
 - Discard exists, is site wide, is undoable from its snapshot, and leaves
   no editor's outbox to resurrect what it removed.
+- A field never reverts: no read is applied below the revision the client
+  has reached, and a focused field is not written from the outside.
 - Importing a patch writes only the fields that differ and deletes
   nothing.
 

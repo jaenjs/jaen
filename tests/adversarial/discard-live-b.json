@@ -1,433 +1,435 @@
 {
-  "startedAt": 1788900002.7550156,
-  "origin": "https://booklimo.at",
+ "startedAt": 1788900002.7550156,
+ "origin": "https://booklimo.at",
+ "site": "booklimo.at",
+ "baseline": {
+  "draft": {
+   "revision": 153,
+   "publishedRevision": 153,
+   "changed": true,
+   "full": true,
+   "discardedRevision": 153,
+   "discardedAt": "2026-09-08T20:38:58.281Z",
+   "discardedBy": "389619062902101595",
+   "discardedByName": "Taxi Test Admin",
+   "updatedAt": "2026-09-08T20:38:58.281Z",
+   "updatedBy": "389619062902101595",
+   "snapshotRevision": 139,
+   "snapshotBytes": 2077
+  },
+  "fields": {
+   "FleetTitle": "Our fleet",
+   "ServicesTitle": "Our services",
+   "ServicesSubtitle": "Get a quick overview. See details if you like.",
+   "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+   "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+   "FaqSubtitle": "Short answers about booking, vehicles and service."
+  }
+ },
+ "baselinePreview": {
+  "revision": 153,
+  "publishedRevision": 153,
+  "canDiscard": false,
+  "reason": "Nothing in the draft differs from the published state.",
+  "pages": 0,
+  "fields": 0,
+  "pagesAdded": [],
+  "pagesRemoved": [],
+  "mediaAdded": 0,
+  "mediaRemoved": 0,
+  "siteChanged": false,
+  "widgetsChanged": 0,
+  "editors": [],
+  "since": null,
+  "publishedAt": "2026-09-08T18:54:56.486Z",
+  "takenAt": "2026-09-08T20:40:02.884Z"
+ },
+ "signedInA": true,
+ "signedInB": true,
+ "editingA": true,
+ "editingB": true,
+ "typedA": [
+  {
+   "field": "FleetTitle",
+   "before": "Our fleet",
+   "typed": " AAA-probe",
+   "onScreen": "Our fleetx"
+  },
+  {
+   "field": "ServicesTitle",
+   "before": "Our services",
+   "typed": " AAA-probe",
+   "onScreen": "Our services AAA-probe"
+  }
+ ],
+ "typedBSaved": {
+  "field": "FaqSubtitle",
+  "before": "Short answers about booking, vehicles and service.",
+  "typed": " BBB-saved-probe",
+  "onScreen": "Short answers about booking, vehicles and service. BBB-saved-probe"
+ },
+ "afterTyping": {
+  "object": {
+   "revision": 163,
+   "publishedRevision": 153,
+   "changed": true,
+   "full": true,
+   "discardedRevision": 153,
+   "discardedAt": "2026-09-08T20:38:58.281Z",
+   "discardedBy": "389619062902101595",
+   "discardedByName": "Taxi Test Admin",
+   "updatedAt": "2026-09-08T20:40:37.671Z",
+   "updatedBy": "389619062902101595",
+   "snapshotRevision": 139,
+   "snapshotBytes": 2077
+  },
+  "fields": {
+   "FleetTitle": "Our fleetx",
+   "ServicesTitle": "Our services AAA-probe",
+   "ServicesSubtitle": "Get a quick overview. See details if you like.",
+   "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+   "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+   "FaqSubtitle": "Short answers about booking, vehicles and service. BBB-saved-probe"
+  }
+ },
+ "typedBParked": {
+  "field": "AboutP1",
+  "before": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+  "typed": " BBB-parked-probe",
+  "onScreen": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology. BBB-parked-probe"
+ },
+ "bBeforeDiscard": {
+  "outbox": 1,
+  "outboxFields": [
+   "AboutP1"
+  ],
+  "revision": 165,
+  "publishedRevision": 153,
+  "discardedRevision": 153,
+  "saveState": "offline",
+  "connection": "socket"
+ },
+ "blockedSaves": 3,
+ "dirty": {
+  "revision": 165,
+  "fields": {
+   "FleetTitle": "Our fleetx",
+   "ServicesTitle": "Our services AAA-probe",
+   "ServicesSubtitle": "Get a quick overview. See details if you like.",
+   "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+   "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+   "FaqSubtitle": "Short answers about booking, vehicles and service. BBB-saved-probe"
+  }
+ },
+ "refusals": {
+  "anonymous": {
+   "preview": [
+    {
+     "message": "Authentication required",
+     "code": "AUTH_REQUIRED",
+     "statusCode": 401,
+     "details": null
+    }
+   ],
+   "discard": [
+    {
+     "message": "Authentication required",
+     "code": "AUTH_REQUIRED",
+     "statusCode": 401,
+     "details": null
+    }
+   ],
+   "statusPreview": 200
+  },
+  "krc:customer machine": {
+   "preview": [
+    {
+     "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
+     "code": "FORBIDDEN",
+     "statusCode": 403,
+     "details": null
+    }
+   ],
+   "discard": [
+    {
+     "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
+     "code": "FORBIDDEN",
+     "statusCode": 403,
+     "details": null
+    }
+   ],
+   "statusPreview": 200
+  },
+  "krc:driver machine": {
+   "preview": [
+    {
+     "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
+     "code": "FORBIDDEN",
+     "statusCode": 403,
+     "details": null
+    }
+   ],
+   "discard": [
+    {
+     "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
+     "code": "FORBIDDEN",
+     "statusCode": 403,
+     "details": null
+    }
+   ],
+   "statusPreview": 200
+  },
+  "limosen admin": {
+   "preview": [
+    {
+     "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
+     "code": "FORBIDDEN",
+     "statusCode": 403,
+     "details": null
+    }
+   ],
+   "discard": [
+    {
+     "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
+     "code": "FORBIDDEN",
+     "statusCode": 403,
+     "details": null
+    }
+   ],
+   "statusPreview": 200
+  }
+ },
+ "refusalsLeftDraft": {
+  "revision": 166,
+  "fields": {
+   "FleetTitle": "Our fleet",
+   "ServicesTitle": "Our services AAA-probe",
+   "ServicesSubtitle": "Get a quick overview. See details if you like.",
+   "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+   "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+   "FaqSubtitle": "Short answers about booking, vehicles and service. BBB-saved-probe"
+  }
+ },
+ "preview": {
+  "revision": 166,
+  "publishedRevision": 153,
+  "canDiscard": true,
+  "reason": null,
+  "pages": 1,
+  "fields": 2,
+  "pagesAdded": [],
+  "pagesRemoved": [],
+  "mediaAdded": 0,
+  "mediaRemoved": 0,
+  "siteChanged": false,
+  "widgetsChanged": 0,
+  "editors": [
+   {
+    "sub": "389619062902101595",
+    "name": "Taxi Test Admin",
+    "at": "2026-09-08T20:40:31.429Z"
+   },
+   {
+    "sub": "389619070703507059",
+    "name": "Taxi Test Customer",
+    "at": "2026-09-08T20:40:36.105Z"
+   }
+  ],
+  "since": "2026-09-08T20:40:31.429Z",
+  "publishedAt": "2026-09-08T18:54:56.486Z",
+  "takenAt": "2026-09-08T20:40:58.603Z"
+ },
+ "menuItem": true,
+ "confirmText": "Alle unveröffentlichten Änderungen verwerfen\n\n2 unveröffentlichte Änderungen auf 1 Seite werden für alle rückgängig gemacht, geschrieben von Taxi Test Admin, Taxi Test Customer, seit 8.9.2026 22:40. Die Website geht auf den Stand der letzten Veröffentlichung zurück.\n\nWeiter bearbeiten\nAlles verwerfen",
+ "confirmButton": true,
+ "after": {
+  "draft": {
+   "revision": 167,
+   "publishedRevision": 167,
+   "changed": true,
+   "full": true,
+   "discardedRevision": 167,
+   "discardedAt": "2026-09-08T20:41:03.179Z",
+   "discardedBy": "389619062902101595",
+   "discardedByName": "Taxi Test Admin",
+   "updatedAt": "2026-09-08T20:41:03.179Z",
+   "updatedBy": "389619062902101595",
+   "snapshotRevision": 139,
+   "snapshotBytes": 2077
+  },
+  "fields": {
+   "FleetTitle": "Our fleet",
+   "ServicesTitle": "Our services",
+   "ServicesSubtitle": "Get a quick overview. See details if you like.",
+   "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+   "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+   "FaqSubtitle": "Short answers about booking, vehicles and service."
+  }
+ },
+ "toastA": [
+  "Unveröffentlichte Änderungen verworfen\nTaxi Test Admin hat um 22:41 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand.",
+  "Unveröffentlichte Änderungen verworfen\nTaxi Test Admin hat um 22:41 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand.",
+  "Unveröffentlichte Änderungen verworfen",
+  "Taxi Test Admin hat um 22:41 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand."
+ ],
+ "aAfter": {
+  "outbox": 0,
+  "outboxFields": [],
+  "revision": 167,
+  "publishedRevision": 167,
+  "discardedRevision": 167,
+  "saveState": "saved",
+  "connection": "socket"
+ },
+ "screenA": {
+  "FleetTitle": "Our fleet",
+  "ServicesTitle": "Our services",
+  "FaqSubtitle": "Short answers about booking, vehicles and service.",
+  "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology."
+ },
+ "toastB": [],
+ "bAfter": {
+  "outbox": 0,
+  "outboxFields": [],
+  "revision": 167,
+  "publishedRevision": 167,
+  "discardedRevision": 167,
+  "saveState": "saved",
+  "connection": "socket"
+ },
+ "parkedB": [
+  {
+   "revision": 167,
+   "at": "2026-09-08T20:41:03.179Z",
+   "by": "Taxi Test Admin",
+   "changes": [
+    {
+     "kind": "fieldWrite",
+     "pageId": "JaenPage /",
+     "fieldType": "IMA:TextField",
+     "fieldName": "AboutP1",
+     "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology. BBB-parked-probe",
+     "props": {
+      "id": "AboutP1"
+     },
+     "at": "2026-09-08T20:40:43.002Z"
+    }
+   ]
+  }
+ ],
+ "screenB": {
+  "FleetTitle": "Our fleet",
+  "ServicesTitle": "Our services",
+  "FaqSubtitle": "Short answers about booking, vehicles and service.",
+  "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology."
+ },
+ "backstop": {
   "site": "booklimo.at",
-  "baseline": {
-    "draft": {
-      "revision": 153,
-      "publishedRevision": 153,
-      "changed": true,
-      "full": true,
-      "discardedRevision": 153,
-      "discardedAt": "2026-09-08T20:38:58.281Z",
-      "discardedBy": "389619062902101595",
-      "discardedByName": "Taxi Test Admin",
-      "updatedAt": "2026-09-08T20:38:58.281Z",
-      "updatedBy": "389619062902101595",
-      "snapshotRevision": 139,
-      "snapshotBytes": 2077
-    },
-    "fields": {
-      "FleetTitle": "Our fleet",
-      "ServicesTitle": "Our services",
-      "ServicesSubtitle": "Get a quick overview. See details if you like.",
-      "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-      "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-      "FaqSubtitle": "Short answers about booking, vehicles and service."
-    }
+  "found": true,
+  "revision": 166,
+  "takenAt": "2026-09-08T20:41:03.179Z",
+  "bytes": 2090,
+  "pages": 1
+ },
+ "backstopFields": {
+  "FleetTitle": "Our fleet",
+  "ServicesTitle": "Our services AAA-probe",
+  "ServicesSubtitle": "Get a quick overview. See details if you like.",
+  "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+  "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+  "FaqSubtitle": "Short answers about booking, vehicles and service. BBB-saved-probe"
+ },
+ "afterUnblock": {
+  "revision": 167,
+  "fields": {
+   "FleetTitle": "Our fleet",
+   "ServicesTitle": "Our services",
+   "ServicesSubtitle": "Get a quick overview. See details if you like.",
+   "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+   "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+   "FaqSubtitle": "Short answers about booking, vehicles and service."
   },
-  "baselinePreview": {
-    "revision": 153,
-    "publishedRevision": 153,
-    "canDiscard": false,
-    "reason": "Nothing in the draft differs from the published state.",
-    "pages": 0,
-    "fields": 0,
-    "pagesAdded": [],
-    "pagesRemoved": [],
-    "mediaAdded": 0,
-    "mediaRemoved": 0,
-    "siteChanged": false,
-    "widgetsChanged": 0,
-    "editors": [],
-    "since": null,
-    "publishedAt": "2026-09-08T18:54:56.486Z",
-    "takenAt": "2026-09-08T20:40:02.884Z"
+  "b": {
+   "outbox": 0,
+   "outboxFields": [],
+   "revision": 167,
+   "publishedRevision": 167,
+   "discardedRevision": 167,
+   "saveState": "saved",
+   "connection": "socket"
   },
-  "signedInA": true,
-  "signedInB": true,
-  "editingA": true,
-  "editingB": true,
-  "typedA": [
-    {
-      "field": "FleetTitle",
-      "before": "Our fleet",
-      "typed": " AAA-probe",
-      "onScreen": "Our fleetx"
-    },
-    {
-      "field": "ServicesTitle",
-      "before": "Our services",
-      "typed": " AAA-probe",
-      "onScreen": "Our services AAA-probe"
-    }
-  ],
-  "typedBSaved": {
-    "field": "FaqSubtitle",
-    "before": "Short answers about booking, vehicles and service.",
-    "typed": " BBB-saved-probe",
-    "onScreen": "Short answers about booking, vehicles and service. BBB-saved-probe"
-  },
-  "afterTyping": {
-    "object": {
-      "revision": 163,
-      "publishedRevision": 153,
-      "changed": true,
-      "full": true,
-      "discardedRevision": 153,
-      "discardedAt": "2026-09-08T20:38:58.281Z",
-      "discardedBy": "389619062902101595",
-      "discardedByName": "Taxi Test Admin",
-      "updatedAt": "2026-09-08T20:40:37.671Z",
-      "updatedBy": "389619062902101595",
-      "snapshotRevision": 139,
-      "snapshotBytes": 2077
-    },
-    "fields": {
-      "FleetTitle": "Our fleetx",
-      "ServicesTitle": "Our services AAA-probe",
-      "ServicesSubtitle": "Get a quick overview. See details if you like.",
-      "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-      "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-      "FaqSubtitle": "Short answers about booking, vehicles and service. BBB-saved-probe"
-    }
-  },
-  "typedBParked": {
-    "field": "AboutP1",
-    "before": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-    "typed": " BBB-parked-probe",
-    "onScreen": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology. BBB-parked-probe"
-  },
-  "bBeforeDiscard": {
-    "outbox": 1,
-    "outboxFields": ["AboutP1"],
-    "revision": 165,
-    "publishedRevision": 153,
-    "discardedRevision": 153,
-    "saveState": "offline",
-    "connection": "socket"
-  },
-  "blockedSaves": 3,
-  "dirty": {
-    "revision": 165,
-    "fields": {
-      "FleetTitle": "Our fleetx",
-      "ServicesTitle": "Our services AAA-probe",
-      "ServicesSubtitle": "Get a quick overview. See details if you like.",
-      "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-      "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-      "FaqSubtitle": "Short answers about booking, vehicles and service. BBB-saved-probe"
-    }
-  },
-  "refusals": {
-    "anonymous": {
-      "preview": [
-        {
-          "message": "Authentication required",
-          "code": "AUTH_REQUIRED",
-          "statusCode": 401,
-          "details": null
-        }
-      ],
-      "discard": [
-        {
-          "message": "Authentication required",
-          "code": "AUTH_REQUIRED",
-          "statusCode": 401,
-          "details": null
-        }
-      ],
-      "statusPreview": 200
-    },
-    "krc:customer machine": {
-      "preview": [
-        {
-          "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
-          "code": "FORBIDDEN",
-          "statusCode": 403,
-          "details": null
-        }
-      ],
-      "discard": [
-        {
-          "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
-          "code": "FORBIDDEN",
-          "statusCode": 403,
-          "details": null
-        }
-      ],
-      "statusPreview": 200
-    },
-    "krc:driver machine": {
-      "preview": [
-        {
-          "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
-          "code": "FORBIDDEN",
-          "statusCode": 403,
-          "details": null
-        }
-      ],
-      "discard": [
-        {
-          "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
-          "code": "FORBIDDEN",
-          "statusCode": 403,
-          "details": null
-        }
-      ],
-      "statusPreview": 200
-    },
-    "limosen admin": {
-      "preview": [
-        {
-          "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
-          "code": "FORBIDDEN",
-          "statusCode": 403,
-          "details": null
-        }
-      ],
-      "discard": [
-        {
-          "message": "jaen:admin on booklimo.at is required, and it counts only when the site's own organisation granted it.",
-          "code": "FORBIDDEN",
-          "statusCode": 403,
-          "details": null
-        }
-      ],
-      "statusPreview": 200
-    }
-  },
-  "refusalsLeftDraft": {
-    "revision": 166,
-    "fields": {
-      "FleetTitle": "Our fleet",
-      "ServicesTitle": "Our services AAA-probe",
-      "ServicesSubtitle": "Get a quick overview. See details if you like.",
-      "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-      "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-      "FaqSubtitle": "Short answers about booking, vehicles and service. BBB-saved-probe"
-    }
-  },
-  "preview": {
-    "revision": 166,
-    "publishedRevision": 153,
-    "canDiscard": true,
-    "reason": null,
-    "pages": 1,
-    "fields": 2,
-    "pagesAdded": [],
-    "pagesRemoved": [],
-    "mediaAdded": 0,
-    "mediaRemoved": 0,
-    "siteChanged": false,
-    "widgetsChanged": 0,
-    "editors": [
-      {
-        "sub": "389619062902101595",
-        "name": "Taxi Test Admin",
-        "at": "2026-09-08T20:40:31.429Z"
-      },
-      {
-        "sub": "389619070703507059",
-        "name": "Taxi Test Customer",
-        "at": "2026-09-08T20:40:36.105Z"
-      }
-    ],
-    "since": "2026-09-08T20:40:31.429Z",
-    "publishedAt": "2026-09-08T18:54:56.486Z",
-    "takenAt": "2026-09-08T20:40:58.603Z"
-  },
-  "menuItem": true,
-  "confirmText": "Alle unveröffentlichten Änderungen verwerfen\n\n2 unveröffentlichte Änderungen auf 1 Seite werden für alle rückgängig gemacht, geschrieben von Taxi Test Admin, Taxi Test Customer, seit 8.9.2026 22:40. Die Website geht auf den Stand der letzten Veröffentlichung zurück.\n\nWeiter bearbeiten\nAlles verwerfen",
-  "confirmButton": true,
-  "after": {
-    "draft": {
-      "revision": 167,
-      "publishedRevision": 167,
-      "changed": true,
-      "full": true,
-      "discardedRevision": 167,
-      "discardedAt": "2026-09-08T20:41:03.179Z",
-      "discardedBy": "389619062902101595",
-      "discardedByName": "Taxi Test Admin",
-      "updatedAt": "2026-09-08T20:41:03.179Z",
-      "updatedBy": "389619062902101595",
-      "snapshotRevision": 139,
-      "snapshotBytes": 2077
-    },
-    "fields": {
-      "FleetTitle": "Our fleet",
-      "ServicesTitle": "Our services",
-      "ServicesSubtitle": "Get a quick overview. See details if you like.",
-      "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-      "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-      "FaqSubtitle": "Short answers about booking, vehicles and service."
-    }
-  },
-  "toastA": [
-    "Unveröffentlichte Änderungen verworfen\nTaxi Test Admin hat um 22:41 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand.",
-    "Unveröffentlichte Änderungen verworfen\nTaxi Test Admin hat um 22:41 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand.",
-    "Unveröffentlichte Änderungen verworfen",
-    "Taxi Test Admin hat um 22:41 alle unveröffentlichten Änderungen dieser Website verworfen. Was du siehst, ist der veröffentlichte Stand."
-  ],
-  "aAfter": {
-    "outbox": 0,
-    "outboxFields": [],
-    "revision": 167,
-    "publishedRevision": 167,
-    "discardedRevision": 167,
-    "saveState": "saved",
-    "connection": "socket"
-  },
-  "screenA": {
-    "FleetTitle": "Our fleet",
-    "ServicesTitle": "Our services",
-    "FaqSubtitle": "Short answers about booking, vehicles and service.",
-    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology."
-  },
-  "toastB": [],
-  "bAfter": {
-    "outbox": 0,
-    "outboxFields": [],
-    "revision": 167,
-    "publishedRevision": 167,
-    "discardedRevision": 167,
-    "saveState": "saved",
-    "connection": "socket"
-  },
-  "parkedB": [
-    {
-      "revision": 167,
-      "at": "2026-09-08T20:41:03.179Z",
-      "by": "Taxi Test Admin",
-      "changes": [
-        {
-          "kind": "fieldWrite",
-          "pageId": "JaenPage /",
-          "fieldType": "IMA:TextField",
-          "fieldName": "AboutP1",
-          "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology. BBB-parked-probe",
-          "props": {
-            "id": "AboutP1"
-          },
-          "at": "2026-09-08T20:40:43.002Z"
-        }
-      ]
-    }
-  ],
   "screenB": {
+   "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+   "FaqSubtitle": "Short answers about booking, vehicles and service."
+  }
+ },
+ "staleSave": {
+  "baseRevision": 165,
+  "errors": [
+   {
+    "message": "The unpublished changes of booklimo.at were discarded at revision 167 by Taxi Test Admin. This save was made against revision 166 or older, so it would put back part of what was discarded and is refused.",
+    "code": "DRAFT_DISCARDED",
+    "statusCode": 409,
+    "details": {
+     "discardedRevision": 167,
+     "discardedAt": "2026-09-08T20:41:03.179Z",
+     "discardedByName": "Taxi Test Admin"
+    }
+   }
+  ],
+  "data": null,
+  "draftAfter": {
+   "revision": 167,
+   "fields": {
     "FleetTitle": "Our fleet",
     "ServicesTitle": "Our services",
-    "FaqSubtitle": "Short answers about booking, vehicles and service.",
-    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology."
-  },
-  "backstop": {
-    "site": "booklimo.at",
-    "found": true,
-    "revision": 166,
-    "takenAt": "2026-09-08T20:41:03.179Z",
-    "bytes": 2090,
-    "pages": 1
-  },
-  "backstopFields": {
-    "FleetTitle": "Our fleet",
-    "ServicesTitle": "Our services AAA-probe",
     "ServicesSubtitle": "Get a quick overview. See details if you like.",
     "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
     "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-    "FaqSubtitle": "Short answers about booking, vehicles and service. BBB-saved-probe"
+    "FaqSubtitle": "Short answers about booking, vehicles and service."
+   }
+  }
+ },
+ "signedInC": true,
+ "screenC": {
+  "FleetTitle": "Our fleet",
+  "ServicesTitle": "Our services",
+  "FaqSubtitle": "Short answers about booking, vehicles and service.",
+  "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology."
+ },
+ "cState": {
+  "outbox": 0,
+  "outboxFields": [],
+  "revision": 167,
+  "publishedRevision": 167,
+  "discardedRevision": 167,
+  "saveState": "idle",
+  "connection": "socket"
+ },
+ "parkedC": null,
+ "final": {
+  "draft": {
+   "revision": 167,
+   "publishedRevision": 167,
+   "changed": true,
+   "full": true,
+   "discardedRevision": 167,
+   "discardedAt": "2026-09-08T20:41:03.179Z",
+   "discardedBy": "389619062902101595",
+   "discardedByName": "Taxi Test Admin",
+   "updatedAt": "2026-09-08T20:41:03.179Z",
+   "updatedBy": "389619062902101595",
+   "snapshotRevision": 167,
+   "snapshotBytes": 2077
   },
-  "afterUnblock": {
-    "revision": 167,
-    "fields": {
-      "FleetTitle": "Our fleet",
-      "ServicesTitle": "Our services",
-      "ServicesSubtitle": "Get a quick overview. See details if you like.",
-      "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-      "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-      "FaqSubtitle": "Short answers about booking, vehicles and service."
-    },
-    "b": {
-      "outbox": 0,
-      "outboxFields": [],
-      "revision": 167,
-      "publishedRevision": 167,
-      "discardedRevision": 167,
-      "saveState": "saved",
-      "connection": "socket"
-    },
-    "screenB": {
-      "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-      "FaqSubtitle": "Short answers about booking, vehicles and service."
-    }
-  },
-  "staleSave": {
-    "baseRevision": 165,
-    "errors": [
-      {
-        "message": "The unpublished changes of booklimo.at were discarded at revision 167 by Taxi Test Admin. This save was made against revision 166 or older, so it would put back part of what was discarded and is refused.",
-        "code": "DRAFT_DISCARDED",
-        "statusCode": 409,
-        "details": {
-          "discardedRevision": 167,
-          "discardedAt": "2026-09-08T20:41:03.179Z",
-          "discardedByName": "Taxi Test Admin"
-        }
-      }
-    ],
-    "data": null,
-    "draftAfter": {
-      "revision": 167,
-      "fields": {
-        "FleetTitle": "Our fleet",
-        "ServicesTitle": "Our services",
-        "ServicesSubtitle": "Get a quick overview. See details if you like.",
-        "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-        "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-        "FaqSubtitle": "Short answers about booking, vehicles and service."
-      }
-    }
-  },
-  "signedInC": true,
-  "screenC": {
-    "FleetTitle": "Our fleet",
-    "ServicesTitle": "Our services",
-    "FaqSubtitle": "Short answers about booking, vehicles and service.",
-    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology."
-  },
-  "cState": {
-    "outbox": 0,
-    "outboxFields": [],
-    "revision": 167,
-    "publishedRevision": 167,
-    "discardedRevision": 167,
-    "saveState": "idle",
-    "connection": "socket"
-  },
-  "parkedC": null,
-  "final": {
-    "draft": {
-      "revision": 167,
-      "publishedRevision": 167,
-      "changed": true,
-      "full": true,
-      "discardedRevision": 167,
-      "discardedAt": "2026-09-08T20:41:03.179Z",
-      "discardedBy": "389619062902101595",
-      "discardedByName": "Taxi Test Admin",
-      "updatedAt": "2026-09-08T20:41:03.179Z",
-      "updatedBy": "389619062902101595",
-      "snapshotRevision": 167,
-      "snapshotBytes": 2077
-    },
-    "fields": {
-      "FleetTitle": "Our fleet",
-      "ServicesTitle": "Our services",
-      "ServicesSubtitle": "Get a quick overview. See details if you like.",
-      "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
-      "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
-      "FaqSubtitle": "Short answers about booking, vehicles and service."
-    }
-  },
-  "endedAt": 1788900114.3492863
+  "fields": {
+   "FleetTitle": "Our fleet",
+   "ServicesTitle": "Our services",
+   "ServicesSubtitle": "Get a quick overview. See details if you like.",
+   "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.",
+   "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+   "FaqSubtitle": "Short answers about booking, vehicles and service."
+  }
+ },
+ "endedAt": 1788900114.3492863
 }
