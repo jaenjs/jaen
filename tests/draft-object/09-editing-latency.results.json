@@ -1,0 +1,212 @@
+{
+  "notebook": "09-editing-latency",
+  "started": 1788853198.5505898,
+  "testkit_version": "1.0.0",
+  "counts": {
+    "PASS": 13,
+    "FAIL": 0,
+    "SKIP": 5,
+    "WARN": 0,
+    "TOTAL": 18
+  },
+  "checks": [
+    {
+      "index": 1,
+      "name": "the head the transition kept is beside the site",
+      "status": "PASS",
+      "evidence": "live.json at /home/snekmin/git/limosen-v3/booklimo.at-transition-before.head. live-media.json at /home/snekmin/git/limosen-v3/booklimo.at-transition-before.head",
+      "detail": "",
+      "section": "the fixture",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853198.5510771
+    },
+    {
+      "index": 2,
+      "name": "it builds into one draft",
+      "status": "PASS",
+      "evidence": "2 pages, 80213 B of draft. the draft fixture at /tmp/jaen-editing/booklimo-draft.json",
+      "detail": "",
+      "section": "the fixture",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853198.551853
+    },
+    {
+      "index": 3,
+      "name": "the draft carries pages and a catalogue",
+      "status": "PASS",
+      "evidence": "pages in the draft. 140 media nodes",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853198.626812
+    },
+    {
+      "index": 4,
+      "name": "the catalogue is the draft, by weight",
+      "status": "PASS",
+      "evidence": "the pages 1899 B, the catalogue 118617 B on disk. the catalogue compact is 76359 B. the catalogue is 62 times the pages",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853198.627153
+    },
+    {
+      "index": 5,
+      "name": "the catalogue holds the 140 nodes the acceptance names",
+      "status": "PASS",
+      "evidence": "media nodes in booklimo's draft",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853198.6271672
+    },
+    {
+      "index": 6,
+      "name": "the harness bundles out of the jaen source",
+      "status": "PASS",
+      "evidence": "bundled 1754054 B",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 68,
+      "timestamp": 1788853198.7039626
+    },
+    {
+      "index": 7,
+      "name": "one blur is one storage write, not four",
+      "status": "PASS",
+      "evidence": "state 77096 B, 140 media nodes. whole-store writes per blur, median 1, max 1. 1312 B written per blur, against 309,253 B in the baseline",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 36907,
+      "timestamp": 1788853235.6122563
+    },
+    {
+      "index": 8,
+      "name": "the write is one pass over the state, not three",
+      "status": "PASS",
+      "evidence": "the old four steps 0.977 ms, the one pass 0.016 ms, 918 B against 77096 B. one stringify with a replacer against a clone, a walk and two stringifies",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853235.6123438
+    },
+    {
+      "index": 9,
+      "name": "the catalogue is what is being copied",
+      "status": "PASS",
+      "evidence": "without the catalogue the store is 748 B of 77096. the catalogue is 99.0% of the payload",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853235.6123886
+    },
+    {
+      "index": 10,
+      "name": "a blur blocks the main thread for less than one frame (node)",
+      "status": "PASS",
+      "evidence": "median 1.42 ms, p95 4.98 ms over 60 blurs. p95 of the whole blur, four serialisations included",
+      "detail": "",
+      "section": "acceptance, node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853235.6309028
+    },
+    {
+      "index": 11,
+      "name": "a payload of the pre-change size is prepared for the browser",
+      "status": "PASS",
+      "evidence": "the browser gets 77085 B of store",
+      "detail": "",
+      "section": "the persistence path in the browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 455,
+      "timestamp": 1788853236.1034255
+    },
+    {
+      "index": 12,
+      "name": "the persistence path costs, measured in chromium",
+      "status": "PASS",
+      "evidence": "77085 B, one whole-store save 0.420 ms (batch), 60 samples. after change 1, one pass on the same payload: 0.225 ms; with change 2 as well, 0.010 ms and 8.... the browser measured something",
+      "detail": "",
+      "section": "the persistence path in the browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 1884,
+      "timestamp": 1788853237.9880736
+    },
+    {
+      "index": 13,
+      "name": "one blur in the browser is under one frame of work",
+      "status": "PASS",
+      "evidence": "before 1.680 ms for a blur, after 0.010 ms. one frame at 16 ms",
+      "detail": "",
+      "section": "the persistence path in the browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853237.9881954
+    },
+    {
+      "index": 14,
+      "name": "a field is typed, left, and set back on the live agent",
+      "status": "SKIP",
+      "evidence": "this build carries no agent option: the transition removed it from both sites, so there is no...",
+      "detail": "",
+      "section": "the real CMS",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853238.0047448
+    },
+    {
+      "index": 15,
+      "name": "the value read back out of an emptied browser is the one found",
+      "status": "SKIP",
+      "evidence": "the browser half did not run",
+      "detail": "",
+      "section": "the real CMS",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853238.00479
+    },
+    {
+      "index": 16,
+      "name": "a blur is painted within one frame",
+      "status": "SKIP",
+      "evidence": "the browser half did not run",
+      "detail": "",
+      "section": "acceptance, browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853238.0206354
+    },
+    {
+      "index": 17,
+      "name": "the writes after a blur are what the deferred writer allows",
+      "status": "SKIP",
+      "evidence": "the browser half did not run",
+      "detail": "",
+      "section": "acceptance, browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853238.0206554
+    },
+    {
+      "index": 18,
+      "name": "the bytes a blur writes collapsed",
+      "status": "SKIP",
+      "evidence": "the browser half did not run",
+      "detail": "",
+      "section": "acceptance, browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788853238.02067
+    }
+  ]
+}

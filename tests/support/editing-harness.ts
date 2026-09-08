@@ -742,8 +742,7 @@ const scenarios: Record<string, () => Promise<any>> = {
     }
 
     const afterRestart = {
-      objectRestartedAt:
-        (store.getState() as any).remote.objectRestartedAt ?? null,
+      objectRestartedAt: (store.getState() as any).remote.objectRestartedAt ?? null,
       revision: (store.getState() as any).remote.revision,
       value: fieldValue(store.getState(), 'FleetTitle'),
       persistedValue: fieldValue(persisted(), 'FleetTitle') ?? null
