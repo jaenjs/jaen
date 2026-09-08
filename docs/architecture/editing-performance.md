@@ -117,6 +117,45 @@ becomes exactly one commit; a poll arriving mid-edit does not overwrite
 an unsent change; discarding clears the outbox and nothing else; and with
 the agent option removed the CMS still saves to `localStorage` alone.
 
+## The engine of the storm, read 2026-09-08 while the owner was blocked
+
+The baseline said the forty-seven writes a second come through
+`useField`'s register. Reading the hook itself, the loop is one effect in
+`packages/jaen/src/hooks/use-field.ts`:
+
+```ts
+const getField = (): ... => { ...reads the store... }
+
+React.useEffect(() => {
+  setField(getField)
+}, [jaenPage.id, getField])
+```
+
+`getField` is a new function on every render, so the effect runs on every
+render. `setField(getField)` hands React the updater, React calls it, and
+it returns a freshly built object read out of the store, a new identity
+every time, so the state is always "changed" and the component renders
+again. That is a render loop with nothing to stop it, throttled only by
+React's scheduling, which is the shape of the forty-seven.
+
+The effect below it resubscribes to the store on every one of those
+renders, because its dependency list carries `field`, which is one of the
+new objects. And a field component whose register effect has an unstable
+dependency then dispatches `field_register` per render, which is how a
+render loop became a store write loop and reached `persist-state`.
+
+So the fix is three narrow things in that one file, and none of them is in
+the agent or in the persistence path: `getField` gets a stable identity or
+leaves the dependency list, the first effect only sets state when the
+value really differs the way the subscription below it already does, and
+the subscription stops depending on the object it produces. The gate stays
+what the plan says: with edit mode on and nobody typing, the store is
+written zero times.
+
+Written down by the orchestrating session rather than fixed there, because
+a builder was measuring the same file at the same moment and this file is
+jaen's core field hook. It is the first place that builder should look.
+
 ## Acceptance
 
 - The main-thread block of one field blur, with a draft of 140 media
