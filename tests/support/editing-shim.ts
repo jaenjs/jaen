@@ -11,6 +11,30 @@
  */
 import * as fs from 'fs'
 
+/**
+ * Everything the code under test says goes to stderr.
+ *
+ * `console.debug` and `console.log` are stdout in node, and stdout is where
+ * the harness emits its one JSON answer. The client is deliberately talkative
+ * about a socket it could not open and a revision that went backwards, and
+ * that talk is worth reading, so it is moved rather than silenced.
+ */
+for (const level of ['log', 'debug', 'info', 'warn'] as const) {
+  const original = console[level].bind(console)
+
+  console[level] = (...args: unknown[]) => {
+    if (process.env.JAEN_HARNESS_QUIET === '0') {
+      original(...args)
+      return
+    }
+
+    process.stderr.write(
+      args.map(arg => (typeof arg === 'string' ? arg : String(arg))).join(' ') +
+        '\n'
+    )
+  }
+}
+
 export interface Write {
   key: string
   bytes: number
@@ -22,8 +46,12 @@ export interface Write {
 export const writes: Write[] = []
 
 /** Every call the agent client made. */
-export const calls: Array<{query: string; changes: any[]; baseSha?: string}> =
-  []
+export const calls: Array<{
+  query: string
+  changes: any[]
+  baseRevision?: number | null
+  sinceRevision?: number | null
+}> = []
 
 export class MemoryStorage {
   private data: Record<string, string> = {}
@@ -83,10 +111,251 @@ export const flushToDisk = () => {
 }
 
 let networkMode: 'ok' | 'offline' = 'ok'
-let head = 0
 
 export const setNetwork = (mode: 'ok' | 'offline') => {
   networkMode = mode
+}
+
+// ---------------------------------------------------------------------------
+// The object, in this process
+// ---------------------------------------------------------------------------
+
+/**
+ * A stand in for the site's Durable Object, small enough to read in one screen
+ * and faithful in the three things the client's behaviour hangs off: a
+ * monotonic revision, an answer that is either a delta or a full replacement,
+ * and a write against a stale base being folded rather than refused.
+ *
+ * It is not the agent. It never claims to be the agent, and no check written
+ * against it proves anything about the agent's own code. What it does prove is
+ * what the client does when the object behaves in each of the ways the design
+ * says it can, including the two it is not supposed to: going away between two
+ * saves, and refusing a socket.
+ */
+export interface ObjectDelta {
+  pages: Record<string, any>
+  media: Record<string, unknown>
+  removedMedia: string[]
+  site: any | null
+  widgets: any[]
+  authors: Record<string, any>
+  mediaField: {pageId: string; fieldType: string; fieldName: string} | null
+}
+
+const emptyDelta = (): ObjectDelta => ({
+  pages: {},
+  media: {},
+  removedMedia: [],
+  site: null,
+  widgets: [],
+  authors: {},
+  mediaField: null
+})
+
+export const agentObject = {
+  revision: 0,
+  publishedRevision: 0,
+  /** One entry per accepted write, so a reader above a revision gets a delta. */
+  log: [] as Array<{revision: number; delta: ObjectDelta}>,
+  /** Whether `subscribe` mints a ticket at all. */
+  socket: 'ok' as 'ok' | 'refused',
+  /** Every ticket minted, so a scenario can count the reconnects. */
+  tickets: [] as string[],
+  saves: 0,
+
+  /**
+   * Somebody else wrote a page into the object. The page is carried whole,
+   * which is what the object's own delta does.
+   */
+  write(pages: Record<string, any>, authors: Record<string, any> = {}) {
+    this.revision += 1
+    this.log.push({
+      revision: this.revision,
+      delta: {...emptyDelta(), pages, authors}
+    })
+    return this.revision
+  },
+
+  /**
+   * The object was lost and a new one answered in its place, at the revision a
+   * snapshot left it at. Everything written after that snapshot is gone, which
+   * is the whole point of the scenario.
+   */
+  restartAt(revision: number) {
+    this.revision = revision
+    this.log = this.log.filter(entry => entry.revision <= revision)
+    // The sockets go with the object that held them, which is the first thing
+    // an editor's browser notices: a Durable Object's WebSockets do not
+    // outlive it. Dropping them here is what makes this a lost object rather
+    // than an object that quietly answers older numbers.
+    dropSockets()
+  },
+
+  read(since: number | null) {
+    if (typeof since === 'number' && since === this.revision) {
+      return {
+        site: 'booklimo.at',
+        revision: this.revision,
+        publishedRevision: this.publishedRevision,
+        changed: false,
+        full: false,
+        delta: null,
+        readAt: new Date().toISOString()
+      }
+    }
+
+    // A reader with no revision, or one this object has never reached, is
+    // answered with everything it has rather than with a delta onto a copy
+    // neither side can name.
+    const full = typeof since !== 'number' || since > this.revision
+    const entries = full
+      ? this.log
+      : this.log.filter(entry => entry.revision > since)
+
+    const delta = emptyDelta()
+
+    for (const entry of entries) {
+      Object.assign(delta.pages, entry.delta.pages)
+      Object.assign(delta.media, entry.delta.media)
+      Object.assign(delta.authors, entry.delta.authors)
+      delta.removedMedia.push(...entry.delta.removedMedia)
+      if (entry.delta.site) delta.site = entry.delta.site
+      if (entry.delta.mediaField) delta.mediaField = entry.delta.mediaField
+      delta.widgets.push(...entry.delta.widgets)
+    }
+
+    return {
+      site: 'booklimo.at',
+      revision: this.revision,
+      publishedRevision: this.publishedRevision,
+      changed: true,
+      full,
+      delta,
+      readAt: new Date().toISOString()
+    }
+  },
+
+  /**
+   * A write. A base the object has already moved past is folded onto the
+   * newer draft rather than refused, and the fields it took from somebody else
+   * come back as `overwrote`, which is how the CMS says what a race cost.
+   */
+  save(changes: any[], baseRevision: number | null) {
+    this.saves += 1
+
+    const rebased =
+      typeof baseRevision === 'number' && baseRevision !== this.revision
+
+    const overwrote = rebased
+      ? changes
+          .filter(change => change.fieldName)
+          .map(change => ({
+            field: `${change.pageId}/${change.fieldType}/${change.fieldName}`
+          }))
+      : []
+
+    const pages: Record<string, any> = {}
+
+    for (const change of changes) {
+      if (change.kind !== 'fieldWrite' || !change.pageId) continue
+
+      pages[change.pageId] = {
+        id: change.pageId,
+        jaenFields: {
+          [change.fieldType]: {
+            [change.fieldName]: {value: change.value}
+          }
+        }
+      }
+    }
+
+    this.revision += 1
+    this.log.push({revision: this.revision, delta: {...emptyDelta(), pages}})
+
+    return {
+      revision: this.revision,
+      savedAt: new Date().toISOString(),
+      rebased,
+      overwrote
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The socket
+// ---------------------------------------------------------------------------
+
+/**
+ * A WebSocket that goes nowhere and can be told to refuse.
+ *
+ * The client's fallback is the whole of what these scenarios are about, and
+ * the two ways a socket fails are both here: `subscribe` refusing to mint a
+ * ticket, which is an agent that does not have the verb, and the connection
+ * itself closing, which is a proxy that will not upgrade.
+ */
+export const sockets: Array<{url: string; protocols: string[]}> = []
+
+class FakeWebSocket {
+  onopen: ((event?: any) => void) | null = null
+  onclose: ((event?: any) => void) | null = null
+  onerror: ((event?: any) => void) | null = null
+  onmessage: ((event?: any) => void) | null = null
+  readyState = 0
+
+  constructor(
+    public url: string,
+    public protocols?: string | string[]
+  ) {
+    sockets.push({
+      url,
+      protocols: Array.isArray(protocols)
+        ? protocols
+        : protocols
+          ? [protocols]
+          : []
+    })
+
+    setTimeout(() => {
+      if (agentObject.socket === 'refused') {
+        this.readyState = 3
+        this.onclose?.({code: 1006})
+        return
+      }
+
+      this.readyState = 1
+      live.push(this)
+      this.onopen?.({})
+    }, 0)
+  }
+
+  close() {
+    this.readyState = 3
+  }
+}
+
+const live: FakeWebSocket[] = []
+
+/** The object went away and took its sockets with it. */
+export const dropSockets = () => {
+  const closing = live.splice(0, live.length)
+
+  for (const socket of closing) {
+    socket.readyState = 3
+    socket.onclose?.({code: 1006})
+  }
+
+  return closing.length
+}
+
+/** Push a frame to every open socket, the way the object would. */
+export const pushRevision = (revision: number, publishedRevision?: number) => {
+  for (const socket of live) {
+    socket.onmessage?.({
+      data: JSON.stringify({type: 'revision', revision, publishedRevision})
+    })
+  }
+
+  return live.length
 }
 ;(globalThis as any).localStorage = storage
 ;(globalThis as any).sessionStorage = new MemoryStorage()
@@ -132,14 +401,24 @@ export const fire = (target: 'window' | 'document', type: string): number => {
 }
 ;(globalThis as any).window = fakeWindow
 ;(globalThis as any).document = fakeDocument
+;(globalThis as any).WebSocket = FakeWebSocket
 ;(globalThis as any).fetch = async (_url: string, init: any) => {
   const body = JSON.parse(init.body)
   const isSave = body.query.includes('JaenAgentSave')
+  const isDraft = body.query.includes('JaenAgentDraft')
+  const isSubscribe = body.query.includes('JaenAgentSubscribe')
 
   calls.push({
-    query: isSave ? 'save' : 'other',
+    query: isSave
+      ? 'save'
+      : isDraft
+        ? 'draft'
+        : isSubscribe
+          ? 'subscribe'
+          : 'other',
     changes: isSave ? body.variables.changes : [],
-    baseSha: body.variables.baseSha
+    baseRevision: isSave ? body.variables.baseRevision : undefined,
+    sinceRevision: isDraft ? body.variables.sinceRevision : undefined
   })
 
   if (networkMode === 'offline') {
@@ -148,24 +427,58 @@ export const fire = (target: 'window' | 'document', type: string): number => {
     throw new Error('harness: the network is down')
   }
 
-  head += 1
-
   if (isSave) {
     return {
       status: 200,
       json: async () => ({
         data: {
-          save: {
-            headSha: `harness-head-${head}`,
-            blobSha: `harness-blob-${head}`,
-            commitSha: `harness-commit-${head}`,
-            commitUrl: `https://example.invalid/commit/${head}`,
-            savedAt: new Date().toISOString(),
-            rebased: false,
-            wrote: ['jaen-data/live.json'],
-            overwrote: []
+          save: agentObject.save(
+            body.variables.changes,
+            body.variables.baseRevision
+          )
+        }
+      })
+    }
+  }
+
+  if (isSubscribe) {
+    if (agentObject.socket === 'refused') {
+      // An agent that does not know the verb answers an error, which is what
+      // this client must survive by falling back to the poll.
+      return {
+        status: 200,
+        json: async () => ({
+          errors: [
+            {message: 'Cannot query field "subscribe" on type "Mutation"'}
+          ]
+        })
+      }
+    }
+
+    const ticket = `ticket-${agentObject.tickets.length + 1}`
+    agentObject.tickets.push(ticket)
+
+    return {
+      status: 200,
+      json: async () => ({
+        data: {
+          subscribe: {
+            site: 'booklimo.at',
+            ticket,
+            url: 'wss://agent.example.invalid/draft/booklimo.at',
+            expiresAt: new Date(Date.now() + 60000).toISOString(),
+            revision: agentObject.revision
           }
         }
+      })
+    }
+  }
+
+  if (isDraft) {
+    return {
+      status: 200,
+      json: async () => ({
+        data: {draft: agentObject.read(body.variables.sinceRevision)}
       })
     }
   }
@@ -174,11 +487,11 @@ export const fire = (target: 'window' | 'document', type: string): number => {
     status: 200,
     json: async () => ({
       data: {
-        draft: {
+        viewer: {
           site: 'booklimo.at',
-          headSha: `harness-head-${head}`,
-          changed: false,
-          readAt: new Date().toISOString()
+          sub: 'harness',
+          name: 'The harness',
+          at: new Date().toISOString()
         }
       }
     })
@@ -198,8 +511,16 @@ export const fire = (target: 'window' | 'document', type: string): number => {
     : {
         url: 'https://agent.example.invalid/graphql',
         site: 'booklimo.at',
-        pollMs: 5000,
-        activePollMs: 1500
+        // The poll runs fast here on purpose. It is the fallback and the
+        // scenario that matters most is the one where it is the only path
+        // there is, so a check on it should not be a check on a scenario's
+        // patience: `JAEN_HARNESS_POLL_MS` sets it, default 300 ms.
+        pollMs: Number(process.env.JAEN_HARNESS_POLL_MS || 300),
+        activePollMs: Number(process.env.JAEN_HARNESS_POLL_MS || 300)
         // No `debounceMs`, exactly as booklimo's own gatsby-config passes
         // none, so the harness waits out the window the code ships with.
       }
+
+// `document.visibilityState` is 'visible' above, so the client polls at
+// `activePollMs`. Nothing here sets the socket up or down: `agentObject.socket`
+// does, and every scenario that cares says which it wants.

@@ -296,11 +296,39 @@ BENCH = """({payload, samples}) => {
 
   const batchMs = (performance.now() - batchStarted) / samples
 
+  // The same work after change 1 of the plan: one `JSON.stringify` with a
+  // replacer, then the write. Timed in a batch for the same clamping reason,
+  // and twice, because the two changes are separable: `single` is change 1 on
+  // a payload of the old size, `singleDrop` is change 1 and change 2 together,
+  // which is what the CMS now writes.
+  const replacer = drop => (key, value) => {
+    if (key === 'isLoading' || key === 'error') return undefined
+    if (drop && key === 'IMA:MEDIA_NODES') return undefined
+    return value
+  }
+
+  const timeSingle = drop => {
+    const started = performance.now()
+
+    for (let i = 0; i < samples; i += 1) {
+      localStorage.setItem('jaen-editing-bench', JSON.stringify(state, replacer(drop)))
+    }
+
+    return (performance.now() - started) / samples
+  }
+
+  const batchSingleMs = timeSingle(false)
+  const batchSingleDropMs = timeSingle(true)
+
+  const singleBytes = new TextEncoder().encode(JSON.stringify(state, replacer(false))).length
+  const singleDropBytes = new TextEncoder().encode(JSON.stringify(state, replacer(true))).length
+
   localStorage.removeItem('jaen-editing-bench')
 
   const bytes = new TextEncoder().encode(JSON.stringify(state)).length
 
-  return {legs, batchMs, bytes, userAgent: navigator.userAgent}
+  return {legs, batchMs, batchSingleMs, batchSingleDropMs, singleBytes,
+          singleDropBytes, bytes, userAgent: navigator.userAgent}
 }"""
 
 
@@ -334,11 +362,18 @@ async def run_cost(pw, args):
         "userAgent": answer["userAgent"],
         "legs": legs,
         "batchMs": answer["batchMs"],
-        # One blur is four whole-store writes on the path as it stands.
+        "batchSingleMs": answer["batchSingleMs"],
+        "batchSingleDropMs": answer["batchSingleDropMs"],
+        "singleBytes": answer["singleBytes"],
+        "singleDropBytes": answer["singleDropBytes"],
+        # One blur was four whole-store writes on the path as it stood, and is
+        # one coalesced write after change 1: every dispatch a blur causes
+        # falls into the same idle callback.
         "blurMs": {
             "median": legs["total"]["median"] * 4,
             "p95": legs["total"]["p95"] * 4,
             "batch": answer["batchMs"] * 4,
+            "after": answer["batchSingleDropMs"],
         },
     }
 

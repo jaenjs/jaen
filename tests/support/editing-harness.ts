@@ -16,11 +16,14 @@
  * so a scenario can be continued by a second process, which is what a reload is.
  */
 import {
+  agentObject,
   calls,
   fakeDocument,
   fire,
   flushToDisk,
+  pushRevision,
   setNetwork,
+  sockets,
   storage,
   writes
 } from './editing-shim'
@@ -44,32 +47,38 @@ const HOME_PAGE = 'JaenPage /'
 const MEDIA_PAGE = 'JaenPage /cms/media/'
 const MEDIA_FIELD_TYPE = 'IMA:MEDIA_NODES'
 
+/**
+ * The fixture: one draft, out of one file.
+ *
+ * It used to be two, `booklimo.at/jaen-data/live.json` and `live-media.json`,
+ * the agent's head as the first build of the shared draft kept it. The
+ * transition of `docs/architecture/draft-state.md` deleted both, because a head
+ * in `patches.txt` made every unfinished edit part of the published site. So
+ * the fixture is now one file holding the draft the way the object's own
+ * `snapshot(site)` answers it, `{pages, site, widgets}`, and `JAEN_HARNESS_DRAFT`
+ * names it.
+ *
+ * The notebooks pass the sourced jaen data the transition kept beside the site,
+ * which is the whole replayed chain and therefore a bigger and more honest
+ * fixture than the head ever was: booklimo's ten pages and its 140 media nodes.
+ * A `{message, createdAt, data}` migration is accepted as well and unwrapped,
+ * so the file the transition uploaded works without being edited first.
+ */
 const readDraft = (): any => {
-  const live = JSON.parse(
-    fs.readFileSync(process.env.JAEN_HARNESS_LIVE!, 'utf8')
-  )
-  const media = JSON.parse(
-    fs.readFileSync(process.env.JAEN_HARNESS_MEDIA!, 'utf8')
-  )
+  const file = process.env.JAEN_HARNESS_DRAFT
 
-  const pages = [...(live.data.pages || [])]
-
-  // The agent keeps the catalogue in a file of its own and the client sees one
-  // draft, so the two are merged the way `draft` answers them.
-  for (const page of media.data.pages || []) {
-    const existing = pages.find((entry: any) => entry.id === page.id)
-
-    if (existing) {
-      existing.jaenFields = {
-        ...(existing.jaenFields || {}),
-        ...(page.jaenFields || {})
-      }
-    } else {
-      pages.push(page)
-    }
+  if (!file) {
+    throw new Error('JAEN_HARNESS_DRAFT is required: the draft fixture')
   }
 
-  return {pages, site: live.data.site, widgets: live.data.widgets || []}
+  const parsed = JSON.parse(fs.readFileSync(file, 'utf8'))
+  const data = parsed && parsed.data ? parsed.data : parsed
+
+  return {
+    pages: data.pages || [],
+    site: data.site || {siteMetadata: {}},
+    widgets: data.widgets || []
+  }
 }
 
 /** The draft as the poller would hydrate it, straight off booklimo's own files. */
@@ -79,7 +88,10 @@ const hydrateBooklimo = () => {
   store.dispatch(pageActions.hydrateFromRemote({nodes: state.pages as any}))
   store.dispatch(siteActions.hydrateFromRemote(state.site.siteMetadata))
   store.dispatch(widgetActions.hydrateFromRemote(state.widgets))
-  store.dispatch(remoteActions.headSeen('harness-head-0'))
+  // The object's revision this browser starts from. The stand in in
+  // `editing-shim` starts at 0 as well, so a scenario that never writes gets
+  // `changed: false` from its first read, which is the ordinary case.
+  store.dispatch(remoteActions.revisionSeen({revision: 0}))
 }
 
 const fieldWrite = (value: string, fieldName = 'FleetTitle') =>
@@ -531,7 +543,7 @@ const scenarios: Record<string, () => Promise<any>> = {
     store.dispatch(pageActions.hydrateFromRemote({nodes: merged.pages as any}))
     store.dispatch(siteActions.hydrateFromRemote(merged.site.siteMetadata))
     store.dispatch(widgetActions.hydrateFromRemote(merged.widgets))
-    store.dispatch(remoteActions.remoteHydrated({headSha: 'harness-head-new'}))
+    store.dispatch(remoteActions.remoteHydrated({revision: 1}))
 
     await sleep(PERSIST_DEADLINE_MS)
 
@@ -554,7 +566,7 @@ const scenarios: Record<string, () => Promise<any>> = {
     // discard must not take away.
     store.dispatch(
       remoteActions.remoteHydrated({
-        headSha: 'harness-head-poll',
+        revision: 7,
         authors: {
           'JaenPage //IMA:TextField/FleetTitle': {
             sub: 'someone-else',
@@ -586,12 +598,12 @@ const scenarios: Record<string, () => Promise<any>> = {
       scenario: 'discard',
       before: {
         outboxLength: before.remote.outbox.length,
-        headSha: before.remote.headSha,
+        revision: before.remote.revision,
         value: fieldValue(before)
       },
       after: {
         outboxLength: after.remote.outbox.length,
-        headSha: after.remote.headSha,
+        revision: after.remote.revision,
         active: after.remote.active,
         authors: Object.keys(after.remote.authors || {}).length,
         // `?? null` on purpose: an undefined is dropped by JSON.stringify and
@@ -682,6 +694,317 @@ const scenarios: Record<string, () => Promise<any>> = {
       afterHidden: afterHidden ?? null,
       afterIdleDeadline: afterIdleDeadline ?? null,
       writes: writes.length
+    }
+  },
+
+  /**
+   * The object was lost between two saves.
+   *
+   * The design's own worst case for the draft store, and the one the snapshot
+   * backstop exists for. This asks the narrower question, which is the client's
+   * to answer: when the object comes back at a revision below the one this
+   * browser already had, is the edit the person made still on the screen and
+   * still in storage, and does the next save go through.
+   *
+   * A revision is monotonic while its object lives, so a lower one is not a
+   * race, it is a different object. The client skips that answer rather than
+   * applying it, because the answer is older than the screen.
+   */
+  async objectRestart() {
+    hydrateBooklimo()
+
+    // The poller and the socket only run for a mounted CMS. Everything below
+    // is about them, so the CMS is mounted.
+    store.dispatch(remoteActions.setActive(true))
+
+    fieldWrite('before the object went away', 'FleetTitle')
+
+    // The first save, waited out and acknowledged.
+    for (let waited = 0; waited < 5000; waited += 50) {
+      if ((store.getState() as any).remote.outbox.length === 0) break
+      await sleep(50)
+    }
+
+    const afterFirstSave = {
+      revision: (store.getState() as any).remote.revision,
+      value: fieldValue(store.getState(), 'FleetTitle'),
+      objectRevision: agentObject.revision
+    }
+
+    // The object is lost and a new one answers in its place, at revision 0,
+    // which is a fresh object that has never heard of this browser.
+    agentObject.restartAt(0)
+
+    // The next read is the one that matters.
+    for (let waited = 0; waited < 4000; waited += 50) {
+      if ((store.getState() as any).remote.objectRestartedAt) break
+      await sleep(50)
+    }
+
+    const afterRestart = {
+      objectRestartedAt:
+        (store.getState() as any).remote.objectRestartedAt ?? null,
+      revision: (store.getState() as any).remote.revision,
+      value: fieldValue(store.getState(), 'FleetTitle'),
+      persistedValue: fieldValue(persisted(), 'FleetTitle') ?? null
+    }
+
+    // And the second save, which has to be accepted by the new object.
+    const savesBefore = agentObject.saves
+    fieldWrite('after the object came back', 'FleetTitle')
+
+    for (let waited = 0; waited < 6000; waited += 50) {
+      if (
+        (store.getState() as any).remote.outbox.length === 0 &&
+        agentObject.saves > savesBefore
+      ) {
+        break
+      }
+      await sleep(50)
+    }
+
+    await sleep(PERSIST_DEADLINE_MS)
+
+    return {
+      scenario: 'objectRestart',
+      afterFirstSave,
+      afterRestart,
+      afterSecondSave: {
+        revision: (store.getState() as any).remote.revision,
+        value: fieldValue(store.getState(), 'FleetTitle'),
+        persistedValue: fieldValue(persisted(), 'FleetTitle') ?? null,
+        outboxLength: (store.getState() as any).remote.outbox.length,
+        saveState: (store.getState() as any).remote.saveState,
+        objectSaves: agentObject.saves,
+        objectRevision: agentObject.revision
+      }
+    }
+  },
+
+  /**
+   * The socket is refused and the poll carries everything.
+   *
+   * `draft-state.md` keeps the poll as the fallback for a browser whose socket
+   * is refused, and this is that browser: the agent answers `subscribe` with a
+   * validation error, which is what an agent that does not have the verb yet
+   * answers, and every open CMS in that state is a poll and nothing else.
+   *
+   * What is asserted is not that a flag says `poll`. It is that the other
+   * editor's field arrives anyway, read back off this browser's own store.
+   */
+  async socketRefused() {
+    agentObject.socket = 'refused'
+
+    hydrateBooklimo()
+    store.dispatch(remoteActions.setActive(true))
+
+    // Let the client try, fail and settle into the poll.
+    await sleep(400)
+
+    const settled = {
+      connection: (store.getState() as any).remote.connection,
+      subscribeCalls: calls.filter(call => call.query === 'subscribe').length,
+      socketsOpened: sockets.length
+    }
+
+    // The second editor writes a field into the object. Nothing pushes it.
+    agentObject.write(
+      {
+        'JaenPage /': {
+          id: 'JaenPage /',
+          jaenFields: {
+            'IMA:TextField': {
+              FleetTitle: {value: 'written by the other editor'}
+            }
+          }
+        }
+      },
+      {
+        'JaenPage //IMA:TextField/FleetTitle': {
+          sub: 'someone-else',
+          name: 'The other editor',
+          at: new Date().toISOString()
+        }
+      }
+    )
+
+    const wroteAt = performance.now()
+    let arrivedAfterMs = -1
+
+    for (let waited = 0; waited < 8000; waited += 25) {
+      if (
+        fieldValue(store.getState(), 'FleetTitle') ===
+        'written by the other editor'
+      ) {
+        arrivedAfterMs = performance.now() - wroteAt
+        break
+      }
+      await sleep(25)
+    }
+
+    await sleep(PERSIST_DEADLINE_MS)
+
+    return {
+      scenario: 'socketRefused',
+      settled,
+      arrivedAfterMs,
+      value: fieldValue(store.getState(), 'FleetTitle'),
+      persistedValue: fieldValue(persisted(), 'FleetTitle') ?? null,
+      connection: (store.getState() as any).remote.connection,
+      revision: (store.getState() as any).remote.revision,
+      authors: Object.keys((store.getState() as any).remote.authors || {}),
+      draftCalls: calls.filter(call => call.query === 'draft').length
+    }
+  },
+
+  /**
+   * The socket carries it, which is the path the poll is the fallback for.
+   *
+   * The frame is a revision and never content, so what is measured is the
+   * whole round: the object pushes a number, the client asks for the delta and
+   * the other editor's field is on this screen.
+   */
+  async socketCarries() {
+    hydrateBooklimo()
+    store.dispatch(remoteActions.setActive(true))
+
+    for (let waited = 0; waited < 2000; waited += 25) {
+      if ((store.getState() as any).remote.connection === 'socket') break
+      await sleep(25)
+    }
+
+    const up = {
+      connection: (store.getState() as any).remote.connection,
+      socketsOpened: sockets.length,
+      protocols: sockets[0]?.protocols || [],
+      url: sockets[0]?.url || null,
+      tickets: agentObject.tickets.length
+    }
+
+    const draftCallsBefore = calls.filter(call => call.query === 'draft').length
+
+    const revision = agentObject.write({
+      'JaenPage /': {
+        id: 'JaenPage /',
+        jaenFields: {
+          'IMA:TextField': {ServicesTitle: {value: 'pushed over the socket'}}
+        }
+      }
+    })
+
+    const pushedTo = pushRevision(revision)
+    const pushedAt = performance.now()
+
+    let arrivedAfterMs = -1
+
+    for (let waited = 0; waited < 4000; waited += 10) {
+      if (
+        fieldValue(store.getState(), 'ServicesTitle') ===
+        'pushed over the socket'
+      ) {
+        arrivedAfterMs = performance.now() - pushedAt
+        break
+      }
+      await sleep(10)
+    }
+
+    return {
+      scenario: 'socketCarries',
+      up,
+      pushedTo,
+      arrivedAfterMs,
+      value: fieldValue(store.getState(), 'ServicesTitle'),
+      revision: (store.getState() as any).remote.revision,
+      draftCallsAfterFrame:
+        calls.filter(call => call.query === 'draft').length - draftCallsBefore
+    }
+  },
+
+  /**
+   * Two editors racing on one field.
+   *
+   * The other editor writes the field into the object first, so this browser's
+   * save carries a base the object has already moved past. The object folds it
+   * on rather than refusing it, which is what makes last write win here, and
+   * answers `overwrote` so the CMS can say what the race cost.
+   *
+   * Three things are asked, and none of them is a flag: this browser's own
+   * value is the one that stands, because it wrote last; the field it took is
+   * named; and a read follows the rebase at once rather than at the next
+   * interval, because a rebased browser holds a copy that is behind by
+   * definition.
+   */
+  async twoEditorsRace() {
+    hydrateBooklimo()
+    store.dispatch(remoteActions.setActive(true))
+
+    // The race is inside the quiet window, which is where a race actually
+    // happens: this browser types, and before its batch is sent the other
+    // editor's write reaches the object. The socket is refused and the poll
+    // is set slow by the notebook (`JAEN_HARNESS_POLL_MS`), because a poll
+    // faster than the window would read the other editor's value first and
+    // there would be nothing to race.
+    agentObject.socket = 'refused'
+    await sleep(200)
+
+    const base = (store.getState() as any).remote.revision
+
+    fieldWrite('and this browser was second', 'FleetTitle')
+
+    await sleep(300)
+
+    agentObject.write({
+      'JaenPage /': {
+        id: 'JaenPage /',
+        jaenFields: {
+          'IMA:TextField': {FleetTitle: {value: 'the other editor was first'}}
+        }
+      }
+    })
+
+    for (let waited = 0; waited < 8000; waited += 25) {
+      if (
+        (store.getState() as any).remote.outbox.length === 0 &&
+        (store.getState() as any).remote.saveState === 'saved'
+      ) {
+        break
+      }
+      await sleep(25)
+    }
+
+    const rightAfterSave = {
+      value: fieldValue(store.getState(), 'FleetTitle'),
+      overwrote: ((store.getState() as any).remote.lastOverwrote || []).map(
+        (entry: any) => entry.field
+      ),
+      revision: (store.getState() as any).remote.revision
+    }
+
+    const draftCallsAfterSave = calls.filter(
+      call => call.query === 'draft'
+    ).length
+
+    // The read the rebase asks for lands within a moment, and it must not put
+    // the other editor's value back on this screen: this browser wrote last
+    // and the object holds its value.
+    await sleep(500)
+    await sleep(PERSIST_DEADLINE_MS)
+
+    return {
+      scenario: 'twoEditorsRace',
+      baseSent: calls.find(call => call.query === 'save')?.baseRevision ?? null,
+      baseHeld: base,
+      rightAfterSave,
+      draftCallsAfterSave,
+      settled: {
+        value: fieldValue(store.getState(), 'FleetTitle'),
+        persistedValue: fieldValue(persisted(), 'FleetTitle') ?? null,
+        revision: (store.getState() as any).remote.revision,
+        outboxLength: (store.getState() as any).remote.outbox.length,
+        saveState: (store.getState() as any).remote.saveState
+      },
+      objectRevision: agentObject.revision,
+      objectSaves: agentObject.saves
     }
   },
 
