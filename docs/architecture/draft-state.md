@@ -1170,3 +1170,236 @@ and `editing-performance.md` describes it as the path of today.
 - **One local build failed and the next did not**, on writing a downloaded
   gateway image into `public/osg/`, at "source and transform nodes" after 273 s.
   It was not reproduced and is recorded rather than explained.
+
+## Repaired 2026-09-08, and the lockout had a cause after all
+
+An Opus session took the two adversarial verifications above as its work list.
+booklimo only; nothing was written on limosen and its working tree is
+untouched. Everything below was measured on the deployed systems, and every
+edit made on the live site was set back and read back.
+
+What shipped: `jaen-agent` **4.3.0** on Cloudflare (commit `542819d`, built
+`2026-09-08T11:32:41Z`, both custom domains answering the stamp), booklimo.at
+rebuilt and deployed with the repaired client (app `1.9.1`, commit `cff865d`,
+`/`, `/de/` and `/cms/` 200, `booklimo.at/` serving `Our fleet`). The runs are
+in `tests/repaired/`.
+
+### The lost edit, which was the FAIL
+
+**What was wrong.** Nothing was dispatched while a person typed. A text field's
+change became a `pages/field_write` only on blur and only 500 ms after it, so
+the synchronous write `persist-state.ts` makes on `visibilitychange` to hidden
+and on `pagehide` wrote a store that had never heard of the edit. Measured on
+the live site: a close at 0 ms or 300 ms after the blur left the previous value
+in `localStorage` with an empty outbox, and typing without leaving the field at
+all was covered by nothing.
+
+**Why another listener would not have done it.** The persister registers its
+own `visibilitychange` and `pagehide` listeners when the redux module is
+loaded, which is before any field has mounted, and listeners run in the order
+they were registered. A field's own listener would therefore always have run
+**after** the store had already been written, and the flush would have landed
+in a page that was already gone. So the way out of the page is one ordered pass
+instead, `packages/jaen/src/utils/on-leave.ts`:
+
+1. every holder of an edit that is not yet a dispatch flushes it,
+2. the store is written synchronously,
+3. the outbox is sent, best effort.
+
+Step 2 holds the invariant. Step 3 is an optimisation and a browser is free to
+drop it, because the call carries an `Authorization` header and cannot be a
+beacon. The three listeners that were there stay: each of them is still correct
+on its own and the pass only adds the order. `remote-state.ts` registers step 3
+so the best effort send carries the change the person just typed rather than
+the one before it.
+
+**And the field dispatches while a person types**, through the same 500 ms
+debounce, so the cost is a dispatch per half second of quiet rather than one
+per keystroke and the agent's own quiet window still decides when anything is
+sent. That is what covers the person who types a sentence and closes the tab
+without ever leaving the field.
+
+**One thing had to be built beside it, and it is not cosmetic.**
+`dangerouslySetInnerHTML` re-sets `innerHTML` whenever the string it is given
+changes, which puts the caret back at the start of the field. Dispatching while
+a person types would therefore have moved their caret every half second. So the
+echo of a field's own dispatch is not handed back to React **while the caret is
+in that field**: the freeze is that narrow deliberately, so a value arriving
+from anywhere else, another editor's change over the socket above all, still
+lands in the DOM exactly as it did before, and so that nothing can freeze a
+field nobody is typing into.
+
+**Measured, on the deployed booklimo.at**, `tests/10-draft-persistence.ipynb`
+`losses`, and every one of these was a loss before:
+
+| the tab goes away                              | in `localStorage` when it does | in the object afterwards  |
+| ---------------------------------------------- | ------------------------------ | ------------------------- |
+| 0 ms after the blur                            | the typed value, outbox 1      | the typed value           |
+| 300 ms after the blur                          | the typed value, outbox 1      | the typed value           |
+| with the caret still in the field, no blur     | the typed value, outbox 1      | the typed value           |
+| a real `page.close()`, no blur, nothing waited | the typed value, outbox 1      | taken on the next sign in |
+
+The last row is read out of a second tab of the same browser, which is the same
+`localStorage` a person coming back would find, and it drains once the CMS has
+a session again. `saveState` there is `error` and not `offline`, because the
+new tab is signed out and the agent refuses it, which is the queue behaving
+exactly as it should.
+
+**And the suite no longer steps over the window.** `run_safety` waited 700 ms
+before hiding the tab and said why in its own comment, so its hidden-tab and
+reload checks were taken outside the half second in which the loss happened. It
+hides with nothing waited out now.
+
+### The lockout had a cause, and it was ours
+
+`draft-state.md` recorded a booklimo machine admin answered `FORBIDDEN` for
+seven minutes and sixteen calls while the identity server said all along that
+it held `jaen:admin`, and that it healed on its own with nothing changed on any
+identity. The cause is established here and it is reproducible in one pair of
+calls.
+
+**The identity cache is keyed by the SHA-256 of the bearer**, in the isolate
+and in the KV both, because it remembers an identity. A resolution is not an
+identity. The same person is an admin on one site and a stranger on the other,
+the facade that answers for one is not the facade that answers for the other,
+and both sites sign in against one Zitadel with one project and one client so
+the token cannot tell them apart. Keyed by the token alone, the empty grants of
+the site a caller is a stranger on were written under their token and read back
+on the site they administer.
+
+Measured on the deployed agent, before the fix:
+
+| what was asked                                         | what the agent answered |
+| ------------------------------------------------------ | ----------------------- |
+| the limosen admin for booklimo's draft                 | `FORBIDDEN`, correctly  |
+| the same token for limosen's draft, in the same minute | **`FORBIDDEN`**         |
+| the same token for limosen's draft, 75 s later         | served, revision 0      |
+
+Nothing changed on any identity between the second row and the third. That is
+the seven minute lockout in miniature, and it lasted seven minutes rather than
+one because every hit past half the entry's life refreshes it.
+
+The resolution is scoped by the organisation and the facade now, which is
+everything the answer depends on, so two sites of one organisation still share
+it. After the deploy the same three calls answer `FORBIDDEN`, served, served.
+
+**The suite could never have found it**, because it runs with
+`AUTH_CACHE_TTL_MS: 0` so that a role granted or revoked between two tests is
+seen at once. The new test turns the cache on for itself, asks the stranger
+site first, and fails on the build before the fix.
+
+### A failed lookup is not a caller with no roles
+
+The second half of the same finding. `src/auth/index.ts` asked the site's
+facade when the token's claims said nothing, and a lookup that failed answered
+the same empty list as a lookup that found nothing, so the guard refused the
+person. `okf/decisions/hard-rules.md` has the rule and it is there because it
+cost a morning: "an empty identity answer is never evidence that the directory
+is empty". `private-storage.md` draws the same line for the gateway, where a
+failed introspection is a 500 and never a 401.
+
+**The facade cannot say which it is**, and that was measured rather than
+assumed. `idm.booklimo.at` and `idm.limosen.at` answer `user(args: {id})` with
+`INTERNAL_SERVER_ERROR` and `data: null` for **every** id they will not talk
+about: an account of another organisation, and an id that does not exist. So an
+empty lookup on its own decides nothing.
+
+**The control question is `currentUser`**, the one question every credential
+may ask. It says the facade is up and which organisation the Worker's own token
+lives in, and two things follow from one round trip: the facade answered, and
+the directory it answered from is the site's own or it is not. The site's own
+means the empty answer about the caller was a real refusal. Another
+organisation, or no answer at all, means the agent is asking the wrong
+directory, which is exactly the misconfiguration the hard rule was written
+after, and the call is answered `IDENTITY_UNAVAILABLE` 503 rather than decided.
+The editor's change stays in the outbox and retries; nothing is lost.
+
+`organization(id)` was tried first and rejected, and the rejection is worth
+recording: it answers `null` rather than an error for an organisation the
+credential may not read, which is the shape this needs, and reading an
+organisation at all takes a role the sites' own admin accounts do not hold, so
+the control would have called a healthy facade broken. A control that is
+answered by a credential nobody uses is not a control.
+
+Where the control itself cannot be taken, the file falls back to what it did
+before rather than refuse every caller of every site. A resolution carrying
+`unavailable` is never cached, in the isolate or in the KV, because KV's expiry
+has a minute as its floor and a transient written into a cache outlives its own
+cause.
+
+Read back on the deployed 4.3.0, and every refusal is what it was: the booklimo
+admin served, the limosen admin `FORBIDDEN` on booklimo and served on limosen,
+a `krc:customer` `FORBIDDEN`, an anonymous call `AUTH_REQUIRED`.
+
+### The two smaller things the verification named
+
+**A write with no base is stale.** `rebased` was false whenever `baseRevision`
+was absent, so a caller that sent none replaced another editor's field, was
+told `rebased: false` and `overwrote: []`, and the other editor was never
+named. Nothing was lost by it and the answer said the opposite of what had
+happened. An absent base is read as maximally stale now, on an object that
+holds anything at all. A refusal was considered and rejected: this store never
+rejects a write, because rejecting one is how an edit is lost.
+
+**A save of the value already there does not move the revision.** The CMS reads
+`revision > publishedRevision` as "there is something unpublished", so a write
+of the value already in the draft told a person their site had unpublished
+changes it did not have. The first cut of this could never fire, and the
+deployed object said so: two identical saves 157 ms apart answered revisions 76
+and 77. Every field write stamps the page's `modifiedAt`, so the page node
+always serialised differently. A page whose only difference is the stamp the
+write itself put on it has that stamp put back and its key is not written.
+"Modified" is a claim about content. Measured on the deployed 4.3.0: an
+identical save answers `revision 77`, `keys 0`, and the object stays at 77.
+
+### One publish, and the state this run left
+
+The draft was set back to `Our fleet`, the value every run before this one
+found, and published once so the object is not left claiming unpublished work.
+Through the mutation and not through the frame's menu, because this publish is
+housekeeping rather than an acceptance; the acceptance was met through the
+control twice on 2026-09-08 and nothing in this repair touches that path except
+the identity guard in front of it.
+
+| what was asked                | what the systems answered                                                                                                         |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| exactly one gateway file      | `…/storage/BQACAgQAAx0Ed6zoewACBkhqn_RppdG0gBQeGBLWr57-Rg9W-AACiB4AAlWvAAFRz5nMNWc8XMs9BA`, 653 bytes, sha256 `97995550a9263b74…` |
+| the shape and the gate        | top level exactly `createdAt`, `data`, `message`; `data` is `pages`, `site`, `widgets`; 401 anonymously, 200 to the KRC token     |
+| exactly one commit, one line  | `02c2d614`, `jaen-data/patches.txt` **+1 −0**, author `taxi-test-admin-krc-api`, committer `jaen-agent`                           |
+| the CMS stops saying anything | `revision 97`, `publishedRevision 97`                                                                                             |
+| the site serves what it did   | `booklimo.at/` serves `Our fleet`                                                                                                 |
+
+The line was repeated in this checkout by hand as `80f401a`, for the reason the
+section above gives: GitHub's `main` still ends with the two head lines and a
+pull would put a draft back into the published chain.
+
+### What this repair did not do, and one thing it could not have stopped
+
+- **`patches.txt` on GitHub still names a draft.** `live.json` and
+  `live-media.json` are lines 19 and 20 of its 26, both blobs are still in the
+  tree, and the fix is still the push of the transition's commits that this run
+  may not make. Every publish since has been appended to that chain and
+  repeated here by hand. It is the one acceptance of this design that is met in
+  the checkout and not on the remote.
+- **The anonymous refusal is still HTTP 200** with `AUTH_REQUIRED` and
+  `statusCode: 401` inside the GraphQL error's extensions. That is Pylon's
+  wire, the refusal is real and `data` is null, and a caller that reads
+  `res.ok` is told the opposite of the truth. It was left alone deliberately:
+  changing the HTTP status of a GraphQL error changes it for every client at
+  once, including the CMS's own, which reads a non-2xx as a network failure and
+  would show "offline" where it now shows a refusal. Whoever takes it should
+  take it with the client in the same change.
+- **The build still writes the migration payloads into `public/osg/`.** That is
+  the decision the transition named and did not take, and this repair did not
+  take it either.
+- **The change vocabulary still cannot remove a field.**
+- **The blur to paint gap is still over one frame**, and its cause is still the
+  registration storm `editing-performance.md` names.
+- **limosen carries the repaired client and this run did not deploy it.**
+  `packages/jaen/dist` is one build shared by both site checkouts, and another
+  run rebuilt and deployed limosen at 11:07 UTC, half an hour after this one
+  rebuilt that dist. The outcome is right, the mechanism is not: a shared dist
+  means one run's unfinished work rides out on another run's deploy, which is
+  the same hazard `draft-state.md` recorded about the app package on the day of
+  the deploy. Nothing else on limosen was touched, its working tree is clean,
+  and its draft object still answers revision 0.
