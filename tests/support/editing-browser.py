@@ -39,7 +39,24 @@ HTTP_PORT = int(os.environ.get("JAEN_SITE_PORT", "9209"))
 TLS_PORT = HTTP_PORT + 1
 CONFIG = pathlib.Path(os.path.expanduser("~/.config/taxi-app"))
 PERSIST_KEY = "jaenjs-state"
-FIELD_NAME = os.environ.get("JAEN_FIELD_NAME", "FleetTitle")
+# The field every browser scenario of this file types into.
+#
+# It is `FaqSubtitle` and not `FleetTitle`, and that is a safety decision
+# rather than a preference. `FleetTitle` is where an editor of this site
+# actually works, so it is where an editor's unpublished text stands, and this
+# suite has twice written into it and failed to put it back: the run of
+# 2026-09-08 in the evening left ` probe probe` on the owner's own value
+# (`tests/revert-gate/README.md`). `FaqSubtitle` is the fixture
+# `support/revert-probe.py` already uses for the same reason: it was last
+# written by the booklimo machine test account and it holds the site's own
+# published text, so a set-back that misses is a fixture wrong and never a
+# person's work lost.
+#
+# It also carries no markup, which the owner's value does
+# (`Our fleet &nbsp;test`). A set-back by typing cannot restore an entity at
+# all, so a field that carries one is a field this harness must not be the
+# only writer of.
+FIELD_NAME = os.environ.get("JAEN_FIELD_NAME", "FaqSubtitle")
 HOME_PAGE = "JaenPage /"
 
 
@@ -370,9 +387,24 @@ async def wait_for_saved(page, timeout=60):
     return False
 
 
-async def editable_for(page, value):
-    """The contenteditable that carries `value`, which is the field itself."""
-    for _ in range(30):
+async def editable_for(page, value, name=FIELD_NAME):
+    """The editable element of the field under test.
+
+    By its own id first, because a jaen field renders with its field name as
+    the element id and that is what the field *is*. The comparison below it
+    was the only way this file had, and it is a comparison between the store's
+    **raw** value and the element's **rendered** text: a value carrying
+    `&nbsp;` can never match it, and the scenario then skipped after thirty
+    seconds without saying which field it had been looking for. That is how
+    ten checks of `10-draft-persistence.ipynb` went silently green-by-absence
+    on 2026-09-09. The text comparison is kept as the fallback for a build
+    whose fields carry no id.
+    """
+    for attempt in range(30):
+        if name:
+            by_id = page.locator('[contenteditable="true"]#%s' % name)
+            if await by_id.count():
+                return by_id.first
         handles = await page.locator('[contenteditable="true"]').all()
         for handle in handles:
             text = (await handle.inner_text()).strip()
