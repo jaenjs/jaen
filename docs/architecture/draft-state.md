@@ -2530,15 +2530,16 @@ says so rather than leaving the next run to find it.
 errors it has carried since `private-storage.md` recorded them, all in files no
 work of these sessions touched.
 
-| what                    | value                                                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------------------- |
-| app                     | `1.9.3`, from 1.9.2, on both brands                                                                |
-| app commit              | `d0296e4`, the same on both brands                                                                 |
-| booklimo built          | `2026-09-08T22:40:09.208Z`, deployment `58556461.booklimo.pages.dev`                               |
-| limosen built           | `2026-09-08T22:47:16.590Z`, deployment `19ef34d3.limosen.pages.dev`                                |
-| `/`, `/de/`, `/cms/`    | 200 on both brands                                                                                 |
-| the fix, in the bundles | `appliedRevision`, `staleAnswers` and `jaen-draft.v1` in both, **no `headSha` and no `blobSha`**   |
-| the `:has()` repair     | the served stylesheet is one file with the same hash on both brands, **0** `:has(.jaen-app)` in it |
+| what                    | value                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| app                     | `1.9.3`, from 1.9.2, on both brands                                                                      |
+| app commit              | `d0296e4`, the same on both brands                                                                       |
+| booklimo built          | `2026-09-08T22:40:09.208Z`, deployment `58556461.booklimo.pages.dev`                                     |
+| limosen built           | `2026-09-08T22:47:16.590Z`, deployment `19ef34d3.limosen.pages.dev`                                      |
+| `/`, `/de/`, `/cms/`    | 200 on both brands                                                                                       |
+| the fix, in the bundles | `appliedRevision`, `staleAnswers` and `jaen-draft.v1` in both, **no `headSha` and no `blobSha`**         |
+| the `:has()` repair     | the served stylesheet is one file with the same hash on both brands, **0** `:has(.jaen-app)` in it       |
+| `15-versions.ipynb`     | **10 / 0 / 0 / 0** after the deploy, both brands at app 1.9.3 and `d0296e4`, both pylons 1.9.1 untouched |
 
 **The app's version had to move and the number is shared with a repository this
 run may not rewrite.** `gatsby-jaen-app` exists twice, here and as `app/` in the
