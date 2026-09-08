@@ -1,0 +1,387 @@
+{
+  "mode": "swallow",
+  "origin": "https://booklimo.at",
+  "startedAt": "2026-09-08T17:01:50Z",
+  "remote": 108,
+  "isEditingAtStart": false,
+  "swallow": {
+    "controlLeftThenRight": {
+      "opened": true,
+      "geometry": {
+        "trigger": {
+          "x": 16,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panel": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 900
+        },
+        "otherTrigger": {
+          "x": 1388,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panelCoversItsOwnTrigger": true,
+        "panelCoversTheOtherTrigger": false
+      },
+      "clickTheOtherButton": {
+        "label": "Open user menu",
+        "clicks": 2,
+        "opened": true,
+        "attempts": [
+          {
+            "click": 1,
+            "openBefore": false,
+            "openAtEnd": false,
+            "events": [],
+            "reachedTheButton": false,
+            "bodyPointerEvents": "none",
+            "dialogsBefore": 1,
+            "dialogsAfter": 0
+          },
+          {
+            "click": 2,
+            "openBefore": false,
+            "openAtEnd": true,
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "reachedTheButton": true,
+            "bodyPointerEvents": "auto",
+            "dialogsBefore": 0,
+            "dialogsAfter": 1
+          }
+        ]
+      },
+      "clickItsOwnButton": null,
+      "shutAfterEscape": true
+    },
+    "controlRightThenLeft": {
+      "opened": true,
+      "geometry": {
+        "trigger": {
+          "x": 1388,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panel": {
+          "x": 1120,
+          "y": 0,
+          "w": 320,
+          "h": 900
+        },
+        "otherTrigger": {
+          "x": 16,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panelCoversItsOwnTrigger": true,
+        "panelCoversTheOtherTrigger": false
+      },
+      "clickTheOtherButton": {
+        "label": "Open main menu",
+        "clicks": 2,
+        "opened": true,
+        "attempts": [
+          {
+            "click": 1,
+            "openBefore": false,
+            "openAtEnd": false,
+            "events": [],
+            "reachedTheButton": false,
+            "bodyPointerEvents": "none",
+            "dialogsBefore": 1,
+            "dialogsAfter": 0
+          },
+          {
+            "click": 2,
+            "openBefore": false,
+            "openAtEnd": true,
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "reachedTheButton": true,
+            "bodyPointerEvents": "auto",
+            "dialogsBefore": 0,
+            "dialogsAfter": 1
+          }
+        ]
+      },
+      "clickItsOwnButton": null,
+      "shutAfterEscape": true
+    },
+    "controlLeftThenLeft": {
+      "opened": true,
+      "geometry": {
+        "trigger": {
+          "x": 16,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panel": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 900
+        },
+        "otherTrigger": {
+          "x": 16,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panelCoversItsOwnTrigger": true,
+        "panelCoversTheOtherTrigger": true
+      },
+      "clickTheOtherButton": {
+        "label": "Open main menu",
+        "clicks": 1,
+        "opened": true,
+        "attempts": [
+          {
+            "click": 1,
+            "openBefore": true,
+            "openAtEnd": true,
+            "events": [],
+            "reachedTheButton": false,
+            "bodyPointerEvents": "none",
+            "dialogsBefore": 1,
+            "dialogsAfter": 1
+          }
+        ]
+      },
+      "clickItsOwnButton": null,
+      "shutAfterEscape": true
+    },
+    "entered": true,
+    "editableFields": 41,
+    "editingLeftThenRight": {
+      "opened": true,
+      "geometry": {
+        "trigger": {
+          "x": 16,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panel": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 900
+        },
+        "otherTrigger": {
+          "x": 1388,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panelCoversItsOwnTrigger": true,
+        "panelCoversTheOtherTrigger": false
+      },
+      "clickTheOtherButton": {
+        "label": "Open user menu",
+        "clicks": 2,
+        "opened": true,
+        "attempts": [
+          {
+            "click": 1,
+            "openBefore": false,
+            "openAtEnd": false,
+            "events": [],
+            "reachedTheButton": false,
+            "bodyPointerEvents": "none",
+            "dialogsBefore": 1,
+            "dialogsAfter": 0
+          },
+          {
+            "click": 2,
+            "openBefore": false,
+            "openAtEnd": true,
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "reachedTheButton": true,
+            "bodyPointerEvents": "auto",
+            "dialogsBefore": 0,
+            "dialogsAfter": 1
+          }
+        ]
+      },
+      "clickItsOwnButton": null,
+      "shutAfterEscape": true
+    },
+    "editingRightThenLeft": {
+      "opened": true,
+      "geometry": {
+        "trigger": {
+          "x": 1388,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panel": {
+          "x": 1120,
+          "y": 0,
+          "w": 320,
+          "h": 900
+        },
+        "otherTrigger": {
+          "x": 16,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panelCoversItsOwnTrigger": true,
+        "panelCoversTheOtherTrigger": false
+      },
+      "clickTheOtherButton": {
+        "label": "Open main menu",
+        "clicks": 2,
+        "opened": true,
+        "attempts": [
+          {
+            "click": 1,
+            "openBefore": false,
+            "openAtEnd": false,
+            "events": [],
+            "reachedTheButton": false,
+            "bodyPointerEvents": "none",
+            "dialogsBefore": 1,
+            "dialogsAfter": 0
+          },
+          {
+            "click": 2,
+            "openBefore": false,
+            "openAtEnd": true,
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "reachedTheButton": true,
+            "bodyPointerEvents": "auto",
+            "dialogsBefore": 0,
+            "dialogsAfter": 1
+          }
+        ]
+      },
+      "clickItsOwnButton": null,
+      "shutAfterEscape": true
+    },
+    "editingLeftThenLeft": {
+      "opened": true,
+      "geometry": {
+        "trigger": {
+          "x": 16,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panel": {
+          "x": 0,
+          "y": 0,
+          "w": 320,
+          "h": 900
+        },
+        "otherTrigger": {
+          "x": 16,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panelCoversItsOwnTrigger": true,
+        "panelCoversTheOtherTrigger": true
+      },
+      "clickTheOtherButton": {
+        "label": "Open main menu",
+        "clicks": 1,
+        "opened": true,
+        "attempts": [
+          {
+            "click": 1,
+            "openBefore": true,
+            "openAtEnd": true,
+            "events": [],
+            "reachedTheButton": false,
+            "bodyPointerEvents": "none",
+            "dialogsBefore": 1,
+            "dialogsAfter": 1
+          }
+        ]
+      },
+      "clickItsOwnButton": null,
+      "shutAfterEscape": true
+    },
+    "editingRightThenRight": {
+      "opened": true,
+      "geometry": {
+        "trigger": {
+          "x": 1388,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panel": {
+          "x": 1120,
+          "y": 0,
+          "w": 320,
+          "h": 900
+        },
+        "otherTrigger": {
+          "x": 1388,
+          "y": 14,
+          "w": 36,
+          "h": 36
+        },
+        "panelCoversItsOwnTrigger": true,
+        "panelCoversTheOtherTrigger": true
+      },
+      "clickTheOtherButton": {
+        "label": "Open user menu",
+        "clicks": 2,
+        "opened": true,
+        "attempts": [
+          {
+            "click": 1,
+            "openBefore": true,
+            "openAtEnd": false,
+            "events": [],
+            "reachedTheButton": false,
+            "bodyPointerEvents": "none",
+            "dialogsBefore": 1,
+            "dialogsAfter": 0
+          },
+          {
+            "click": 2,
+            "openBefore": false,
+            "openAtEnd": true,
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "reachedTheButton": true,
+            "bodyPointerEvents": "auto",
+            "dialogsBefore": 0,
+            "dialogsAfter": 1
+          }
+        ]
+      },
+      "clickItsOwnButton": null,
+      "shutAfterEscape": true
+    }
+  },
+  "notes": [
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity"
+  ]
+}

@@ -1,0 +1,512 @@
+{
+  "mode": "burst",
+  "origin": "https://booklimo.at",
+  "startedAt": "2026-09-08T16:35:19Z",
+  "remote": 108,
+  "isEditingAtStart": false,
+  "burst": {
+    "control": {
+      "1": {
+        "clicks": 1,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 130,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 9,
+        "longestLongTaskMs": 59,
+        "cdp": {
+          "TaskDuration": 0.7403,
+          "ScriptDuration": 0.199,
+          "LayoutDuration": 0.0012,
+          "RecalcStyleDuration": 0.1252,
+          "LayoutCount": 3,
+          "RecalcStyleCount": 372,
+          "Nodes": 206,
+          "JSEventListeners": 152
+        }
+      },
+      "2": {
+        "clicks": 2,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 136,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 7,
+        "longestLongTaskMs": 67,
+        "cdp": {
+          "TaskDuration": 0.7651,
+          "ScriptDuration": 0.1614,
+          "LayoutDuration": 0.0005,
+          "RecalcStyleDuration": 0.1516,
+          "LayoutCount": 1,
+          "RecalcStyleCount": 370,
+          "Nodes": 206,
+          "JSEventListeners": 146
+        }
+      },
+      "3": {
+        "clicks": 3,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 113,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 7,
+        "longestLongTaskMs": 0,
+        "cdp": {
+          "TaskDuration": 0.618,
+          "ScriptDuration": 0.1478,
+          "LayoutDuration": 0.0005,
+          "RecalcStyleDuration": 0.1337,
+          "LayoutCount": 1,
+          "RecalcStyleCount": 376,
+          "Nodes": 206,
+          "JSEventListeners": 144
+        }
+      },
+      "4": {
+        "clicks": 4,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 118,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 7,
+        "longestLongTaskMs": 67,
+        "cdp": {
+          "TaskDuration": 0.8739,
+          "ScriptDuration": 0.2154,
+          "LayoutDuration": 0.0008,
+          "RecalcStyleDuration": 0.1933,
+          "LayoutCount": 2,
+          "RecalcStyleCount": 373,
+          "Nodes": -199,
+          "JSEventListeners": -174
+        }
+      }
+    },
+    "editing": {
+      "1": {
+        "clicks": 1,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 127,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 320,
+        "longestLongTaskMs": 60,
+        "cdp": {
+          "TaskDuration": 6.0535,
+          "ScriptDuration": 5.0692,
+          "LayoutDuration": 0.0616,
+          "RecalcStyleDuration": 0.8006,
+          "LayoutCount": 159,
+          "RecalcStyleCount": 787,
+          "Nodes": 19172,
+          "JSEventListeners": -12336
+        }
+      },
+      "2": {
+        "clicks": 2,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 119,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 318,
+        "longestLongTaskMs": 57,
+        "cdp": {
+          "TaskDuration": 6.0679,
+          "ScriptDuration": 5.0772,
+          "LayoutDuration": 0.0623,
+          "RecalcStyleDuration": 0.7982,
+          "LayoutCount": 158,
+          "RecalcStyleCount": 792,
+          "Nodes": 18964,
+          "JSEventListeners": -13461
+        }
+      },
+      "3": {
+        "clicks": 3,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 121,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 318,
+        "longestLongTaskMs": 64,
+        "cdp": {
+          "TaskDuration": 6.0321,
+          "ScriptDuration": 5.0354,
+          "LayoutDuration": 0.0647,
+          "RecalcStyleDuration": 0.8048,
+          "LayoutCount": 158,
+          "RecalcStyleCount": 795,
+          "Nodes": 19136,
+          "JSEventListeners": 23907
+        }
+      },
+      "4": {
+        "clicks": 4,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 122,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 320,
+        "longestLongTaskMs": 0,
+        "cdp": {
+          "TaskDuration": 6.0581,
+          "ScriptDuration": 5.0723,
+          "LayoutDuration": 0.0626,
+          "RecalcStyleDuration": 0.7948,
+          "LayoutCount": 159,
+          "RecalcStyleCount": 801,
+          "Nodes": 19232,
+          "JSEventListeners": 18120
+        }
+      },
+      "5": {
+        "clicks": 5,
+        "gapMs": 150,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 121,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 316,
+        "longestLongTaskMs": 59,
+        "cdp": {
+          "TaskDuration": 6.0328,
+          "ScriptDuration": 5.0263,
+          "LayoutDuration": 0.062,
+          "RecalcStyleDuration": 0.8151,
+          "LayoutCount": 157,
+          "RecalcStyleCount": 795,
+          "Nodes": 18978,
+          "JSEventListeners": 15995
+        }
+      }
+    },
+    "controlIdle": {
+      "writes": 0,
+      "writeBytes": 0,
+      "stateWrites": 0,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      },
+      "frames": 180,
+      "commits": 0,
+      "unmounts": 0,
+      "unmountedTypes": {},
+      "unmountedWhere": {},
+      "longTaskError": null,
+      "cdp": {
+        "TaskDuration": 0.1866,
+        "ScriptDuration": 0.0229,
+        "LayoutDuration": 0.0,
+        "RecalcStyleDuration": 0.033,
+        "LayoutCount": 0,
+        "RecalcStyleCount": 180,
+        "Nodes": 0,
+        "JSEventListeners": 0
+      },
+      "mainThreadBusy": 0.062,
+      "seconds": 3,
+      "writesPerSecond": 0.0,
+      "stateWritesPerSecond": 0.0,
+      "mountsPerSecond": {
+        "left": 0.0,
+        "right": 0.0
+      },
+      "framesPerSecond": 60.0,
+      "commitsPerSecond": 0.0,
+      "longestLongTaskMs": 0,
+      "longTaskCount": 0
+    },
+    "entered": true,
+    "editableFields": 41,
+    "editingIdle": {
+      "writes": 16,
+      "writeBytes": 70576,
+      "stateWrites": 16,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      },
+      "frames": 145,
+      "commits": 288,
+      "unmounts": 33120,
+      "unmountedTypes": {
+        "path": 9360,
+        "H": 4896,
+        "div": 2016,
+        "chakra(div)": 1728,
+        "exotic": 1728,
+        "Link": 1440,
+        "chakra(a)": 1440,
+        "a": 1440,
+        "VStack": 1008,
+        "Stack": 1008,
+        "Text": 720,
+        "chakra(p)": 720,
+        "p": 720,
+        "#text": 720
+      },
+      "unmountedWhere": {
+        "page": 14688
+      },
+      "longTaskError": null,
+      "cdp": {
+        "TaskDuration": 5.0022,
+        "ScriptDuration": 4.2749,
+        "LayoutDuration": 0.0555,
+        "RecalcStyleDuration": 0.5603,
+        "LayoutCount": 144,
+        "RecalcStyleCount": 430,
+        "Nodes": 16875,
+        "JSEventListeners": -42987
+      },
+      "mainThreadBusy": 1.0,
+      "seconds": 5,
+      "writesPerSecond": 3.2,
+      "stateWritesPerSecond": 3.2,
+      "mountsPerSecond": {
+        "left": 0.0,
+        "right": 0.0
+      },
+      "framesPerSecond": 29.0,
+      "commitsPerSecond": 57.6,
+      "longestLongTaskMs": 53,
+      "longTaskCount": 2
+    },
+    "editingFast": {
+      "2": {
+        "clicks": 2,
+        "gapMs": 60,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 122,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 318,
+        "longestLongTaskMs": 0,
+        "cdp": {
+          "TaskDuration": 6.0482,
+          "ScriptDuration": 5.0551,
+          "LayoutDuration": 0.0624,
+          "RecalcStyleDuration": 0.8011,
+          "LayoutCount": 159,
+          "RecalcStyleCount": 797,
+          "Nodes": 19092,
+          "JSEventListeners": 14229
+        }
+      },
+      "3": {
+        "clicks": 3,
+        "gapMs": 60,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 120,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 322,
+        "longestLongTaskMs": 59,
+        "cdp": {
+          "TaskDuration": 6.0525,
+          "ScriptDuration": 5.0428,
+          "LayoutDuration": 0.0622,
+          "RecalcStyleDuration": 0.8174,
+          "LayoutCount": 160,
+          "RecalcStyleCount": 808,
+          "Nodes": 19326,
+          "JSEventListeners": 12015
+        }
+      },
+      "4": {
+        "clicks": 4,
+        "gapMs": 60,
+        "transitions": [
+          {
+            "at": 0,
+            "open": false
+          },
+          {
+            "at": 123,
+            "open": true
+          }
+        ],
+        "openAtEnd": true,
+        "clicksSeen": 1,
+        "mounts": {
+          "left": 0,
+          "right": 0
+        },
+        "commits": 320,
+        "longestLongTaskMs": 55,
+        "cdp": {
+          "TaskDuration": 6.0542,
+          "ScriptDuration": 5.069,
+          "LayoutDuration": 0.0619,
+          "RecalcStyleDuration": 0.7961,
+          "LayoutCount": 160,
+          "RecalcStyleCount": 806,
+          "Nodes": 19222,
+          "JSEventListeners": 15849
+        }
+      }
+    }
+  },
+  "notes": [
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity"
+  ]
+}

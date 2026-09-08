@@ -1,0 +1,5731 @@
+{
+  "mode": "after",
+  "origin": "https://booklimo.at",
+  "startedAt": "2026-09-08T16:57:27Z",
+  "remote": 108,
+  "isEditingAtStart": false,
+  "after": {
+    "controlRecovery": [
+      {
+        "round": 1,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 118,
+          "inertUntilMs": 370,
+          "dialogsGoneAtMs": 542,
+          "inertAfterTheDrawerWentMs": -172,
+          "longestGapMs": 91,
+          "medianGapMs": 50,
+          "first": {
+            "at": 0,
+            "body": "none",
+            "hidden": "true",
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6012,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "none",
+              "hidden": "true",
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 78,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 129,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 179,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 229,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 320,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 370,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 421,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 471,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 542,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 592,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 642,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 692,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 742,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 793,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 843,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 894,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 944,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 994,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1045,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1095,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1145,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1196,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1246,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1297,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1347,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1398,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1448,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1499,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1549,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1600,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1651,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1701,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1753,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1803,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1855,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1905,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1956,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2007,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2057,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 2,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 119,
+          "inertUntilMs": 306,
+          "dialogsGoneAtMs": 526,
+          "inertAfterTheDrawerWentMs": -220,
+          "longestGapMs": 90,
+          "medianGapMs": 50,
+          "first": {
+            "at": 0,
+            "body": "none",
+            "hidden": "true",
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6018,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "none",
+              "hidden": "true",
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 54,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 104,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 155,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 205,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 255,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 306,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 356,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 406,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 457,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 526,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 576,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 626,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 676,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 726,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 777,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 828,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 878,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 929,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 979,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1029,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1080,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1130,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1180,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1231,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1281,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1332,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1382,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1433,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1483,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1535,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1585,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1635,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1686,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1736,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1786,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1837,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1888,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1938,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1988,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 3,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 118,
+          "inertUntilMs": 284,
+          "dialogsGoneAtMs": 503,
+          "inertAfterTheDrawerWentMs": -219,
+          "longestGapMs": 81,
+          "medianGapMs": 51,
+          "first": {
+            "at": 0,
+            "body": "none",
+            "hidden": "true",
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6026,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "none",
+              "hidden": "true",
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 53,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 103,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 153,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 203,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 284,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 334,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 385,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 436,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 503,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 554,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 604,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 657,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 707,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 758,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 808,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 869,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 919,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 969,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1021,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1072,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1122,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1174,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1224,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1275,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1325,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1375,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1426,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1476,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1527,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1577,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1628,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1678,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1728,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1780,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1831,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1881,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1950,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2000,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2051,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      }
+    ],
+    "controlIdle": {
+      "writes": 0,
+      "writeBytes": 0,
+      "stateWrites": 0,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      },
+      "frames": 180,
+      "commits": 0,
+      "unmounts": 0,
+      "unmountedTypes": {},
+      "unmountedWhere": {},
+      "longTaskError": null,
+      "cdp": {
+        "TaskDuration": 0.2835,
+        "ScriptDuration": 0.0347,
+        "LayoutDuration": 0.0,
+        "RecalcStyleDuration": 0.0366,
+        "LayoutCount": 0,
+        "RecalcStyleCount": 180,
+        "Nodes": -202,
+        "JSEventListeners": -264,
+        "JSHeapUsedSize": -23066020,
+        "JSHeapTotalSize": -76021760
+      },
+      "mainThreadBusy": 0.094,
+      "seconds": 3,
+      "writesPerSecond": 0.0,
+      "stateWritesPerSecond": 0.0,
+      "mountsPerSecond": {
+        "left": 0.0,
+        "right": 0.0
+      },
+      "framesPerSecond": 60.0,
+      "commitsPerSecond": 0.0,
+      "longestLongTaskMs": 0,
+      "longTaskCount": 0
+    },
+    "userDrawerOpened": true,
+    "editItem": 1,
+    "afterStart": {
+      "samples": 138,
+      "inertUntilMs": 254,
+      "dialogsGoneAtMs": 496,
+      "inertAfterTheDrawerWentMs": -242,
+      "longestGapMs": 142,
+      "medianGapMs": 108,
+      "first": {
+        "at": 0,
+        "body": "auto",
+        "hidden": null,
+        "dialogs": 1,
+        "reaches": false
+      },
+      "last": {
+        "at": 15035,
+        "body": "auto",
+        "hidden": null,
+        "dialogs": 0,
+        "reaches": true
+      },
+      "trace": [
+        {
+          "at": 0,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": false
+        },
+        {
+          "at": 131,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": false
+        },
+        {
+          "at": 254,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": true
+        },
+        {
+          "at": 373,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": true
+        },
+        {
+          "at": 496,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 605,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 694,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 817,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 948,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1060,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1169,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1281,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1392,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1498,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1609,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1721,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1830,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1940,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2036,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2155,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2269,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2376,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2484,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2592,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2699,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2806,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 2917,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3025,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3138,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3271,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3387,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3501,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3609,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3716,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3824,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 3936,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 4044,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 4152,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 4260,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 4379,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        }
+      ]
+    },
+    "editableFields": 41,
+    "editingIdle": {
+      "writes": 15,
+      "writeBytes": 66165,
+      "stateWrites": 15,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      },
+      "frames": 134,
+      "commits": 268,
+      "unmounts": 30820,
+      "unmountedTypes": {
+        "path": 8710,
+        "H": 4556,
+        "div": 1876,
+        "chakra(div)": 1608,
+        "exotic": 1608,
+        "Link": 1340,
+        "chakra(a)": 1340,
+        "a": 1340,
+        "VStack": 938,
+        "Stack": 938,
+        "Text": 670,
+        "chakra(p)": 670,
+        "p": 670,
+        "#text": 670
+      },
+      "unmountedWhere": {
+        "page": 13668
+      },
+      "longTaskError": null,
+      "cdp": {
+        "TaskDuration": 5.0057,
+        "ScriptDuration": 4.3143,
+        "LayoutDuration": 0.0513,
+        "RecalcStyleDuration": 0.5307,
+        "LayoutCount": 133,
+        "RecalcStyleCount": 662,
+        "Nodes": 16171,
+        "JSEventListeners": -8016,
+        "JSHeapUsedSize": -101306820,
+        "JSHeapTotalSize": 10387456
+      },
+      "mainThreadBusy": 1.001,
+      "seconds": 5,
+      "writesPerSecond": 3.0,
+      "stateWritesPerSecond": 3.0,
+      "mountsPerSecond": {
+        "left": 0.0,
+        "right": 0.0
+      },
+      "framesPerSecond": 26.8,
+      "commitsPerSecond": 53.6,
+      "longestLongTaskMs": 59,
+      "longTaskCount": 3
+    },
+    "editingRecoveryBackdrop": [
+      {
+        "round": 1,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 55,
+          "inertUntilMs": 245,
+          "dialogsGoneAtMs": 465,
+          "inertAfterTheDrawerWentMs": -220,
+          "longestGapMs": 140,
+          "medianGapMs": 111,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6004,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 116,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 245,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 368,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 465,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 575,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 686,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 800,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 913,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1012,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1121,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1235,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1351,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1450,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1561,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1670,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1788,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1901,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2011,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2120,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2229,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2341,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2451,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2534,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2637,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2743,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2877,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2995,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3106,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3215,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3327,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3435,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3544,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3652,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3765,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3872,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3981,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4090,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4203,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4318,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 2,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 55,
+          "inertUntilMs": 462,
+          "dialogsGoneAtMs": 558,
+          "inertAfterTheDrawerWentMs": -96,
+          "longestGapMs": 155,
+          "medianGapMs": 110,
+          "first": {
+            "at": 0,
+            "body": "none",
+            "hidden": "true",
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6024,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "none",
+              "hidden": "true",
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 99,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 216,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 333,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 462,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 558,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 672,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 783,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 894,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 999,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1107,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1219,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1324,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1430,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1540,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1687,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1804,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1916,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2024,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2134,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2243,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2359,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2468,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2578,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2687,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2796,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2905,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3010,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3115,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3270,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3363,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3466,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3572,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3679,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3785,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3896,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4000,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4111,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4217,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4324,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 3,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 55,
+          "inertUntilMs": 240,
+          "dialogsGoneAtMs": 451,
+          "inertAfterTheDrawerWentMs": -211,
+          "longestGapMs": 149,
+          "medianGapMs": 112,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6087,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 115,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 240,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 357,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 451,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 568,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 676,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 783,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 890,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 998,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1114,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1227,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1340,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1455,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1568,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1680,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1790,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1900,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2009,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2127,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2235,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2346,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2452,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2560,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2673,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2783,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2930,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3046,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3155,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3267,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3381,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3491,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3602,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3713,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3827,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3935,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4043,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4153,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4264,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4376,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 4,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 56,
+          "inertUntilMs": 352,
+          "dialogsGoneAtMs": 453,
+          "inertAfterTheDrawerWentMs": -101,
+          "longestGapMs": 147,
+          "medianGapMs": 110,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6109,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 111,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 231,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 352,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 453,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 554,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 660,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 766,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 872,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 984,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1102,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1197,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1307,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1414,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1522,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1641,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1749,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1854,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1960,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2070,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2175,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2279,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2385,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2495,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2599,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2705,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2807,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2912,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3021,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3131,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3248,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3366,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3480,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3591,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3706,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3813,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3925,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4036,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4143,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4258,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      }
+    ],
+    "editingRecoveryEscape": [
+      {
+        "round": 1,
+        "opened": true,
+        "closeBy": "escape",
+        "recovery": {
+          "samples": 55,
+          "inertUntilMs": 367,
+          "dialogsGoneAtMs": 466,
+          "inertAfterTheDrawerWentMs": -99,
+          "longestGapMs": 151,
+          "medianGapMs": 112,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6055,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 121,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 242,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 367,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 466,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 543,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 648,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 760,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 872,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 985,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1099,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1210,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1321,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1430,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1541,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1654,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1805,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1918,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2037,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2148,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2262,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2374,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2491,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2602,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2711,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2821,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2932,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3046,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3158,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3268,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3385,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3488,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3597,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3689,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3795,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3909,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4037,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4154,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4267,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4380,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 2,
+        "opened": true,
+        "closeBy": "escape",
+        "recovery": {
+          "samples": 53,
+          "inertUntilMs": 360,
+          "dialogsGoneAtMs": 494,
+          "inertAfterTheDrawerWentMs": -134,
+          "longestGapMs": 157,
+          "medianGapMs": 113,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6001,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 119,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 238,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 360,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 494,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 606,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 712,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 821,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 977,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1089,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1201,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1315,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1424,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1531,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1639,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1747,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1859,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1967,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2071,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2179,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2295,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2406,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2515,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2624,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2731,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2850,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2962,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3073,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3205,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3303,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3422,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3536,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3658,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3771,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3898,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4022,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4137,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4253,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4368,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4480,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 3,
+        "opened": true,
+        "closeBy": "escape",
+        "recovery": {
+          "samples": 53,
+          "inertUntilMs": 373,
+          "dialogsGoneAtMs": 470,
+          "inertAfterTheDrawerWentMs": -97,
+          "longestGapMs": 175,
+          "medianGapMs": 113,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6006,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 121,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 243,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 373,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 470,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 583,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 698,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 813,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 927,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1086,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1208,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1321,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1435,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1547,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1662,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1773,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1887,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2009,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2119,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2231,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2348,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2460,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2571,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2685,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2796,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2905,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3019,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3128,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3246,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3354,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3529,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3648,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3761,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3869,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3988,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4103,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4213,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4322,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4433,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4545,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      }
+    ],
+    "editingRecoveryCloseButton": [
+      {
+        "round": 1,
+        "opened": true,
+        "closeBy": "closeButton",
+        "recovery": {
+          "samples": 55,
+          "inertUntilMs": 247,
+          "dialogsGoneAtMs": 462,
+          "inertAfterTheDrawerWentMs": -215,
+          "longestGapMs": 156,
+          "medianGapMs": 110,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6024,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 118,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 247,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 372,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 462,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 570,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 683,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 790,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 897,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1006,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1129,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1242,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1361,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1477,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1586,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1700,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1812,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1922,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2030,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2142,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2253,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2362,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2479,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2593,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2704,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2814,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2925,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3037,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3145,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3252,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3359,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3470,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3597,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3753,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3868,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3980,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4089,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4195,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4288,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4391,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 2,
+        "opened": true,
+        "closeBy": "closeButton",
+        "recovery": {
+          "samples": 54,
+          "inertUntilMs": 249,
+          "dialogsGoneAtMs": 441,
+          "inertAfterTheDrawerWentMs": -192,
+          "longestGapMs": 160,
+          "medianGapMs": 113,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6038,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 121,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 249,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 344,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 441,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 556,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 670,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 790,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 901,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1011,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1117,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1224,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1337,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1445,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1552,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1659,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1812,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1924,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2036,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2144,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2262,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2375,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2486,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2600,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2712,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2818,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2934,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3045,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3156,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3271,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3383,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3496,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3609,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3721,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3838,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3952,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4069,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4180,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4291,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4405,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 3,
+        "opened": true,
+        "closeBy": "closeButton",
+        "recovery": {
+          "samples": 55,
+          "inertUntilMs": 236,
+          "dialogsGoneAtMs": 500,
+          "inertAfterTheDrawerWentMs": -264,
+          "longestGapMs": 170,
+          "medianGapMs": 112,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6085,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 114,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 236,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 406,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 500,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 624,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 738,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 851,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 961,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1074,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1183,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1292,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1400,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1510,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1624,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1737,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1847,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1960,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2073,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2182,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2269,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2381,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2494,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2606,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2717,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2826,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2944,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3055,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3217,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3335,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3451,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3564,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3678,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3790,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3902,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4008,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4117,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4224,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4335,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4451,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      }
+    ],
+    "editingRecoveryRight": [
+      {
+        "round": 1,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 55,
+          "inertUntilMs": 351,
+          "dialogsGoneAtMs": 476,
+          "inertAfterTheDrawerWentMs": -125,
+          "longestGapMs": 140,
+          "medianGapMs": 112,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6049,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 116,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 233,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 351,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 476,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 589,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 697,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 802,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 910,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1021,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1131,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1239,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1345,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1452,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1566,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1678,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1790,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1904,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2020,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2138,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2270,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2383,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2503,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2621,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2733,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2848,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2961,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3071,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3183,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3291,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3402,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3510,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3623,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3731,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3848,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3961,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4071,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4179,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4285,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4394,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 2,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 55,
+          "inertUntilMs": 352,
+          "dialogsGoneAtMs": 589,
+          "inertAfterTheDrawerWentMs": -237,
+          "longestGapMs": 127,
+          "medianGapMs": 111,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6059,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 114,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 232,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 352,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 471,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 589,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 712,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 825,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 934,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1042,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1152,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1263,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1380,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1491,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1618,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1732,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1852,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1964,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2071,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2183,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2299,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2411,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2517,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2623,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2732,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2852,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2962,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3070,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3180,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3294,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3403,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3517,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3622,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3732,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3843,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3952,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4061,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4174,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4281,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4392,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4500,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      },
+      {
+        "round": 3,
+        "opened": true,
+        "closeBy": "backdrop",
+        "recovery": {
+          "samples": 54,
+          "inertUntilMs": 351,
+          "dialogsGoneAtMs": 477,
+          "inertAfterTheDrawerWentMs": -126,
+          "longestGapMs": 134,
+          "medianGapMs": 113,
+          "first": {
+            "at": 0,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 1,
+            "reaches": false
+          },
+          "last": {
+            "at": 6055,
+            "body": "auto",
+            "hidden": null,
+            "dialogs": 0,
+            "reaches": true
+          },
+          "trace": [
+            {
+              "at": 0,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 117,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 230,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": false
+            },
+            {
+              "at": 351,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 1,
+              "reaches": true
+            },
+            {
+              "at": 477,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 589,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 709,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 824,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 938,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1048,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1155,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1263,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1392,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1510,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1624,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1736,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1849,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 1959,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2065,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2174,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2286,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2402,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2512,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2622,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2732,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2847,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 2971,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3084,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3195,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3312,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3423,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3532,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3646,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3755,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3870,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 3987,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4098,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4224,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4342,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            },
+            {
+              "at": 4456,
+              "body": "auto",
+              "hidden": null,
+              "dialogs": 0,
+              "reaches": true
+            }
+          ]
+        },
+        "reopened": true,
+        "reopenEvents": ["pointerdown", "mousedown", "mouseup", "click"]
+      }
+    ],
+    "stopItem": 1,
+    "afterStop": {
+      "samples": 197,
+      "inertUntilMs": 205,
+      "dialogsGoneAtMs": 420,
+      "inertAfterTheDrawerWentMs": -215,
+      "longestGapMs": 92,
+      "medianGapMs": 51,
+      "first": {
+        "at": 0,
+        "body": "auto",
+        "hidden": null,
+        "dialogs": 1,
+        "reaches": false
+      },
+      "last": {
+        "at": 10026,
+        "body": "auto",
+        "hidden": null,
+        "dialogs": 0,
+        "reaches": true
+      },
+      "trace": [
+        {
+          "at": 0,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": false
+        },
+        {
+          "at": 50,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": false
+        },
+        {
+          "at": 100,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": false
+        },
+        {
+          "at": 151,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": false
+        },
+        {
+          "at": 205,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": true
+        },
+        {
+          "at": 255,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": true
+        },
+        {
+          "at": 305,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": true
+        },
+        {
+          "at": 356,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 1,
+          "reaches": true
+        },
+        {
+          "at": 420,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 471,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 521,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 571,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 623,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 674,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 724,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 775,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 825,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 875,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 926,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 977,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1027,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1080,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1130,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1181,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1231,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1282,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1332,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1382,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1433,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1483,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1534,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1584,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1635,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1685,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1735,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1786,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1836,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1887,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1937,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        },
+        {
+          "at": 1988,
+          "body": "auto",
+          "hidden": null,
+          "dialogs": 0,
+          "reaches": true
+        }
+      ]
+    },
+    "editableFieldsAfter": 0
+  },
+  "notes": [
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "requestfailed: https://maps.gstatic.com/maps-api-v3/embed/js/66/3d/intl/de_ALL/init_embed.js",
+    "requestfailed: https://maps.googleapis.com/maps/api/js?key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&paint_origin=&libraries=geometry,sea",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity"
+  ]
+}

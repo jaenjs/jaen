@@ -1,0 +1,5884 @@
+{
+  "mode": "inert",
+  "origin": "https://booklimo.at",
+  "startedAt": "2026-09-08T16:51:30Z",
+  "remote": 108,
+  "isEditingAtStart": false,
+  "inert": {
+    "controlLeft": {
+      "label": "Open main menu",
+      "side": "left",
+      "rounds": 4,
+      "gapMs": 500,
+      "closeBy": "trigger",
+      "openedFirstClick": 4,
+      "neededMoreThanOne": 0,
+      "clicksWhenItNeededMore": [],
+      "stillShutAfterRescue": 0,
+      "closedByItsOwnButton": 0,
+      "attempts": [
+        {
+          "round": 1,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 9,
+            "unmounts": 0,
+            "longestLongTaskMs": 53,
+            "cdp": {
+              "TaskDuration": 0.2605,
+              "ScriptDuration": 0.1136,
+              "LayoutDuration": 0.0008,
+              "RecalcStyleDuration": 0.0514,
+              "LayoutCount": 1,
+              "RecalcStyleCount": 102,
+              "Nodes": 202,
+              "JSEventListeners": 128,
+              "JSHeapUsedSize": 13990888,
+              "JSHeapTotalSize": 0
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 0,
+            "unmounts": 0,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 0.2153,
+              "ScriptDuration": 0.0397,
+              "LayoutDuration": 0.0,
+              "RecalcStyleDuration": 0.0352,
+              "LayoutCount": 0,
+              "RecalcStyleCount": 97,
+              "Nodes": 4,
+              "JSEventListeners": 10,
+              "JSHeapUsedSize": 156416,
+              "JSHeapTotalSize": 0
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 2,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 0,
+            "unmounts": 0,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 0.1751,
+              "ScriptDuration": 0.0285,
+              "LayoutDuration": 0.0,
+              "RecalcStyleDuration": 0.0146,
+              "LayoutCount": 0,
+              "RecalcStyleCount": 93,
+              "Nodes": 0,
+              "JSEventListeners": 2,
+              "JSHeapUsedSize": 102160,
+              "JSHeapTotalSize": 0
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 2,
+            "unmounts": 0,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 0.2045,
+              "ScriptDuration": 0.0671,
+              "LayoutDuration": 0.0,
+              "RecalcStyleDuration": 0.0352,
+              "LayoutCount": 0,
+              "RecalcStyleCount": 93,
+              "Nodes": 4,
+              "JSEventListeners": 102,
+              "JSHeapUsedSize": 6177288,
+              "JSHeapTotalSize": 0
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 3,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 0,
+            "unmounts": 0,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 0.1462,
+              "ScriptDuration": 0.0276,
+              "LayoutDuration": 0.0,
+              "RecalcStyleDuration": 0.0162,
+              "LayoutCount": 0,
+              "RecalcStyleCount": 93,
+              "Nodes": 0,
+              "JSEventListeners": 2,
+              "JSHeapUsedSize": 110040,
+              "JSHeapTotalSize": 0
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 0,
+            "unmounts": 0,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 0.266,
+              "ScriptDuration": 0.0422,
+              "LayoutDuration": 0.0,
+              "RecalcStyleDuration": 0.0391,
+              "LayoutCount": 0,
+              "RecalcStyleCount": 93,
+              "Nodes": -21,
+              "JSEventListeners": -184,
+              "JSHeapUsedSize": -24544688,
+              "JSHeapTotalSize": -108003328
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 4,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 1,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 2,
+            "unmounts": 0,
+            "longestLongTaskMs": 63,
+            "cdp": {
+              "TaskDuration": 0.2039,
+              "ScriptDuration": 0.0893,
+              "LayoutDuration": 0.0,
+              "RecalcStyleDuration": 0.0145,
+              "LayoutCount": 0,
+              "RecalcStyleCount": 93,
+              "Nodes": 0,
+              "JSEventListeners": 90,
+              "JSHeapUsedSize": 1504240,
+              "JSHeapTotalSize": 3145728
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 0,
+            "unmounts": 0,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 0.1599,
+              "ScriptDuration": 0.0237,
+              "LayoutDuration": 0.0,
+              "RecalcStyleDuration": 0.0141,
+              "LayoutCount": 0,
+              "RecalcStyleCount": 94,
+              "Nodes": 0,
+              "JSEventListeners": 5,
+              "JSHeapUsedSize": 946912,
+              "JSHeapTotalSize": 0
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        }
+      ]
+    },
+    "controlIdle": {
+      "writes": 0,
+      "writeBytes": 0,
+      "stateWrites": 0,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      },
+      "frames": 180,
+      "commits": 2,
+      "unmounts": 0,
+      "unmountedTypes": {},
+      "unmountedWhere": {},
+      "longTaskError": null,
+      "cdp": {
+        "TaskDuration": 0.3377,
+        "ScriptDuration": 0.0869,
+        "LayoutDuration": 0.0,
+        "RecalcStyleDuration": 0.026,
+        "LayoutCount": 0,
+        "RecalcStyleCount": 179,
+        "Nodes": 0,
+        "JSEventListeners": -9,
+        "JSHeapUsedSize": -393728,
+        "JSHeapTotalSize": 4980736
+      },
+      "mainThreadBusy": 0.113,
+      "seconds": 3,
+      "writesPerSecond": 0.0,
+      "stateWritesPerSecond": 0.0,
+      "mountsPerSecond": {
+        "left": 0.0,
+        "right": 0.0
+      },
+      "framesPerSecond": 60.0,
+      "commitsPerSecond": 0.7,
+      "longestLongTaskMs": 54,
+      "longTaskCount": 1
+    },
+    "entered": true,
+    "editableFields": 41,
+    "editingIdle": {
+      "writes": 16,
+      "writeBytes": 70576,
+      "stateWrites": 16,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      },
+      "frames": 140,
+      "commits": 278,
+      "unmounts": 31970,
+      "unmountedTypes": {
+        "path": 9035,
+        "H": 4726,
+        "div": 1946,
+        "chakra(div)": 1668,
+        "exotic": 1668,
+        "Link": 1390,
+        "chakra(a)": 1390,
+        "a": 1390,
+        "VStack": 973,
+        "Stack": 973,
+        "Text": 695,
+        "chakra(p)": 695,
+        "p": 695,
+        "#text": 695
+      },
+      "unmountedWhere": {
+        "page": 14178
+      },
+      "longTaskError": null,
+      "cdp": {
+        "TaskDuration": 5.0032,
+        "ScriptDuration": 4.3096,
+        "LayoutDuration": 0.0521,
+        "RecalcStyleDuration": 0.5434,
+        "LayoutCount": 139,
+        "RecalcStyleCount": 415,
+        "Nodes": 16824,
+        "JSEventListeners": -1488,
+        "JSHeapUsedSize": -12402128,
+        "JSHeapTotalSize": -20037632
+      },
+      "mainThreadBusy": 1.001,
+      "seconds": 5,
+      "writesPerSecond": 3.2,
+      "stateWritesPerSecond": 3.2,
+      "mountsPerSecond": {
+        "left": 0.0,
+        "right": 0.0
+      },
+      "framesPerSecond": 28.0,
+      "commitsPerSecond": 55.6,
+      "longestLongTaskMs": 59,
+      "longTaskCount": 2
+    },
+    "editingLeftSlow": {
+      "label": "Open main menu",
+      "side": "left",
+      "rounds": 8,
+      "gapMs": 500,
+      "closeBy": "trigger",
+      "openedFirstClick": 8,
+      "neededMoreThanOne": 0,
+      "clicksWhenItNeededMore": [],
+      "stillShutAfterRescue": 0,
+      "closedByItsOwnButton": 0,
+      "attempts": [
+        {
+          "round": 1,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 91,
+            "unmounts": 9660,
+            "longestLongTaskMs": 83,
+            "cdp": {
+              "TaskDuration": 1.7247,
+              "ScriptDuration": 1.4368,
+              "LayoutDuration": 0.0168,
+              "RecalcStyleDuration": 0.235,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 217,
+              "Nodes": 5276,
+              "JSEventListeners": -10424,
+              "JSHeapUsedSize": -141890112,
+              "JSHeapTotalSize": -16384000
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 60,
+            "cdp": {
+              "TaskDuration": 1.6638,
+              "ScriptDuration": 1.4049,
+              "LayoutDuration": 0.016,
+              "RecalcStyleDuration": 0.2106,
+              "LayoutCount": 41,
+              "RecalcStyleCount": 209,
+              "Nodes": 5008,
+              "JSEventListeners": 1560,
+              "JSHeapUsedSize": 2302104,
+              "JSHeapTotalSize": 24526848
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 2,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 58,
+            "cdp": {
+              "TaskDuration": 1.692,
+              "ScriptDuration": 1.4276,
+              "LayoutDuration": 0.0167,
+              "RecalcStyleDuration": 0.2144,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 211,
+              "Nodes": 5140,
+              "JSEventListeners": 4000,
+              "JSHeapUsedSize": 51125308,
+              "JSHeapTotalSize": 1703936
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 51,
+            "cdp": {
+              "TaskDuration": 1.7005,
+              "ScriptDuration": 1.4356,
+              "LayoutDuration": 0.0172,
+              "RecalcStyleDuration": 0.2137,
+              "LayoutCount": 41,
+              "RecalcStyleCount": 208,
+              "Nodes": 5012,
+              "JSEventListeners": 2172,
+              "JSHeapUsedSize": 39439808,
+              "JSHeapTotalSize": -6684672
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 3,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 82,
+            "unmounts": 9430,
+            "longestLongTaskMs": 53,
+            "cdp": {
+              "TaskDuration": 1.6887,
+              "ScriptDuration": 1.4265,
+              "LayoutDuration": 0.0161,
+              "RecalcStyleDuration": 0.2121,
+              "LayoutCount": 41,
+              "RecalcStyleCount": 204,
+              "Nodes": 4890,
+              "JSEventListeners": 2740,
+              "JSHeapUsedSize": 46674416,
+              "JSHeapTotalSize": 9781248
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 54,
+            "cdp": {
+              "TaskDuration": 1.6962,
+              "ScriptDuration": 1.4279,
+              "LayoutDuration": 0.0165,
+              "RecalcStyleDuration": 0.2146,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 209,
+              "Nodes": 4934,
+              "JSEventListeners": -14588,
+              "JSHeapUsedSize": -206437828,
+              "JSHeapTotalSize": -22970368
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 4,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 53,
+            "cdp": {
+              "TaskDuration": 1.6941,
+              "ScriptDuration": 1.4264,
+              "LayoutDuration": 0.0166,
+              "RecalcStyleDuration": 0.2177,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 213,
+              "Nodes": 5136,
+              "JSEventListeners": 2932,
+              "JSHeapUsedSize": 31167564,
+              "JSHeapTotalSize": 3031040
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 82,
+            "unmounts": 9430,
+            "longestLongTaskMs": 61,
+            "cdp": {
+              "TaskDuration": 1.6584,
+              "ScriptDuration": 1.3998,
+              "LayoutDuration": 0.0159,
+              "RecalcStyleDuration": 0.2093,
+              "LayoutCount": 41,
+              "RecalcStyleCount": 204,
+              "Nodes": 4886,
+              "JSEventListeners": 1676,
+              "JSHeapUsedSize": 25166780,
+              "JSHeapTotalSize": 9175040
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 5,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 53,
+            "cdp": {
+              "TaskDuration": 1.6873,
+              "ScriptDuration": 1.4205,
+              "LayoutDuration": 0.0168,
+              "RecalcStyleDuration": 0.2163,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 210,
+              "Nodes": 5126,
+              "JSEventListeners": 740,
+              "JSHeapUsedSize": -6013764,
+              "JSHeapTotalSize": 6225920
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 82,
+            "unmounts": 9430,
+            "longestLongTaskMs": 50,
+            "cdp": {
+              "TaskDuration": 1.6353,
+              "ScriptDuration": 1.3775,
+              "LayoutDuration": 0.0162,
+              "RecalcStyleDuration": 0.2077,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 203,
+              "Nodes": 4880,
+              "JSEventListeners": 272,
+              "JSHeapUsedSize": 3192284,
+              "JSHeapTotalSize": -3489792
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 6,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 55,
+            "cdp": {
+              "TaskDuration": 1.6959,
+              "ScriptDuration": 1.4345,
+              "LayoutDuration": 0.0162,
+              "RecalcStyleDuration": 0.2115,
+              "LayoutCount": 41,
+              "RecalcStyleCount": 209,
+              "Nodes": 5004,
+              "JSEventListeners": 408,
+              "JSHeapUsedSize": -1121388,
+              "JSHeapTotalSize": 10371072
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 54,
+            "cdp": {
+              "TaskDuration": 1.684,
+              "ScriptDuration": 1.4195,
+              "LayoutDuration": 0.0165,
+              "RecalcStyleDuration": 0.2146,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 212,
+              "Nodes": 5122,
+              "JSEventListeners": 4,
+              "JSHeapUsedSize": -542004,
+              "JSHeapTotalSize": 12599296
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 7,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 62,
+            "cdp": {
+              "TaskDuration": 1.6683,
+              "ScriptDuration": 1.4049,
+              "LayoutDuration": 0.0161,
+              "RecalcStyleDuration": 0.2131,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 209,
+              "Nodes": 4994,
+              "JSEventListeners": -1400,
+              "JSHeapUsedSize": -23806504,
+              "JSHeapTotalSize": 7733248
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6623,
+              "ScriptDuration": 1.3953,
+              "LayoutDuration": 0.0166,
+              "RecalcStyleDuration": 0.2168,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 214,
+              "Nodes": 5116,
+              "JSEventListeners": -1600,
+              "JSHeapUsedSize": -38290604,
+              "JSHeapTotalSize": -1015808
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 8,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 82,
+            "unmounts": 9430,
+            "longestLongTaskMs": 57,
+            "cdp": {
+              "TaskDuration": 1.6763,
+              "ScriptDuration": 1.4108,
+              "LayoutDuration": 0.0163,
+              "RecalcStyleDuration": 0.2144,
+              "LayoutCount": 41,
+              "RecalcStyleCount": 203,
+              "Nodes": 4868,
+              "JSEventListeners": -2508,
+              "JSHeapUsedSize": -45539688,
+              "JSHeapTotalSize": 10731520
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 55,
+            "cdp": {
+              "TaskDuration": 1.6804,
+              "ScriptDuration": 1.4158,
+              "LayoutDuration": 0.0163,
+              "RecalcStyleDuration": 0.2147,
+              "LayoutCount": 41,
+              "RecalcStyleCount": 206,
+              "Nodes": 4994,
+              "JSEventListeners": -1408,
+              "JSHeapUsedSize": -28217900,
+              "JSHeapTotalSize": -3473408
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        }
+      ]
+    },
+    "editingLeftFast": {
+      "label": "Open main menu",
+      "side": "left",
+      "rounds": 8,
+      "gapMs": 120,
+      "closeBy": "trigger",
+      "openedFirstClick": 8,
+      "neededMoreThanOne": 0,
+      "clicksWhenItNeededMore": [],
+      "stillShutAfterRescue": 0,
+      "closedByItsOwnButton": 0,
+      "attempts": [
+        {
+          "round": 1,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 62,
+            "cdp": {
+              "TaskDuration": 1.7018,
+              "ScriptDuration": 1.4337,
+              "LayoutDuration": 0.0168,
+              "RecalcStyleDuration": 0.2153,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 215,
+              "Nodes": 5114,
+              "JSEventListeners": -1506,
+              "JSHeapUsedSize": 259169116,
+              "JSHeapTotalSize": 15433728
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 66,
+            "cdp": {
+              "TaskDuration": 1.7229,
+              "ScriptDuration": 1.453,
+              "LayoutDuration": 0.0168,
+              "RecalcStyleDuration": 0.2218,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 209,
+              "Nodes": 5207,
+              "JSEventListeners": 17609,
+              "JSHeapUsedSize": -58069592,
+              "JSHeapTotalSize": -8781824
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 2,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 53,
+            "cdp": {
+              "TaskDuration": 1.6866,
+              "ScriptDuration": 1.4195,
+              "LayoutDuration": 0.0165,
+              "RecalcStyleDuration": 0.2164,
+              "LayoutCount": 41,
+              "RecalcStyleCount": 210,
+              "Nodes": 4984,
+              "JSEventListeners": -3760,
+              "JSHeapUsedSize": -59630756,
+              "JSHeapTotalSize": 4440064
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 55,
+            "cdp": {
+              "TaskDuration": 1.675,
+              "ScriptDuration": 1.4106,
+              "LayoutDuration": 0.0163,
+              "RecalcStyleDuration": 0.2134,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 210,
+              "Nodes": 4992,
+              "JSEventListeners": -1832,
+              "JSHeapUsedSize": -23758916,
+              "JSHeapTotalSize": -20234240
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 3,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 68,
+            "cdp": {
+              "TaskDuration": 1.6945,
+              "ScriptDuration": 1.4246,
+              "LayoutDuration": 0.0163,
+              "RecalcStyleDuration": 0.22,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 212,
+              "Nodes": 5112,
+              "JSEventListeners": -2040,
+              "JSHeapUsedSize": -25102016,
+              "JSHeapTotalSize": 14909440
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6587,
+              "ScriptDuration": 1.3926,
+              "LayoutDuration": 0.0162,
+              "RecalcStyleDuration": 0.2159,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 214,
+              "Nodes": 5104,
+              "JSEventListeners": -4184,
+              "JSHeapUsedSize": -57488468,
+              "JSHeapTotalSize": 6225920
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 4,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 84,
+            "unmounts": 9660,
+            "longestLongTaskMs": 59,
+            "cdp": {
+              "TaskDuration": 1.6513,
+              "ScriptDuration": 1.3848,
+              "LayoutDuration": 0.016,
+              "RecalcStyleDuration": 0.2158,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 209,
+              "Nodes": 4982,
+              "JSEventListeners": -4032,
+              "JSHeapUsedSize": -66059236,
+              "JSHeapTotalSize": 11616256
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9890,
+            "longestLongTaskMs": 58,
+            "cdp": {
+              "TaskDuration": 1.6655,
+              "ScriptDuration": 1.3983,
+              "LayoutDuration": 0.0162,
+              "RecalcStyleDuration": 0.2176,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 213,
+              "Nodes": 5102,
+              "JSEventListeners": -4388,
+              "JSHeapUsedSize": -56769308,
+              "JSHeapTotalSize": 2588672
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 5,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 88,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.7213,
+              "ScriptDuration": 1.4463,
+              "LayoutDuration": 0.0167,
+              "RecalcStyleDuration": 0.2229,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 219,
+              "Nodes": 5226,
+              "JSEventListeners": -3882,
+              "JSHeapUsedSize": -59948552,
+              "JSHeapTotalSize": 622592
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 88,
+            "unmounts": 10120,
+            "longestLongTaskMs": 59,
+            "cdp": {
+              "TaskDuration": 1.664,
+              "ScriptDuration": 1.396,
+              "LayoutDuration": 0.0166,
+              "RecalcStyleDuration": 0.2171,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 219,
+              "Nodes": 5224,
+              "JSEventListeners": -4504,
+              "JSHeapUsedSize": 266389528,
+              "JSHeapTotalSize": 17809408
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 6,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 88,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6682,
+              "ScriptDuration": 1.4013,
+              "LayoutDuration": 0.0167,
+              "RecalcStyleDuration": 0.216,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 217,
+              "Nodes": 5222,
+              "JSEventListeners": -5127,
+              "JSHeapUsedSize": 271517172,
+              "JSHeapTotalSize": 5324800
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 88,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6911,
+              "ScriptDuration": 1.4244,
+              "LayoutDuration": 0.0167,
+              "RecalcStyleDuration": 0.2182,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 218,
+              "Nodes": 5332,
+              "JSEventListeners": 19010,
+              "JSHeapUsedSize": 253850340,
+              "JSHeapTotalSize": 5160960
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 7,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 88,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6629,
+              "ScriptDuration": 1.3961,
+              "LayoutDuration": 0.0167,
+              "RecalcStyleDuration": 0.2196,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 217,
+              "Nodes": 5332,
+              "JSEventListeners": 18930,
+              "JSHeapUsedSize": 247133576,
+              "JSHeapTotalSize": 3833856
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 90,
+            "unmounts": 10350,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6891,
+              "ScriptDuration": 1.419,
+              "LayoutDuration": 0.0171,
+              "RecalcStyleDuration": 0.222,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 222,
+              "Nodes": 5456,
+              "JSEventListeners": 19362,
+              "JSHeapUsedSize": 269007168,
+              "JSHeapTotalSize": 5324800
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 8,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 88,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6673,
+              "ScriptDuration": 1.4024,
+              "LayoutDuration": 0.0166,
+              "RecalcStyleDuration": 0.2179,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 219,
+              "Nodes": 5332,
+              "JSEventListeners": 18938,
+              "JSHeapUsedSize": 269104280,
+              "JSHeapTotalSize": 5537792
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 88,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6658,
+              "ScriptDuration": 1.4007,
+              "LayoutDuration": 0.0164,
+              "RecalcStyleDuration": 0.2181,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 220,
+              "Nodes": 5332,
+              "JSEventListeners": 18938,
+              "JSHeapUsedSize": 249271364,
+              "JSHeapTotalSize": 4685824
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        }
+      ]
+    },
+    "editingRightSlow": {
+      "label": "Open user menu",
+      "side": "right",
+      "rounds": 6,
+      "gapMs": 500,
+      "closeBy": "trigger",
+      "openedFirstClick": 5,
+      "neededMoreThanOne": 1,
+      "clicksWhenItNeededMore": [2],
+      "stillShutAfterRescue": 0,
+      "closedByItsOwnButton": 6,
+      "attempts": [
+        {
+          "round": 1,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": false,
+            "transitions": [
+              {
+                "at": 5,
+                "open": false
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 97,
+            "unmounts": 11159,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.7047,
+              "ScriptDuration": 1.4268,
+              "LayoutDuration": 0.0175,
+              "RecalcStyleDuration": 0.2151,
+              "LayoutCount": 48,
+              "RecalcStyleCount": 233,
+              "Nodes": 5580,
+              "JSEventListeners": 19912,
+              "JSHeapUsedSize": 262124356,
+              "JSHeapTotalSize": 6602752
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "html",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            }
+          },
+          "rescue": {
+            "clicks": 1,
+            "opened": true,
+            "attempts": [
+              {
+                "openBefore": false,
+                "openAtEnd": true,
+                "transitions": [
+                  {
+                    "at": 5,
+                    "open": true
+                  }
+                ],
+                "events": ["pointerdown", "mousedown", "mouseup", "click"],
+                "mounts": {
+                  "left": 0,
+                  "right": 0
+                },
+                "inserted": {
+                  "left": 0,
+                  "right": 0
+                },
+                "commits": 99,
+                "unmounts": 10580,
+                "longestLongTaskMs": 0,
+                "cdp": {
+                  "TaskDuration": 1.7072,
+                  "ScriptDuration": 1.4343,
+                  "LayoutDuration": 0.018,
+                  "RecalcStyleDuration": 0.2176,
+                  "LayoutCount": 46,
+                  "RecalcStyleCount": 235,
+                  "Nodes": 5653,
+                  "JSEventListeners": 19823,
+                  "JSHeapUsedSize": 272298572,
+                  "JSHeapTotalSize": 6389760
+                },
+                "inertBefore": {
+                  "bodyPointerEvents": "auto",
+                  "bodyOverflow": "visible",
+                  "bodyPaddingRight": "0px",
+                  "bodyInlineStyle": null,
+                  "bodyDataScrollLocked": null,
+                  "rootAriaHidden": null,
+                  "dialogNodes": 0,
+                  "backdrops": 0,
+                  "positioners": 0,
+                  "hiddenAttrs": 53,
+                  "topAtButton": {
+                    "tag": "span",
+                    "label": null,
+                    "scope": "avatar",
+                    "part": "fallback",
+                    "state": "visible",
+                    "pointerEvents": "auto"
+                  },
+                  "pointerReachesButton": true
+                },
+                "inertAfter": {
+                  "bodyPointerEvents": "none",
+                  "bodyOverflow": "hidden",
+                  "bodyPaddingRight": "0px",
+                  "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+                  "bodyDataScrollLocked": null,
+                  "rootAriaHidden": "true",
+                  "dialogNodes": 1,
+                  "backdrops": 1,
+                  "positioners": 1,
+                  "hiddenAttrs": 63,
+                  "topAtButton": {
+                    "tag": "button",
+                    "label": "Close",
+                    "scope": "dialog",
+                    "part": "close-trigger",
+                    "state": null,
+                    "pointerEvents": "auto"
+                  },
+                  "pointerReachesButton": false
+                }
+              }
+            ]
+          },
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": false,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              },
+              {
+                "at": 423,
+                "open": false
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 100,
+            "unmounts": 11120,
+            "longestLongTaskMs": 60,
+            "cdp": {
+              "TaskDuration": 1.7309,
+              "ScriptDuration": 1.4642,
+              "LayoutDuration": 0.0179,
+              "RecalcStyleDuration": 0.2078,
+              "LayoutCount": 49,
+              "RecalcStyleCount": 237,
+              "Nodes": 5704,
+              "JSEventListeners": 20247,
+              "JSHeapUsedSize": -115385652,
+              "JSHeapTotalSize": -9453568
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 2,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 93,
+            "unmounts": 10120,
+            "longestLongTaskMs": 59,
+            "cdp": {
+              "TaskDuration": 1.6867,
+              "ScriptDuration": 1.4129,
+              "LayoutDuration": 0.017,
+              "RecalcStyleDuration": 0.2209,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 224,
+              "Nodes": 5202,
+              "JSEventListeners": -9236,
+              "JSHeapUsedSize": -113730188,
+              "JSHeapTotalSize": -6324224
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": false,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              },
+              {
+                "at": 415,
+                "open": false
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 98,
+            "unmounts": 10890,
+            "longestLongTaskMs": 67,
+            "cdp": {
+              "TaskDuration": 1.7061,
+              "ScriptDuration": 1.4282,
+              "LayoutDuration": 0.0174,
+              "RecalcStyleDuration": 0.2089,
+              "LayoutCount": 48,
+              "RecalcStyleCount": 233,
+              "Nodes": 5452,
+              "JSEventListeners": -7872,
+              "JSHeapUsedSize": -122840460,
+              "JSHeapTotalSize": 8880128
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 3,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 91,
+            "unmounts": 9890,
+            "longestLongTaskMs": 65,
+            "cdp": {
+              "TaskDuration": 1.6851,
+              "ScriptDuration": 1.4066,
+              "LayoutDuration": 0.0166,
+              "RecalcStyleDuration": 0.2216,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 223,
+              "Nodes": 5078,
+              "JSEventListeners": -9620,
+              "JSHeapUsedSize": -135090884,
+              "JSHeapTotalSize": 983040
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": false,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              },
+              {
+                "at": 420,
+                "open": false
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 98,
+            "unmounts": 10890,
+            "longestLongTaskMs": 64,
+            "cdp": {
+              "TaskDuration": 1.7068,
+              "ScriptDuration": 1.4326,
+              "LayoutDuration": 0.0173,
+              "RecalcStyleDuration": 0.2059,
+              "LayoutCount": 48,
+              "RecalcStyleCount": 231,
+              "Nodes": 5446,
+              "JSEventListeners": -9124,
+              "JSHeapUsedSize": -137755820,
+              "JSHeapTotalSize": 5521408
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 4,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 91,
+            "unmounts": 9890,
+            "longestLongTaskMs": 62,
+            "cdp": {
+              "TaskDuration": 1.6807,
+              "ScriptDuration": 1.4023,
+              "LayoutDuration": 0.0166,
+              "RecalcStyleDuration": 0.2205,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 218,
+              "Nodes": 5072,
+              "JSEventListeners": -10888,
+              "JSHeapUsedSize": -131343704,
+              "JSHeapTotalSize": 4620288
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": false,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              },
+              {
+                "at": 422,
+                "open": false
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 96,
+            "unmounts": 10660,
+            "longestLongTaskMs": 61,
+            "cdp": {
+              "TaskDuration": 1.6834,
+              "ScriptDuration": 1.4096,
+              "LayoutDuration": 0.0172,
+              "RecalcStyleDuration": 0.2045,
+              "LayoutCount": 48,
+              "RecalcStyleCount": 231,
+              "Nodes": 5320,
+              "JSEventListeners": -10092,
+              "JSHeapUsedSize": -141210236,
+              "JSHeapTotalSize": 3424256
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 5,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 93,
+            "unmounts": 10120,
+            "longestLongTaskMs": 66,
+            "cdp": {
+              "TaskDuration": 1.6968,
+              "ScriptDuration": 1.4217,
+              "LayoutDuration": 0.0169,
+              "RecalcStyleDuration": 0.2227,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 224,
+              "Nodes": 5196,
+              "JSEventListeners": -10380,
+              "JSHeapUsedSize": -134085756,
+              "JSHeapTotalSize": -4194304
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": false,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              },
+              {
+                "at": 386,
+                "open": false
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 96,
+            "unmounts": 10660,
+            "longestLongTaskMs": 59,
+            "cdp": {
+              "TaskDuration": 1.6759,
+              "ScriptDuration": 1.4128,
+              "LayoutDuration": 0.017,
+              "RecalcStyleDuration": 0.2045,
+              "LayoutCount": 47,
+              "RecalcStyleCount": 230,
+              "Nodes": 5316,
+              "JSEventListeners": -10980,
+              "JSHeapUsedSize": -154863604,
+              "JSHeapTotalSize": 19218432
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 6,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 91,
+            "unmounts": 9890,
+            "longestLongTaskMs": 63,
+            "cdp": {
+              "TaskDuration": 1.6801,
+              "ScriptDuration": 1.4055,
+              "LayoutDuration": 0.0165,
+              "RecalcStyleDuration": 0.2198,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 218,
+              "Nodes": 5062,
+              "JSEventListeners": -13056,
+              "JSHeapUsedSize": -168113752,
+              "JSHeapTotalSize": 1884160
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": false,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              },
+              {
+                "at": 421,
+                "open": false
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 94,
+            "unmounts": 10430,
+            "longestLongTaskMs": 64,
+            "cdp": {
+              "TaskDuration": 1.6462,
+              "ScriptDuration": 1.3926,
+              "LayoutDuration": 0.0168,
+              "RecalcStyleDuration": 0.2003,
+              "LayoutCount": 47,
+              "RecalcStyleCount": 229,
+              "Nodes": 5331,
+              "JSEventListeners": 17564,
+              "JSHeapUsedSize": -179025868,
+              "JSHeapTotalSize": 212992
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 63,
+              "topAtButton": {
+                "tag": "button",
+                "label": "Close",
+                "scope": "dialog",
+                "part": "close-trigger",
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "span",
+                "label": null,
+                "scope": "avatar",
+                "part": "fallback",
+                "state": "visible",
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": true
+        }
+      ]
+    },
+    "editingLeftBackdrop": {
+      "label": "Open main menu",
+      "side": "left",
+      "rounds": 6,
+      "gapMs": 400,
+      "closeBy": "backdrop",
+      "openedFirstClick": 6,
+      "neededMoreThanOne": 0,
+      "clicksWhenItNeededMore": [],
+      "stillShutAfterRescue": 0,
+      "closedByItsOwnButton": 6,
+      "attempts": [
+        {
+          "round": 1,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 92,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.715,
+              "ScriptDuration": 1.4267,
+              "LayoutDuration": 0.0173,
+              "RecalcStyleDuration": 0.2368,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 227,
+              "Nodes": 5534,
+              "JSEventListeners": 18976,
+              "JSHeapUsedSize": 269286288,
+              "JSHeapTotalSize": 11517952
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "by": "backdrop"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 2,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 90,
+            "unmounts": 9890,
+            "longestLongTaskMs": 57,
+            "cdp": {
+              "TaskDuration": 1.7136,
+              "ScriptDuration": 1.4235,
+              "LayoutDuration": 0.0166,
+              "RecalcStyleDuration": 0.2348,
+              "LayoutCount": 43,
+              "RecalcStyleCount": 219,
+              "Nodes": 5262,
+              "JSEventListeners": -13573,
+              "JSHeapUsedSize": -175322236,
+              "JSHeapTotalSize": 3915776
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "by": "backdrop"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 3,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 92,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.7089,
+              "ScriptDuration": 1.4245,
+              "LayoutDuration": 0.0171,
+              "RecalcStyleDuration": 0.2327,
+              "LayoutCount": 45,
+              "RecalcStyleCount": 227,
+              "Nodes": 5534,
+              "JSEventListeners": 19048,
+              "JSHeapUsedSize": 251479820,
+              "JSHeapTotalSize": 5537792
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "by": "backdrop"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 4,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 88,
+            "unmounts": 9660,
+            "longestLongTaskMs": 71,
+            "cdp": {
+              "TaskDuration": 1.7005,
+              "ScriptDuration": 1.4069,
+              "LayoutDuration": 0.0164,
+              "RecalcStyleDuration": 0.2376,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 214,
+              "Nodes": 4931,
+              "JSEventListeners": -15192,
+              "JSHeapUsedSize": -217446908,
+              "JSHeapTotalSize": 3325952
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "by": "backdrop"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 5,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 92,
+            "unmounts": 10120,
+            "longestLongTaskMs": 0,
+            "cdp": {
+              "TaskDuration": 1.6984,
+              "ScriptDuration": 1.4177,
+              "LayoutDuration": 0.0169,
+              "RecalcStyleDuration": 0.2308,
+              "LayoutCount": 44,
+              "RecalcStyleCount": 224,
+              "Nodes": 5534,
+              "JSEventListeners": 18960,
+              "JSHeapUsedSize": 269481764,
+              "JSHeapTotalSize": 4685824
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "by": "backdrop"
+          },
+          "shutAfterClose": true
+        },
+        {
+          "round": 6,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 86,
+            "unmounts": 9430,
+            "longestLongTaskMs": 72,
+            "cdp": {
+              "TaskDuration": 1.6975,
+              "ScriptDuration": 1.4033,
+              "LayoutDuration": 0.0161,
+              "RecalcStyleDuration": 0.2334,
+              "LayoutCount": 42,
+              "RecalcStyleCount": 211,
+              "Nodes": 4803,
+              "JSEventListeners": -16175,
+              "JSHeapUsedSize": -207827004,
+              "JSHeapTotalSize": 8208384
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "by": "backdrop"
+          },
+          "shutAfterClose": true
+        }
+      ]
+    },
+    "editingLeftThrottled": {
+      "label": "Open main menu",
+      "side": "left",
+      "rounds": 6,
+      "gapMs": 400,
+      "closeBy": "trigger",
+      "openedFirstClick": 6,
+      "neededMoreThanOne": 0,
+      "clicksWhenItNeededMore": [],
+      "stillShutAfterRescue": 0,
+      "closedByItsOwnButton": 0,
+      "attempts": [
+        {
+          "round": 1,
+          "opening": {
+            "openBefore": false,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 2,
+                "open": true
+              }
+            ],
+            "events": ["pointerdown", "mousedown", "mouseup", "click"],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 19,
+            "unmounts": 1610,
+            "longestLongTaskMs": 224,
+            "cdp": {
+              "TaskDuration": 1.9602,
+              "ScriptDuration": 1.484,
+              "LayoutDuration": 0.0256,
+              "RecalcStyleDuration": 0.3847,
+              "LayoutCount": 15,
+              "RecalcStyleCount": 58,
+              "Nodes": 1070,
+              "JSEventListeners": 3120,
+              "JSHeapUsedSize": 53647976,
+              "JSHeapTotalSize": 1277952
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": null,
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "backdrops": 0,
+              "positioners": 0,
+              "hiddenAttrs": 53,
+              "topAtButton": {
+                "tag": "path",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": true
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 13,
+            "unmounts": 1380,
+            "longestLongTaskMs": 223,
+            "cdp": {
+              "TaskDuration": 1.6341,
+              "ScriptDuration": 1.3648,
+              "LayoutDuration": 0.0202,
+              "RecalcStyleDuration": 0.1845,
+              "LayoutCount": 13,
+              "RecalcStyleCount": 47,
+              "Nodes": 744,
+              "JSEventListeners": 2730,
+              "JSHeapUsedSize": 56185704,
+              "JSHeapTotalSize": 1703936
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 2,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 1,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 14,
+            "unmounts": 1610,
+            "longestLongTaskMs": 241,
+            "cdp": {
+              "TaskDuration": 1.8796,
+              "ScriptDuration": 1.5709,
+              "LayoutDuration": 0.0243,
+              "RecalcStyleDuration": 0.2302,
+              "LayoutCount": 13,
+              "RecalcStyleCount": 47,
+              "Nodes": 868,
+              "JSEventListeners": 3066,
+              "JSHeapUsedSize": 49888236,
+              "JSHeapTotalSize": 1064960
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 1,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 15,
+            "unmounts": 1610,
+            "longestLongTaskMs": 235,
+            "cdp": {
+              "TaskDuration": 1.9368,
+              "ScriptDuration": 1.6259,
+              "LayoutDuration": 0.021,
+              "RecalcStyleDuration": 0.2239,
+              "LayoutCount": 14,
+              "RecalcStyleCount": 51,
+              "Nodes": 868,
+              "JSEventListeners": 3082,
+              "JSHeapUsedSize": 51634136,
+              "JSHeapTotalSize": 1064960
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 3,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 1,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 14,
+            "unmounts": 1610,
+            "longestLongTaskMs": 254,
+            "cdp": {
+              "TaskDuration": 1.8692,
+              "ScriptDuration": 1.5457,
+              "LayoutDuration": 0.0209,
+              "RecalcStyleDuration": 0.2388,
+              "LayoutCount": 12,
+              "RecalcStyleCount": 47,
+              "Nodes": 868,
+              "JSEventListeners": 3066,
+              "JSHeapUsedSize": 49672932,
+              "JSHeapTotalSize": 1064960
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 1,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 13,
+            "unmounts": 1380,
+            "longestLongTaskMs": 270,
+            "cdp": {
+              "TaskDuration": 1.7413,
+              "ScriptDuration": 1.4493,
+              "LayoutDuration": 0.022,
+              "RecalcStyleDuration": 0.1994,
+              "LayoutCount": 12,
+              "RecalcStyleCount": 47,
+              "Nodes": 404,
+              "JSEventListeners": 2642,
+              "JSHeapUsedSize": 51020372,
+              "JSHeapTotalSize": 1703936
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 4,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 12,
+            "unmounts": 1380,
+            "longestLongTaskMs": 270,
+            "cdp": {
+              "TaskDuration": 1.8642,
+              "ScriptDuration": 1.5711,
+              "LayoutDuration": 0.02,
+              "RecalcStyleDuration": 0.2073,
+              "LayoutCount": 12,
+              "RecalcStyleCount": 42,
+              "Nodes": 744,
+              "JSEventListeners": 2626,
+              "JSHeapUsedSize": 29934368,
+              "JSHeapTotalSize": 851968
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 13,
+            "unmounts": 1380,
+            "longestLongTaskMs": 237,
+            "cdp": {
+              "TaskDuration": 1.6796,
+              "ScriptDuration": 1.3976,
+              "LayoutDuration": 0.0214,
+              "RecalcStyleDuration": 0.2075,
+              "LayoutCount": 12,
+              "RecalcStyleCount": 46,
+              "Nodes": 744,
+              "JSEventListeners": 2642,
+              "JSHeapUsedSize": 30199404,
+              "JSHeapTotalSize": 851968
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 5,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 14,
+            "unmounts": 1610,
+            "longestLongTaskMs": 233,
+            "cdp": {
+              "TaskDuration": 1.9137,
+              "ScriptDuration": 1.5901,
+              "LayoutDuration": 0.019,
+              "RecalcStyleDuration": 0.2367,
+              "LayoutCount": 12,
+              "RecalcStyleCount": 47,
+              "Nodes": 868,
+              "JSEventListeners": 3066,
+              "JSHeapUsedSize": 50595892,
+              "JSHeapTotalSize": 1064960
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 15,
+            "unmounts": 1610,
+            "longestLongTaskMs": 236,
+            "cdp": {
+              "TaskDuration": 1.9884,
+              "ScriptDuration": 1.6561,
+              "LayoutDuration": 0.0302,
+              "RecalcStyleDuration": 0.2353,
+              "LayoutCount": 14,
+              "RecalcStyleCount": 52,
+              "Nodes": 868,
+              "JSEventListeners": 3170,
+              "JSHeapUsedSize": 56362796,
+              "JSHeapTotalSize": 1703936
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        },
+        {
+          "round": 6,
+          "opening": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 14,
+            "unmounts": 1610,
+            "longestLongTaskMs": 382,
+            "cdp": {
+              "TaskDuration": 2.0907,
+              "ScriptDuration": 1.7272,
+              "LayoutDuration": 0.0185,
+              "RecalcStyleDuration": 0.262,
+              "LayoutCount": 13,
+              "RecalcStyleCount": 47,
+              "Nodes": 868,
+              "JSEventListeners": -29178,
+              "JSHeapUsedSize": -400198320,
+              "JSHeapTotalSize": -9781248
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            }
+          },
+          "rescue": null,
+          "closing": {
+            "openBefore": true,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 1,
+                "open": true
+              }
+            ],
+            "events": [],
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "commits": 15,
+            "unmounts": 1610,
+            "longestLongTaskMs": 246,
+            "cdp": {
+              "TaskDuration": 1.9754,
+              "ScriptDuration": 1.6517,
+              "LayoutDuration": 0.0259,
+              "RecalcStyleDuration": 0.2312,
+              "LayoutCount": 14,
+              "RecalcStyleCount": 51,
+              "Nodes": 868,
+              "JSEventListeners": 3082,
+              "JSHeapUsedSize": 54127924,
+              "JSHeapTotalSize": 1703936
+            },
+            "inertBefore": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "inertAfter": {
+              "bodyPointerEvents": "none",
+              "bodyOverflow": "hidden",
+              "bodyPaddingRight": "0px",
+              "bodyInlineStyle": "overflow: hidden; pointer-events: none;",
+              "bodyDataScrollLocked": null,
+              "rootAriaHidden": "true",
+              "dialogNodes": 1,
+              "backdrops": 1,
+              "positioners": 1,
+              "hiddenAttrs": 71,
+              "topAtButton": {
+                "tag": "svg",
+                "label": null,
+                "scope": null,
+                "part": null,
+                "state": null,
+                "pointerEvents": "auto"
+              },
+              "pointerReachesButton": false
+            },
+            "by": "trigger"
+          },
+          "shutAfterClose": false
+        }
+      ]
+    }
+  },
+  "notes": [
+    "requestfailed: https://accounts.netsnek.com/ui/login/resources/scripts/error_popup.js?v=2026-08-12T09:11:14Z",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "requestfailed: https://maps.gstatic.com/maps-api-v3/embed/js/66/3d/intl/de_ALL/init_embed.js",
+    "requestfailed: https://maps.googleapis.com/maps/api/js?key=AIzaSyCmL18misQw9KdwqGaw3zHkitj8vG6QF2Y&paint_origin=&libraries=geometry,sea",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity"
+  ]
+}

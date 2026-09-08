@@ -471,3 +471,204 @@ change either way. The cause is still the registration storm this file named and
 the acceptance stays red until the dispatches go, not the writes. In the four
 seconds after a blur: 12 store writes and 13,590 B, against the baseline's 185
 and 14.4 MB.
+
+## The drawer that would not open, measured 2026-09-08 on the live booklimo.at
+
+Owner, 2026-09-08, on the live CMS: "der discard button in jaen ist jetzt
+verschwunden, und nach dem Bearbeiten lassen sich das Hamburger-Menue nicht
+mehr oeffnen, also beide Drawer. Erst nach vielen Versuchen gehen sie
+irgendwann wieder auf."
+
+This section measures the second half of that sentence and changes no
+behaviour. The first half is settled and is not re-derived here: the discard
+item was replaced by the shared draft's save state item, and it survives only in
+the branch `slices/jaen-frame.tsx` takes when `sharedDraft.enabled` is false, so
+with the agent configured there is no discard at all.
+
+Two causes were put to the systems. **A**, the main thread is saturated by the
+registration storm this file names, so the click's work never gets a frame.
+**B**, `DrawerLeft` holds its open state in its own `useDisclosure`, and
+something in the frame's render path gives it a new identity, so it is remounted
+and the state thrown away milliseconds after the click. B predicts a mount count
+that climbs while edit mode is on. A predicts long tasks and a late but eventual
+open.
+
+**Neither is the cause. A third is, it reproduces on demand, and it is not the
+storm's: while any drawer stands, a click on either drawer button reaches
+nothing at all.**
+
+### How it was measured
+
+`tests/support/drawer-probe.py`, on the real `booklimo.at` signed in as the
+booklimo human admin, playwright chromium at 1440x900, de-AT. Eight runs, stored
+as `tests/drawer/*.json`. Nothing was written to the draft except the one field
+of the `afterEdit` run, which was typed, read back and set back to the value the
+run found (`Our fleet test`, the value another session had left), with
+`revision 108` before and after every run that followed.
+
+Four things are read on every gesture. A mount counter, which is the identity of
+the two trigger nodes watched in a `requestAnimationFrame` loop with a
+`MutationObserver` counting insertions beside it, so the frame loop is a floor
+and the observer cannot miss one. The store writes, counted in a wrapper around
+`localStorage.setItem` installed before any script of the page. The long tasks,
+from a `PerformanceObserver` and from the CDP performance domain's
+`TaskDuration` around each click. And React's own work, `commits` and fiber
+deletions off the devtools hook.
+
+The click is `mouse.move`, `mouse.down`, `mouse.up` at the button's own
+coordinates and never `locator.click()`, because playwright re-resolves and
+retries a locator whose node went away, which is the failure the run is trying
+to see.
+
+### What the storm costs, with nobody touching anything
+
+| five seconds of an untouched CMS   | edit mode off | edit mode on           |
+| ---------------------------------- | ------------- | ---------------------- |
+| `localStorage` writes a second     | 0.0           | 3.2 (70,576 B per 5 s) |
+| React commits a second             | 0.7           | 53.6 to 59.0           |
+| React fiber deletions per 5 s      | 0             | 31,510 to 33,810       |
+| animation frames a second          | 60.0          | 26.8 to 29.4           |
+| main thread busy per second        | 0.09 to 0.11  | **1.000 to 1.001**     |
+| longest long task                  | 0 to 54 ms    | 50 to 59 ms            |
+| a 50 ms `setTimeout` loop fires at | 50 to 51 ms   | **110 to 113 ms**      |
+
+The main thread is fully occupied. The store writes are down from the
+baseline's forty-seven a second because change 1 coalesces them, and the
+dispatches that caused them are untouched, which is exactly what this file
+predicted when it recorded the storm. The soak of 68 seconds says it is steady
+rather than growing: 967 elements throughout, 57.6 to 58.8 commits a second at
+the end as at the beginning, and no node or listener growth.
+
+### Hypothesis B, refuted with a large denominator
+
+**177 measurement windows, 0 mounts and 0 DOM insertions of either trigger
+button.** Not one remount of `DrawerLeft` or `DrawerRight` was seen with edit
+mode on, with edit mode off, under CPU throttle, or over a soak of 68 seconds in
+edit mode. The fiber deletions above are real and they are elsewhere in the tree:
+the ones the run could name are `path`, `Link`, `VStack` and `Text`, at about
+2,000 icon paths and 300 links a second, and none of them is a drawer.
+
+### Hypothesis A, refuted as the cause and confirmed as the cost
+
+**From a page with no drawer standing, 109 of 109 gestures opened the drawer on
+the first click**, at a median of 5 ms and a maximum of 27 ms from the mouse up
+to the panel having geometry. That count is the 15 gestures of the runs that
+read the inert state plus the 94 of the earlier cycles, both drawers, edit mode
+on and off.
+
+Throttling the CPU is the knob that tells A from B, and it moves nothing about
+the click:
+
+| CPU throttle | commits a second | frames a second | longest long task around a click | opened on the first click |
+| ------------ | ---------------- | --------------- | -------------------------------- | ------------------------- |
+| 1x           | 59.0             | 29.4            | 56 ms                            | 10 of 10                  |
+| 4x           | 13.6             | 12.8            | 284 ms                           | 10 of 10                  |
+| 8x           | 6.0              | 6.0             | 390 ms                           | 10 of 10                  |
+| 20x          | 2.0              | 2.0             | **1,782 ms**                     | 10 of 10                  |
+
+A machine twenty times slower than this one, painting two frames a second, still
+opens the drawer on the first click. So the storm does not lose the click. What
+it does is make the answer late enough to feel like nothing happened, which is
+the half of A that is real and which the next section joins to the cause.
+
+### The third cause: while a drawer stands, the page answers no click
+
+Read on the live site at 1440x900, and identical with edit mode on and off:
+
+| what                                          | left drawer                              | right drawer         |
+| --------------------------------------------- | ---------------------------------------- | -------------------- |
+| the trigger button                            | x 16, y 14, 36x36                        | x 1388, y 14, 36x36  |
+| the panel when it is open                     | x 0, y 0, 320x900                        | x 1120, y 0, 320x900 |
+| the panel covers its own trigger              | **yes**                                  | **yes**              |
+| the panel covers the other trigger            | no                                       | no                   |
+| `body` while it is open                       | `overflow: hidden; pointer-events: none` | the same             |
+| `#___gatsby` while it is open                 | `aria-hidden="true"`                     | the same             |
+| `elementFromPoint` at either trigger's centre | never the button                         | never the button     |
+
+So a person who has one drawer open and reaches for either drawer button clicks
+a document that has been made inert. **56 of 56 gestures taken with a drawer
+standing produced no `pointerdown`, no `mousedown`, no `mouseup` and no `click`
+on the button.** They are not lost, they are spent: a gesture a second or more
+after the open dismisses the standing drawer (the dialog node count goes from 1
+to 0 across the gesture) and the next click opens the drawer that was asked for.
+Measured as a pair four times, left then right and right then left, with edit
+mode on and with it off, and it is always exactly two clicks.
+
+Two details of the same mechanism, both measured:
+
+- **The left drawer cannot be closed by its own button at all**, 0 of 26
+  closing gestures, at a person's pace, at 120 ms, and under throttle. Its
+  panel covers the trigger and the point lands on the drawer's own header, so
+  the pointer is inside the layer and nothing is dismissed. The right drawer
+  reads as a toggle instead, 6 of 6, because the same point there lands outside
+  its content and dismisses it. That asymmetry is a reading of where the point
+  falls and not a proof.
+- **Clicks in a fast burst do nothing whatever.** Two, three, four or five
+  clicks 60 ms or 150 ms apart are one click seen and the drawer open at the
+  end, because the dismissable layer is not armed yet inside the opening
+  animation. So an impatient burst leaves the drawer exactly as the first click
+  left it, and a click a second later closes it.
+
+The cause of all of it is in the frame's own two components rather than in
+Chakra: `DrawerLeft` and `DrawerRight` put their `IconButton` **outside**
+`Drawer.Root` and wire it to `onToggle`, instead of using `Drawer.Trigger`
+inside the root. A trigger inside the root is part of the dismissable layer and
+is excluded from "outside", which is what makes a toggle a toggle. A button
+outside it is furniture the layer covers and ignores.
+
+**And the inert state is never stuck**, which had to be measured because a
+cleanup starved by the storm was the obvious way for this to become permanent.
+Sampled from inside the page every 50 ms: after a close the page is clickable
+again at 240 to 462 ms in edit mode and at 284 to 370 ms with edit mode off, and
+the drawer node itself goes at 441 to 589 ms, which is its exit animation. The
+same reading taken over the click on "Bearbeitung starten", which is the owner's
+own door into edit mode and which closes the user drawer as it goes, has the
+body inert at no point at all and the drawer gone at 496 ms. What the sampler
+does show is A again: its own 50 ms interval fires at a median of 110 ms while
+the storm runs and at 50 ms with edit mode off.
+
+### Which hypothesis the measurement supports, plainly
+
+**Neither A nor B.** B is refuted, 0 mounts in 177 windows. A is refuted as the
+cause of a click that does not open a drawer, 109 of 109 first clicks including
+at 20x throttle, and is confirmed as a cost, a main thread that is busy 100% of
+the time with nobody typing and a 50 ms timer that fires at 110.
+
+The owner's sentence is produced by the two of them together, and the order
+matters. The storm makes the CMS answer late enough that a person clicks again.
+The second click, and every click after it while the drawer stands, reaches
+nothing, and depending on when it lands it either does nothing at all or closes
+the drawer he was trying to open. That is "erst nach vielen Versuchen gehen sie
+irgendwann wieder auf", and it needs no drawer state to be thrown away and no
+click to be dropped by the scheduler.
+
+### What is not established, and what this run could not do
+
+- **The owner's own failure was not reproduced as he describes it**, a drawer
+  that stays shut on a first click from a page with nothing open. This run never
+  saw one in 109 attempts. What it saw is a click that is swallowed whenever
+  something is already open, which produces the same sentence and is a different
+  fact. A reader should hold the difference.
+- **The build he used is gone.** booklimo was rebuilt and deployed twice on the
+  day he wrote it, once at 18:08 by another run of this session, so what is
+  measured here is today's deployment and not his.
+- **The reading is one machine, one browser and one viewport.** At a narrower
+  width the panel and the triggers sit differently and nothing here says how.
+- **The mount counter is a floor for the frame loop and a true count for the
+  observer.** A remount and re-insertion inside one animation frame would be
+  missed by the first, and the `MutationObserver` beside it saw zero insertions,
+  which is what makes the refutation of B a measurement rather than a sample.
+- **Why the storm is 3.2 store writes a second and 57 commits** is this file's
+  own subject and is named above it, not here. The engine is the render loop in
+  `use-field.ts`.
+- **Nothing was fixed.** The fix is the next phase's, and the two things it has
+  to take are separate: the dispatch loop, which this file's acceptance is
+  already red against, and the trigger that lives outside its own drawer.
+
+**What this run left on the live site.** One field was typed in and set back in
+the `afterEdit` run and nothing was typed after it. Read back at the end out of
+a browser of its own: `revision 108`, `publishedRevision 97`, `saveState idle`,
+an empty outbox, `FleetTitle` in the draft the `Our fleet test` this run found
+there, and `booklimo.at` serving `Our fleet` to a visitor. The unpublished
+difference between those two is another session's and is left standing the way
+it was found. Nothing was written on limosen.

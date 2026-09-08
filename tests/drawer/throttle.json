@@ -1,0 +1,1812 @@
+{
+  "mode": "throttle",
+  "origin": "https://booklimo.at",
+  "startedAt": "2026-09-08T16:11:01Z",
+  "remote": 108,
+  "isEditingAtStart": false,
+  "throttle": {
+    "entered": true,
+    "editableFields": 41,
+    "rates": {
+      "1": {
+        "idle": {
+          "writes": 16,
+          "writeBytes": 70572,
+          "stateWrites": 16,
+          "mounts": {
+            "left": 0,
+            "right": 0
+          },
+          "inserted": {
+            "left": 0,
+            "right": 0
+          },
+          "frames": 147,
+          "commits": 295,
+          "unmounts": 33810,
+          "unmountedTypes": {
+            "path": 9555,
+            "H": 4998,
+            "div": 2058,
+            "chakra(div)": 1764,
+            "exotic": 1764,
+            "Link": 1470,
+            "chakra(a)": 1470,
+            "a": 1470,
+            "VStack": 1029,
+            "Stack": 1029,
+            "Text": 735,
+            "chakra(p)": 735,
+            "p": 735,
+            "#text": 735
+          },
+          "longTaskError": null,
+          "cdp": {
+            "TaskDuration": 5.0051,
+            "ScriptDuration": 4.285,
+            "LayoutDuration": 0.0557,
+            "RecalcStyleDuration": 0.562,
+            "LayoutCount": 146,
+            "RecalcStyleCount": 438,
+            "Nodes": 17882,
+            "JSEventListeners": 15988
+          },
+          "mainThreadBusy": 1.001,
+          "seconds": 5,
+          "writesPerSecond": 3.2,
+          "stateWritesPerSecond": 3.2,
+          "mountsPerSecond": {
+            "left": 0.0,
+            "right": 0.0
+          },
+          "framesPerSecond": 29.4,
+          "commitsPerSecond": 59.0,
+          "longestLongTaskMs": 54,
+          "longTaskCount": 1
+        },
+        "left": {
+          "label": "Open main menu",
+          "side": "left",
+          "cycles": 6,
+          "openedFromShut": 6,
+          "startedAlreadyOpen": 0,
+          "failed": 0,
+          "attempts": [
+            {
+              "cycle": 1,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 6,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 172,
+              "unmounts": 19090,
+              "longTasks": 1,
+              "longestLongTaskMs": 56,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.1982,
+                "ScriptDuration": 2.6576,
+                "LayoutDuration": 0.0328,
+                "RecalcStyleDuration": 0.441,
+                "LayoutCount": 84,
+                "RecalcStyleCount": 416,
+                "Nodes": 10156,
+                "JSEventListeners": -9984
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 2,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 8,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 170,
+              "unmounts": 19090,
+              "longTasks": 1,
+              "longestLongTaskMs": 56,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.1916,
+                "ScriptDuration": 2.6429,
+                "LayoutDuration": 0.0327,
+                "RecalcStyleDuration": 0.4322,
+                "LayoutCount": 84,
+                "RecalcStyleCount": 416,
+                "Nodes": 9966,
+                "JSEventListeners": -7501
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 3,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 0,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 9,
+              "commits": 176,
+              "unmounts": 19780,
+              "longTasks": 1,
+              "longestLongTaskMs": 51,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.1813,
+                "ScriptDuration": 2.6406,
+                "LayoutDuration": 0.0333,
+                "RecalcStyleDuration": 0.4346,
+                "LayoutCount": 87,
+                "RecalcStyleCount": 431,
+                "Nodes": 10742,
+                "JSEventListeners": 37512
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 4,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 5,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 168,
+              "unmounts": 18860,
+              "longTasks": 1,
+              "longestLongTaskMs": 55,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.1976,
+                "ScriptDuration": 2.6576,
+                "LayoutDuration": 0.0331,
+                "RecalcStyleDuration": 0.4274,
+                "LayoutCount": 82,
+                "RecalcStyleCount": 412,
+                "Nodes": 9824,
+                "JSEventListeners": -11885
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 5,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 0,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 172,
+              "unmounts": 19320,
+              "longTasks": 1,
+              "longestLongTaskMs": 56,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.2153,
+                "ScriptDuration": 2.6676,
+                "LayoutDuration": 0.0328,
+                "RecalcStyleDuration": 0.4349,
+                "LayoutCount": 84,
+                "RecalcStyleCount": 419,
+                "Nodes": 10056,
+                "JSEventListeners": -14581
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 6,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 5,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 164,
+              "unmounts": 18400,
+              "longTasks": 0,
+              "longestLongTaskMs": 0,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.1971,
+                "ScriptDuration": 2.6633,
+                "LayoutDuration": 0.0331,
+                "RecalcStyleDuration": 0.4258,
+                "LayoutCount": 81,
+                "RecalcStyleCount": 403,
+                "Nodes": 9998,
+                "JSEventListeners": 34888
+              },
+              "closedByEscape": true
+            }
+          ]
+        },
+        "right": {
+          "label": "Open user menu",
+          "side": "right",
+          "cycles": 4,
+          "openedFromShut": 4,
+          "startedAlreadyOpen": 0,
+          "failed": 0,
+          "attempts": [
+            {
+              "cycle": 1,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 5,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 171,
+              "unmounts": 18860,
+              "longTasks": 0,
+              "longestLongTaskMs": 0,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.2148,
+                "ScriptDuration": 2.7252,
+                "LayoutDuration": 0.0342,
+                "RecalcStyleDuration": 0.3944,
+                "LayoutCount": 83,
+                "RecalcStyleCount": 416,
+                "Nodes": 10117,
+                "JSEventListeners": 35743
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 2,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 0,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 9,
+              "commits": 173,
+              "unmounts": 19320,
+              "longTasks": 0,
+              "longestLongTaskMs": 0,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.2045,
+                "ScriptDuration": 2.706,
+                "LayoutDuration": 0.0336,
+                "RecalcStyleDuration": 0.3979,
+                "LayoutCount": 84,
+                "RecalcStyleCount": 423,
+                "Nodes": 10365,
+                "JSEventListeners": 36543
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 3,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 0,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 163,
+              "unmounts": 18170,
+              "longTasks": 1,
+              "longestLongTaskMs": 65,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.1749,
+                "ScriptDuration": 2.6812,
+                "LayoutDuration": 0.0322,
+                "RecalcStyleDuration": 0.3821,
+                "LayoutCount": 79,
+                "RecalcStyleCount": 394,
+                "Nodes": 9310,
+                "JSEventListeners": -27984
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 4,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 6,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 163,
+              "unmounts": 18170,
+              "longTasks": 2,
+              "longestLongTaskMs": 61,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.199,
+                "ScriptDuration": 2.665,
+                "LayoutDuration": 0.0326,
+                "RecalcStyleDuration": 0.4196,
+                "LayoutCount": 80,
+                "RecalcStyleCount": 401,
+                "Nodes": 9369,
+                "JSEventListeners": -31105
+              },
+              "closedByEscape": true
+            }
+          ]
+        }
+      },
+      "4": {
+        "idle": {
+          "writes": 11,
+          "writeBytes": 48521,
+          "stateWrites": 11,
+          "mounts": {
+            "left": 0,
+            "right": 0
+          },
+          "inserted": {
+            "left": 0,
+            "right": 0
+          },
+          "frames": 64,
+          "commits": 68,
+          "unmounts": 7820,
+          "unmountedTypes": {
+            "path": 2210,
+            "H": 1156,
+            "div": 476,
+            "chakra(div)": 408,
+            "exotic": 408,
+            "Link": 340,
+            "chakra(a)": 340,
+            "a": 340,
+            "VStack": 238,
+            "Stack": 238,
+            "Text": 170,
+            "chakra(p)": 170,
+            "p": 170,
+            "#text": 170
+          },
+          "longTaskError": null,
+          "cdp": {
+            "TaskDuration": 5.0004,
+            "ScriptDuration": 4.2401,
+            "LayoutDuration": 0.0639,
+            "RecalcStyleDuration": 0.5372,
+            "LayoutCount": 63,
+            "RecalcStyleCount": 227,
+            "Nodes": 4092,
+            "JSEventListeners": 14624
+          },
+          "mainThreadBusy": 1.0,
+          "seconds": 5,
+          "writesPerSecond": 2.2,
+          "stateWritesPerSecond": 2.2,
+          "mountsPerSecond": {
+            "left": 0.0,
+            "right": 0.0
+          },
+          "framesPerSecond": 12.8,
+          "commitsPerSecond": 13.6,
+          "longestLongTaskMs": 140,
+          "longTaskCount": 34
+        },
+        "left": {
+          "label": "Open main menu",
+          "side": "left",
+          "cycles": 6,
+          "openedFromShut": 6,
+          "startedAlreadyOpen": 0,
+          "failed": 0,
+          "attempts": [
+            {
+              "cycle": 1,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 1,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 8,
+              "commits": 42,
+              "unmounts": 4370,
+              "longTasks": 21,
+              "longestLongTaskMs": 167,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.3192,
+                "ScriptDuration": 2.652,
+                "LayoutDuration": 0.0387,
+                "RecalcStyleDuration": 0.5083,
+                "LayoutCount": 38,
+                "RecalcStyleCount": 137,
+                "Nodes": 2558,
+                "JSEventListeners": 8472
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 2,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 1,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 8,
+              "commits": 43,
+              "unmounts": 4600,
+              "longTasks": 21,
+              "longestLongTaskMs": 159,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.4163,
+                "ScriptDuration": 2.7247,
+                "LayoutDuration": 0.0414,
+                "RecalcStyleDuration": 0.5291,
+                "LayoutCount": 37,
+                "RecalcStyleCount": 133,
+                "Nodes": 2558,
+                "JSEventListeners": 8472
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 3,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 4,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 9,
+              "commits": 41,
+              "unmounts": 4140,
+              "longTasks": 21,
+              "longestLongTaskMs": 283,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.4962,
+                "ScriptDuration": 2.7205,
+                "LayoutDuration": 0.0425,
+                "RecalcStyleDuration": 0.5424,
+                "LayoutCount": 38,
+                "RecalcStyleCount": 129,
+                "Nodes": 1492,
+                "JSEventListeners": -64971
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 4,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 1,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 9,
+              "commits": 43,
+              "unmounts": 4370,
+              "longTasks": 22,
+              "longestLongTaskMs": 166,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.4692,
+                "ScriptDuration": 2.7914,
+                "LayoutDuration": 0.041,
+                "RecalcStyleDuration": 0.5195,
+                "LayoutCount": 37,
+                "RecalcStyleCount": 135,
+                "Nodes": 2558,
+                "JSEventListeners": 8400
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 5,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 2,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 9,
+              "commits": 40,
+              "unmounts": 4140,
+              "longTasks": 20,
+              "longestLongTaskMs": 175,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.4659,
+                "ScriptDuration": 2.7932,
+                "LayoutDuration": 0.0432,
+                "RecalcStyleDuration": 0.5038,
+                "LayoutCount": 34,
+                "RecalcStyleCount": 126,
+                "Nodes": 2434,
+                "JSEventListeners": 7944
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 6,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 0,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 10,
+              "commits": 45,
+              "unmounts": 4600,
+              "longTasks": 22,
+              "longestLongTaskMs": 284,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.5253,
+                "ScriptDuration": 2.8029,
+                "LayoutDuration": 0.0451,
+                "RecalcStyleDuration": 0.5501,
+                "LayoutCount": 41,
+                "RecalcStyleCount": 145,
+                "Nodes": 2682,
+                "JSEventListeners": 8840
+              },
+              "closedByEscape": true
+            }
+          ]
+        },
+        "right": {
+          "label": "Open user menu",
+          "side": "right",
+          "cycles": 4,
+          "openedFromShut": 4,
+          "startedAlreadyOpen": 0,
+          "failed": 0,
+          "attempts": [
+            {
+              "cycle": 1,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 0,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 9,
+              "commits": 41,
+              "unmounts": 4140,
+              "longTasks": 20,
+              "longestLongTaskMs": 285,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.5501,
+                "ScriptDuration": 2.873,
+                "LayoutDuration": 0.0435,
+                "RecalcStyleDuration": 0.5176,
+                "LayoutCount": 36,
+                "RecalcStyleCount": 132,
+                "Nodes": 2305,
+                "JSEventListeners": 7943
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 2,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 0,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 9,
+              "commits": 40,
+              "unmounts": 3910,
+              "longTasks": 20,
+              "longestLongTaskMs": 171,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.3855,
+                "ScriptDuration": 2.747,
+                "LayoutDuration": 0.0355,
+                "RecalcStyleDuration": 0.4853,
+                "LayoutCount": 34,
+                "RecalcStyleCount": 124,
+                "Nodes": 2181,
+                "JSEventListeners": 7503
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 3,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 2,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 8,
+              "commits": 48,
+              "unmounts": 5060,
+              "longTasks": 22,
+              "longestLongTaskMs": 287,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.6569,
+                "ScriptDuration": 3.0318,
+                "LayoutDuration": 0.0396,
+                "RecalcStyleDuration": 0.4654,
+                "LayoutCount": 37,
+                "RecalcStyleCount": 139,
+                "Nodes": 2677,
+                "JSEventListeners": 9367
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 4,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 1,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 8,
+              "commits": 43,
+              "unmounts": 4370,
+              "longTasks": 20,
+              "longestLongTaskMs": 165,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.4189,
+                "ScriptDuration": 2.8523,
+                "LayoutDuration": 0.0406,
+                "RecalcStyleDuration": 0.4065,
+                "LayoutCount": 32,
+                "RecalcStyleCount": 120,
+                "Nodes": 2429,
+                "JSEventListeners": 8455
+              },
+              "closedByEscape": true
+            }
+          ]
+        }
+      },
+      "8": {
+        "idle": {
+          "writes": 8,
+          "writeBytes": 35288,
+          "stateWrites": 8,
+          "mounts": {
+            "left": 0,
+            "right": 0
+          },
+          "inserted": {
+            "left": 0,
+            "right": 0
+          },
+          "frames": 30,
+          "commits": 30,
+          "unmounts": 3450,
+          "unmountedTypes": {
+            "path": 975,
+            "H": 510,
+            "div": 210,
+            "chakra(div)": 180,
+            "exotic": 180,
+            "Link": 150,
+            "chakra(a)": 150,
+            "a": 150,
+            "VStack": 105,
+            "Stack": 105,
+            "Text": 75,
+            "chakra(p)": 75,
+            "p": 75,
+            "#text": 75
+          },
+          "longTaskError": null,
+          "cdp": {
+            "TaskDuration": 5.0,
+            "ScriptDuration": 4.2537,
+            "LayoutDuration": 0.0702,
+            "RecalcStyleDuration": 0.5075,
+            "LayoutCount": 29,
+            "RecalcStyleCount": 102,
+            "Nodes": 1736,
+            "JSEventListeners": 6264
+          },
+          "mainThreadBusy": 1.0,
+          "seconds": 5,
+          "writesPerSecond": 1.6,
+          "stateWritesPerSecond": 1.6,
+          "mountsPerSecond": {
+            "left": 0.0,
+            "right": 0.0
+          },
+          "framesPerSecond": 6.0,
+          "commitsPerSecond": 6.0,
+          "longestLongTaskMs": 307,
+          "longTaskCount": 16
+        },
+        "left": {
+          "label": "Open main menu",
+          "side": "left",
+          "cycles": 6,
+          "openedFromShut": 6,
+          "startedAlreadyOpen": 0,
+          "failed": 0,
+          "attempts": [
+            {
+              "cycle": 1,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 4,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 22,
+              "unmounts": 2070,
+              "longTasks": 19,
+              "longestLongTaskMs": 338,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.5856,
+                "ScriptDuration": 2.7996,
+                "LayoutDuration": 0.0437,
+                "RecalcStyleDuration": 0.5982,
+                "LayoutCount": 18,
+                "RecalcStyleCount": 69,
+                "Nodes": 1318,
+                "JSEventListeners": 3984
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 2,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 2,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 23,
+              "unmounts": 2300,
+              "longTasks": 18,
+              "longestLongTaskMs": 319,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.6523,
+                "ScriptDuration": 2.8131,
+                "LayoutDuration": 0.0397,
+                "RecalcStyleDuration": 0.6569,
+                "LayoutCount": 19,
+                "RecalcStyleCount": 71,
+                "Nodes": 1318,
+                "JSEventListeners": 4000
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 3,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 4,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 22,
+              "unmounts": 2070,
+              "longTasks": 19,
+              "longestLongTaskMs": 360,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.886,
+                "ScriptDuration": 2.9608,
+                "LayoutDuration": 0.0507,
+                "RecalcStyleDuration": 0.658,
+                "LayoutCount": 18,
+                "RecalcStyleCount": 68,
+                "Nodes": 397,
+                "JSEventListeners": 4072
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 4,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 2,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 22,
+              "unmounts": 2070,
+              "longTasks": 20,
+              "longestLongTaskMs": 331,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.8359,
+                "ScriptDuration": 2.97,
+                "LayoutDuration": 0.0425,
+                "RecalcStyleDuration": 0.6605,
+                "LayoutCount": 19,
+                "RecalcStyleCount": 67,
+                "Nodes": 1318,
+                "JSEventListeners": 4072
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 5,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 2,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 4,
+              "commits": 20,
+              "unmounts": 1840,
+              "longTasks": 18,
+              "longestLongTaskMs": 390,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.8231,
+                "ScriptDuration": 2.9995,
+                "LayoutDuration": 0.0478,
+                "RecalcStyleDuration": 0.62,
+                "LayoutCount": 16,
+                "RecalcStyleCount": 60,
+                "Nodes": 1194,
+                "JSEventListeners": 3632
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 6,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 3,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 22,
+              "unmounts": 2070,
+              "longTasks": 19,
+              "longestLongTaskMs": 347,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.9062,
+                "ScriptDuration": 2.9943,
+                "LayoutDuration": 0.0475,
+                "RecalcStyleDuration": 0.6902,
+                "LayoutCount": 19,
+                "RecalcStyleCount": 67,
+                "Nodes": 1318,
+                "JSEventListeners": 3984
+              },
+              "closedByEscape": true
+            }
+          ]
+        },
+        "right": {
+          "label": "Open user menu",
+          "side": "right",
+          "cycles": 4,
+          "openedFromShut": 4,
+          "startedAlreadyOpen": 0,
+          "failed": 0,
+          "attempts": [
+            {
+              "cycle": 1,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 1,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 4,
+              "commits": 21,
+              "unmounts": 1840,
+              "longTasks": 16,
+              "longestLongTaskMs": 409,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.9631,
+                "ScriptDuration": 3.139,
+                "LayoutDuration": 0.043,
+                "RecalcStyleDuration": 0.6228,
+                "LayoutCount": 16,
+                "RecalcStyleCount": 61,
+                "Nodes": 1065,
+                "JSEventListeners": 3527
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 2,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 1,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 23,
+              "unmounts": 2070,
+              "longTasks": 19,
+              "longestLongTaskMs": 358,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.8551,
+                "ScriptDuration": 3.1441,
+                "LayoutDuration": 0.0543,
+                "RecalcStyleDuration": 0.5082,
+                "LayoutCount": 18,
+                "RecalcStyleCount": 68,
+                "Nodes": 1189,
+                "JSEventListeners": 4055
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 3,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 3,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 27,
+              "unmounts": 2530,
+              "longTasks": 18,
+              "longestLongTaskMs": 304,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.7647,
+                "ScriptDuration": 3.0573,
+                "LayoutDuration": 0.049,
+                "RecalcStyleDuration": 0.509,
+                "LayoutCount": 21,
+                "RecalcStyleCount": 80,
+                "Nodes": 1437,
+                "JSEventListeners": 4935
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 4,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 27,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 6,
+              "commits": 27,
+              "unmounts": 2530,
+              "longTasks": 17,
+              "longestLongTaskMs": 555,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 3.7439,
+                "ScriptDuration": 3.0791,
+                "LayoutDuration": 0.0618,
+                "RecalcStyleDuration": 0.4896,
+                "LayoutCount": 21,
+                "RecalcStyleCount": 77,
+                "Nodes": 1437,
+                "JSEventListeners": 4951
+              },
+              "closedByEscape": true
+            }
+          ]
+        }
+      },
+      "20": {
+        "idle": {
+          "writes": 5,
+          "writeBytes": 22055,
+          "stateWrites": 5,
+          "mounts": {
+            "left": 0,
+            "right": 0
+          },
+          "inserted": {
+            "left": 0,
+            "right": 0
+          },
+          "frames": 10,
+          "commits": 10,
+          "unmounts": 1150,
+          "unmountedTypes": {
+            "path": 325,
+            "H": 170,
+            "div": 70,
+            "chakra(div)": 60,
+            "exotic": 60,
+            "Link": 50,
+            "chakra(a)": 50,
+            "a": 50,
+            "VStack": 35,
+            "Stack": 35,
+            "Text": 25,
+            "chakra(p)": 25,
+            "p": 25,
+            "#text": 25
+          },
+          "longTaskError": null,
+          "cdp": {
+            "TaskDuration": 5.002,
+            "ScriptDuration": 4.3171,
+            "LayoutDuration": 0.0518,
+            "RecalcStyleDuration": 0.466,
+            "LayoutCount": 9,
+            "RecalcStyleCount": 32,
+            "Nodes": 496,
+            "JSEventListeners": 1864
+          },
+          "mainThreadBusy": 1.0,
+          "seconds": 5,
+          "writesPerSecond": 1.0,
+          "stateWritesPerSecond": 1.0,
+          "mountsPerSecond": {
+            "left": 0.0,
+            "right": 0.0
+          },
+          "framesPerSecond": 2.0,
+          "commitsPerSecond": 2.0,
+          "longestLongTaskMs": 1119,
+          "longTaskCount": 11
+        },
+        "left": {
+          "label": "Open main menu",
+          "side": "left",
+          "cycles": 6,
+          "openedFromShut": 6,
+          "startedAlreadyOpen": 0,
+          "failed": 0,
+          "attempts": [
+            {
+              "cycle": 1,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 7,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 6,
+              "commits": 15,
+              "unmounts": 1150,
+              "longTasks": 14,
+              "longestLongTaskMs": 1782,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 6.1409,
+                "ScriptDuration": 4.5074,
+                "LayoutDuration": 0.0636,
+                "RecalcStyleDuration": 1.2618,
+                "LayoutCount": 11,
+                "RecalcStyleCount": 42,
+                "Nodes": 822,
+                "JSEventListeners": 2264
+              },
+              "closedByEscape": false
+            },
+            {
+              "cycle": 2,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 8,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 3,
+              "commits": 10,
+              "unmounts": 690,
+              "longTasks": 8,
+              "longestLongTaskMs": 1385,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 5.0107,
+                "ScriptDuration": 3.6525,
+                "LayoutDuration": 0.0634,
+                "RecalcStyleDuration": 1.0552,
+                "LayoutCount": 6,
+                "RecalcStyleCount": 23,
+                "Nodes": 212,
+                "JSEventListeners": 1432
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 3,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 5,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 15,
+              "unmounts": 1150,
+              "longTasks": 13,
+              "longestLongTaskMs": 1742,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 6.1553,
+                "ScriptDuration": 4.5198,
+                "LayoutDuration": 0.0643,
+                "RecalcStyleDuration": 1.2698,
+                "LayoutCount": 12,
+                "RecalcStyleCount": 41,
+                "Nodes": 760,
+                "JSEventListeners": 2328
+              },
+              "closedByEscape": false
+            },
+            {
+              "cycle": 4,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 3,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 14,
+              "unmounts": 1150,
+              "longTasks": 12,
+              "longestLongTaskMs": 793,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 5.69,
+                "ScriptDuration": 4.1718,
+                "LayoutDuration": 0.0723,
+                "RecalcStyleDuration": 1.2001,
+                "LayoutCount": 10,
+                "RecalcStyleCount": 39,
+                "Nodes": 822,
+                "JSEventListeners": 2224
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 5,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 3,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 4,
+              "commits": 12,
+              "unmounts": 920,
+              "longTasks": 11,
+              "longestLongTaskMs": 838,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 4.9796,
+                "ScriptDuration": 3.6661,
+                "LayoutDuration": 0.0466,
+                "RecalcStyleDuration": 1.0595,
+                "LayoutCount": 8,
+                "RecalcStyleCount": 32,
+                "Nodes": 698,
+                "JSEventListeners": 1872
+              },
+              "closedByEscape": false
+            },
+            {
+              "cycle": 6,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 0,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 4,
+              "commits": 12,
+              "unmounts": 920,
+              "longTasks": 10,
+              "longestLongTaskMs": 827,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 4.6792,
+                "ScriptDuration": 3.3477,
+                "LayoutDuration": 0.0466,
+                "RecalcStyleDuration": 1.0958,
+                "LayoutCount": 8,
+                "RecalcStyleCount": 30,
+                "Nodes": 698,
+                "JSEventListeners": 1784
+              },
+              "closedByEscape": false
+            }
+          ]
+        },
+        "right": {
+          "label": "Open user menu",
+          "side": "right",
+          "cycles": 4,
+          "openedFromShut": 4,
+          "startedAlreadyOpen": 0,
+          "failed": 0,
+          "attempts": [
+            {
+              "cycle": 1,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 5,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 4,
+              "commits": 13,
+              "unmounts": 920,
+              "longTasks": 10,
+              "longestLongTaskMs": 934,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 4.9649,
+                "ScriptDuration": 3.6453,
+                "LayoutDuration": 0.0606,
+                "RecalcStyleDuration": 1.0027,
+                "LayoutCount": 8,
+                "RecalcStyleCount": 35,
+                "Nodes": 569,
+                "JSEventListeners": -30503
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 2,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 4,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 5,
+              "commits": 16,
+              "unmounts": 1380,
+              "longTasks": 12,
+              "longestLongTaskMs": 1439,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 6.0364,
+                "ScriptDuration": 4.882,
+                "LayoutDuration": 0.0717,
+                "RecalcStyleDuration": 0.8254,
+                "LayoutCount": 12,
+                "RecalcStyleCount": 42,
+                "Nodes": 271,
+                "JSEventListeners": 2735
+              },
+              "closedByEscape": false
+            },
+            {
+              "cycle": 3,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 3,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 4,
+              "commits": 14,
+              "unmounts": 1150,
+              "longTasks": 10,
+              "longestLongTaskMs": 784,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 4.3123,
+                "ScriptDuration": 3.4131,
+                "LayoutDuration": 0.0455,
+                "RecalcStyleDuration": 0.6199,
+                "LayoutCount": 9,
+                "RecalcStyleCount": 37,
+                "Nodes": 547,
+                "JSEventListeners": 1871
+              },
+              "closedByEscape": true
+            },
+            {
+              "cycle": 4,
+              "openBefore": false,
+              "opened": true,
+              "openAtEnd": true,
+              "transitions": [
+                {
+                  "at": 3,
+                  "open": true
+                }
+              ],
+              "mounts": {
+                "left": 0,
+                "right": 0
+              },
+              "inserted": {
+                "left": 0,
+                "right": 0
+              },
+              "storeWrites": 4,
+              "commits": 13,
+              "unmounts": 920,
+              "longTasks": 10,
+              "longestLongTaskMs": 817,
+              "events": ["pointerdown", "mousedown", "mouseup", "click"],
+              "cdp": {
+                "TaskDuration": 4.3553,
+                "ScriptDuration": 3.5091,
+                "LayoutDuration": 0.0431,
+                "RecalcStyleDuration": 0.6259,
+                "LayoutCount": 8,
+                "RecalcStyleCount": 33,
+                "Nodes": 569,
+                "JSEventListeners": 1855
+              },
+              "closedByEscape": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "notes": [
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "pageerror: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "requestfailed: https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sKRC+Limousinenservice+KG,+Wien",
+    "requestfailed: https://accounts.netsnek.com/auth/v1/policies/passwords/complexity"
+  ]
+}
