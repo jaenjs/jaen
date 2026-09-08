@@ -624,9 +624,10 @@ export const CMSManagementProvider = withRedux(
               confirmText: 'Publish',
               cancelText: 'Cancel'
             },
-            `Update ${Object.values(
-              (store.getState() as RootState).page.pages.nodes
-            ).length} pages`
+            `Update ${
+              Object.values((store.getState() as RootState).page.pages.nodes)
+                .length
+            } pages`
           )
 
           if (!message) return
@@ -672,9 +673,23 @@ export const CMSManagementProvider = withRedux(
                 answer.reason ||
                 'Published. This site has no automatic build; the operator builds it.'
             })
-          } else {
+          } else if (answer.queued) {
+            // Nothing was new, so no migration was written, and a build was
+            // started anyway: publish with nothing to publish is a person
+            // asking for a rebuild. Neither half of that is a failure.
             notification.toast({
-              status: 'error',
+              status: 'info',
+              title: 'Publish',
+              description:
+                answer.reason ||
+                'Nothing new to publish; the build was started.'
+            })
+          } else {
+            // Neither a migration nor a build. It is usually "everything is
+            // already published", which is not an error, so it is said as
+            // information and the agent's own reason is what the editor reads.
+            notification.toast({
+              status: 'info',
               title: 'Publish',
               description: answer.reason || 'Nothing was published.'
             })
