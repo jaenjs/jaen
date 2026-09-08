@@ -52,6 +52,9 @@ AUTH_ISSUER = "https://accounts.netsnek.com"
 AUTH_PROJECT_ID = "268283277977065078"
 AUTH_CACHE_TTL_MS = 60000
 DEFAULT_BRANCH = "main"
+# Where a publish uploads its migration. Every read and every write of it
+# carries a Zitadel token (docs/architecture/private-storage.md).
+STORAGE_URL = "https://osg.netsnek.com"
 PYLON_TELEMETRY_DISABLED = 1
 
 # The site table. There is no database, so this is where a site is added and
@@ -70,7 +73,7 @@ PYLON_TELEMETRY_DISABLED = 1
 # `installationId` is absent until the `jaen-agent` GitHub App exists; the
 # interim credential is the GITHUB_TOKEN secret, a fine grained token with
 # contents:write on both repositories.
-SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"356348844407002709","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.booklimo.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_BOOKLIMO"},"limosen.at":{"repository":"netsnek/limosen.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"339284789469124181","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.limosen.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_LIMOSEN"}}'
+SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"356348844407002709","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.booklimo.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_BOOKLIMO","osgTokenVar":"OSG_TOKEN_BOOKLIMO"},"limosen.at":{"repository":"netsnek/limosen.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"339284789469124181","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.limosen.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_LIMOSEN","osgTokenVar":"OSG_TOKEN_LIMOSEN"}}'
 
 # Four kinds of key and nothing else. The read cache
 # (`head:<site>:<branch>`, thirty seconds), the in-flight lock (`lock:<site>`,
@@ -105,6 +108,19 @@ id = "6e75d473808c48e7ac39c4391cce02fb"
 #   GITHUB_APP_PRIVATE_KEY  its private key in PKCS#8
 #                           (`openssl pkcs8 -topk8 -nocrypt -in app.pem`),
 #                           because WebCrypto reads no other form
+#   OSG_TOKEN_BOOKLIMO      the storage gateway credential a publish uploads
+#   OSG_TOKEN_LIMOSEN       its migration with, named by the site entry's
+#                           `osgTokenVar`. It is the brand's storage machine
+#                           user, `osg-krc` in 356348844407002709 and
+#                           `osg-limosen` in 339284789469124181, each holding
+#                           storage:read, storage:write and storage:sign. One
+#                           per site because the gateway stamps a file with the
+#                           organisation of the token that sent it, so one
+#                           estate wide token would give every brand's
+#                           migration one owner. Never `osg-build-<brand>`,
+#                           which private-storage.md gave storage:read and
+#                           nothing else on purpose: a build downloads what the
+#                           data names and never uploads.
 #   ORG_USER_MANAGER_TOKEN_BOOKLIMO   the bearer the grant lookup through
 #   ORG_USER_MANAGER_TOKEN_LIMOSEN    idm.<brand> is made with, one per site
 #                           the way the taxi pylons hold theirs, named by the

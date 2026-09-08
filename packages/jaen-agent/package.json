@@ -1,8 +1,8 @@
 {
   "name": "jaen-agent",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "private": true,
-  "description": "The jaen agent: the one process that reads a site's jaen data from its repository and writes every saved change back as a git commit.",
+  "description": "The jaen agent: the shared draft of a site in one Durable Object, and the publish that writes one migration into the site's repository.",
   "license": "EUPL-1.2",
   "type": "module",
   "scripts": {
