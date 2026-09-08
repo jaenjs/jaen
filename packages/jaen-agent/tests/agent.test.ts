@@ -388,6 +388,7 @@ const stopWorker = async (): Promise<void> => {
 }
 
 let sitesVar = ''
+let devVarsContent = ''
 
 before(async () => {
   const main = await gh(`/repos/${REPOSITORY}/git/ref/heads/main`)
@@ -399,27 +400,25 @@ before(async () => {
 
   // wrangler dev reads its secrets from .dev.vars and from nowhere else. The
   // file is gitignored and is removed again in the teardown below.
-  writeFileSync(
-    devVars,
-    [
-      `AUTH_ISSUER=${taxiVars.AUTH_ISSUER}`,
-      `AUTH_KEY=${taxiVars.AUTH_KEY}`,
-      `GITHUB_TOKEN=${GITHUB_TOKEN}`,
-      // In production this is the Worker's own organisation manager token.
-      // Locally the booklimo admin's token is a valid bearer for the facade,
-      // and the lookup is only reached when the caller's token asserts no
-      // roles at all.
-      `ORG_USER_MANAGER_TOKEN=${ADMIN}`,
-      // The brand's storage machine user, osg-krc, which holds storage:write.
-      // Introspected at accounts.netsnek.com before this suite was written
-      // rather than tried: active, organisation 356348844407002709,
-      // storage:read, storage:write, storage:sign. Never the build user
-      // osg-build-krc, which holds storage:read alone and cannot upload.
-      `OSG_TOKEN_BOOKLIMO=${OSG_TOKEN}`,
-      ''
-    ].join('\n'),
-    {mode: 0o600}
-  )
+  devVarsContent = [
+    `AUTH_ISSUER=${taxiVars.AUTH_ISSUER}`,
+    `AUTH_KEY=${taxiVars.AUTH_KEY}`,
+    `GITHUB_TOKEN=${GITHUB_TOKEN}`,
+    // In production this is the Worker's own organisation manager token.
+    // Locally the booklimo admin's token is a valid bearer for the facade,
+    // and the lookup is only reached when the caller's token asserts no
+    // roles at all.
+    `ORG_USER_MANAGER_TOKEN=${ADMIN}`,
+    // The brand's storage machine user, osg-krc, which holds storage:write.
+    // Introspected at accounts.netsnek.com before this suite was written
+    // rather than tried: active, organisation 356348844407002709,
+    // storage:read, storage:write, storage:sign. Never the build user
+    // osg-build-krc, which holds storage:read alone and cannot upload.
+    `OSG_TOKEN_BOOKLIMO=${OSG_TOKEN}`,
+    ''
+  ].join('\n')
+
+  writeFileSync(devVars, devVarsContent, {mode: 0o600})
 
   sitesVar = JSON.stringify({
     [SITE]: {
@@ -1307,4 +1306,57 @@ test('a publish is refused anonymously and to a caller without the role', async 
 
   assert.equal(customer.data?.publish, undefined)
   assert.equal(errorCode(customer), 'FORBIDDEN')
+})
+
+/**
+ * The identity server answering nothing is not the same as it answering "no".
+ *
+ * The agent reads a caller's roles out of one lookup through `idm.<brand>`,
+ * because these machine tokens carry no roles claim, and that lookup answers
+ * `INTERNAL_SERVER_ERROR` for an account it will not talk about and for an
+ * account it cannot reach alike. Until 2026-09-08 both were read as "this
+ * person holds no roles" and the person was refused: on the live booklimo.at
+ * an account that held `jaen:admin` throughout was answered FORBIDDEN for
+ * seven minutes and sixteen calls.
+ *
+ * This gives the Worker a manager credential of the WRONG organisation, which
+ * is the shape of the misconfiguration `okf/decisions/hard-rules.md` was
+ * written after, and asks for the draft as the site's own admin. The answer
+ * must be that the question cannot be decided, and never that the admin may
+ * not edit. It runs last because it restarts the runtime twice.
+ */
+test('an identity lookup that cannot be made refuses to decide, and does not refuse the person', async () => {
+  await stopWorker()
+  writeFileSync(
+    devVars,
+    devVarsContent.replace(
+      `ORG_USER_MANAGER_TOKEN=${ADMIN}`,
+      `ORG_USER_MANAGER_TOKEN=${FOREIGN}`
+    ),
+    {mode: 0o600}
+  )
+  await startWorker()
+
+  try {
+    const admin = await call(DRAFT, {site: SITE}, ADMIN)
+
+    assert.equal(admin.data?.draft, undefined)
+    assert.equal(errorCode(admin), 'IDENTITY_UNAVAILABLE')
+    assert.equal(admin.errors?.[0]?.extensions?.statusCode, 503)
+
+    // An anonymous caller is still told to sign in: nothing was looked up.
+    const anonymous = await call(DRAFT, {site: SITE})
+
+    assert.equal(errorCode(anonymous), 'AUTH_REQUIRED')
+  } finally {
+    await stopWorker()
+    writeFileSync(devVars, devVarsContent, {mode: 0o600})
+    await startWorker()
+  }
+
+  // And the credential put back, the same admin is served again, so the
+  // refusal above was the credential and not the account.
+  const again = await call(DRAFT, {site: SITE}, ADMIN)
+
+  assert.equal(again.data?.draft?.site, SITE)
 })

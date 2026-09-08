@@ -289,13 +289,136 @@ const FACADE_QUERY = `query JaenAgentCaller($id: String!) {
 }`
 
 /**
- * One grant lookup through the site's own identity facade, `idm.<brand>`.
+ * The control question, and the reason this file can tell a refusal from an
+ * outage at all.
  *
- * The facade is scoped to the site's organisation, so an account of the other
- * brand is not found there at all, which is already the refusal acceptance 3
- * asks for. `resourceOwner` is the organisation the account lives in and is
- * what the site check compares.
+ * Measured against `idm.booklimo.at` and `idm.limosen.at` on 2026-09-08: the
+ * facade answers `user(args: {id})` with `INTERNAL_SERVER_ERROR` and
+ * `data: null` for **every** id it will not talk about, an account of another
+ * organisation and an id that does not exist alike, so the caller's own lookup
+ * cannot tell "not yours" from "cannot say".
+ *
+ * `currentUser` can, and it is the one question every credential may ask: it
+ * answers who the Worker's own token is and which organisation that account
+ * lives in. Two things follow from one round trip. The facade answered, so it
+ * is up and the credential is live. And the directory it answered from is the
+ * site's own, or it is not, which is precisely the failure
+ * `okf/decisions/hard-rules.md` was written after: a wrong
+ * `ORG_USER_MANAGER_TOKEN` made every KRC driver roleless for a morning
+ * because "an empty identity answer is never evidence that the directory is
+ * empty".
+ *
+ * `organization(id)` was tried first and rejected: it answers `null` rather
+ * than an error for an organisation the credential may not read, which is the
+ * behaviour this needs, and reading an organisation at all takes a role the
+ * site's own admin accounts do not hold, so the control would have said "the
+ * facade cannot see this organisation" about a perfectly healthy one.
  */
+const CONTROL_QUERY = `query JaenAgentControl {
+  currentUser {
+    __typename
+    ... on HumanUser { id resourceOwner }
+    ... on MachineUser { id resourceOwner }
+  }
+}`
+
+/** A healthy control, per credential and organisation, for its minute. */
+const controlSeenUntil = new Map<string, number>()
+
+const CONTROL_TTL_MS = 60_000
+
+type FacadeAnswer = {
+  reached: boolean
+  status: number
+  json: any
+}
+
+const askFacade = async (
+  url: string,
+  bearer: string,
+  query: string,
+  variables: Record<string, unknown>
+): Promise<FacadeAnswer> => {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${bearer}`,
+        // Cloudflare fronts the facade and answers a request without one with
+        // `error code: 1010` in plain text, which is not JSON.
+        'User-Agent': USER_AGENT
+      },
+      body: JSON.stringify({query, variables})
+    })
+
+    const json = await res.json().catch(() => undefined)
+
+    // A body that is not JSON, or a status that is not a success, is the
+    // facade not answering rather than the facade answering nothing. A token
+    // that has expired is a 401 here, and it is the case that must never be
+    // read as "this person holds no roles".
+    return {reached: res.ok && json !== undefined, status: res.status, json}
+  } catch (error) {
+    console.error('jaen-agent: the identity facade could not be reached', error)
+    return {reached: false, status: 0, json: undefined}
+  }
+}
+
+/**
+ * Whether the facade answered, and whether it answered for this site.
+ *
+ * `true` and `false` are answers. `undefined` is "the control itself could not
+ * be taken", which is deliberately not an outage: a facade that does not carry
+ * `currentUser`, or carries it in another shape, would otherwise turn every
+ * refusal on every site into a 503. Where the control cannot be taken this
+ * file falls back to what it did before it existed.
+ */
+const facadeAnswersFor = async (
+  url: string,
+  bearer: string,
+  organizationId: string
+): Promise<boolean | undefined> => {
+  if (!organizationId) return undefined
+
+  const key = `${url}\n${organizationId}`
+  const seen = controlSeenUntil.get(key)
+
+  // Only a healthy control is remembered. Caching the unhealthy one would
+  // hold a site shut for a minute after its cause had gone.
+  if (seen !== undefined && seen > Date.now()) return true
+
+  const answer = await askFacade(url, bearer, CONTROL_QUERY, {})
+
+  if (!answer.reached) return false
+
+  const owner = answer.json?.data?.currentUser?.resourceOwner
+
+  if (typeof owner === 'string' && owner) {
+    if (owner === organizationId) {
+      controlSeenUntil.set(key, Date.now() + CONTROL_TTL_MS)
+      return true
+    }
+
+    console.error(
+      'jaen-agent: the identity credential for this site lives in',
+      owner,
+      'and the site is',
+      organizationId
+    )
+
+    return false
+  }
+
+  console.error(
+    'jaen-agent: the identity control question was not answered',
+    answer.json?.errors?.[0]?.message ?? `HTTP ${answer.status}`
+  )
+
+  return undefined
+}
+
 const facadeGrants = async (
   entry: SiteEntry,
   userId: string
@@ -314,55 +437,10 @@ const facadeGrants = async (
   // configured decides on the claims alone, which is what it has always done.
   if (!url || !bearer || !userId) return {grants: [], orgs: []}
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${bearer}`,
-        // Cloudflare fronts the facade and answers a request without one with
-        // `error code: 1010` in plain text, which is not JSON.
-        'User-Agent': USER_AGENT
-      },
-      body: JSON.stringify({query: FACADE_QUERY, variables: {id: userId}})
-    })
+  const answer = await askFacade(url, bearer, FACADE_QUERY, {id: userId})
+  const user = answer.reached ? answer.json?.data?.user : undefined
 
-    const json = (await res.json().catch(() => ({}))) as any
-    const user = json?.data?.user
-
-    // A GraphQL error, a non-2xx, or a body with neither a user nor an
-    // explicit null. `user: null` is the facade saying it does not know this
-    // account, which is an answer and is a refusal; anything else is the
-    // facade failing to answer, and the two must not be confused. Measured
-    // 2026-09-08: asked with a token of the wrong organisation this facade
-    // answers `INTERNAL_SERVER_ERROR`, which is exactly the case that used to
-    // be read as "no roles".
-    const errored =
-      !res.ok ||
-      (Array.isArray(json?.errors) && json.errors.length > 0) ||
-      !json ||
-      typeof json !== 'object' ||
-      !('data' in json) ||
-      json.data === null ||
-      json.data === undefined
-
-    if (errored) {
-      console.error(
-        'jaen-agent: the grant lookup could not be made for',
-        userId,
-        json?.errors?.[0]?.message ?? `HTTP ${res.status}`
-      )
-      return {grants: [], orgs: [], unavailable: true}
-    }
-
-    if (!user) {
-      // The facade answered, and it does not know this account. That is a
-      // real refusal: the facade is scoped to the site's organisation, so an
-      // account of the other brand is simply not there.
-      return {grants: [], orgs: []}
-    }
-
+  if (user) {
     const orgs = user.resourceOwner ? [String(user.resourceOwner)] : []
 
     const grants = (user.roles?.edges ?? [])
@@ -371,10 +449,43 @@ const facadeGrants = async (
       .map((key: string) => ({key, orgs}))
 
     return {grants, orgs}
-  } catch (error) {
-    console.error('jaen-agent: the grant lookup failed', error)
+  }
+
+  // Nothing came back about this caller, and the facade says the same thing
+  // about a stranger and about an outage. The control question decides which
+  // it was. See CONTROL_QUERY above.
+  const sees = answer.reached
+    ? await facadeAnswersFor(url, bearer, entry.organizationId)
+    : false
+
+  if (sees === true) {
+    // The facade is answering for this site's organisation and it will not
+    // name this caller, so the caller is not in it. A refusal.
+    return {grants: [], orgs: []}
+  }
+
+  if (sees === false) {
+    console.error(
+      'jaen-agent: the identity facade did not answer for',
+      entry.organizationId,
+      'so the roles of',
+      userId,
+      'are unknown:',
+      answer.json?.errors?.[0]?.message ?? `HTTP ${answer.status}`
+    )
+
     return {grants: [], orgs: [], unavailable: true}
   }
+
+  // The control could not be taken at all. Fall back to what this file did
+  // before it existed rather than refuse every caller of every site.
+  console.error(
+    'jaen-agent: the grant lookup answered nothing for',
+    userId,
+    answer.json?.errors?.[0]?.message ?? `HTTP ${answer.status}`
+  )
+
+  return {grants: [], orgs: []}
 }
 
 /** The organisation the account itself lives in, from the userinfo claim. */
