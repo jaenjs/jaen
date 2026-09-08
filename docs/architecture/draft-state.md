@@ -163,14 +163,25 @@ through `fetchWithCache` and reads any other line as a file **inside**
 The last patch wins a field. That local file path already exists and is what
 makes the design below cheap.
 
-### The repository as the store: one head patch
+### The repository as the store: two head patches
 
-The agent owns exactly one file per site, **`jaen-data/live.json`**, listed
-as the last line of `jaen-data/patches.txt`. Every save rewrites it with the
-merged draft of the whole site, in the patch shape the build already reads,
-`{createdAt, message, data: {pages, site, widgets}}`. Because it is last in
-the chain it wins the deepmerge, so the repository's HEAD is at all times a
+The agent owns two files per site, **`jaen-data/live.json`** and
+**`jaen-data/live-media.json`**, listed as the last two lines of
+`jaen-data/patches.txt` in that order. A save rewrites the one its changes
+belong to, in the patch shape the build already reads,
+`{createdAt, message, data: {pages, site, widgets}}`. Because they are last in
+the chain they win the deepmerge, so the repository's HEAD is at all times a
 buildable statement of the current content.
+
+It was one file until 2026-09-08 and the second one is a budget decision, not
+a new data path. `media_nodes` is a jaen field like any other, but it is the
+one field that holds a catalogue: booklimo.at's head patch weighed 120 KB of
+which 80 KB were the 140 media nodes, and the page everything else lives on
+was 502 bytes. Every text change committed the whole catalogue and every
+picture committed the whole site. Split, a text change writes about two
+kilobytes and a picture writes the catalogue, and neither opens the other's
+file at all. `live-media.json` carries one page stub with one field, so the
+build merges it onto the page `live.json` already described.
 
 That is what lets publish commit nothing. The alternative, sealing the head
 file into a dated patch at publish time and starting a fresh one, was
@@ -181,8 +192,14 @@ are, and a maintainer who wants to fold the head file into a dated one does
 it with an ordinary commit that the agent neither makes nor needs to know
 about.
 
-`patches.txt` is touched only when `live.json` is not yet in it, once per
-site, in the same commit as the first save.
+`patches.txt` is touched only when the two files are not already its last two
+lines in that order: once per site on the first save, and once more when the
+catalogue is lifted out of `live.json`, which the first save after the split
+does by itself. `live-media.json` is never listed before it exists, because
+the build reads a local patch line as a file and panics on one that is not
+there. The answer is then remembered in the agent's KV for an hour, because
+reading `patches.txt` on every save was one GitHub round trip out of four for
+a file that changes twice in the life of a site.
 
 ### The agent's API
 
@@ -195,6 +212,7 @@ resolver off its parent and calls it without a receiver, so a method loses
 ```graphql
 type Query {
   version: Version!
+  viewer(site: String!): Viewer!
   draft(site: String!, sinceSha: String): Draft!
 }
 
@@ -217,6 +235,14 @@ type Draft {
   readAt: String!
 }
 
+type Viewer {
+  site: String!
+  sub: String!
+  name: String!
+  email: String!
+  at: String!
+}
+
 type SaveResult {
   headSha: String!
   blobSha: String!
@@ -225,6 +251,7 @@ type SaveResult {
   savedAt: String!
   rebased: Boolean!
   overwrote: [FieldOverwrite!]! # field, the previous author, the previous instant
+  wrote: [String!]! # the head files this save actually wrote
 }
 
 type PublishResult {
@@ -236,15 +263,24 @@ type PublishResult {
 }
 ```
 
+`viewer(site)` answers who is calling and touches no repository at all. Its
+whole cost is the introspection the auth middleware pays before a resolver
+runs, which is exactly what it is for: the CMS calls it once when it opens, so
+that a token nobody has introspected lately is paid for while the toolbar is
+still coming up rather than inside the editor's first save.
+
 `draft(site)` reads the repository's HEAD. It resolves the branch head with
-`GET /repos/<repo>/commits/<branch>`, reads `jaen-data/live.json` with
-`GET /repos/<repo>/contents/...?ref=<branch>`, and answers the parsed `data`
-plus both shas. `sinceSha` is the head the caller already has: when it still
-matches, the answer is `changed: false` with no body, which is what almost
-every poll costs.
+`GET /repos/<repo>/commits/<branch>`, reads both head files with
+`GET /repos/<repo>/contents/...?ref=<branch>`, merges them and answers the
+parsed `data` plus both shas. `sinceSha` is the head the caller already has:
+when it still matches, the answer is `changed: false` with no body **and no
+file read at all**, one commit lookup, which is what almost every poll of
+every open CMS costs.
 
 `save(site, changes, baseSha)` applies the changes and commits, in the
-editor's name, one commit per call. `publish(site)` triggers the build and
+editor's name, one commit per call and per head file the batch touched.
+`wrote` names those files, which is how the CMS and the tests can see that a
+text change did not commit the catalogue. `publish(site)` triggers the build and
 commits nothing.
 
 ### The shape of a change
@@ -256,6 +292,7 @@ sends what it already produces and the agent needs no diffing.
 interface JaenChangeInput {
   kind:
     | 'fieldWrite' // page.field_write
+    | 'fieldMerge' // page.field_write of a field that holds a catalogue
     | 'sectionAdd' // page.section_add
     | 'sectionRemove' // page.section_remove
     | 'sectionMove' // page.section_move
@@ -291,6 +328,24 @@ nullable, so a kind that carries no value sends `{}` and every branch of the
 applier ignores it. `props` is `JSONObject` and may be omitted. The derived
 schema is `packages/jaen-agent/.pylon/schema.graphql` after a build and is the
 authority over this block.
+
+**`fieldMerge`, the field sent as the difference it is.** The media gallery
+reads `media_nodes` as one object of every picture in the site and writes the
+whole object back on every upload, clone, edit and delete, so a single new
+picture used to send 76 KB up the wire and commit 120 KB back down. The
+recorder diffs the write against the value it replaced and sends
+`value`, the entries that changed, and `props.removed`, the ids that went, and
+the applier folds them onto whatever the base holds. Measured on booklimo.at's
+catalogue of 140 nodes: the request went from 76 604 bytes to 449. A base that
+is not a record, which is a browser that has not seen a remote value for the
+field yet, and a write that changes more than half of it both fall back to
+sending the field whole, so the merge is an optimisation and never the only
+way a value can travel.
+
+It is also the honest conflict rule for a catalogue. Two editors uploading at
+the same time each used to write a catalogue without the other's node, and the
+later commit won. Now each sends its own node and both pictures survive, which
+is why `overwrote` never names a merge.
 
 A call carries at most 200 changes and at most one megabyte, which the
 debounce below never approaches.
@@ -333,7 +388,19 @@ introspection cache: the answer is remembered per SHA-256 of the bearer for
 `AUTH_CACHE_TTL_MS`, sixty seconds by default, and refreshed in the
 background past half its life. Without it every call pays two round trips of
 about 750 ms to `accounts.netsnek.com`, which is what the taxi pylon
-measured on 2026-09-05. Pylon's own `@requireAuth()` is not used, because it
+measured on 2026-09-05.
+
+**Two tiers, because one was not enough.** The module scoped map belongs to
+one Worker isolate and Cloudflare starts isolates as it pleases, so a token
+this isolate has not seen pays the round trips again however warm the caller
+is: the adversarial read below measured 3.77 s on the first call of a run and
+1.7 s on the three after it, twice. The same answer therefore also goes into
+the `CACHE` KV under `auth:<sha256 of the token>`, with the resolved grant
+list beside it, which every isolate of every colo reads. A cold isolate then
+pays a KV read of a few milliseconds. The key is the hash of the token and
+nothing else: reading the entry back means holding the token, which already
+means being that caller. A refresh that comes back inactive deletes both
+tiers, so a revoked token stops working within the minute wherever it lands. Pylon's own `@requireAuth()` is not used, because it
 only checks that `auth` is truthy and `useAuth` sets that on an anonymous
 request as well. The agent has its own `requireAuth` demanding `auth.user`.
 
@@ -577,12 +644,15 @@ binding = "CACHE"
 id = "6e75d473808c48e7ac39c4391cce02fb"
 ```
 
-No `[[d1_databases]]`, no prisma, no migrations directory. The KV holds two
-kinds of key and nothing else: `head:<site>`, the head sha and the parsed
-document with a thirty second TTL, and `lock:<site>`, the in-flight lock with
-a fifteen second TTL. A cold or lost KV is a slower read and never a lost
-change, because every write re-reads GitHub under the lock before it applies
-anything.
+No `[[d1_databases]]`, no prisma, no migrations directory. The KV holds four
+kinds of key and nothing else. `head:<site>:<branch>`, the head sha and the
+parsed document with a thirty second TTL. `lock:<site>`, the in-flight lock
+with a fifteen second TTL. `auth:<sha256 of a bearer>`, the introspected
+identity and its grants for `AUTH_CACHE_TTL_MS`. And
+`patches:<site>:<branch>`, one word saying that patches.txt already ends with
+the head files, for an hour. A cold or lost KV is a slower read and never a
+lost change, because every write re-reads GitHub before it applies anything
+and every PUT carries the blob sha it read.
 
 Secrets, `wrangler secret put`: `AUTH_KEY`, the JSON key of an API
 application of the CMS project the introspection's `client_assertion` is
@@ -610,12 +680,14 @@ wrangler is node.
 
 ### The open points, decided
 
-1. **Where the draft lives in the repository.** One head patch,
-   `jaen-data/live.json`, last in `patches.txt`, rewritten on every save.
-   The build already reads local patch files out of `jaen-data`, the last
-   patch wins the merge, and nothing needs committing at publish time.
-   Sealing it into a dated patch at publish was rejected for putting a
-   commit back into the publish path.
+1. **Where the draft lives in the repository.** Two head patches,
+   `jaen-data/live.json` and `jaen-data/live-media.json`, last in
+   `patches.txt` in that order, and a save rewrites the one its changes
+   belong to. The build already reads local patch files out of `jaen-data`,
+   the last patch wins the merge, and nothing needs committing at publish
+   time. Sealing them into a dated patch at publish was rejected for putting
+   a commit back into the publish path. It was one file until 2026-09-08,
+   when the catalogue turned out to be two thirds of every commit.
 2. **Commit granularity.** One commit per debounced batch, not per change.
 3. **What publish triggers.** `workflow_dispatch` on the workflow the site
    entry names, `deploy.yaml` by default, and an honest `queued: false` with
@@ -637,9 +709,13 @@ wrangler is node.
 8. **Discard.** Removed from the toolbar when the agent is configured, and
    replaced by the save state. Undo is git, and the save answer carries the
    commit URL.
-9. **The media library.** No path of its own. `media_nodes` is a jaen field
-   of the media page and rides the same save. The file keeps going straight
-   to the storage gateway.
+9. **The media library.** No data path of its own: `media_nodes` is a jaen
+   field of the media page and rides the same save, the same applier and the
+   same conflict rule. It has a file of its own, `live-media.json`, and a
+   change kind of its own, `fieldMerge`, and both are budget and not
+   architecture: the field is a catalogue, it was two thirds of every commit
+   the agent made, and the gallery writes it whole. The picture file keeps
+   going straight to the storage gateway.
 10. **Where the agent lives.** `packages/jaen-agent` in this repository, jaen
     native as the owner asked. `~/git/jaen-agent-v2` contributes its
     `src/hosts` and `src/stubs` and is retired once
@@ -648,8 +724,29 @@ wrangler is node.
     rebased on the current HEAD and never rejected, and the answer names
     every field it overwrote and who had written it.
 
+12. **The introspection cache.** Two tiers, the isolate's map and the
+    Worker's KV, keyed by the SHA-256 of the bearer with one deadline. A
+    module scoped cache alone is a cache one isolate has, and the two second
+    tail the adversarial read found was a cold isolate paying the round trips
+    again. The CMS warms it with `viewer(site)` when it opens.
+
 Out of scope on purpose: per field locking, presence indicators, a comment
 or review step, and any branch but the site's own build branch.
+
+### Still open
+
+**A media node deleted leaves its file on the gateway.** Removing a picture in
+the library removes its entry from `media_nodes` and nothing else: the blob
+stays at `osg.netsnek.com` with nothing pointing at it, and the library has no
+sweep that would find it. That was already true before the agent existed, the
+adversarial read on 2026-09-08 recorded it again after deleting its two test
+pictures, and the split does not change it either way, because the entry and
+the file were never written by the same thing. It is worth naming rather than
+leaving as folklore, and it is worth deciding rather than building on a hunch,
+because a sweep is the kind of job that deletes somebody's picture when it is
+wrong: it needs to know that every site that could name a blob has been
+consulted, and one storage gateway serves more than one site. Nothing here
+builds it.
 
 ## Identity, the one way, owner 2026-09-07
 
@@ -913,3 +1010,94 @@ library has always done.
 rather than on the first save, or raise `AUTH_CACHE_TTL_MS` toward the token's
 own expiry, which the cache already caps against. Nothing else in the six
 samples is over budget.
+
+## The budget again, measured 2026-09-08 in the afternoon
+
+The adversarial read above left two things over budget. The first sample of
+every run was two seconds slower than the warm ones, in both runs, because a
+Worker isolate that had not seen the token paid the introspection again. And
+the save round trip was four to six seconds, of which the biggest single item
+was a `PUT` of a `live.json` carrying 140 media nodes. Both are addressed
+here, and this is what was measured.
+
+**How it was measured, and what it is not.** Against a local `wrangler dev` of
+the agent on two throwaway branches of `netsnek/booklimo.at`, one running the
+agent as it was deployed (`ae0e224`) and one running this work, both talking to
+the real `api.github.com` with the real repository and both introspecting the
+real `accounts.netsnek.com` with a real booklimo `jaen:admin`. The two saves
+were alternated, old, new, old, new, so the drift of this machine's link falls
+on both alike, ten samples each, twice. Nothing ran against `main`: the two
+branches were cut from it, written only by the agent, and deleted afterwards.
+
+These are **not** the live agent's numbers and they are not meant to be. The
+link from this machine to GitHub is not Cloudflare's, so every absolute figure
+here is smaller than the deployed one. What carries over is the ratio and what
+disappeared. The ship measures live.
+
+**The introspection, which is the two second tail.** The probe is one
+authenticated call that reaches no repository, so its whole cost is the
+middleware.
+
+| what                                              | before  | after  |
+| ------------------------------------------------- | ------- | ------ |
+| a token nothing has seen, cold isolate, cold KV   | 1388 ms | 893 ms |
+| the same token again on that isolate              | 13 ms   | 13 ms  |
+| **a new isolate, the token already introspected** | 1358 ms | 79 ms  |
+
+The third row is the finding. Before, every isolate paid the round trips for
+itself and an editor met that again after any minute without a save. Now the
+first isolate pays it and the rest read the KV. The first row is a token the
+whole estate has not seen, which is what `viewer(site)` is called for when the
+CMS opens: it is still about a second, and it is now spent before the editor
+has typed anything.
+
+**The poll, which is what every open CMS does between saves.**
+
+| what                                             | before | after |
+| ------------------------------------------------ | ------ | ----- |
+| `draft(sinceSha = head)`, the agent's cache cold | 866 ms | 6 ms  |
+| the same, cache warm                             | 12 ms  | 7 ms  |
+
+`changed: false` no longer reads a file at all, only the branch head, and the
+head comes out of KV where it is fresh.
+
+**The save round trip, ten samples each, alternated, twice.**
+
+| what                       | before            | after             |
+| -------------------------- | ----------------- | ----------------- |
+| a text change is committed | 2.60 s and 2.38 s | 1.24 s and 1.14 s |
+| a picture is committed     | 2.46 s and 2.56 s | 1.80 s and 1.80 s |
+
+Three things did that, and none of them is a shorter interval. The save used
+to open with three sequential round trips to GitHub before it wrote anything,
+the branch head, then the file at that sha, then `patches.txt`. The head
+lookup now runs beside the file read, because the file is read at the branch
+and the branch is at least as fresh as the sha it resolves to, and
+`patches.txt` is remembered in KV for an hour. What makes the write safe is
+still the blob sha on the `PUT` and the retry loop behind it, which is
+unchanged. And the file that is written is now the small one: booklimo.at's
+`live.json` is 2 188 bytes without the catalogue and was 120 156 with it.
+
+**The request, which never showed up in a timing on this link and will on a
+phone.** One new picture used to send the whole catalogue to the agent,
+76 604 bytes of nodes it already had. It now sends 449.
+
+**The two legs, put back together.** These are the parts, not a stopwatch on
+two browsers, and they are stated as parts on purpose: the end to end figure
+belongs to the live estate and the ship agent measures it there. A text change
+reaching the second editor is the field's own 500 ms on blur, plus the save,
+plus up to `activePollMs` of the other CMS waiting to ask, plus its read of the
+changed head. The save halved and the poll's cold case went from most of a
+second to nothing. The cold introspection, which was two of the eight and a
+half seconds the adversarial read measured, is paid before the first save
+instead of inside it, and it is paid once for the whole estate instead of once
+per isolate. Nothing in the client's intervals changed: 1500 ms while the tab
+is watched, 5000 ms while it is not, and the quiet only for a streaming field.
+
+**What is still there.** A save is two GitHub round trips and cannot be fewer
+without the git trees API, which would let one commit carry both head files
+and is a bigger change than this one. `viewer` still costs about a second the
+first time the estate sees a token, because that is Zitadel's introspection and
+userinfo, and the only ways past it are a longer `AUTH_CACHE_TTL_MS`, which the
+cache already caps against the token's own expiry, or not introspecting, which
+is not on offer.
