@@ -625,12 +625,18 @@ PERSISTED_AT = """(ident) => {
 
 # Setting the field back through the store rather than through the keyboard.
 #
-# A contenteditable is cleared with a select-all that a browser is free to
-# widen to the whole document, and a run that is here to prove nothing was
-# left behind must not risk typing into the wrong place. The action is the
-# very one a blur dispatches, with the value the run found in the DOM before
-# it typed, so it goes through the same reducer, the same recorder and the
-# same outbox.
+# **This does not reach the agent, and the comment here used to claim it did.**
+# `P.store` is the INNERMOST store, below the middleware chain, so the recorder
+# never sees this action, no change reaches the outbox and no save leaves the
+# browser: the value goes back in this tab and the object keeps the typed one
+# until the next poll puts the object's value back on the screen. `run_restore`
+# below is the one that actually sets a field back, by typing, and it exists
+# because of this. Two runs have now been misled by the paragraph that used to
+# stand here, the second on 2026-09-09.
+#
+# It stays because reading the state through `P.store` is what the probe needs,
+# and a local-only field write is occasionally what a scenario wants. It is
+# never a set-back.
 RESTORE = """(ident) => {
   const P = window.__jaenProbe
   if (!P || !P.store) return false

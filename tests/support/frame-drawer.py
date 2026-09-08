@@ -476,6 +476,32 @@ READ_PROBE = """() => {
           documentEvents: P.documentEvents.slice(-12)}
 }"""
 
+# The field's own contents selected, and nothing else.
+#
+# The set-back below used to click the field, press `End` and then Backspace
+# over the suffix. `End` in a contenteditable that WRAPS goes to the end of the
+# visual line, not the end of the content, so on 2026-09-09 a click that landed
+# in the middle of booklimo's `AboutP2` deleted twelve characters out of the
+# middle of a paragraph on the live draft ("economically and with comfort"
+# became "economica comfort") and left the run's own suffix standing at the end.
+# Selecting the node's contents through the Selection API cannot reach outside
+# the field the way a `Control+a` can, and typing the original over it does not
+# depend on where a click put the caret.
+SELECT_CONTENTS = """(value) => {
+  const nodes = Array.from(document.querySelectorAll('[contenteditable="true"]'))
+  const found = nodes.find(node => (node.innerText || '').trim() === value)
+  if (!found) return {found: false}
+  found.focus()
+  const range = document.createRange()
+  range.selectNodeContents(found)
+  const selection = window.getSelection()
+  selection.removeAllRanges()
+  selection.addRange(range)
+  return {found: true, selected: selection.toString().length,
+          inField: found.contains(range.commonAncestorContainer),
+          length: (found.textContent || '').length}
+}"""
+
 TYPE_TARGET = """(value) => {
   const nodes = Array.from(document.querySelectorAll('[contenteditable="true"]'))
   const found = nodes.find(node => (node.innerText || '').trim() === value)
@@ -813,12 +839,33 @@ async def run(page, report, only=None):
         report["setBack"] = {"found": back[0] if back else None,
                              "remove": back[1] if back else 0}
         if back:
+            # Click first, so the field is focused and edit mode has it, then
+            # select its own contents and type the original over them. See
+            # SELECT_CONTENTS for what the keyboard-only version cost.
             await page.mouse.click(back[0]["x"], back[0]["y"])
-            await page.keyboard.press("End")
-            for _ in range(back[1]):
-                await page.keyboard.press("Backspace")
-            await page.keyboard.press("Tab")
-            await page.wait_for_timeout(8000)
+            await page.wait_for_timeout(400)
+            selected = await page.evaluate(SELECT_CONTENTS, back[0]["text"])
+            report["setBack"]["selected"] = selected
+            if selected.get("found") and selected.get("inField") and \
+                    selected.get("selected") == selected.get("length"):
+                await page.keyboard.type(original, delay=6)
+                await page.wait_for_timeout(400)
+                report["setBack"]["typedReads"] = await page.evaluate(
+                    """(value) => {
+                      const nodes = Array.from(
+                        document.querySelectorAll('[contenteditable="true"]'))
+                      const node = nodes.find(
+                        n => (n.innerText || '').trim() === value)
+                      return node ? (node.innerText || '').trim() : null
+                    }""", original)
+                await page.keyboard.press("Tab")
+                await page.wait_for_timeout(8000)
+            else:
+                # Nothing is typed into a field whose own contents could not be
+                # selected. A run that cannot set a value back says so and
+                # leaves it, rather than deleting from wherever the caret is.
+                report["setBack"]["refused"] = (
+                    "the selection was not the field's own contents")
         report["setBack"]["readBack"] = await page.evaluate(
             """() => Array.from(document.querySelectorAll('[contenteditable="true"]'))
                  .map(n => (n.innerText || '').trim())

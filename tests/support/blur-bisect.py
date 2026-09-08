@@ -155,7 +155,7 @@ MUTATIONS = {
     # falls here as well, then what costs a whole-document recalculation is the
     # descendant combinator after the `:has()` and not the `:has()` itself, and
     # the repair is four selectors rather than eleven.
-    "nohasdesc": """() => {
+    "nohasdesc": r"""() => {
       let removed = 0
       const combinator = /:has\(\.jaen-app\)\s*[ >+~]/
       for (const sheet of Array.from(document.styleSheets)) {
