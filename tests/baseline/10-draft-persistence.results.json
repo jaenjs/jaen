@@ -1,0 +1,234 @@
+{
+  "notebook": "10-draft-persistence",
+  "started": 1788846768.6756506,
+  "testkit_version": "1.0.0",
+  "counts": {
+    "PASS": 17,
+    "FAIL": 2,
+    "SKIP": 0,
+    "WARN": 1,
+    "TOTAL": 20
+  },
+  "checks": [
+    {
+      "index": 1,
+      "name": "the harness bundles out of the jaen source",
+      "status": "PASS",
+      "evidence": "bundled 1723004 B",
+      "detail": "",
+      "section": "the harness",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 69,
+      "timestamp": 1788846768.745566
+    },
+    {
+      "index": 2,
+      "name": "the payload carries the unsent change and the edit",
+      "status": "PASS",
+      "evidence": "the edit is in the payload, read back out of it. changes waiting in the outbox. what is waiting",
+      "detail": "",
+      "section": "the persisted payload",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846768.8611927
+    },
+    {
+      "index": 3,
+      "name": "the payload does not carry the media catalogue",
+      "status": "FAIL",
+      "evidence": "77390 B payload, 140 media nodes in it, 76168 B of catalogue. expected 0, observed 140. change 2 of the plan: the catalogue is not persisted",
+      "detail": "",
+      "section": "the persisted payload",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846768.8617783
+    },
+    {
+      "index": 4,
+      "name": "an edit survives the browser being started again",
+      "status": "PASS",
+      "evidence": "the value the second process read out of storage. and 140 media nodes came back with it",
+      "detail": "",
+      "section": "a reload",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 128,
+      "timestamp": 1788846769.034558
+    },
+    {
+      "index": 5,
+      "name": "a hidden tab has the edit in storage with no waiting",
+      "status": "PASS",
+      "evidence": "1 listener(s) heard visibilitychange. read back out of storage in the same frame as the event",
+      "detail": "",
+      "section": "a hidden tab",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846769.447194
+    },
+    {
+      "index": 6,
+      "name": "the edit is in storage within the idle deadline anyway",
+      "status": "PASS",
+      "evidence": "read back 300 ms after the dispatch. the write is synchronous today: it was there at once",
+      "detail": "",
+      "section": "a hidden tab",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846769.447388
+    },
+    {
+      "index": 7,
+      "name": "an edit made offline is kept, in the store and in storage",
+      "status": "PASS",
+      "evidence": "read back out of storage while the agent is unreachable. waiting in the outbox. what the toolbar says",
+      "detail": "",
+      "section": "offline",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846774.7756362
+    },
+    {
+      "index": 8,
+      "name": "the queue drains on its own when the agent comes back",
+      "status": "PASS",
+      "evidence": "the outbox is empty again. and the value is still the one that was typed. drained 5.0 s after the network came back",
+      "detail": "",
+      "section": "offline",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846774.7759614
+    },
+    {
+      "index": 9,
+      "name": "the documented first retry is the one the code takes",
+      "status": "WARN",
+      "evidence": "first retry at 5.0 s, while draft-state.md and the plan both say 2 s: RETRY_SECONDS is indexe...",
+      "detail": "",
+      "section": "offline",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846774.7763824
+    },
+    {
+      "index": 10,
+      "name": "the browser saying online drains it at once",
+      "status": "PASS",
+      "evidence": "the outbox is empty. the value read back out of storage. drained 25 ms after the online event",
+      "detail": "",
+      "section": "offline",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846774.7766418
+    },
+    {
+      "index": 11,
+      "name": "three field writes inside the window are one commit",
+      "status": "FAIL",
+      "evidence": "3 call(s) to the agent, [1, 1, 1] change(s) each. expected 1, observed 3. change 3 of the plan",
+      "detail": "",
+      "section": "the quiet window",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846777.6512794
+    },
+    {
+      "index": 12,
+      "name": "none of the three values is lost, whatever the batching",
+      "status": "PASS",
+      "evidence": "all three read back out of the store. and all three left the outbox",
+      "detail": "",
+      "section": "the quiet window",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846777.651788
+    },
+    {
+      "index": 13,
+      "name": "a poll does not overwrite an unsent change",
+      "status": "PASS",
+      "evidence": "the remote draft says 'Our fleet'. the store after the hydration. and storage, read back. the change is still waiting",
+      "detail": "",
+      "section": "a poll mid-edit",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846777.8051467
+    },
+    {
+      "index": 14,
+      "name": "discard drops the unsent changes and keeps the head",
+      "status": "PASS",
+      "evidence": "something to discard. the outbox is empty. the edit is gone from the store, read back. and out of storage. the head the poller gave us survives. and so do the authors",
+      "detail": "",
+      "section": "discard",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846777.980822
+    },
+    {
+      "index": 15,
+      "name": "without the agent the CMS still saves to localStorage alone",
+      "status": "PASS",
+      "evidence": "no agent is configured. the edit read back out of storage. and nothing left the browser. no outbox is kept",
+      "detail": "",
+      "section": "the escape",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846778.079034
+    },
+    {
+      "index": 16,
+      "name": "a reload, a hidden tab, an offline edit and a second editor",
+      "status": "PASS",
+      "evidence": "the field had a value to begin with",
+      "detail": "",
+      "section": "the browser",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 47009,
+      "timestamp": 1788846825.174059
+    },
+    {
+      "index": 17,
+      "name": "an edit survives the tab being hidden and the page reloaded",
+      "status": "PASS",
+      "evidence": "in storage when the tab went away. and still there after the reload",
+      "detail": "",
+      "section": "the browser",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846825.1742175
+    },
+    {
+      "index": 18,
+      "name": "an edit made offline is kept and drains when the network is back",
+      "status": "PASS",
+      "evidence": "read back while offline. 1 change(s) waiting. the queue drained. and the value is unchanged",
+      "detail": "",
+      "section": "the browser",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846825.174428
+    },
+    {
+      "index": 19,
+      "name": "a second editor reads the change out of the repository",
+      "status": "PASS",
+      "evidence": "what the second browser hydrated from the agent",
+      "detail": "",
+      "section": "the browser",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846825.1745121
+    },
+    {
+      "index": 20,
+      "name": "the live field is back to the value the run found",
+      "status": "PASS",
+      "evidence": "read back out of an emptied browser",
+      "detail": "",
+      "section": "the browser",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 0,
+      "timestamp": 1788846825.1745825
+    }
+  ]
+}

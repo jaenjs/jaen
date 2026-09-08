@@ -1,0 +1,157 @@
+{
+  "notebook": "09-editing-latency",
+  "started": 1788846840.115986,
+  "testkit_version": "1.0.0",
+  "counts": {
+    "PASS": 10,
+    "FAIL": 3,
+    "SKIP": 0,
+    "WARN": 0,
+    "TOTAL": 13
+  },
+  "checks": [
+    {
+      "index": 1,
+      "name": "booklimo carries a live patch and a catalogue patch",
+      "status": "PASS",
+      "evidence": "live.json at /home/snekmin/git/limosen-v3/booklimo.at/jaen-data/live.json. live-media.json at /home/snekmin/git/limosen-v3/booklimo.at/jaen-data/live-media.json",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788846840.1455665
+    },
+    {
+      "index": 2,
+      "name": "the catalogue is the draft, by weight",
+      "status": "PASS",
+      "evidence": "live.json 1899 B, live-media.json 118617 B on disk. the catalogue compact is 76359 B. the catalogue is 62 times the pages",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 1,
+      "timestamp": 1788846840.148195
+    },
+    {
+      "index": 3,
+      "name": "the catalogue holds the 140 nodes the acceptance names",
+      "status": "PASS",
+      "evidence": "media nodes in booklimo's catalogue",
+      "detail": "",
+      "section": "the draft on disk",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788846840.148256
+    },
+    {
+      "index": 4,
+      "name": "the harness bundles out of the jaen source",
+      "status": "PASS",
+      "evidence": "bundled 1723004 B",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 65,
+      "timestamp": 1788846840.2422407
+    },
+    {
+      "index": 5,
+      "name": "one blur drives the store four times over",
+      "status": "PASS",
+      "evidence": "state 77090 B, 140 media nodes. whole-store writes per blur. 309253 B written per blur",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 13562,
+      "timestamp": 1788846853.8063753
+    },
+    {
+      "index": 6,
+      "name": "the catalogue is what is being copied",
+      "status": "PASS",
+      "evidence": "without the catalogue the store is 742 B of 77090. the catalogue is 99.0% of the payload",
+      "detail": "",
+      "section": "the persistence path in node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788846853.8065224
+    },
+    {
+      "index": 7,
+      "name": "a blur blocks the main thread for less than one frame (node)",
+      "status": "FAIL",
+      "evidence": "median 18.80 ms, p95 27.24 ms over 60 blurs. p95 of the whole blur, four serialisations included",
+      "detail": "",
+      "section": "acceptance, node",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788846853.8325765
+    },
+    {
+      "index": 8,
+      "name": "a payload of the real size is prepared for the browser",
+      "status": "PASS",
+      "evidence": "the browser gets 77390 B of store",
+      "detail": "",
+      "section": "the persistence path in the browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 87,
+      "timestamp": 1788846853.938243
+    },
+    {
+      "index": 9,
+      "name": "the persistence path costs, measured in chromium",
+      "status": "PASS",
+      "evidence": "77390 B, one whole-store save 0.455 ms (batch), 60 samples. the browser measured something",
+      "detail": "",
+      "section": "the persistence path in the browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 1890,
+      "timestamp": 1788846855.8286614
+    },
+    {
+      "index": 10,
+      "name": "a field is typed, left, and set back on the live agent",
+      "status": "PASS",
+      "evidence": "the edit reached the store. the field was set back",
+      "detail": "",
+      "section": "the real CMS",
+      "notebook": "09-editing-latency",
+      "duration_ms": 25604,
+      "timestamp": 1788846881.4446394
+    },
+    {
+      "index": 11,
+      "name": "the value read back out of an emptied browser is the one found",
+      "status": "PASS",
+      "evidence": "the repository holds what it held before this run",
+      "detail": "",
+      "section": "the real CMS",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788846881.4446685
+    },
+    {
+      "index": 12,
+      "name": "a blur is painted within one frame",
+      "status": "FAIL",
+      "evidence": "blur to the next painted frame: 24.8 ms. one frame at 16 ms",
+      "detail": "",
+      "section": "acceptance, browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788846881.4529333
+    },
+    {
+      "index": 13,
+      "name": "one blur is four whole-store writes, not more",
+      "status": "FAIL",
+      "evidence": "187 writes, 14.6 MB, in the four seconds after the blur. longest long task 51 ms. the plan says four: everything above that is the registration storm described above",
+      "detail": "",
+      "section": "acceptance, browser",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788846881.4529839
+    }
+  ]
+}
