@@ -59,9 +59,15 @@ holds, the owner's four unpublished fields included, compared field by field.
 discarded. The object went from 203 to 332.
 
 What did move is the authorship stamp of four fields, and it cannot be put back
-because the object stamps the writer of every write: `FleetTitle` and `AboutP2`
-were the owner's and are now a test account's, and `FaqSubtitle` and
-`ServicesSubtitle` carry a newer instant of the account that already held them.
-The two fixture fields are this suite's own. The two of the owner's are the
-`09` fault above, and they are the reason it is written down here rather than
-noted in passing.
+because the object stamps the writer of every write. `FaqSubtitle` and
+`ServicesSubtitle` are this suite's own fixture fields and carry a newer instant
+of the account that already held them. `FleetTitle` and `AboutP2` were the
+owner's: `FleetTitle` is the `09` fault above, found carrying ` probe probe` and
+set back through the agent by this run, and `AboutP2` was damaged and repaired by
+**another session working in this same checkout at the same time**, which
+committed its own account of it (`836912a`, "a set-back types the original over
+the field's own selection"). Both values are byte for byte the owner's again.
+
+That two notebooks of this suite wrote into an editor's unpublished fields on the
+same evening, by two different faults, is worth more than a line in a README, and
+it is in `docs/architecture/draft-state.md` with this run.
