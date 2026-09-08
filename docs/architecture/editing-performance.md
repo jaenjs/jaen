@@ -1172,3 +1172,194 @@ see each other's result, and this is the reading where they meet.
   0 remounts in these 40 gestures as in the 40 before them.
 - **The Fable 5.1 review of the editing path is still open**, and this run adds
   the deployed readings to what it has to read.
+
+## Verified adversarially 2026-09-08 in the evening, on the deployed booklimo.at
+
+An Opus session that built none of this. It read this file and
+`draft-state.md`, `private-storage.md` and `okf/decisions/hard-rules.md`, then
+took the two readings this file owns again rather than trusting the stored runs:
+the drawers of `tests/11-cms-frame.ipynb` and the store at rest and the blur to
+the next painted frame of `tests/09-editing-latency.ipynb`. Everything below was
+measured on `https://booklimo.at` as it is served to a person, signed in as the
+booklimo human admin, against the deployed `jaen-agent` 4.4.0 (`091d3f1`) and
+the site build app `1.9.2` at `4409131`. No package of this checkout has changed
+since that build, so the deployment is this tree. booklimo only. Nothing was
+written on limosen and its draft object still answers revision 0.
+
+The runs are in `tests/adversarial/` and the three probes beside them are
+`tests/support/adversarial-frame-rest.py`, `adversarial-drawer-390.py`,
+`adversarial-blur-cause.py`, `adversarial-blur-fields.py` and
+`adversarial-blur-profiler.py`.
+
+**A second session was writing to the same object throughout.** booklimo's
+`publishedRevision` went 137, 153, 167, 183 and `discardedRevision` with it while
+this run was measuring, which is another session publishing and discarding. So
+every reading here is taken with the revision read immediately before and after
+the act, and one of this run's own set-backs was completed by somebody else's
+discard rather than by its own keystrokes. Two verifiers on one live object is
+still not a measurement anybody should have to disentangle.
+
+### The drawers hold, and the audit is of the raw gestures rather than the count
+
+`tests/support/frame-drawer.py` under `JAEN_LIVE=1`, one run of 328 s, edit mode
+on, 43 editable fields, after ` frame probe` was typed into `FleetTitle` and left,
+which is the state the owner reported.
+
+| what was asked                               | what the deployed site answered                        |
+| -------------------------------------------- | ------------------------------------------------------ |
+| 1440x900, the left drawer on the first click | **10 of 10** opened, 10 of 10 still open afterwards    |
+| 1440x900, the right drawer                   | **10 of 10**, 10 of 10 still open                      |
+| 390x844, the left drawer                     | **10 of 10**, 10 of 10 still open                      |
+| 390x844, the right drawer                    | **10 of 10**, 10 of 10 still open                      |
+| under the storm dispatched from the page     | **10 of 10** and **10 of 10**, both drawers at 1440    |
+| a standing drawer through five seconds of it | still open after **257** React commits, **0** remounts |
+| and nothing of the storm reached the agent   | outbox 0 and revision 138 before and after             |
+
+The count is not what makes this hold, so the raw attempts were audited instead.
+Before every one of the sixty gestures: **0** dialog content nodes standing,
+`body` at `pointer-events: auto`, no `aria-hidden` on `#___gatsby`, and
+`elementFromPoint` at the trigger's own centre was the trigger button itself. The
+panel that answered was resolved through the trigger's own `aria-controls` and
+counted only at `data-state="open"` with real geometry. The window capture
+listener saw the `pointerdown` in every crossing. **0** mounts and **0** DOM
+insertions of either trigger in all sixty.
+
+One weakness of the instrument is worth naming because it looks stronger than it
+is. `openBefore` reads the panel through the trigger's `aria-controls`, and while
+a drawer is shut that attribute is absent, so `openBefore: false` would be
+answered for a shut drawer and for a missing attribute alike. What actually
+carries "it started shut" is the `dialogNodes: 0` beside it, which is read off
+every `[data-part="content"]` on the page and does not go through the trigger.
+
+**And the storm at 390, which nothing had measured.** `tests/11` drives the first
+click at both widths and the storm at 1440 only, because the storm section runs
+after the viewport has been put back, and this file records the narrow width as
+something its reading does not cover. `tests/support/adversarial-drawer-390.py`
+takes the two together: at 390x844, with **13,888** `pages/field_register`
+actions dispatched into jaen's own store over 69.7 s (52.0 React commits a
+second, 26.0 animation frames a second, 3.4 `localStorage` writes a second), the
+left drawer opened on the first click **10 of 10** and the right **10 of 10**,
+every one of the twenty from a page with no dialog standing and the trigger the
+topmost element at its own centre. The outbox was 0 and the draft at revision 168
+before and after the storm, so none of it reached the agent.
+
+### The store at rest is zero, and two instruments say so
+
+Three windows of thirty seconds with edit mode off and three with it on, rather
+than the five second windows the ship run took, because with a socket up the poll
+ticks about every thirty seconds and a five second window can sit between two
+ticks.
+
+| ninety seconds, untouched     | edit mode off  | edit mode on |
+| ----------------------------- | -------------- | ------------ |
+| dispatches                    | **0**          | **0**        |
+| `localStorage` writes         | **0**          | **0**        |
+| bytes written                 | **0**          | **0**        |
+| animation frames a second     | 59.56 to 59.72 | 59.75        |
+| a 50 ms `setTimeout` fires at | 50 ms          | 50 ms        |
+| longest long task in a window | 59 to 102 ms   | 64 to 69 ms  |
+
+The second instrument is independent of the first. The `setItem` counter is a
+wrapper installed before any script of the page, and beside it the raw persisted
+string is read at the start of each window and again at the end: **byte identical
+in all six**, by length and by hash. A write the counter missed would still have
+moved the payload.
+
+The long task of about seventy milliseconds once or twice in every thirty second
+window is present with edit mode off as well, so it is not the CMS's editing
+path.
+
+**And it is not a property of the home page.** Every zero this file has recorded
+was taken on booklimo's `/` with edit mode on, and the remount that used to drive
+the storm came out of the site's own `FooterWithLocale`, which is built from the
+locale prefix. Fifteen second windows on three pages, edit mode on:
+`/` (43 editable fields), `/de/` (43) and `/imprint/` (3), all **0.0 dispatches a
+second and 0.0 writes a second**. The German locale, which is the one that makes
+that component's prop differ, storms no more than the default one.
+
+### The blur to the next painted frame is over one frame, and load is not why
+
+Sixty blurs in three runs of twenty, on `FleetTitle` of the home page, edit mode
+on. Ten of each run carry a real change (five add a character and five take it away
+again, so the run ends at the value it found) and ten carry none at all.
+
+| p95 of ten                | run A      | run B      | run C      |
+| ------------------------- | ---------- | ---------- | ---------- |
+| a blur with nothing typed | 69.7 ms    | 66.2 ms    | 59.0 ms    |
+| a blur carrying a change  | 58.8 ms    | 66.4 ms    | 70.8 ms    |
+| medians                   | 57.5, 51.6 | 58.8, 58.2 | 52.8, 54.5 |
+
+**Every one of the sixty is over one frame at 16 ms**, and so are the twelve of a
+fourth run taken beside them, whose lowest reading is 25.7 ms. The acceptance at
+the top of this file is red where a person meets it.
+
+Two things separate this from the causes this file has offered for it.
+
+**It is not the persistence path and not the dispatches.** A blur with nothing
+typed dispatches **0** actions and writes **0** bytes and costs the same 49 to
+70 ms as one that dispatches four (`pages/field_write`, `remote/record`,
+`remote/saveStarted`, `remote/saveSucceeded`) and writes two or three times.
+
+**It is not the machine.** This file's last word on the cause is "load is the
+likeliest cause and this run cannot prove it, because it may not close somebody's
+browsers to take a measurement". Load does not have to be removed to be measured
+around. Two controls were taken in the same page, the same browser session and
+the same minutes as the blurs, with the person's own browsers running throughout
+and the load average between 2.3 and 3.7 on a ten core machine:
+
+| in the same page, the same minute                     | median  | p95     |
+| ----------------------------------------------------- | ------- | ------- |
+| a `requestAnimationFrame` asked for from a timer      | 15.0 ms | 16.9 ms |
+| a real Tab that moves focus from one link to the next | 6.8 ms  | 15.2 ms |
+| a real Tab that leaves a jaen field                   | 52.8 ms | 59.0 ms |
+
+That is run C. Run B's two controls in its own minutes are a median of 15.3 ms
+for the frame and 9.7 ms for the link against a blur of 58.8 ms, so the shape is
+the same twice.
+
+A page that hands an ordinary keystroke its next frame in seven milliseconds is
+not a page that is short of frames. The forty to fifty milliseconds are spent on
+the way out of a jaen field and nowhere else.
+
+### The one instrument that could name the work changes the number
+
+This is the finding this run did not expect and it is why the cause is still not
+named. Five blurs measured with the V8 sampling profiler running across each of
+them read a median of 14.5 ms, in the same hour as the runs above.
+
+So the two were interleaved in one run, same field, same page, same minutes, ten
+of each, alternating:
+
+| twenty blurs, alternating             | median       | max     | over one frame |
+| ------------------------------------- | ------------ | ------- | -------------- |
+| with `Profiler.start` across the blur | **16.95 ms** | 29.1 ms | 8 of 10        |
+| without it                            | **53.1 ms**  | 69.3 ms | 10 of 10       |
+
+The profiler makes the gesture more than three times faster. Whatever the forty
+milliseconds are, they are not ordinary main thread JavaScript, because attaching
+a sampler that only adds work removes them. The self time the profiler did
+collect over five blurs is about 28 ms in the app bundle and 18 ms in one vendor
+chunk in total, which is a few milliseconds a blur and nowhere near the gap.
+
+What that leaves, for whoever takes this: the gap is likelier to be a wait for a
+frame that the renderer is not producing than a task it is busy with, and the
+profiler's presence is exactly the kind of thing that keeps a renderer producing
+frames. A reading taken with the profiler attached is therefore not the reading a
+person gets, and `09`'s number should keep being taken without one.
+
+### What was left, and what this run could not settle
+
+- **The live draft is back at its published state.** Every field of booklimo's
+  draft is the value the run found, `FleetTitle` is `Our fleet`, the site serves
+  `Our fleet` and no probe marker appears anywhere in the served home page. The
+  object stands at `revision 183 = publishedRevision 183`, which is where the
+  other session's own discard left it rather than where this run put it.
+- **Nothing was published and nothing was discarded by this run.** A discard
+  would have corrected the stamp this run's set-backs moved, and it was not made:
+  another session was demonstrably writing to the same object, and a discard
+  taken a second after somebody else types refuses their save.
+- **The cause of the blur gap is still not named**, only narrowed: not the store,
+  not the dispatches, not the machine, and not visible to the profiler that could
+  have named it.
+- **One machine, one browser, two widths, one site.** Unchanged.
+- **The Fable 5.1 review of the editing path is still open.**
