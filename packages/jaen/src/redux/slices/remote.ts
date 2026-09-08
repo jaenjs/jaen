@@ -54,6 +54,16 @@ const remoteSlice = createSlice({
      * off that claim.
      */
     resume: state => {
+      // A store persisted before 2026-09-08 in the evening carries `revision`
+      // and no `appliedRevision`, and what that browser had merged is exactly
+      // the revision it last saw. Reading it as "nothing merged" would make
+      // the first read of every upgrading browser a full one, and reading it
+      // as undefined for ever would make every guard below compare against
+      // nothing.
+      if (typeof state.appliedRevision !== 'number') {
+        state.appliedRevision = state.revision
+      }
+
       state.saveState =
         state.outbox.length > 0
           ? 'pending'
@@ -83,6 +93,7 @@ const remoteSlice = createSlice({
         ids: number[]
         revision: number
         savedAt: string
+        rebased?: boolean
         authors?: JaenAuthors
         overwrote?: FieldOverwrite[]
       }>
@@ -90,7 +101,31 @@ const remoteSlice = createSlice({
       const flushed = new Set(action.payload.ids)
 
       state.outbox = state.outbox.filter(entry => !flushed.has(entry.id))
-      state.revision = action.payload.revision
+      state.revision = Math.max(state.revision ?? -1, action.payload.revision)
+
+      /**
+       * Whether this browser's copy is the object's copy after its own save.
+       *
+       * `rebased: false` says the object was at exactly the base this call
+       * carried, so the object at the revision it answers is this browser's
+       * merged content plus the write it has just made, and there is nothing
+       * to read back. `rebased: true` says the object had moved on: it folded
+       * this write onto another editor's, and that other editor's change is in
+       * the object and not here. So the applied mark stays where it was, the
+       * next read is asked from there and brings both changes, and until it
+       * lands every answer older than this save's own revision is refused.
+       *
+       * That refusal is the fix of "a field sometimes reverts": the answer the
+       * object produced before this save cannot contain it, and applying it
+       * writes the value the person replaced back over the one they typed.
+       */
+      if (!action.payload.rebased) {
+        state.appliedRevision = Math.max(
+          state.appliedRevision ?? -1,
+          action.payload.revision
+        )
+      }
+
       state.lastSavedAt = action.payload.savedAt
       // What the recorder appended while the call was out is not saved, and
       // the toolbar keeps saying so until the next flush takes it.
@@ -135,7 +170,15 @@ const remoteSlice = createSlice({
         replaceAuthors?: boolean
       }>
     ) => {
-      state.revision = action.payload.revision
+      // Never backwards. An answer below what this browser holds is refused
+      // before it reaches this reducer, and a mark that moved down with it is
+      // what made the revert of 2026-09-08 heal itself thirty seconds later
+      // and would have hidden a worse one. See docs/architecture/draft-state.md.
+      state.revision = Math.max(state.revision ?? -1, action.payload.revision)
+      state.appliedRevision = Math.max(
+        state.appliedRevision ?? -1,
+        action.payload.revision
+      )
 
       if (typeof action.payload.publishedRevision === 'number') {
         state.publishedRevision = action.payload.publishedRevision
@@ -161,11 +204,30 @@ const remoteSlice = createSlice({
         publishedRevision?: number | null
       }>
     ) => {
-      state.revision = action.payload.revision
+      state.revision = Math.max(state.revision ?? -1, action.payload.revision)
+
+      // `changed: false` is the object saying that nothing above the mark this
+      // read was asked from exists, so what this browser holds is current as
+      // far as the revision it answers. A socket frame about a revision this
+      // browser has already applied says the same thing and moves neither.
+      state.appliedRevision = Math.max(
+        state.appliedRevision ?? -1,
+        action.payload.revision
+      )
 
       if (typeof action.payload.publishedRevision === 'number') {
         state.publishedRevision = action.payload.publishedRevision
       }
+    },
+
+    /**
+     * An answer that was older than what this browser had already applied, or
+     * older than the revision its own last save was given, and was therefore
+     * not applied. It is counted and nothing else: no mark moves, because the
+     * answer said nothing this browser did not already know.
+     */
+    staleAnswerSkipped: state => {
+      state.staleAnswers = (state.staleAnswers || 0) + 1
     },
 
     /**
@@ -185,7 +247,13 @@ const remoteSlice = createSlice({
         publishedRevision?: number | null
       }>
     ) => {
+      // Both marks, and down as well as up: this is a different object, and
+      // its revisions are a new sequence. Keeping the old applied mark would
+      // make every read of the new object an answer this browser refuses, for
+      // ever, which is the one way a guard against going backwards can lose
+      // more than it saves.
       state.revision = action.payload.revision
+      state.appliedRevision = action.payload.revision
       state.objectRestartedAt = new Date().toISOString()
 
       if (typeof action.payload.publishedRevision === 'number') {
@@ -248,6 +316,11 @@ const remoteSlice = createSlice({
     ) => {
       state.outbox = []
       state.revision = action.payload.revision
+      // Nothing of the restored draft is merged here yet, so the read that
+      // follows a discard is asked for from nothing and is answered whole.
+      // Leaving the applied mark where it was would have this browser refuse
+      // that answer as older than itself and keep the discarded copy.
+      state.appliedRevision = undefined
       state.publishedRevision =
         typeof action.payload.publishedRevision === 'number'
           ? action.payload.publishedRevision

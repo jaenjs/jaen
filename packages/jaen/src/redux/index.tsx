@@ -93,8 +93,15 @@ const rootReducer = (state: any, action: any) => {
       // Discard means the unsent changes go too. Anything the object already
       // took stays in the object, which is what the CMS says on the button:
       // this browser stops carrying what it had not sent, and the revision it
-      // last saw is kept so the next read asks for a delta rather than the
-      // whole draft.
+      // last saw is kept so a save it makes next carries a base the object
+      // recognises.
+      //
+      // `appliedRevision` deliberately does not come with it. The page, site
+      // and widget slices above are being reset, so this browser has just
+      // stopped holding the draft's content, and the mark that says what it
+      // has merged has to say so: the next read is asked for from nothing and
+      // is answered whole. Carrying the mark over would ask for a delta onto a
+      // copy that is no longer there.
       remote: {
         ...remoteInitialState,
         active: state?.remote?.active ?? false,

@@ -334,6 +334,40 @@ const discardInvalidates = (
   discardedRevision > (remote?.discardedRevision ?? 0)
 
 /**
+ * The revision a read is asked from, and the revision a save is based on.
+ *
+ * It is the **applied** mark and not the highest revision this browser has
+ * heard of, because the two come apart the moment a save is rebased: the
+ * object answers "I am at 207" while 206 holds another editor's change this
+ * browser has never merged. Asking from 207 there is asking for nothing and
+ * staying stale for ever; asking from 205 is asking for both changes, which is
+ * what this browser is actually missing. See docs/architecture/draft-state.md,
+ * "A field sometimes reverts".
+ */
+const readMark = (remote: any): number | undefined =>
+  typeof remote?.appliedRevision === 'number'
+    ? remote.appliedRevision
+    : typeof remote?.revision === 'number'
+      ? remote.revision
+      : undefined
+
+/**
+ * The highest revision this browser knows the object reached, its own saves
+ * counted. An answer below it was produced before something this browser
+ * already holds and cannot contain it.
+ */
+const knownMark = (remote: any): number | undefined => {
+  const applied = readMark(remote)
+  const revision =
+    typeof remote?.revision === 'number' ? remote.revision : undefined
+
+  if (typeof revision !== 'number') return applied
+  if (typeof applied !== 'number') return revision
+
+  return Math.max(revision, applied)
+}
+
+/**
  * The object's delta, folded onto a draft.
  *
  * Four kinds of key, and each one is merged the way the object splits it.
@@ -463,6 +497,8 @@ export default (config: AgentConfig) => {
     let pollTimer: ReturnType<typeof setInterval> | undefined
     let pollingEvery: number | undefined
     let inFlight = false
+    /** A read somebody asked for while a save was in flight. See `wantPoll`. */
+    let pollWanted = false
     let failures = 0
     let stopped = false
     /** True while the object's socket is open. Drives `wantedPollMs`. */
@@ -515,7 +551,7 @@ export default (config: AgentConfig) => {
       const changes = batch.map((entry: any) => entry.change)
 
       try {
-        const answer = await saveChanges(config, changes, remote.revision)
+        const answer = await saveChanges(config, changes, readMark(remote))
 
         failures = 0
 
@@ -524,6 +560,9 @@ export default (config: AgentConfig) => {
             ids,
             revision: answer.revision,
             savedAt: answer.savedAt || new Date().toISOString(),
+            // What the object did with the base decides whether this browser's
+            // copy is now the object's copy. See the reducer.
+            rebased: Boolean(answer.rebased),
             overwrote: answer.overwrote
           })
         )
@@ -534,8 +573,15 @@ export default (config: AgentConfig) => {
         // between. Asking at once rather than waiting for the next interval is
         // the difference between seeing the other editor's field and looking
         // at a value that is no longer the draft's.
+        //
+        // It is asked for through `wantPoll` and not `poll` directly, because
+        // `inFlight` is still set here: it is cleared in the `finally` below,
+        // and `poll()`'s own early return on `inFlight` swallowed this read
+        // entirely until 2026-09-08 in the evening. Measured by its absence,
+        // twice, in `tests/revert/forced-a.json` and `forced-b.json`: the one
+        // read that would have repaired the revert in a second never ran.
         if (answer.rebased) {
-          void poll()
+          wantPoll()
         }
       } catch (error) {
         /**
@@ -600,6 +646,14 @@ export default (config: AgentConfig) => {
         failures === 0
       ) {
         scheduleFlush(0)
+      }
+
+      // Everything that asked to read while this call was out. Two things do:
+      // a save that came back rebased, and a socket frame about another
+      // editor's write that landed inside the call. Both were dropped on the
+      // floor by `poll()`'s early return before this.
+      if (!stopped && pollWanted && !inFlight) {
+        void poll()
       }
     }
 
@@ -747,19 +801,143 @@ export default (config: AgentConfig) => {
       try {
         const answer = await fetchDraft(config)
 
-        if (answer.changed) hydrate(answer)
+        if (answer.changed) applyAnswer(answer)
       } catch (error) {
         console.debug('jaen agent: the whole draft could not be read', error)
       }
     }
 
-    const poll = async (): Promise<void> => {
-      if (stopped || inFlight) return
-
+    /**
+     * The gate every answer passes, read against the store **at the instant
+     * the answer arrives** and never against a snapshot taken before the call.
+     *
+     * That distinction is the whole of the bug of 2026-09-08. `poll()` took
+     * `state().remote` before its `await` and compared the answer against it,
+     * so a browser that had saved while the read was out compared against the
+     * revision it had left behind: 206 against 205, false, while it stood at
+     * 207. The answer, produced by the object before that save, then wrote the
+     * value the person had replaced back over the one they typed. Measured
+     * twice on the live booklimo.at, `tests/revert/forced-a.json` and
+     * `forced-b.json`.
+     *
+     * Three answers and three outcomes:
+     *
+     * - **below the revision this read was asked from**: the object cannot go
+     *   backwards while it lives, so this is another object answering in the
+     *   place of one that is gone. The content is refused because it is older
+     *   than the screen, and the revision is adopted because the next save has
+     *   to carry a base the new object recognises.
+     * - **at or below what this browser has already applied, or below the
+     *   revision its own last save was given**: it can contain nothing this
+     *   browser does not hold, and it can be missing something this browser
+     *   does. It is counted and dropped, and the applied mark stays where it
+     *   is, so the next read is asked from there and brings everything the
+     *   dropped answer carried.
+     * - **above both**: applied.
+     */
+    const applyAnswer = (answer: DraftAnswer, askedFrom?: number) => {
       const remote = state().remote
+      const applied = readMark(remote)
+      const known = knownMark(remote)
+
+      if (typeof answer.revision !== 'number') {
+        hydrate(answer)
+        return
+      }
+
+      if (typeof askedFrom === 'number' && answer.revision < askedFrom) {
+        // The object went backwards, which a monotonic revision cannot do
+        // while the object lives. What it means is that the object this
+        // browser was talking to is gone and a new one answered in its place,
+        // at a revision it has not reached yet. Its answer is older than what
+        // is on this screen, so applying it would take an edit away from the
+        // person who made it, and that is the one thing this file is not
+        // allowed to do.
+        //
+        // The comparison is against the revision **this read was sent with**
+        // and not against the mark the browser holds now, because those are
+        // two different questions: a browser whose mark moved on while a read
+        // was out gets an answer below its mark from a perfectly healthy
+        // object, and calling that a restart would move both marks down onto a
+        // race. An answer below what this very read asked from cannot come
+        // from the object that was asked.
+        //
+        // What is not recovered here is what the other editors had written
+        // into the object that died: nothing in a browser holds that, and the
+        // design's answer to it is the snapshot the object writes outside
+        // itself. See docs/architecture/draft-state.md.
+        console.warn(
+          `jaen agent: the draft went from revision ${askedFrom} back to ${answer.revision}, keeping what is in this browser`
+        )
+
+        store.dispatch(
+          remoteActions.objectRestarted({
+            revision: answer.revision,
+            publishedRevision: answer.publishedRevision
+          })
+        )
+
+        return
+      }
+
+      if (
+        (typeof applied === 'number' && answer.revision <= applied) ||
+        (typeof known === 'number' && answer.revision < known)
+      ) {
+        console.debug(
+          `jaen agent: an answer at revision ${answer.revision} is older than this browser (applied ${applied}, known ${known}), keeping what is here`
+        )
+
+        store.dispatch(remoteActions.staleAnswerSkipped())
+
+        return
+      }
+
+      hydrate(answer)
+    }
+
+    /**
+     * Ask for a read, or owe one.
+     *
+     * A save being in flight is not a reason to drop a read: it is a reason to
+     * take it after the save. Two callers matter and both were dropped before
+     * this existed, a rebased save's own re-read and a socket frame about
+     * another editor's write, and both of them are the moment a second editor
+     * is writing into the same draft.
+     */
+    const wantPoll = () => {
+      if (stopped) return
+
+      if (inFlight) {
+        pollWanted = true
+        return
+      }
+
+      void poll()
+    }
+
+    const poll = async (): Promise<void> => {
+      if (stopped) return
+
+      if (inFlight) {
+        // The read is not dropped, it is owed. `flush()` runs it when the call
+        // it is waiting behind comes back.
+        pollWanted = true
+        return
+      }
+
+      pollWanted = false
+
+      const askedFrom = readMark(state().remote)
 
       try {
-        const answer = await fetchDraft(config, remote.revision)
+        const answer = await fetchDraft(config, askedFrom)
+
+        // Everything below is decided against the store as it is **now**, and
+        // not against the one this call started with: the browser may have
+        // saved, hydrated or been discarded on while the answer was on the
+        // wire, which is exactly the window this whole gate exists for.
+        const remote = state().remote
 
         // A discard reaches a browser whose revision is already the object's
         // through this branch as well, which is what a browser that adopted a
@@ -808,40 +986,7 @@ export default (config: AgentConfig) => {
           return
         }
 
-        // The object went backwards, which a monotonic revision cannot do
-        // while the object lives. What it means is that the object this
-        // browser was talking to is gone and a new one answered in its place,
-        // at a revision it has not reached yet. Its answer is older than what
-        // is on this screen, so applying it would take an edit away from the
-        // person who made it, and that is the one thing this file is not
-        // allowed to do.
-        //
-        // So the answer is skipped and the object's revision is adopted, which
-        // keeps the next save's base valid and lets everything after the
-        // restart arrive normally. What is not recovered here is what the
-        // other editors had written into the object that died: nothing in a
-        // browser holds that, and the design's answer to it is the snapshot
-        // the object writes outside itself. See docs/architecture/draft-state.md.
-        if (
-          typeof remote.revision === 'number' &&
-          typeof answer.revision === 'number' &&
-          answer.revision < remote.revision
-        ) {
-          console.warn(
-            `jaen agent: the draft went from revision ${remote.revision} back to ${answer.revision}, keeping what is in this browser`
-          )
-
-          store.dispatch(
-            remoteActions.objectRestarted({
-              revision: answer.revision,
-              publishedRevision: answer.publishedRevision
-            })
-          )
-
-          return
-        }
-
-        hydrate(answer)
+        applyAnswer(answer, askedFrom)
       } catch (error) {
         // A poll that fails changes nothing. The save state belongs to the
         // flusher, and saying "offline" because a read timed out while every
@@ -920,16 +1065,20 @@ export default (config: AgentConfig) => {
 
       closeSocket = openDraftSocket(config, {
         onRevision: (revision, publishedRevision) => {
-          const remote = state().remote
+          const applied = readMark(state().remote)
 
-          // A frame about a revision this browser already has is the object
-          // telling it about its own save, which is every save it makes. The
-          // read is skipped and the mark is moved, which is what keeps a busy
-          // editor from asking for a delta after each of their own writes.
-          if (
-            typeof remote?.revision === 'number' &&
-            revision <= remote.revision
-          ) {
+          // A frame about a revision this browser has already **applied** is
+          // the object telling it about its own save, which is every save it
+          // makes. The read is skipped and the mark is moved, which is what
+          // keeps a busy editor from asking for a delta after each of their
+          // own writes.
+          //
+          // The comparison is against the applied mark and not against the
+          // highest revision this browser has heard of: a save that was
+          // rebased leaves the second above the first, and comparing against
+          // it would drop the one frame that says another editor's change is
+          // waiting to be read.
+          if (typeof applied === 'number' && revision <= applied) {
             if (typeof publishedRevision === 'number') {
               store.dispatch(
                 remoteActions.revisionSeen({revision, publishedRevision})
@@ -939,7 +1088,13 @@ export default (config: AgentConfig) => {
             return
           }
 
-          void poll()
+          // `wantPoll` and not `poll`, because a frame that lands while this
+          // browser's own save is in flight is exactly when another editor is
+          // writing. Before 2026-09-08 in the evening `poll()` returned at
+          // once on `inFlight` and nothing asked again, so the other editor's
+          // change waited for the safety poll: 24.77 s, measured in
+          // `tests/revert/saveflight-a.json`.
+          wantPoll()
         },
         onLive: live => {
           socketLive = live

@@ -1,6 +1,13 @@
 import {Button, Portal, Text, TextProps, Tooltip} from '@chakra-ui/react'
 import DOMPurify from 'isomorphic-dompurify'
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} from 'react'
 
 import {FaAlignCenter} from '@react-icons/all-files/fa/FaAlignCenter'
 import {FaAlignJustify} from '@react-icons/all-files/fa/FaAlignJustify'
@@ -198,10 +205,59 @@ export const TextField = connectField<string, TextFieldProps>(
       return stripEmptyAnchors(value)
     }, [value, jaenField.isEditing, isRTF])
 
+    /**
+     * What React was last given as `__html`, and the one rule about when that
+     * may change: **never while the caret is in this field**.
+     *
+     * `dangerouslySetInnerHTML` re-sets `innerHTML` whenever the string it is
+     * given changes, and setting `innerHTML` puts the caret back at position
+     * zero and replaces whatever the person had typed since the last render.
+     * So while the field has focus it keeps being handed the string it already
+     * has, whatever the store says, and the outside value waits until they
+     * leave.
+     *
+     * Until 2026-09-08 in the evening the freeze held only for the echo of
+     * this field's own dispatch, and the comment here said the narrowness was
+     * deliberate: "a value that arrives from anywhere else, another editor's
+     * change over the socket above all, is written into the DOM exactly as it
+     * was before this change, caret and all". Measured on the live booklimo.at
+     * that reads: the other editor's value replaced the sentence the person
+     * was in the middle of, the next two keystrokes landed at the **start** of
+     * the field, and the two sides then fought, four saves in thirteen
+     * seconds. `tests/revert/focused-a.json` and `focused-b.json`, and the
+     * owner's own draft carried the fingerprint of it, `dudhd` twice in one
+     * field with one of them at the front of a sentence he was appending to.
+     *
+     * What the outside change costs by waiting is that this person's blur
+     * writes over it. That is the ordinary last-writer-wins of a shared draft,
+     * the object answers `overwrote` for it and the CMS says whose change was
+     * taken. What it buys is that a person's own unfinished sentence is never
+     * removed from under their hands, which is the invariant this CMS is sold
+     * on. Where the two disagree, safety wins.
+     *
+     * `bumpRender` exists so that leaving the field is a render: `focusedRef` is
+     * a ref, so nothing else would re-read the value that waited.
+     */
+    const focusedRef = useRef(false)
+    const dirtyRef = useRef(false)
+    const renderedRef = useRef<typeof displayValue>(displayValue)
+    const [, bumpRender] = useReducer((count: number) => count + 1, 0)
+
+    if (!focusedRef.current) {
+      renderedRef.current = displayValue
+    }
+
     const {toast} = useNotificationsContext()
 
+    /**
+     * The tag follows what is **painted** and not what is stored, which is the
+     * same freeze one level up: a value arriving from outside while a person
+     * types could otherwise turn the wrapper from a span into a div, and React
+     * replacing the element rebuilds its DOM out of the frozen string with
+     * everything the person had typed since gone.
+     */
     const asAs = useMemo(() => {
-      if (containsFlowContent(value)) {
+      if (containsFlowContent(renderedRef.current)) {
         return 'div'
       }
 
@@ -213,34 +269,7 @@ export const TextField = connectField<string, TextFieldProps>(
       }
 
       return (Wrapper as any).displayName === 'Heading' ? 'h2' : undefined
-    }, [value, (Wrapper as any).displayName, definedAsAs])
-
-    /**
-     * What this field last handed the store, and what React was last given as
-     * `__html`.
-     *
-     * A field dispatches while a person types now (see `handleContentInput`),
-     * and `dangerouslySetInnerHTML` re-sets `innerHTML` whenever the string it
-     * is given changes, which puts the caret back at the start of the field.
-     * So the echo of this field's own dispatch is not handed back to React:
-     * while the caret is in the field and the store's value is exactly what
-     * this field put there, React keeps being given the string it already has
-     * and does not touch the DOM.
-     *
-     * The freeze is deliberately narrow. It holds only while the field has
-     * focus, so a value that arrives from anywhere else, another editor's
-     * change over the socket above all, is written into the DOM exactly as it
-     * was before this change, caret and all. And it holds only for this
-     * field's own echo, so nothing can freeze the rendering of a field nobody
-     * is typing into.
-     */
-    const focusedRef = useRef(false)
-    const dispatchedRef = useRef<string | null | undefined>(undefined)
-    const renderedRef = useRef<typeof displayValue>(displayValue)
-
-    if (!focusedRef.current || displayValue !== dispatchedRef.current) {
-      renderedRef.current = displayValue
-    }
+    }, [renderedRef.current, (Wrapper as any).displayName, definedAsAs])
 
     /**
      * `reason` decides only whether a person is told, and never what is
@@ -256,8 +285,6 @@ export const TextField = connectField<string, TextFieldProps>(
           if (data === value) {
             return
           }
-
-          dispatchedRef.current = data || undefined
 
           jaenField.onUpdateValue(data || undefined)
 
@@ -319,15 +346,43 @@ export const TextField = connectField<string, TextFieldProps>(
       }
     }, [jaenField.isEditing])
 
+    /**
+     * Leaving the field, which is the moment the freeze above ends.
+     *
+     * A person who typed has their own text written to the store at once
+     * rather than half a second later: the debounce is flushed here because
+     * the render that follows the blur is the one that paints whatever the
+     * store holds, and without the flush that render would paint the value
+     * that arrived from outside while they were typing and then flip back to
+     * theirs when the debounce fired.
+     *
+     * A person who only clicked into the field and out of it again writes
+     * nothing. That is what `dirtyRef` is for and it is not a nicety: with the
+     * freeze in place the DOM of an untouched field still holds the value it
+     * had before the other editor's change, so dispatching it on the way out
+     * would overwrite somebody else's work with a click.
+     */
     const handleContentBlur: React.FocusEventHandler<HTMLSpanElement> =
       useCallback(evt => {
         focusedRef.current = false
-        handleTextSave(evt.currentTarget.innerHTML, 'blur')
+
+        if (dirtyRef.current) {
+          dirtyRef.current = false
+          handleTextSave(evt.currentTarget.innerHTML, 'blur')
+          handleTextSave.flush()
+          return
+        }
+
+        // Nothing of this person's is waiting, so whatever arrived while they
+        // were in the field is painted now. Nothing else would ask for it: a
+        // ref does not re-render.
+        bumpRender()
       }, [])
 
     const handleContentFocus: React.FocusEventHandler<HTMLSpanElement> =
       useCallback(() => {
         focusedRef.current = true
+        dirtyRef.current = false
       }, [])
 
     /**
@@ -344,6 +399,10 @@ export const TextField = connectField<string, TextFieldProps>(
      */
     const handleContentInput: React.FormEventHandler<HTMLSpanElement> =
       useCallback(evt => {
+        // Every way the DOM of this field changes under a person passes here,
+        // typing, pasting and every `execCommand` of the tunes, and it is what
+        // decides whether leaving the field writes anything at all.
+        dirtyRef.current = true
         handleTextSave(evt.currentTarget.innerHTML, 'input')
       }, [])
 
