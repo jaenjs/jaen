@@ -2484,3 +2484,209 @@ times against a `totalCount` of 47. The KRC organisation manager token answers
 both correctly. It is the shape of the rule
 `okf/decisions/hard-rules.md` already carries about an empty identity answer,
 seen once more.
+
+## Shipped 2026-09-09, and the field that reverted is measured where a person meets it
+
+Everything above this heading about the revert was measured on a local
+production build. This is the run that deployed it: the three dists rebuilt,
+both sites built and deployed through their own `scripts/deploy.sh`, and the
+same instrument that reproduced the revert driven again on
+`https://booklimo.at` as it is served. booklimo only, because that is where
+this estate tests (`okf/decisions/hard-rules.md`); nothing was written on
+limosen beyond the build its own `scripts/deploy.sh` makes.
+
+### The agent was not deployed, and that is a reading rather than an omission
+
+`git diff 091d3f1..HEAD -- packages/jaen-agent` is **empty**: the repair of the
+revert is entirely the client's, one number becoming two in
+`packages/jaen/src/redux/remote-state.ts` and the freeze in
+`packages/jaen/src/fields/TextField/TextField.tsx`, and the object it talks to
+did not have to learn anything. So there was nothing to deploy and the stamp was
+read back rather than assumed, off both custom domains:
+
+| what    | value                                             |
+| ------- | ------------------------------------------------- |
+| version | `4.4.0`, unchanged                                |
+| commit  | `091d3f1`                                         |
+| builtAt | `2026-09-08T18:49:12Z`                            |
+| routes  | `jaen-agent.booklimo.at`, `jaen-agent.limosen.at` |
+
+That the two halves of this design could be shipped apart is worth one line of
+its own. The wire between them did not move: the client asks the same `draft`,
+`save` and `subscribe` it asked yesterday, and what changed is which answers it
+applies.
+
+### The two sites
+
+`packages/jaen/dist`, `packages/gatsby-plugin-jaen/dist` and
+`packages/gatsby-source-jaen/dist` rebuilt, and **`packages/gatsby-jaen-app/dist`
+beside them, which the three do not cover**. The `:has()` repair of
+`editing-performance.md` is in that package and its `dist` was three hours older
+than its source, so a run that rebuilt only the three would have deployed the
+repair's version number without the repair. It is a fourth dist and this file
+says so rather than leaving the next run to find it.
+
+`packages/jaen` typechecks clean. `gatsby-plugin-jaen` has the same **thirty**
+errors it has carried since `private-storage.md` recorded them, all in files no
+work of these sessions touched.
+
+| what                    | value                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| app                     | `1.9.3`, from 1.9.2, on both brands                                                                |
+| app commit              | `d0296e4`, the same on both brands                                                                 |
+| booklimo built          | `2026-09-08T22:40:09.208Z`, deployment `58556461.booklimo.pages.dev`                               |
+| limosen built           | `2026-09-08T22:47:16.590Z`, deployment `19ef34d3.limosen.pages.dev`                                |
+| `/`, `/de/`, `/cms/`    | 200 on both brands                                                                                 |
+| the fix, in the bundles | `appliedRevision`, `staleAnswers` and `jaen-draft.v1` in both, **no `headSha` and no `blobSha`**   |
+| the `:has()` repair     | the served stylesheet is one file with the same hash on both brands, **0** `:has(.jaen-app)` in it |
+
+**The app's version had to move and the number is shared with a repository this
+run may not rewrite.** `gatsby-jaen-app` exists twice, here and as `app/` in the
+taxi checkout where it is versioned, and `tests/15-versions.ipynb` compares what
+a site serves against **that** copy's `package.json`. Deploying a changed bundle
+under 1.9.2 would have made two builds indistinguishable, and bumping only the
+copy the sites build from would have made that notebook red. So both copies moved
+to 1.9.3 together and the two files the `:has()` repair changed were carried into
+the taxi checkout with the number (`taxi-app d0296e4`). It is deliberately **not**
+a full `sync-app.sh` run: sixteen other files of that package are ahead there and
+belong to work in flight, and pulling them into a jaen deploy would have shipped
+another run's unfinished work onto two production brands.
+
+**A second session was committing in this checkout throughout**, and it took the
+version bump with it: `5e98f12`, a docs commit of that session, carries
+`packages/gatsby-jaen-app/package.json` 1.9.2 → 1.9.3 because the file was in the
+working tree when it committed. The content is right and the attribution is not,
+and it is recorded because it is the same hazard this file has already named
+twice about one `dist` shared by two checkouts. Neither of that session's two
+commits touched a package's source, so the dists deployed here are the source of
+`3620406` with that one version line on top.
+
+### The forced race, on the deployed site, twice
+
+`tests/support/revert-probe.py` with its own default, `JAEN_LIVE=1`, so the
+subject is `https://booklimo.at` as a browser reaches it. Signed in as the
+booklimo human admin, the second editor the booklimo machine admin writing
+through the agent's own `save`. The runs are `tests/deployed-gate/forced-a.json`
+and `forced-b.json`.
+
+| what happened                          | run A                                                                  | run B                      |
+| -------------------------------------- | ---------------------------------------------------------------------- | -------------------------- |
+| the client and the object in step      | revision 360, applied 360                                              | 364, 364                   |
+| the second editor writes another field | object to 361                                                          | 365                        |
+| the poll the frame causes, held        | asked from 360, answered 361 with the field's **old** value            | from 364, answered 365     |
+| the person types ` AAA` and leaves     | save `baseRevision` 360, answered 362, `rebased: true`                 | ` BBB`, base 364, 366      |
+| **the re-read the rebase asks for**    | asked from **360** and not from 362, answered 362 with the typed value | from **364**, answered 366 |
+| the held answer is released            | refused, `staleAnswers` 0 → 1, `remote.revision` **362 and not 361**   | the same, 366 not 365      |
+| the store, the screen and the object   | all three hold the typed value                                         | the same                   |
+| reverts written by a hydrate           | **0**                                                                  | **0**                      |
+
+Read against the morning's run of this same scenario on this same site: the
+store took the old value, the mark went 207 back to 206, and the screen showed
+the value the person had replaced for 45.1 s.
+
+The one difference from the local runs is a smaller number and it is worth
+naming: `staleAnswers` is 0 before the release on the deployed site and 2 on the
+local build. It is not the fix behaving differently. The counter counts every
+answer a browser did not need, and a CMS that comes up asks twice; how many of
+those two land after the other is a race the two servings do not run the same
+way. The gate asserts the **increment** across the released answer for exactly
+that reason, and the increment is 1 in all four runs.
+
+### The focused field, on the deployed site, twice
+
+No forcing at all: the second editor writes the very field the caret is in.
+`tests/deployed-gate/focused-a.json` and `focused-b.json`, the same in both.
+
+| what was asked                        | before, `tests/revert/focused-a.json`            | on the deployed site now                  |
+| ------------------------------------- | ------------------------------------------------ | ----------------------------------------- |
+| what the screen holds after the write | the other editor's value, the person's text gone | the person's own ` AAA`, no `OTHER` in it |
+| where the next two keystrokes land    | at the **front**, `ZZShort answers about …`      | at the end, `… AAAZZ`                     |
+| how many saves the round costs        | 4 in 13 s, the two values alternating            | **2**                                     |
+| reverts written by a hydrate          | the field moved under the person                 | **0**                                     |
+
+### The notebook, and the ten checks that were going green by absence
+
+`tests/10-draft-persistence.ipynb` **52 PASS 0 FAIL 0 SKIP 1 WARN**, stored with
+its run in `tests/deployed-gate/`, the same counts as the local gate's and now on
+the deployed build. Its one WARN is the old one, that the store's write is
+asynchronous.
+
+**The first execution of it was 42 PASS 0 FAIL 10 SKIP**, and the ten skips are
+the finding of this run rather than a footnote. Every one said "the field
+carrying `dudhdtttttOur fleet &nbsp;test &nbsp;dudhd` was not editable". That
+value is the owner's own unpublished `FleetTitle`, and
+`tests/support/editing-browser.py` found the field to type into by comparing the
+store's **raw** value against the element's **rendered** text, which a value
+carrying `&nbsp;` can never match. So it waited thirty seconds and skipped
+without naming what it had been looking for.
+
+Nothing was damaged by it, and that is the smaller half. The larger half is that
+the whole browser side of the safety notebook, the hidden tab, the reload, the
+offline queue, the second editor and the four rows of "the half second before the
+store", would have gone on reporting SKIP for as long as an editor's value
+carried markup, and a suite that is green because it did not run is worse than a
+suite that is red. Two things are repaired in `efc4ed6`:
+
+- **the harness types into `FaqSubtitle`**, the fixture `revert-probe.py` already
+  uses, machine written and holding the site's own published text, and no longer
+  into the field an editor actually works in. This suite has written into
+  `FleetTitle` and failed to put it back twice on two evenings by two unrelated
+  faults, which is recorded above; it now does not write there at all.
+- **a field is found by its own id**, because a jaen field renders with its field
+  name as the element id and that is what the field _is_. The text comparison is
+  kept as the fallback.
+
+Beside them `tests/support/draft-guard.py`, which is the restore this file has
+been asking for in prose since the gate: it reads every text field of the live
+draft before a run, reads them again after, writes back through the agent's own
+`save` every value that differs and reads each one back out of the object. It
+depends on no browser, on no rendered string and on no comparison the harness
+makes, which is precisely what both faults above did.
+
+### What this run left on the live site
+
+Every text field of booklimo's draft is byte for byte what the run found,
+compared field for field by `draft-guard.py` and read back out of the object:
+`tests/deployed-gate/draft-after.json` equals `draft-before.json`, the owner's
+own unpublished `FleetTitle` included. The object went from **376 to 400** and
+`publishedRevision` is **183**, which is where every run since 2026-09-08 has
+found it. Nothing was published and nothing was discarded. Four authorship stamps
+of the two fixture fields carry a newer instant of the account that already held
+them, which is the object stamping the writer of every write.
+
+**No role was granted to anybody for this run.** The second editor is the
+booklimo machine admin, which is a second sub with its own base as far as the
+object is concerned and is what both mechanisms turn on. Granting `jaen:admin` to
+the human customer was available and was not taken: a run of 2026-09-08 left
+exactly that grant standing on a real identity server for eight hours, and this
+run had nothing to measure that the machine account could not answer.
+
+### Where the acceptance stands, 2026-09-09
+
+| the acceptance                                                 | where it stands                                                                                                                                            |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| two editors, a change in under two seconds, no commit, no file | measured 2026-09-08 at 2.14 s from the blur, unchanged by this run                                                                                         |
+| one gateway file and one commit per publish, one line          | met 2026-09-08, three times; this run published nothing                                                                                                    |
+| nothing in `patches.txt` names a draft                         | **met in both checkouts** and **still not on GitHub**, where the transition's unpushed commits leave the two head lines in place                           |
+| byte identical data before and after the transition            | met 2026-09-08, unchanged                                                                                                                                  |
+| every loss scenario of `10-draft-persistence.ipynb`            | **met on the deployed build**, 52 PASS 0 FAIL 0 SKIP 1 WARN                                                                                                |
+| the CMS still works on `localStorage` alone                    | not re-measurable on a build that carries the option, unchanged                                                                                            |
+| discard is site wide, undoable from its snapshot, no outbox    | met 2026-09-08 from the CMS's own control, unchanged                                                                                                       |
+| **a field never reverts**                                      | **met where a person meets it**: four runs on the deployed site, 0 reverts, the applied mark never moved down, the screen never lost the person's own text |
+| importing a patch writes only what differs                     | **not built**                                                                                                                                              |
+
+### What this run did not do
+
+- **The natural rate is still not measured.** What is proven is the mechanism
+  and the guard on the deployed build, not a rate on a slow link.
+- **Two people in two browsers** is still not driven. The second editor is a
+  machine account.
+- **The agent was not redeployed**, because its tree did not move. Hibernation
+  and the drill for a lost object are still unmeasured, as they were.
+- **`patches.txt` on GitHub still names a draft**, and the fix is still the push
+  of the transition's commits that this run may not make.
+- **This checkout is on a detached HEAD** (from `b2dd711`), which is where every
+  session of these two days has been committing. Nothing is lost while the
+  reflog stands and nothing is safe until it is pushed.
+- **The Fable 5.1 review of the whole editing path is still open**, and this run
+  adds the deployed revert gate and the harness repair to what it has to read.
