@@ -23,7 +23,11 @@
  *      without a ticket;
  *   9. the agent refuses another site's admin, a caller without the role, and
  *      an anonymous call, on the draft as on everything else;
- *  10. a publish writes exactly one gateway file, one line and one commit.
+ *  10. a publish writes exactly one gateway file, one line and one commit;
+ *  11. a discard restores the state the last publish wrote, tells every
+ *      reader which revision invalidated them, keeps the draft it replaced in
+ *      the backstop, and refuses the save of a browser still holding the
+ *      draft it threw away.
  *
  * The branch is created before and deleted after, so nothing of this reaches
  * booklimo.at's main. Nothing runs against limosen.at at all. Only the publish
@@ -192,6 +196,7 @@ const DRAFT = `query D($site: String!, $sinceRevision: Number) {
   draft(site: $site, sinceRevision: $sinceRevision) {
     site revision publishedRevision changed full
     updatedAt updatedBy snapshotRevision snapshotAt snapshotBytes readAt
+    discardedRevision discardedAt discardedBy discardedByName
     delta {
       pages media removedMedia site widgets authors
       mediaField { pageId fieldType fieldName }
@@ -1328,6 +1333,288 @@ test('a publish is refused anonymously and to a caller without the role', async 
 
   assert.equal(customer.data?.publish, undefined)
   assert.equal(errorCode(customer), 'FORBIDDEN')
+})
+
+// --------------------------------------------------------------------------
+// Discard: the draft put back to what the last publish wrote
+// --------------------------------------------------------------------------
+//
+// It runs after the publish section on purpose. A discard restores the state
+// the last publish kept, and an object that has never published has nothing to
+// restore to and says so, which is the first thing asserted below.
+//
+// What this proves, which is the design's own list
+// (docs/architecture/draft-state.md, "Three operations that rewrite the shared
+// draft"): the confirmation names what will go before anything goes; a discard
+// restores exactly what the last migration produced and writes no commit; the
+// draft as it stood is in the backstop and can be read back, so the act is
+// undoable; a save made against a revision below the discard is refused rather
+// than folded back on top, which is the other editors' outbox being dropped;
+// and none of it is answered to somebody who is not the site's admin.
+
+const DISCARD_PREVIEW = `query DP($site: String!) {
+  discardPreview(site: $site) {
+    site revision publishedRevision canDiscard reason
+    pages fields pagesAdded pagesRemoved
+    mediaAdded mediaRemoved siteChanged widgetsChanged
+    editors { sub name at }
+    since publishedAt takenAt
+  }
+}`
+
+const DISCARD = `mutation DC($site: String!, $atRevision: Number) {
+  discard(site: $site, atRevision: $atRevision) {
+    site discarded revision previousRevision publishedRevision
+    pages fields
+    editors { sub name at }
+    snapshotRevision snapshotAt snapshotBytes
+    by { sub name at }
+    at reason
+  }
+}`
+
+const DISCARDED = `query DD($site: String!) {
+  discardedDraft(site: $site) {
+    site found revision takenAt bytes pages data authors
+  }
+}`
+
+/** The field this section writes into the draft and expects to lose. */
+const DISCARD_FIELD = `${RUN}Discarded`
+
+const draftField = async (fieldName: string): Promise<unknown> => {
+  const answer = await readDraft()
+
+  assert.equal(answer.errors, undefined)
+
+  return fieldValue(answer.data.draft.delta, fieldName)
+}
+
+test('the confirmation names what will go, before anything goes', async () => {
+  // The state of the object here is the second publish, and the draft is
+  // exactly it: the test above asserted that a publish with nothing new
+  // publishes nothing.
+  const quiet = await call(DISCARD_PREVIEW, {site: SITE}, ADMIN)
+
+  assert.equal(quiet.errors, undefined)
+  assert.equal(quiet.data.discardPreview.canDiscard, false)
+  assert.match(quiet.data.discardPreview.reason, /nothing/i)
+
+  const saved = await write(DISCARD_FIELD, 'this one goes')
+
+  assert.equal(saved.errors, undefined)
+
+  const preview = await call(DISCARD_PREVIEW, {site: SITE}, ADMIN)
+
+  assert.equal(preview.errors, undefined)
+
+  const it = preview.data.discardPreview
+
+  assert.equal(it.canDiscard, true, `cannot discard: ${it.reason}`)
+  assert.equal(it.reason, null)
+  assert.equal(it.revision, saved.data.save.revision)
+  assert.ok(it.pages >= 1, `${it.pages} pages`)
+  assert.ok(it.fields >= 1, `${it.fields} fields`)
+  // Whose edits, and since when. The editors come from the object's own
+  // per-field authorship and not from a guess about who is asking.
+  assert.ok(it.editors.length >= 1)
+  assert.ok(it.editors.some((e: any) => e.sub && e.name))
+  assert.ok(it.since, 'the confirmation says since when')
+  assert.equal(it.publishedRevision < it.revision, true)
+  // A preview writes nothing.
+  assert.equal(
+    (await call(DISCARD_PREVIEW, {site: SITE}, ADMIN)).data.discardPreview
+      .revision,
+    it.revision
+  )
+})
+
+test('a confirmation about a draft that has moved is refused', async () => {
+  const before = (await readDraft()).data.draft.revision
+
+  const answer = await call(
+    DISCARD,
+    {site: SITE, atRevision: before - 1},
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+  assert.equal(answer.data.discard.discarded, false)
+  assert.match(answer.data.discard.reason, /moved from revision/i)
+  // Nothing moved, and the field that was going to go is still there.
+  assert.equal((await readDraft()).data.draft.revision, before)
+  assert.equal(await draftField(DISCARD_FIELD), 'this one goes')
+})
+
+let discardedAtRevision = 0
+
+test('a discard restores the published state, and writes no commit', async () => {
+  const headBefore = await branchHead()
+  const linesBefore = await patchLines()
+  const before = (await readDraft()).data.draft.revision
+
+  const answer = await call(DISCARD, {site: SITE, atRevision: before}, ADMIN)
+
+  assert.equal(answer.errors, undefined)
+
+  const result = answer.data.discard
+
+  assert.equal(result.discarded, true, `not discarded: ${result.reason}`)
+  assert.equal(result.previousRevision, before)
+  assert.equal(result.revision, before + 1)
+  // What the object holds afterwards is exactly what the last migration
+  // produced, so there is nothing unpublished in it and the CMS must not say
+  // there is.
+  assert.equal(result.publishedRevision, result.revision)
+  assert.ok(result.pages >= 1)
+  assert.ok(result.fields >= 1)
+  assert.ok(result.by.name, 'the discard says who made it')
+  assert.ok(result.at, 'and when')
+
+  const draft = await readDraft()
+
+  assert.equal(draft.data.draft.revision, result.revision)
+  assert.equal(draft.data.draft.publishedRevision, result.revision)
+  // Every reader is answered whole after a discard, because the delta
+  // vocabulary has no page tombstone and a discard may remove a page.
+  assert.equal(draft.data.draft.full, true)
+  assert.equal(draft.data.draft.discardedRevision, result.revision)
+  assert.ok(draft.data.draft.discardedAt)
+  assert.ok(draft.data.draft.discardedByName)
+
+  // The field that was written after the publish is gone, and the field the
+  // publish wrote is what the migration wrote.
+  assert.equal(fieldValue(draft.data.draft.delta, DISCARD_FIELD), undefined)
+  assert.equal(
+    fieldValue(draft.data.draft.delta, PUBLISH_FIELD),
+    'published two'
+  )
+
+  // A discard is a draft act. It touches no repository and no gateway file.
+  assert.equal(await branchHead(), headBefore)
+  assert.deepEqual(await patchLines(), linesBefore)
+
+  discardedAtRevision = result.revision
+})
+
+test('the draft as it stood one instant before is in the backstop', async () => {
+  const answer = await call(DISCARDED, {site: SITE}, ADMIN)
+
+  assert.equal(answer.errors, undefined)
+
+  const snapshot = answer.data.discardedDraft
+
+  assert.equal(snapshot.found, true)
+  assert.equal(snapshot.revision, discardedAtRevision - 1)
+  assert.ok(snapshot.takenAt)
+  assert.ok(snapshot.bytes > 200, `${snapshot.bytes} bytes`)
+  assert.ok(snapshot.pages > 0)
+  // The discarded value is in it, which is what makes the act undoable. The
+  // restore that would put it back is not built.
+  assert.equal(publishedField(snapshot.data), 'published two')
+  assert.equal(
+    snapshot.data.pages.find((page: any) => page.id === PAGE)?.jaenFields?.[
+      FIELD_TYPE
+    ]?.[DISCARD_FIELD]?.value,
+    'this one goes'
+  )
+})
+
+test("a second editor's outbox is dropped rather than reapplied", async () => {
+  // Two editors are one identity here, for the reason draft-state.md gives:
+  // accounts.netsnek.com offers no password grant and booklimo has one machine
+  // account with jaen:admin. What decides this refusal is the base revision
+  // and never who is calling, so what is proven is the mechanism the other
+  // editor's browser relies on: a save carrying a base from before the discard
+  // is refused, named with the revision that invalidated it, and the draft
+  // still holds the published state afterwards.
+  const stale = await write(
+    `${RUN}Resurrected`,
+    'this must not come back',
+    discardedAtRevision - 1
+  )
+
+  assert.equal(stale.data?.save, undefined)
+  assert.equal(errorCode(stale), 'DRAFT_DISCARDED')
+
+  const details = stale.errors?.[0]?.extensions?.details
+
+  assert.equal(details?.discardedRevision, discardedAtRevision)
+  assert.ok(details?.discardedAt)
+
+  const draft = await readDraft()
+
+  assert.equal(draft.data.draft.revision, discardedAtRevision)
+  assert.equal(
+    fieldValue(draft.data.draft.delta, `${RUN}Resurrected`),
+    undefined
+  )
+
+  // And a save made against the restored draft is taken as usual, which is
+  // what keeps the refusal narrow: it is about the outbox of a browser that
+  // was holding the discarded draft, not about the site being read only.
+  const fresh = await write(
+    `${RUN}AfterDiscard`,
+    'typed after the discard',
+    discardedAtRevision
+  )
+
+  assert.equal(fresh.errors, undefined)
+  assert.equal(fresh.data.save.revision, discardedAtRevision + 1)
+  assert.equal(
+    await draftField(`${RUN}AfterDiscard`),
+    'typed after the discard'
+  )
+})
+
+test('a discard with nothing to discard changes nothing', async () => {
+  // Everything typed after the discard is put back first, so the draft is the
+  // published state again and this run leaves the branch as it found it.
+  const back = await call(DISCARD, {site: SITE}, ADMIN)
+
+  assert.equal(back.errors, undefined)
+  assert.equal(back.data.discard.discarded, true)
+
+  const at = back.data.discard.revision
+  const again = await call(DISCARD, {site: SITE}, ADMIN)
+
+  assert.equal(again.errors, undefined)
+  assert.equal(again.data.discard.discarded, false)
+  assert.match(again.data.discard.reason, /nothing/i)
+  assert.equal((await readDraft()).data.draft.revision, at)
+})
+
+test('a discard is refused anonymously and to a caller without the role', async () => {
+  const anonymousPreview = await call(DISCARD_PREVIEW, {site: SITE})
+
+  assert.equal(anonymousPreview.data?.discardPreview, undefined)
+  assert.equal(errorCode(anonymousPreview), 'AUTH_REQUIRED')
+
+  const anonymous = await call(DISCARD, {site: SITE})
+
+  assert.equal(anonymous.data?.discard, undefined)
+  assert.equal(errorCode(anonymous), 'AUTH_REQUIRED')
+
+  const customerPreview = await call(DISCARD_PREVIEW, {site: SITE}, CUSTOMER)
+
+  assert.equal(customerPreview.data?.discardPreview, undefined)
+  assert.equal(errorCode(customerPreview), 'FORBIDDEN')
+
+  const customer = await call(DISCARD, {site: SITE}, CUSTOMER)
+
+  assert.equal(customer.data?.discard, undefined)
+  assert.equal(errorCode(customer), 'FORBIDDEN')
+
+  // Another site's admin, which is the refusal that is easiest to get wrong.
+  const foreign = await call(DISCARD, {site: SITE}, FOREIGN)
+
+  assert.equal(foreign.data?.discard, undefined)
+  assert.equal(errorCode(foreign), 'FORBIDDEN')
+
+  const backstop = await call(DISCARDED, {site: SITE}, CUSTOMER)
+
+  assert.equal(backstop.data?.discardedDraft, undefined)
+  assert.equal(errorCode(backstop), 'FORBIDDEN')
 })
 
 /**
