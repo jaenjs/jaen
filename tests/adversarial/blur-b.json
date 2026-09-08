@@ -1,0 +1,466 @@
+{
+  "origin": "https://booklimo.at",
+  "startedAt": 1788899922.9951603,
+  "stem": "Our fleet",
+  "draftBefore": {
+    "revision": 152,
+    "publishedRevision": 137,
+    "discardedRevision": 125,
+    "updatedAt": "2026-09-08T20:38:29.296Z",
+    "full": true
+  },
+  "fieldBefore": "Our fleet AAA-probe",
+  "signedIn": true,
+  "editOff": [
+    {
+      "seconds": 5.01,
+      "dispatches": 5,
+      "dispatchesPerSecond": 0.999,
+      "types": {
+        "remote/draftDiscarded": 1,
+        "pages/hydrateFromRemote": 1,
+        "site/hydrateFromRemote": 1,
+        "widget/hydrateFromRemote": 1,
+        "remote/remoteHydrated": 1
+      },
+      "writes": 1,
+      "writesPerSecond": 0.2,
+      "bytes": 2391,
+      "commitsPerSecond": 1.6,
+      "framesPerSecond": 59.73,
+      "isEditing": false,
+      "timerMedian": 50,
+      "timerMax": 79.90000000596046,
+      "longTaskCount": 1,
+      "longTaskMax": 58,
+      "payloadBefore": {
+        "length": 2414,
+        "hash": 317510820
+      },
+      "payloadAfter": {
+        "length": 2391,
+        "hash": 1176740576
+      },
+      "payloadUnchanged": false
+    }
+  ],
+  "editable": true,
+  "fields": 43,
+  "editOn": [
+    {
+      "seconds": 5.02,
+      "dispatches": 0,
+      "dispatchesPerSecond": 0.0,
+      "types": {},
+      "writes": 0,
+      "writesPerSecond": 0.0,
+      "bytes": 0,
+      "commitsPerSecond": 0.2,
+      "framesPerSecond": 59.96,
+      "isEditing": true,
+      "timerMedian": 50,
+      "timerMax": 53.70000001788139,
+      "longTaskCount": 0,
+      "longTaskMax": 0,
+      "payloadBefore": {
+        "length": 4516,
+        "hash": 1401387201
+      },
+      "payloadAfter": {
+        "length": 4516,
+        "hash": 1401387201
+      },
+      "payloadUnchanged": true
+    }
+  ],
+  "remoteAtRest": {
+    "saveState": "idle",
+    "connection": "socket",
+    "revision": 153,
+    "publishedRevision": 153
+  },
+  "control": {
+    "idle": [10.3, 14.7, 18.8, 14, 15.7, 17.4, 14.8, 16, 16.1, 2.9],
+    "link": [6.8, 9.6, 32.5, 11.1, 1.4, 12.6, 2.2, 9.8, 5.4, 13.7],
+    "focused": "A",
+    "error": null
+  },
+  "blurUntyped": [
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 61.2,
+      "blockMs": 63.5,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 62,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 59.2,
+      "blockMs": 62.6,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 59,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 53.7,
+      "blockMs": 55.0,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 54,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 53.4,
+      "blockMs": 55.7,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 55,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 61.1,
+      "blockMs": 62.6,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 61,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 58.3,
+      "blockMs": 60.2,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 59,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 49.5,
+      "blockMs": 51.4,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 63,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 66.2,
+      "blockMs": 68.0,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 66,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 62.4,
+      "blockMs": 64.5,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 62,
+      "after": "Our fleet"
+    },
+    {
+      "typed": null,
+      "before": "Our fleet",
+      "gapMs": 55.5,
+      "blockMs": 57.0,
+      "sawBlur": true,
+      "dispatches": 0,
+      "types": {},
+      "writes": 0,
+      "bytes": 0,
+      "longTaskMax": 55,
+      "after": "Our fleet"
+    }
+  ],
+  "blurTyped": [
+    {
+      "typed": "add",
+      "before": "Our fleet",
+      "gapMs": 56.7,
+      "blockMs": 58.2,
+      "sawBlur": true,
+      "dispatches": 4,
+      "types": {
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 3,
+      "bytes": 13988,
+      "longTaskMax": 104,
+      "after": "Our fleetx"
+    },
+    {
+      "typed": "remove",
+      "before": "Our fleetx",
+      "gapMs": 45.8,
+      "blockMs": 47.8,
+      "sawBlur": true,
+      "dispatches": 4,
+      "types": {
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 2,
+      "bytes": 9312,
+      "longTaskMax": 50,
+      "after": "Our fleet"
+    },
+    {
+      "typed": "add",
+      "before": "Our fleet",
+      "gapMs": 45.9,
+      "blockMs": 50,
+      "sawBlur": true,
+      "dispatches": 4,
+      "types": {
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 3,
+      "bytes": 14070,
+      "longTaskMax": 73,
+      "after": "Our fleetx"
+    },
+    {
+      "typed": "remove",
+      "before": "Our fleetx",
+      "gapMs": 57.0,
+      "blockMs": 59.7,
+      "sawBlur": true,
+      "dispatches": 4,
+      "types": {
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 3,
+      "bytes": 14065,
+      "longTaskMax": 76,
+      "after": "Our fleet"
+    },
+    {
+      "typed": "add",
+      "before": "Our fleet",
+      "gapMs": 62.7,
+      "blockMs": 64.5,
+      "sawBlur": true,
+      "dispatches": 10,
+      "types": {
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "pages/hydrateFromRemote": 1,
+        "site/hydrateFromRemote": 1,
+        "widget/hydrateFromRemote": 1,
+        "remote/remoteHydrated": 1,
+        "pages/field_register": 2,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 3,
+      "bytes": 10039,
+      "longTaskMax": 74,
+      "after": "Our fleetx"
+    },
+    {
+      "typed": "remove",
+      "before": "Our fleetx",
+      "gapMs": 61.6,
+      "blockMs": 65.5,
+      "sawBlur": true,
+      "dispatches": 10,
+      "types": {
+        "pages/hydrateFromRemote": 1,
+        "site/hydrateFromRemote": 1,
+        "widget/hydrateFromRemote": 1,
+        "remote/remoteHydrated": 1,
+        "pages/field_register": 2,
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 4,
+      "bytes": 10568,
+      "longTaskMax": 61,
+      "after": "Our fleet"
+    },
+    {
+      "typed": "add",
+      "before": "Our fleet",
+      "gapMs": 65.4,
+      "blockMs": 67.0,
+      "sawBlur": true,
+      "dispatches": 10,
+      "types": {
+        "pages/hydrateFromRemote": 1,
+        "site/hydrateFromRemote": 1,
+        "widget/hydrateFromRemote": 1,
+        "remote/remoteHydrated": 1,
+        "pages/field_register": 2,
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 4,
+      "bytes": 10616,
+      "longTaskMax": 66,
+      "after": "Our fleetx"
+    },
+    {
+      "typed": "remove",
+      "before": "Our fleetx",
+      "gapMs": 55.7,
+      "blockMs": 58.4,
+      "sawBlur": true,
+      "dispatches": 4,
+      "types": {
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 3,
+      "bytes": 8056,
+      "longTaskMax": 70,
+      "after": "Our fleet"
+    },
+    {
+      "typed": "add",
+      "before": "Our fleet",
+      "gapMs": 59.3,
+      "blockMs": 60.7,
+      "sawBlur": true,
+      "dispatches": 4,
+      "types": {
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 3,
+      "bytes": 8064,
+      "longTaskMax": 77,
+      "after": "Our fleetx"
+    },
+    {
+      "typed": "remove",
+      "before": "Our fleetx",
+      "gapMs": 66.4,
+      "blockMs": 68.9,
+      "sawBlur": true,
+      "dispatches": 4,
+      "types": {
+        "pages/field_write": 1,
+        "remote/record": 1,
+        "remote/saveStarted": 1,
+        "remote/saveSucceeded": 1
+      },
+      "writes": 3,
+      "bytes": 8061,
+      "longTaskMax": 82,
+      "after": "Our fleet"
+    }
+  ],
+  "remoteAtEnd": {
+    "saveState": "saved",
+    "connection": "socket",
+    "revision": 166,
+    "publishedRevision": 153
+  },
+  "outboxAtEnd": 0,
+  "fieldOnScreen": "Our fleet",
+  "draftAfter": {
+    "revision": 166,
+    "publishedRevision": 153,
+    "discardedRevision": 153,
+    "updatedAt": "2026-09-08T20:40:52.276Z",
+    "full": true
+  },
+  "fieldAfter": "Our fleet",
+  "controlSummary": {
+    "idle": {
+      "n": 10,
+      "values": [10.3, 14.7, 18.8, 14, 15.7, 17.4, 14.8, 16, 16.1, 2.9],
+      "median": 15.25,
+      "p95": 18.8,
+      "max": 18.8
+    },
+    "link": {
+      "n": 10,
+      "values": [6.8, 9.6, 32.5, 11.1, 1.4, 12.6, 2.2, 9.8, 5.4, 13.7],
+      "median": 9.7,
+      "p95": 32.5,
+      "max": 32.5
+    }
+  },
+  "blurUntypedSummary": {
+    "n": 10,
+    "gaps": [61.2, 59.2, 53.7, 53.4, 61.1, 58.3, 49.5, 66.2, 62.4, 55.5],
+    "median": 58.75,
+    "p95": 66.2,
+    "max": 66.2,
+    "overOneFrame": 10
+  },
+  "blurTypedSummary": {
+    "n": 10,
+    "gaps": [56.7, 45.8, 45.9, 57.0, 62.7, 61.6, 65.4, 55.7, 59.3, 66.4],
+    "median": 58.15,
+    "p95": 66.4,
+    "max": 66.4,
+    "overOneFrame": 10
+  },
+  "endedAt": 1788900060.993987
+}

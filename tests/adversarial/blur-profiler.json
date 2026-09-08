@@ -1,0 +1,161 @@
+{
+  "startedAt": 1788900763.150195,
+  "signedIn": true,
+  "rounds": [
+    {
+      "profiled": true,
+      "gapMs": 29.1,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": false,
+      "gapMs": 54.0,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 54
+    },
+    {
+      "profiled": true,
+      "gapMs": 15.8,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 52
+    },
+    {
+      "profiled": false,
+      "gapMs": 52.8,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 53
+    },
+    {
+      "profiled": true,
+      "gapMs": 17.6,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": false,
+      "gapMs": 50.8,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 51
+    },
+    {
+      "profiled": true,
+      "gapMs": 15.7,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": false,
+      "gapMs": 34.2,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": true,
+      "gapMs": 17.8,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": false,
+      "gapMs": 69.3,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 69
+    },
+    {
+      "profiled": true,
+      "gapMs": 17.2,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": false,
+      "gapMs": 24.3,
+      "dispatches": 6,
+      "writes": 1,
+      "longTaskMax": 50
+    },
+    {
+      "profiled": true,
+      "gapMs": 16.7,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": false,
+      "gapMs": 58.7,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 59
+    },
+    {
+      "profiled": true,
+      "gapMs": 16.4,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": false,
+      "gapMs": 26.1,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": true,
+      "gapMs": 16.3,
+      "dispatches": 7,
+      "writes": 1,
+      "longTaskMax": 0
+    },
+    {
+      "profiled": false,
+      "gapMs": 64.5,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 64
+    },
+    {
+      "profiled": true,
+      "gapMs": 19.5,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 67
+    },
+    {
+      "profiled": false,
+      "gapMs": 53.4,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 55
+    }
+  ],
+  "profiledSummary": {
+    "n": 10,
+    "gaps": [29.1, 15.8, 17.6, 15.7, 17.8, 17.2, 16.7, 16.4, 16.3, 19.5],
+    "median": 16.95,
+    "max": 29.1,
+    "overOneFrame": 8
+  },
+  "plainSummary": {
+    "n": 10,
+    "gaps": [54.0, 52.8, 50.8, 34.2, 69.3, 24.3, 58.7, 26.1, 64.5, 53.4],
+    "median": 53.1,
+    "max": 69.3,
+    "overOneFrame": 10
+  },
+  "endedAt": 1788900817.8584063
+}

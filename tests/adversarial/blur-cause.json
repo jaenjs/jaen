@@ -1,0 +1,89 @@
+{
+  "origin": "https://booklimo.at",
+  "startedAt": 1788900356.7348323,
+  "signedIn": true,
+  "pages": {
+    "/": {
+      "url": "https://booklimo.at/",
+      "editableFields": 43,
+      "window": {
+        "seconds": 15.0,
+        "dispatches": 0,
+        "dispatchesPerSecond": 0.0,
+        "types": {},
+        "registerFields": {},
+        "writes": 0,
+        "writesPerSecond": 0.0,
+        "commitsPerSecond": 0.2,
+        "framesPerSecond": 59.91,
+        "isEditing": true,
+        "longTaskMax": 0
+      }
+    },
+    "/de/": {
+      "url": "https://booklimo.at/de/",
+      "editableFields": 43,
+      "window": {
+        "seconds": 15.0,
+        "dispatches": 0,
+        "dispatchesPerSecond": 0.0,
+        "types": {},
+        "registerFields": {},
+        "writes": 0,
+        "writesPerSecond": 0.0,
+        "commitsPerSecond": 0.2,
+        "framesPerSecond": 59.58,
+        "isEditing": true,
+        "longTaskMax": 67
+      }
+    },
+    "/imprint/": {
+      "url": "https://booklimo.at/imprint/",
+      "editableFields": 3,
+      "window": {
+        "seconds": 15.0,
+        "dispatches": 0,
+        "dispatchesPerSecond": 0.0,
+        "types": {},
+        "registerFields": {},
+        "writes": 0,
+        "writesPerSecond": 0.0,
+        "commitsPerSecond": 0.0,
+        "framesPerSecond": 59.96,
+        "isEditing": true,
+        "longTaskMax": 0
+      }
+    }
+  },
+  "profiledGaps": [24.3, 14.5, 14.1, 13.9, 14.8],
+  "profiledGapMedian": 14.5,
+  "selfTimeMs": [
+    ["(idle)  :-1", 2288.39],
+    ["(program)  :-1", 1295.79],
+    ["(garbage collector)  :-1", 54.06],
+    ["(anonymous)  app-50d8fd7092590570ddfd.js:1", 28.53],
+    ["(anonymous)  05af9d3b-84e1bbec6af4b5ee4ccb.js:0", 18.24],
+    ["requestAnimationFrame  :-1", 5.37],
+    ["n  app-50d8fd7092590570ddfd.js:1", 4.76],
+    ["s  framework-a980aaab0edfa42ad93a.js:1", 3.94],
+    ["_.zv  common.js:40", 2.53],
+    ["_i  framework-a980aaab0edfa42ad93a.js:1", 2.37],
+    ["m  app-50d8fd7092590570ddfd.js:1", 2.33],
+    ["Ku  framework-a980aaab0edfa42ad93a.js:1", 2.04],
+    ["tick  :103", 1.6],
+    ["e  app-50d8fd7092590570ddfd.js:1", 1.58],
+    ["Is  framework-a980aaab0edfa42ad93a.js:1", 1.04],
+    ["_o  framework-a980aaab0edfa42ad93a.js:1", 0.97],
+    ["Go  framework-a980aaab0edfa42ad93a.js:1", 0.96],
+    ["Po  framework-a980aaab0edfa42ad93a.js:1", 0.96],
+    ["(anonymous)  :131", 0.88],
+    ["oo  framework-a980aaab0edfa42ad93a.js:1", 0.77],
+    ["o  app-50d8fd7092590570ddfd.js:1", 0.72],
+    ["(anonymous)  :3", 0.64],
+    ["Cl  framework-a980aaab0edfa42ad93a.js:1", 0.48],
+    ["g  app-50d8fd7092590570ddfd.js:1", 0.48],
+    ["(anonymous)  framework-a980aaab0edfa42ad93a.js:1", 0.47]
+  ],
+  "profiles": 5,
+  "endedAt": 1788900444.244831
+}

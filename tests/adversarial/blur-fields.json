@@ -1,0 +1,351 @@
+{
+  "startedAt": 1788900671.920978,
+  "signedIn": true,
+  "fields": [
+    {
+      "index": 0,
+      "id": "FleetTitle",
+      "text": "Our fleet"
+    },
+    {
+      "index": 1,
+      "id": "FleetPassengersLabel_Mercedes Benz E Class",
+      "text": "Passengers:"
+    },
+    {
+      "index": 2,
+      "id": "FleetLuggageLabel_Mercedes Benz E Class",
+      "text": "Luggage:"
+    },
+    {
+      "index": 3,
+      "id": "FleetPassengersLabel_Mercedes Benz EQE",
+      "text": "Passengers:"
+    },
+    {
+      "index": 4,
+      "id": "FleetLuggageLabel_Mercedes Benz EQE",
+      "text": "Luggage:"
+    },
+    {
+      "index": 5,
+      "id": "FleetPassengersLabel_Mercedes Benz S Class",
+      "text": "Passengers:"
+    },
+    {
+      "index": 6,
+      "id": "FleetLuggageLabel_Mercedes Benz S Class",
+      "text": "Luggage:"
+    },
+    {
+      "index": 7,
+      "id": "FleetPassengersLabel_Mercedes Benz V Class",
+      "text": "Passengers:"
+    }
+  ],
+  "first": {
+    "index": 0,
+    "id": "FleetTitle",
+    "text": "Our fleet"
+  },
+  "fleet": {
+    "index": 0,
+    "id": "FleetTitle",
+    "text": "Our fleet"
+  },
+  "rounds": [
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 76.3,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 77
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 48.8,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 53.6,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 53
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 57.6,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 57
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 51.9,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 70
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 66.0,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 66
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 68.2,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 69
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 26.1,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 56.4,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 56
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 25.7,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 47.3,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 0
+    },
+    {
+      "id": "FleetTitle",
+      "text": "Our fleet",
+      "focusedBefore": {
+        "tag": "SPAN",
+        "id": "FleetTitle",
+        "editable": "true",
+        "label": null,
+        "field": "FleetTitle"
+      },
+      "focusedAfter": {
+        "tag": "DIV",
+        "id": "fleet-Mercedes Benz E Class",
+        "editable": null,
+        "label": null,
+        "field": "fleet-Mercedes Benz E Class"
+      },
+      "blurFrom": "FleetTitle",
+      "gapMs": 86.8,
+      "dispatches": 0,
+      "writes": 0,
+      "longTaskMax": 87
+    }
+  ],
+  "firstSummary": {
+    "n": 12,
+    "gaps": [
+      76.3, 48.8, 53.6, 57.6, 51.9, 66.0, 68.2, 26.1, 56.4, 25.7, 47.3, 86.8
+    ],
+    "median": 55.0,
+    "max": 86.8
+  },
+  "fleetSummary": {
+    "n": 12,
+    "gaps": [
+      76.3, 48.8, 53.6, 57.6, 51.9, 66.0, 68.2, 26.1, 56.4, 25.7, 47.3, 86.8
+    ],
+    "median": 55.0,
+    "max": 86.8
+  },
+  "endedAt": 1788900717.1932766
+}
