@@ -1040,3 +1040,135 @@ is worse than no test.
 The draft's other fields carry other sessions' text (`Our services etst`,
 `bebrnf` on `FaqSubtitle`) and were left exactly as they were found. Nothing was
 written on limosen.
+
+## Shipped 2026-09-08 in the evening, and read on the deployed booklimo.at
+
+Everything this file records above was measured on a local production build. It
+is deployed now, and the two readings this file owns were taken again on
+`https://booklimo.at` as it is served to a person: the browser resolves the
+name the way any browser does, there is no `gatsby serve` and no socat listener
+in front of it, and the only thing the run brings of its own is the probe it
+installs before the page's first script. The switch is `JAEN_LIVE=1` on
+`tests/support/register-probe.py` and `tests/support/frame-drawer.py`, which is
+the whole of the change to either of them.
+
+The build is booklimo's own `scripts/deploy.sh`, app `1.9.2` at commit
+`4409131`, `builtAt 2026-09-08T18:56:21Z`, carrying `packages/jaen/dist`,
+`packages/gatsby-plugin-jaen/dist` and `packages/gatsby-source-jaen/dist` built
+from this checkout at `091d3f1`. The runs are stored in `tests/ship/`.
+
+### The storm at rest, on the deployed site
+
+Two five second windows and then three of thirty, edit mode on and nobody
+touching anything, signed in as the booklimo human admin against the deployed
+`jaen-agent` 4.4.0. The gate of "The storm at its root" is met where a person
+meets it.
+
+| edit mode on, untouched        | two 5 s windows | three 30 s windows |
+| ------------------------------ | --------------- | ------------------ |
+| dispatches a second            | **0.0**         | **0.0**            |
+| `localStorage` writes a second | **0.0**         | **0.0**            |
+| bytes written                  | **0**           | **0**              |
+| React commits a second         | 0.2             | 0.17               |
+| animation frames a second      | 59.69, 59.52    | 59.78, 59.85       |
+| a 50 ms `setTimeout` fires at  | 50 ms           | 50 ms              |
+| editable fields on the page    | 43              | 43                 |
+
+Edit mode off is the control and is the same zero at 59.92 frames a second. The
+draft was `revision 121 = publishedRevision 121` with an empty outbox before and
+after every window, and `connection: "socket"`, so the CMS was talking to the
+object throughout and still dispatched nothing.
+
+**One number is worse than the last reading of it and this file will not hide
+it.** The blur to the next painted frame is 21.5 to 93.5 ms over sixteen blurs
+in two live runs, median about 63, where the storm run measured 14.9 before its
+fix and 20.6 after it. **It is not a live against local difference**, which is
+the first thing that had to be ruled out and was: `09` run on a local
+production build in the same hour measures a median of 71.8 ms over eight blurs
+and 93.8 ms on its own acceptance scenario, which is the same spread or worse.
+The dispatch count is zero in both, so it is not the storm coming back, and the
+writes a blur causes are 3 and 8 KB in the four seconds after it against the
+baseline's 185 and 14.4 MB.
+
+What is different from the storm run's machine is the machine. A person's own
+browsers were running on it throughout this run, about forty per cent of the
+CPU across brave, chromium and a WebKit process, and the storm run saw the same
+reading move from 0 ms to 51 to 75 ms in the one window it took "while the
+machine was busier". So the likeliest cause is load and this run cannot prove
+it, because it may not close somebody's browsers to take a measurement. The
+cause is not established and the number is recorded rather than explained. At
+rest there is also one long task of about 70 ms in every thirty second window,
+which is the size and cadence of the poll's own tick with the socket up.
+
+### The drawers, on the deployed site
+
+The same gestures the section above drove on a local build, driven again on the
+deployed site after a field was typed into, which is the state the owner
+reported. Every gesture is `mouse.move`, `mouse.down`, `mouse.up` at the
+button's own coordinates.
+
+| what the owner's sentence asks               | on the deployed booklimo.at                                   |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| the first click opens the drawer             | **40 of 40**, both drawers, at 1440x900 and at 390x844        |
+| and it stays open                            | **40 of 40**, open at 0 ms from the mouse up in every one     |
+| and nothing is remounted                     | **0** remounts and **0** DOM insertions of either trigger     |
+| a drawer stands, the other button is clicked | **4 of 4** switched on one click                              |
+| a drawer stands, its own button is clicked   | **10 of 10**, five per drawer                                 |
+| a burst of four clicks                       | **24 of 24 clicks seen**, and the next click opened it 6 of 6 |
+| under the storm, dispatched on purpose       | **20 of 20** opened on the first click, all stayed open       |
+| a standing drawer under the storm            | still open after five seconds and **256 React commits**       |
+
+The triggers read off the live DOM carry `data-scope="dialog"`,
+`data-part="trigger"`, `aria-haspopup="dialog"` and `aria-expanded`, at 36x36 at
+x 16 and x 1388. In all four crossings the window capture listener saw the
+`pointerdown` and the document listener did not, which is the frame's router
+taking the gesture, with `body` at `pointer-events: none` and `#___gatsby` at
+`aria-hidden="true"` throughout: the page is still inert and what changed is who
+gets the gesture.
+
+The storm was reproduced rather than waited for, because there is none left to
+wait for: **16,232 `pages/field_register` actions over 76 s**, 54.8 React
+commits a second and 27.4 animation frames a second under it. Nothing of it
+reached the agent, the outbox 0 and the draft `revision 122` before and after.
+
+**A burst still ends with the drawer shut when it runs past the 400 ms settle
+window**, which is the same reading as before and is a toggle toggling: at a
+nominal 100 ms apart four clicks really span 391 to 426 ms and the drawer was
+open at the end 2 of 3 times, and at 150 ms apart they span 539 to 565 ms and it
+was open 0 of 3. Every click was seen in every one, and the next click opened it
+every time.
+
+**What the run left.** `FleetTitle` was typed into and set back, read back as
+`Our fleet`, `revision 123`, `publishedRevision 121`, an empty outbox, nothing
+published. Nothing was written on limosen.
+
+### The three notebooks, run at the end of it
+
+`tests/09-editing-latency.ipynb` **23 PASS 1 FAIL 4 SKIP 1 WARN**,
+`tests/10-draft-persistence.ipynb` **41 PASS 0 FAIL 0 SKIP 1 WARN**, and
+`tests/11-cms-frame.ipynb` **26 PASS 0 FAIL 0 SKIP 0 WARN**, all stored in
+`tests/ship/` with the notebooks they came out of.
+
+`09`'s FAIL is this file's own browser acceptance, the blur to the next painted
+frame, and it stays red for the reason above. Its four SKIPs are `localBlur`,
+the rollback, which cannot be measured on a build that carries the option. `10`
+is unchanged from `tests/repaired/`.
+
+**`11` lost its WARN, which is the one thing in this table that moved.** The
+check is called "the storm is present, which is the condition the drawers work
+under" and it read 58.4 commits a second, 29.4 frames a second and 3.2
+`localStorage` writes a second when the drawers were built. It now reads **0.2
+commits a second, 59.8 frames a second and 0.0 writes a second** and says the
+storm is gone. The two pieces of work were built by two sessions that could not
+see each other's result, and this is the reading where they meet.
+
+### What is still not established
+
+- **The blur to paint gap is worse than the last reading of it**, on the
+  deployed site and on a local build alike, and load is the likeliest cause
+  rather than a proven one. See above.
+- **One machine, one browser, two widths.** Unchanged.
+- **The state surviving an actual remount is still argued and not measured**,
+  0 remounts in these 40 gestures as in the 40 before them.
+- **The Fable 5.1 review of the editing path is still open**, and this run adds
+  the deployed readings to what it has to read.
