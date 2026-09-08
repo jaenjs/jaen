@@ -293,6 +293,46 @@ export const agentObject = {
  * ticket, which is an agent that does not have the verb, and the connection
  * itself closing, which is a proxy that will not upgrade.
  */
+// ---------------------------------------------------------------------------
+// Holding an answer, which is how a race is forced rather than waited for
+// ---------------------------------------------------------------------------
+
+/**
+ * Park the **answer** of the next call of one operation, after the object has
+ * produced it, until the scenario releases it.
+ *
+ * It is the node half of `tests/support/revert-probe.py`'s `holdNextOp`, and
+ * it is shaped the same way for the same reason: the bytes handed back are the
+ * object's own and they were genuinely produced before whatever the scenario
+ * does next. Nothing about the request is rewritten and no answer is invented.
+ * The window this opens, an answer produced before a save arriving after it,
+ * is one network round trip wide in the wild, which is why waiting for it is
+ * not a test.
+ */
+let holdArmed: 'draft' | 'save' | null = null
+let releaseHeld: (() => void) | null = null
+
+export const holdNextCall = (op: 'draft' | 'save') => {
+  holdArmed = op
+}
+
+export const isHeld = () => releaseHeld !== null
+
+export const release = (): boolean => {
+  const resolve = releaseHeld
+  releaseHeld = null
+  if (resolve) resolve()
+  return Boolean(resolve)
+}
+
+const holdIfArmed = async (op: 'draft' | 'save') => {
+  if (holdArmed !== op) return
+  holdArmed = null
+  await new Promise<void>(resolve => {
+    releaseHeld = resolve
+  })
+}
+
 export const sockets: Array<{url: string; protocols: string[]}> = []
 
 class FakeWebSocket {
@@ -428,16 +468,19 @@ export const fire = (target: 'window' | 'document', type: string): number => {
   }
 
   if (isSave) {
+    // The object writes when the call reaches it and not when the caller reads
+    // the body, which is what makes a held answer a stale one rather than a
+    // late one.
+    const answer = agentObject.save(
+      body.variables.changes,
+      body.variables.baseRevision
+    )
+
+    await holdIfArmed('save')
+
     return {
       status: 200,
-      json: async () => ({
-        data: {
-          save: agentObject.save(
-            body.variables.changes,
-            body.variables.baseRevision
-          )
-        }
-      })
+      json: async () => ({data: {save: answer}})
     }
   }
 
@@ -475,11 +518,13 @@ export const fire = (target: 'window' | 'document', type: string): number => {
   }
 
   if (isDraft) {
+    const answer = agentObject.read(body.variables.sinceRevision)
+
+    await holdIfArmed('draft')
+
     return {
       status: 200,
-      json: async () => ({
-        data: {draft: agentObject.read(body.variables.sinceRevision)}
-      })
+      json: async () => ({data: {draft: answer}})
     }
   }
 

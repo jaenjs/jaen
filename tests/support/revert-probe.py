@@ -157,6 +157,11 @@ INSTRUMENT = r"""(() => {
       const s = window.__jaenProbe.store.getState()
       return {revision: s.remote.revision,
               publishedRevision: s.remote.publishedRevision,
+              // The applied mark and the refusal counter of the fix of
+              // 2026-09-08 in the evening. Undefined on a build from before
+              // it, which is how a run says which client it drove.
+              applied: s.remote.appliedRevision,
+              staleAnswers: s.remote.staleAnswers,
               outbox: s.remote.outbox.length,
               saveState: s.remote.saveState}
     } catch (error) { return null }
@@ -359,6 +364,7 @@ STATE = """() => {
   try {
     const s = window.__jaenProbe.store.getState()
     return {revision: s.remote.revision, publishedRevision: s.remote.publishedRevision,
+            applied: s.remote.appliedRevision, staleAnswers: s.remote.staleAnswers,
             outbox: s.remote.outbox.length, saveState: s.remote.saveState,
             connection: s.remote.connection, isEditing: s.status.isEditing}
   } catch (error) { return {error: String(error)} }
@@ -827,6 +833,9 @@ async def main():
                         help="the second editor writes the field under test")
     parser.add_argument("--focused", type=int, default=0)
     parser.add_argument("--out", default="")
+    parser.add_argument("--restore", type=int, default=0,
+                        help="set every field this run wrote back to the value "
+                             "it had before it, and read it back")
     args = parser.parse_args()
 
     token = load_tokens()
@@ -838,9 +847,42 @@ async def main():
                            if k != "delta"}
     out["draftFieldsBefore"] = draft_fields(draft(token))
 
+    # The subject is the deployed site under JAEN_LIVE=1, which is what the
+    # reproduce phase drove, and this site's own production build served under
+    # its own name otherwise. The second is what a gate wants: the build in the
+    # checkout, against the live agent and the live object, so what is measured
+    # is the code that is about to be shipped rather than the code that is.
+    site = RP.Site()
+
     from playwright.async_api import async_playwright
-    async with async_playwright() as pw:
-        await SCENARIOS[args.scenario](pw, args, out)
+    try:
+        async with async_playwright() as pw:
+            await SCENARIOS[args.scenario](pw, args, out)
+    finally:
+        site.stop()
+
+    out["servedFrom"] = "the deployed site" if RP.LIVE else "a local production build"
+
+    # Every edit this run made on a live draft is set back and read back. The
+    # values are the ones read out of the object before anything was typed, so
+    # a field the run never touched is written all the same and is a no-op by
+    # value: the object is single threaded and the read-back is the proof, not
+    # the write.
+    if args.restore:
+        restored = {}
+        before = out.get("draftFieldsBefore") or {}
+        for name in (FIELD, OTHER_FIELD):
+            if name not in before:
+                continue
+            answer = write_field(token, name, before[name])
+            restored[name] = {"wroteRevision": (answer.get("data") or {})
+                              .get("save", {}).get("revision"),
+                              "wanted": before[name]}
+        readback = draft_fields(draft(token))
+        for name, entry in restored.items():
+            entry["readBack"] = readback.get(name)
+            entry["ok"] = readback.get(name) == entry["wanted"]
+        out["restored"] = restored
 
     out["draftFieldsAfter"] = draft_fields(draft(token))
     out["objectAfter"] = {k: v for k, v in (draft(token) or {}).items()

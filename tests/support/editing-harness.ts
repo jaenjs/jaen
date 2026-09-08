@@ -21,7 +21,10 @@ import {
   fakeDocument,
   fire,
   flushToDisk,
+  holdNextCall,
+  isHeld,
   pushRevision,
+  release,
   setNetwork,
   sockets,
   storage,
@@ -917,6 +920,182 @@ const scenarios: Record<string, () => Promise<any>> = {
       revision: (store.getState() as any).remote.revision,
       draftCallsAfterFrame:
         calls.filter(call => call.query === 'draft').length - draftCallsBefore
+    }
+  },
+
+  /**
+   * The gate: a read answered before this browser's save, arriving after it.
+   *
+   * The mechanism `docs/architecture/draft-state.md` names first under "A field
+   * sometimes reverts", forced the way the reproduce phase forced it on the
+   * live site: the object's own answer is parked after it has been produced,
+   * so the bytes are genuinely older than the save that overtakes them.
+   *
+   *  1. the client and the object are in step at revision R
+   *  2. the next `draft` answer is armed to be held
+   *  3. the second editor writes **another field of the same page**, so the
+   *     object goes to R+1 and the answer that is held carries the page whole,
+   *     the field under test at its old value with it
+   *  4. a person types into the field under test; the save is based on R, the
+   *     object folds it on and answers R+2 with `rebased: true`, and
+   *     `saveSucceeded` empties the outbox, so there is nothing left to fold
+   *     back over an answer that does not contain it
+   *  5. the held answer is released
+   *
+   * What is asked is the invariant and nothing softer: the person's own value
+   * is what the store holds afterwards, the client's revision never goes
+   * backwards, and the other editor's field is not lost by the refusal either.
+   */
+  async staleReadRace() {
+    hydrateBooklimo()
+    store.dispatch(remoteActions.setActive(true))
+
+    // The socket is refused so that the reads are the poll's and countable,
+    // and the notebook sets the interval slow: a poll that fires while the
+    // answer is held would read the object again and settle the question
+    // before it was asked.
+    agentObject.socket = 'refused'
+
+    // Every distinct revision this browser passed through, in order. A revert
+    // is not the only failure this scenario can produce: a mark that moves
+    // down is the one that would hide a worse one.
+    const marks: Array<{revision?: number; applied?: number}> = []
+    const unsubscribe = store.subscribe(() => {
+      const remote = (store.getState() as any).remote
+      const last = marks[marks.length - 1]
+      if (
+        !last ||
+        last.revision !== remote.revision ||
+        last.applied !== remote.appliedRevision
+      ) {
+        marks.push({
+          revision: remote.revision,
+          applied: remote.appliedRevision
+        })
+      }
+    })
+
+    // 1. in step
+    for (let waited = 0; waited < 6000; waited += 25) {
+      if ((store.getState() as any).remote.revision === agentObject.revision) {
+        break
+      }
+      await sleep(25)
+    }
+
+    const inStep = {
+      revision: (store.getState() as any).remote.revision,
+      applied: (store.getState() as any).remote.appliedRevision,
+      objectRevision: agentObject.revision,
+      value: fieldValue(store.getState(), 'FleetTitle'),
+      otherValue: fieldValue(store.getState(), 'ServicesTitle')
+    }
+
+    // 2. and 3. the answer is armed, then the second editor moves the object
+    holdNextCall('draft')
+
+    agentObject.write({
+      'JaenPage /': {
+        id: 'JaenPage /',
+        jaenFields: {
+          'IMA:TextField': {
+            // The page is carried whole, which is what the object's own delta
+            // does, so this answer also carries the field under test at the
+            // value it had before anybody typed. That is the byte that reverts.
+            ServicesTitle: {value: 'the other editor wrote this'},
+            FleetTitle: {value: inStep.value}
+          }
+        }
+      }
+    })
+
+    let held = false
+    for (let waited = 0; waited < 12000; waited += 25) {
+      held = isHeld()
+      if (held) break
+      await sleep(25)
+    }
+
+    // 4. the person types, and their save overtakes the held answer
+    const savesBefore = agentObject.saves
+    const draftCallsBeforeSave = calls.filter(
+      call => call.query === 'draft'
+    ).length
+    fieldWrite('what the person typed', 'FleetTitle')
+
+    for (let waited = 0; waited < 8000; waited += 25) {
+      if (
+        agentObject.saves > savesBefore &&
+        (store.getState() as any).remote.outbox.length === 0 &&
+        (store.getState() as any).remote.saveState === 'saved'
+      ) {
+        break
+      }
+      await sleep(25)
+    }
+
+    const afterSave = {
+      revision: (store.getState() as any).remote.revision,
+      applied: (store.getState() as any).remote.appliedRevision,
+      value: fieldValue(store.getState(), 'FleetTitle'),
+      objectRevision: agentObject.revision,
+      staleAnswers: (store.getState() as any).remote.staleAnswers ?? 0
+    }
+
+    // 5. the answer the object made before that save is handed over
+    const released = release()
+
+    await sleep(1200)
+    await sleep(PERSIST_DEADLINE_MS)
+
+    const after = {
+      revision: (store.getState() as any).remote.revision,
+      applied: (store.getState() as any).remote.appliedRevision,
+      value: fieldValue(store.getState(), 'FleetTitle'),
+      persistedValue: fieldValue(persisted(), 'FleetTitle') ?? null,
+      staleAnswers: (store.getState() as any).remote.staleAnswers ?? 0,
+      outboxLength: (store.getState() as any).remote.outbox.length,
+      saveState: (store.getState() as any).remote.saveState
+    }
+
+    unsubscribe()
+
+    return {
+      scenario: 'staleReadRace',
+      held,
+      released,
+      inStep,
+      afterSave,
+      after,
+      marks,
+      // The object is the arbiter of what was actually saved: the value it
+      // holds is what every other editor will read.
+      objectValue: (agentObject.read(null) as any).delta.pages['JaenPage /']
+        ?.jaenFields?.['IMA:TextField']?.FleetTitle?.value,
+      objectRevision: agentObject.revision,
+      objectSaves: agentObject.saves,
+      draftCalls: calls.filter(call => call.query === 'draft').length,
+      sinceRevisions: calls
+        .filter(call => call.query === 'draft')
+        .map(call => call.sinceRevision ?? null),
+      /**
+       * What the reads that followed the save asked from, which is the other
+       * half of the refusal: an answer that is dropped must leave the mark it
+       * was asked from where it was, or what it carried is never read again.
+       * The object was at R+2 here and these reads ask from R, which is what
+       * this browser has actually merged.
+       *
+       * What the second editor's own field held afterwards is deliberately not
+       * asserted in this process. `editing-shim`'s stand in logs the page node
+       * a scenario hands it rather than the page it holds, so two writes to
+       * one page replace each other's node instead of merging, which the real
+       * object does not do: it stores a page whole and answers it whole. That
+       * question belongs to the live gate, where the object is the object.
+       */
+      askedFromAfterSave: calls
+        .filter(call => call.query === 'draft')
+        .map(call => call.sinceRevision ?? null)
+        .slice(draftCallsBeforeSave)
     }
   },
 
