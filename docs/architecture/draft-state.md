@@ -1209,6 +1209,217 @@ is where the run found it. `netsnek/booklimo.at` main is `e1ec2748` before and
 after, `patches.txt` unmoved, no gateway file, nothing published and nothing
 discarded.
 
+### Repaired 2026-09-08 in the evening, both guards, and the before and after
+
+Everything above this heading was measured before any of it was fixed. This is
+the fix, what it costs, and what the same instrument answers with it in.
+booklimo only; nothing was written on limosen.
+
+**The three causes, and the four lines that carried them.**
+
+1. `poll()` compared the answer against `const remote = state().remote` read
+   **before** its `await`. So the comparison was against the revision the
+   browser had when the read was sent, never against the one it had reached. In
+   the forced run that was 206 < 205, false, while the browser stood at 207.
+2. `remoteHydrated` set `state.revision = answer.revision` unconditionally, so
+   applying a stale answer moved the browser's own mark down with it.
+3. `flush()` ended its `try` with `if (answer.rebased) void poll()` while
+   `inFlight` was cleared in the `finally` after it, and `poll()`'s first line
+   returns when `inFlight` is set. The one read that would have repaired the
+   revert in a second was dropped on the floor, and so was every socket frame
+   that landed inside a save.
+4. `TextField` froze its rendering only for the echo of its own dispatch, so
+   another editor's value was written into the DOM under a person's hands.
+
+**One number became two, and that is the whole of the client's fix.**
+`remote.revision` was doing two jobs that come apart the moment a save is
+rebased: "the object is at R" and "this browser holds everything up to R". A
+rebased save answers 207 while 206 carries another editor's change this browser
+has never seen. So there are two marks now:
+
+| mark              | what it means                              | what it is used for                                   |
+| ----------------- | ------------------------------------------ | ----------------------------------------------------- |
+| `revision`        | the highest revision this browser knows of | the floor of the guard, the toolbar's "not published" |
+| `appliedRevision` | the highest revision it has **merged**     | `sinceRevision` on a read, `baseRevision` on a save   |
+
+Both are monotonic. The only two operations that may move them down are the two
+that say the object's history was replaced, `objectRestarted` and
+`draftDiscarded`, and both set them together and deliberately.
+
+**The gate, in one sentence.** An answer is applied only when its revision is
+strictly above `appliedRevision` **and** at least `revision`, read against the
+store at the instant the answer arrives; anything else is counted in
+`remote.staleAnswers` and dropped, with the applied mark left where it was so
+the next read asks from what this browser really holds and brings everything the
+dropped answer carried. A refusal that bought staleness would be no fix: it
+would trade a revert that heals in thirty seconds for a field that is wrong
+until somebody writes it again.
+
+**Why the restart is diagnosed against the revision the read was sent with**,
+and not against the mark the browser holds now. Those are two different
+questions. A browser whose mark moved on while a read was out gets an answer
+below its mark from a perfectly healthy object, and calling that a lost object
+would move both marks down onto a race. An answer below what that very read
+asked from cannot have come from the object that was asked: the object answers
+`full: true` to a reader from above its own revision, which is what a lost or
+rebuilt object looks like from outside.
+
+**The focused field waits.** `TextField` keeps handing React the string it
+already has for as long as the caret is in it, whatever the store says, and the
+value that arrived from outside is painted when the person leaves. Two things
+come with it and neither is a nicety. A field the person only clicked into
+writes nothing on the way out, because with the freeze in place its DOM still
+holds the value from before the other editor's change and dispatching it would
+overwrite somebody else's work with a click, so a blur writes only what an
+`input` event has touched. And the wrapper tag follows what is painted rather
+than what is stored, because a value arriving from outside could otherwise turn
+a span into a div, and React replacing the element rebuilds its DOM out of the
+frozen string with everything typed since gone.
+
+What the outside change costs by waiting is that the person's blur writes over
+it. That is the ordinary last-writer-wins of a shared draft, the object answers
+`overwrote` for it and the CMS says whose change was taken. The debounce is
+flushed on the blur as well, so what they typed is in the store the moment they
+leave rather than half a second later.
+
+#### The same instrument, the same race, and what it answers now
+
+`tests/support/revert-probe.py` unchanged in what it drives, with two
+additions: it can serve **this checkout's own production build** under the
+site's name instead of the deployed site (`JAEN_LIVE=0`), which is what a gate
+wants, and `--restore 1` sets every field it wrote back to the value it found
+and reads it back out of the object. The two runs below are that, against the
+live `jaen-agent` 4.4.0, the live object and the live identity server, signed in
+as the booklimo human admin, with the booklimo machine admin as the second
+editor.
+
+**The forced race**, run twice, `tests/revert-gate/forced-a.json` (the run this
+session drove by hand) and `forced.json` (the notebook's own). The call log is
+the whole fix in five lines, and the two runs differ in nothing but their
+revisions:
+
+| what happened                          | run A                                                                  | run B                      |
+| -------------------------------------- | ---------------------------------------------------------------------- | -------------------------- |
+| the client and the object in step      | revision 285, applied 285                                              | 310, 310                   |
+| the second editor writes another field | object to 286                                                          | 311                        |
+| the poll the frame causes, held        | asked from 285, answered 286 with the field's **old** value, held      | from 310, answered 311     |
+| the person types ` AAA` and leaves     | save `baseRevision` 285, answered 287, `rebased: true`                 | base 310, 312, rebased     |
+| **the re-read the rebase asks for**    | asked from **285** and not from 287, answered 287 with the typed value | from **310**, answered 312 |
+| the held answer is released            | refused, `staleAnswers` +1, `remote.revision` **287 and not 286**      | the same, 312 not 311      |
+| the store, the screen and the object   | all three hold ` AAA`, at the release and 40 s later                   | the same                   |
+| reverts written by a hydrate           | **0**                                                                  | **0**                      |
+
+Read against the morning's run of the same scenario on the same site: the store
+took the old value, the mark went 207 back to 206, and the screen showed the
+value the person had replaced for 45.1 s.
+
+**The focused field**, twice as well, `tests/revert-gate/focused-a.json` and
+`focused.json`, the same in both. No forcing at all,
+the second editor writes the very field the caret is in:
+
+| what was asked                        | before, `tests/revert/focused-a.json`            | now                                       |
+| ------------------------------------- | ------------------------------------------------ | ----------------------------------------- |
+| what the screen holds after the write | the other editor's value, the person's text gone | the person's own ` AAA`, no `OTHER` in it |
+| where the next two keystrokes land    | at the **front**, `ZZShort answers about …`      | at the end, `… AAAZZ`                     |
+| how many saves the round costs        | 4 in 13 s, the two values alternating            | **2**                                     |
+| reverts written by a hydrate          | the field moved under the person                 | **0**                                     |
+
+**And in node, deterministically.** `tests/10-draft-persistence.ipynb` grew the
+scenario `staleReadRace` beside `twoEditorsRace`, driven the way the reproduce
+phase drove the live one: `editing-shim` can park the **answer** of one call
+after the object has produced it, which is `holdNextOp` in one process. It is
+the gate that runs everywhere, with no credentials and no browser. Against the
+client of the morning it answers the bug exactly:
+
+| what the scenario reads               | the client of the morning | the client now          |
+| ------------------------------------- | ------------------------- | ----------------------- |
+| the store after the held answer lands | `Our fleet`               | `what the person typed` |
+| `localStorage`                        | `Our fleet`               | `what the person typed` |
+| the object, which every editor reads  | `what the person typed`   | `what the person typed` |
+| `remote.revision` through the run     | 0, 2, **1**               | 0, 2, 2                 |
+| answers refused as stale              | 0                         | **1**                   |
+| reads after the rebased save          | **none**                  | one, asked from 0       |
+
+#### The two notebooks, and the one number that is not this work's
+
+`tests/10-draft-persistence.ipynb` **52 PASS 0 FAIL 0 SKIP 1 WARN**, stored with
+its run in `tests/revert-gate/`. The five node checks and the six browser checks
+this work added are green, and so is everything that was there before: the
+reload, the hidden tab, the offline queue, the discard, the object restarted, the
+two editors racing, the socket carrying it and the socket refused. Its one WARN
+is the old one, that the store's write is asynchronous. The deployed run of the
+morning was 35 PASS with the same 0 FAIL.
+
+`tests/09-editing-latency.ipynb` **22 PASS 3 FAIL 4 SKIP**, and none of the
+three is the fix.
+
+The blur to paint gap is 103.8 ms against one frame at 16, where `../ship/`
+measured 93.8 ms before this change. It is the number
+`editing-performance.md` has been red on since the baseline's 24.8 ms, and this
+run cannot separate the change from the machine: the same run measured a blur
+that dispatches nothing at **13.8 ms** where `../ship/` measured 71.8 ms, on a
+machine that was building and driving browsers throughout. The change does put
+one dispatch and one render inside the blur handler's own path, which is real and
+is the price of the edit being in the store the moment a person leaves the field.
+Whoever takes that number next should take it on a quiet machine, with and
+without the flush, before attributing it.
+
+The other two are a fault of `tests/support/editing-browser.py` and they are
+worth more than a line, because a test that writes on a live draft and cannot set
+it back is the same class of thing this whole file is about. Its `blur` scenario
+types into whichever field the theme renders first, which on this draft is the
+owner's own unpublished `FleetTitle`, and it finds the field to set back by
+comparing the store's **raw** value with the element's rendered text. The owner's
+value carries `&nbsp;`, the comparison can never match, the set-back is skipped
+without a word, and two runs left ` probe probe` standing on his field. It was
+set back through the agent by hand and read back byte for byte.
+
+A run that writes on a live draft restores through the agent and reads back,
+which is what `--restore` of `revert-probe.py` does and what
+`editing-browser.py` should do. It is not repaired here, because repairing it by
+typing cannot restore a value that carries markup at all.
+
+#### What this run left on the live site
+
+Every field of booklimo's draft is byte for byte what
+`tests/revert/draft-before-203.json` holds, compared field by field, the owner's
+four unpublished fields included; the whole draft as this run left it is in
+`tests/revert-gate/draft-after.json`. The object went from 203 to 332,
+`publishedRevision` is 183 where the reproduce run found it, nothing was
+published and nothing was discarded.
+
+Four authorship stamps moved and cannot be put back, because the object stamps
+the writer of every write. `FaqSubtitle` and `ServicesSubtitle` are this suite's
+fixture fields and carry a newer instant of the account that already held them.
+`FleetTitle` and `AboutP2` were the owner's: the first is `09`'s fault above, and
+the second was damaged and repaired by **another session working in this same
+checkout at the same time**, which committed its own account of it (`836912a`).
+That two notebooks of this suite wrote into an editor's unpublished fields on one
+evening, by two unrelated faults, is the finding beside the fix.
+
+#### What this repair did not do, and what is worth doubting
+
+- **The natural rate is still not measured.** Zero reverts in twenty hydrates
+  without forcing was the reading before the fix as well, on a fast link. What
+  is proven is the mechanism and the guard, not a rate.
+- **Two people in two browsers** is still not driven. The second editor is a
+  machine account writing through the agent's own `save`, which is a second sub
+  with its own base as far as the object is concerned, and it is what the
+  mechanisms turn on.
+- **The blur now dispatches at once**, which puts one redux dispatch and one
+  React render in the blur handler's own path. `09-editing-latency.ipynb`
+  measures the blur to paint gap and it was already over one frame at 24.3 ms
+  for a cause `editing-performance.md` names; whether this moved it is that
+  notebook's reading and is reported with this run rather than argued.
+- **A field the person only clicked into no longer writes on the way out.** It
+  is the right behaviour and it is a behaviour change: an interaction that
+  changes a field's DOM without an `input` event would now be dropped on the
+  blur. Typing, pasting and every `execCommand` of the tunes fire one.
+- **`RESET_STATE` drops the applied mark**, so the local discard of unsent
+  changes is followed by a full read rather than a delta. That is a fix of its
+  own, found while writing this: the reset empties the page slice, and the mark
+  that said what had been merged said it about a copy that was no longer there.
+
 ## Three operations that rewrite the shared draft
 
 Import, discard and restore are one kind of thing: an act that changes the

@@ -1553,3 +1553,39 @@ the page. Eleven checks, all green, on the local production build:
   every render of the app's own screens paid it too. Only the blur was measured.
 - **One machine, one browser, one width, one site.** Apple M1 Max under Asahi,
   headless chromium at 1440x900, booklimo's home page.
+
+## The blur path changed again, 2026-09-08 in the evening
+
+Not this file's work, and it is this file's subject, so it is recorded here and
+measured in `docs/architecture/draft-state.md`, "A field sometimes reverts". The
+owner reported a field resetting to the value it had before, that was reproduced
+on demand on the live site, and one of its three mechanisms is in `TextField`
+itself.
+
+Three things about a field's own path are different.
+
+**A field that has focus is never written from the outside.** The freeze that
+kept the echo of a field's own dispatch out of `dangerouslySetInnerHTML` now
+holds for every value while the caret is in the field, and the outside value is
+painted when the person leaves. Measured before the change: another editor's
+write replaced the sentence under the person's hands, the next two keystrokes
+landed at position zero, and the two sides then alternated at four saves in
+thirteen seconds.
+
+**The debounce is flushed on the blur.** `handleTextSave` is still
+`useDebouncedCallback(…, 500)` and still dispatches while a person types, and
+leaving the field now takes what is in it at once instead of half a second
+later. It closes the last of the window "The half second is closed" measured,
+for the ordinary case of a person who leaves a field and then leaves the page,
+and it is what keeps the render after the blur from painting a value that
+arrived while they were typing.
+
+**A field the person only clicked into writes nothing.** A blur dispatches only
+when an `input` event has touched the field, because with the freeze in place
+the DOM of an untouched field still holds the value from before another
+editor's change and writing it back would take their work away with a click.
+
+What this costs is one dispatch and one React render inside the blur handler's
+own path, which is the path "The blur to the next painted frame is over one
+frame" measures. The reading with the change in is reported with the run that
+made it.
