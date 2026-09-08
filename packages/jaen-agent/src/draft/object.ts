@@ -1424,7 +1424,11 @@ export class JaenDraftObject {
 
     for (let attempt = 1; attempt <= DISCARD_ATTEMPTS; attempt += 1) {
       before = await this.snapshot(site)
-      snapshotBytes = await this.sink.put(before, 'discard')
+      // The first attempt rotates the previous discard's backstop into place
+      // beside it, a retry replaces its own first attempt: rotating on every
+      // attempt would push the older discard's copy out of the store because
+      // somebody happened to type during this one.
+      snapshotBytes = await this.sink.put(before, 'discard', attempt === 1)
 
       const now = await this.meta(site)
 

@@ -36,7 +36,18 @@ import type {DraftSnapshot} from './store'
 export type SnapshotKind = 'draft' | 'discard'
 
 export interface SnapshotSink {
-  put(snapshot: DraftSnapshot, kind?: SnapshotKind): Promise<number>
+  /**
+   * `rotate` is false for a write that replaces a copy this same act just
+   * made. A discard whose backstop has to be re-taken, because a save landed
+   * while the first one was being written, would otherwise push its own first
+   * attempt into `:previous` and the previous discard's backstop out of the
+   * store altogether, which is an older undo lost to a retry.
+   */
+  put(
+    snapshot: DraftSnapshot,
+    kind?: SnapshotKind,
+    rotate?: boolean
+  ): Promise<number>
   get(site: string, kind?: SnapshotKind): Promise<DraftSnapshot | null>
 }
 
@@ -44,7 +55,7 @@ const key = (site: string, kind: SnapshotKind = 'draft') =>
   kind === 'discard' ? `draft-discard:${site}` : `draft-snapshot:${site}`
 
 export const kvSnapshotSink = (kv: KVNamespace | null): SnapshotSink => ({
-  put: async (snapshot, kind = 'draft') => {
+  put: async (snapshot, kind = 'draft', rotate = true) => {
     const body = JSON.stringify(snapshot)
 
     if (!kv) {
@@ -58,7 +69,9 @@ export const kvSnapshotSink = (kv: KVNamespace | null): SnapshotSink => ({
       return body.length
     }
 
-    const previous = await kv.get(key(snapshot.site, kind)).catch(() => null)
+    const previous = rotate
+      ? await kv.get(key(snapshot.site, kind)).catch(() => null)
+      : null
 
     if (previous) {
       await kv
