@@ -373,3 +373,62 @@ beside the store's own flush, and dispatch on input rather than only on blur, so
 a person who types and closes the tab without leaving the field is covered too.
 Neither is a regression of the four changes above: the 500 ms debounce is the
 path this file describes as today's, and it was never the part that was measured.
+
+## The half second is closed, 2026-09-08
+
+The section above is the measurement of a loss. This is the repair, and its
+numbers are in `tests/repaired/` beside the three runs before it. The four
+changes of this file are untouched: nothing in `persist-state.ts` moved, the
+quiet window is the same window, and the toolbar says what it said.
+
+**What changed is above them.** `TextField` dispatches while a person types,
+through the same 500 ms debounce it always had, so a keystroke becomes a
+`pages/field_write` half a second after the typing stops rather than half a
+second after the field is left. And the way out of the page is one ordered pass
+rather than a set of listeners, `packages/jaen/src/utils/on-leave.ts`: every
+holder of an edit that is not yet a dispatch flushes it, then the store is
+written synchronously, then the outbox is sent best effort. The order is the
+whole of it. A field's own `visibilitychange` listener could never have worked,
+because this file's persister registers its listeners when the redux module
+loads and a field's would always run after the store had been written.
+
+So the safety argument at the top of this file now reaches the field as well.
+"Held by a synchronous write on `visibilitychange` to hidden and on `pagehide`"
+is true of the store, and what is written is a store that has the edit in it.
+
+**One thing had to be built with it.** `dangerouslySetInnerHTML` re-sets
+`innerHTML` whenever the string it is given changes, so dispatching while a
+person types would have put their caret back at the start of the field every
+half second. A field does not hand React the echo of its own dispatch while the
+caret is in it. The freeze is that narrow on purpose: a value from anywhere
+else, another editor's over the socket above all, still lands in the DOM the
+way it did before.
+
+**Measured on the deployed booklimo.at**, the three cases that used to lose the
+edit and one real tab close, in `10-draft-persistence.ipynb`'s new `losses`
+scenario: at 0 ms after the blur, at 300 ms, with the caret still in the field,
+and on a `page.close()` with nothing waited out at all, the typed value is in
+`localStorage` with one change in the outbox and the object has it afterwards.
+`10` is **41 PASS 0 FAIL 0 SKIP 1 WARN**, where the run against the deployed
+agent was 35 / 0 / 0 / 2.
+
+**And the suite stops stepping over the window.** `run_safety` waited 700 ms
+before hiding the tab, past the debounce, which is why every hidden-tab and
+reload check of `10` was green while the invariant was not met. It hides with
+nothing waited out now.
+
+**The first retry is two seconds.** `RETRY_SECONDS` was indexed with a failure
+count the catch had already incremented, which this file recorded as a WARN and
+which is fixed, so `10`'s two WARNs are one.
+
+**The blur to paint gap is unchanged and still over one frame**, and the reading
+is noisier than one number can carry: 26.2, 26.0 and 25.2 ms in three notebook
+runs of this repair and 24.4 ms with the same scenario run on its own on a quiet
+machine, against 24.0 and 24.8 in the baseline, 25.0 with no agent and 24.3
+against the deployed agent. Dispatching while a person types cannot land in this
+measurement, because the scenario types and blurs at once and the blur replaces
+the pending call, and nobody should read a millisecond of this spread as a
+change either way. The cause is still the registration storm this file named and
+the acceptance stays red until the dispatches go, not the writes. In the four
+seconds after a blur: 12 store writes and 13,590 B, against the baseline's 185
+and 14.4 MB.
