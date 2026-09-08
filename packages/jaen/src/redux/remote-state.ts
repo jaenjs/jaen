@@ -37,14 +37,16 @@ import {Store} from 'redux'
 import {
   AgentConfig,
   AgentOfflineError,
+  DraftAnswer,
+  DraftDelta,
   fetchDraft,
   openDraftSocket,
   saveChanges
 } from '../clients/agent'
 import {
   applyChanges,
-  draftDataToState,
   draftStateToData,
+  emptyDraftState,
   JaenChange,
   JaenDraftState,
   MEDIA_FIELD_TYPE,
@@ -255,6 +257,96 @@ const recordAction = (
 const isRemoteWrite = (type: string) =>
   type.endsWith('/hydrateFromRemote') || type.endsWith('/discardAllChanges')
 
+/**
+ * The object's delta, folded onto a draft.
+ *
+ * Four kinds of key, and each one is merged the way the object splits it.
+ *
+ * A page is carried whole and replaces the page of that id, because the object
+ * stores a page as one key and a field level delta of a page would be a second
+ * merge algorithm beside the build's.
+ *
+ * The catalogue is not, because it is 118 KB on booklimo and one key per node
+ * is the entire reason a picture is cheap to save. Its nodes are merged into
+ * the field `mediaField` names, one id at a time, and `removedMedia` deletes.
+ * That field is written whole by the gallery, so a delta that carried it whole
+ * would make every picture added anywhere a full catalogue on the wire.
+ *
+ * The site metadata is present only when it changed, so `null` means "leave
+ * it" and not "empty it": emptying a site's metadata because a text field was
+ * written is exactly the kind of loss this file is answerable for.
+ *
+ * Widgets are merged by id rather than replaced, for the same reason as a
+ * page. Whether the object sends all of them or only the changed ones is not
+ * settled in its interface, and merging by id is the reading that is right
+ * either way.
+ */
+const applyDelta = (
+  state: JaenDraftState,
+  delta: DraftDelta | null | undefined
+): JaenDraftState => {
+  if (!delta) return state
+
+  for (const [pageId, node] of Object.entries(delta.pages || {})) {
+    if (!pageId || !node) continue
+    state.pages[pageId] = node
+  }
+
+  const field = delta.mediaField
+  const media = delta.media || {}
+  const removed = delta.removedMedia || []
+
+  if (field && (Object.keys(media).length > 0 || removed.length > 0)) {
+    const page: any = (state.pages[field.pageId] = {
+      ...(state.pages[field.pageId] || {id: field.pageId})
+    } as any)
+
+    page.jaenFields = {...(page.jaenFields || {})}
+    page.jaenFields[field.fieldType] = {
+      ...(page.jaenFields[field.fieldType] || {})
+    }
+
+    const existing =
+      page.jaenFields[field.fieldType][field.fieldName]?.value || {}
+
+    const value: Record<string, unknown> = {...existing}
+
+    for (const [id, node] of Object.entries(media)) {
+      if (!id) continue
+      value[id] = node
+    }
+
+    for (const id of removed) {
+      delete value[id]
+    }
+
+    page.jaenFields[field.fieldType][field.fieldName] = {
+      ...(page.jaenFields[field.fieldType][field.fieldName] || {}),
+      value
+    }
+  }
+
+  if (delta.site) {
+    state.site = {siteMetadata: delta.site.siteMetadata || {}}
+  }
+
+  for (const widget of delta.widgets || []) {
+    if (!widget) continue
+
+    const at = state.widgets.findIndex(
+      (entry: any) => entry && entry.id && entry.id === (widget as any).id
+    )
+
+    if (at >= 0) {
+      state.widgets[at] = widget
+    } else {
+      state.widgets.push(widget)
+    }
+  }
+
+  return state
+}
+
 export default (config: AgentConfig) => {
   /**
    * The middleware only appends to the store. It never sends, so a save can
@@ -421,21 +513,42 @@ export default (config: AgentConfig) => {
     }
 
     /**
-     * A poll that found a new head. The remote document is the base and this
-     * browser's unsent changes are folded back on top of it, so a local edit
-     * that has not reached the agent yet is never overwritten by the answer
-     * that does not contain it.
+     * A read that came back with something. It is the one place the remote
+     * answer meets this browser's unsent changes, whether the read was asked
+     * for by the poll, by a socket frame or by a rebased save.
+     *
+     * The order is the safety, and it is the same order it has always been:
+     * the remote answer is the base, this browser's outbox is applied on top,
+     * and only then is the store hydrated. A change that has not reached the
+     * object yet is therefore never overwritten by an answer that does not
+     * contain it, which is the invariant this whole file exists for.
+     *
+     * What changed with the object is that the base is not always the whole
+     * draft. `full` says the answer replaces this browser's copy, which is
+     * what a reader with no revision, a revision older than the object's
+     * pruned window, or a revision the object has never reached gets, and the
+     * last of those is what a lost object looks like from the outside. A
+     * `delta` merges onto what is already here.
      */
-    const hydrate = (
-      remoteState: JaenDraftState,
-      revision: number,
-      publishedRevision?: number | null,
-      authors?: any
-    ) => {
-      const outbox = state().remote.outbox as Array<{change: JaenChange}>
+    const hydrate = (answer: DraftAnswer) => {
+      const current = state()
+
+      const base: JaenDraftState = answer.full
+        ? emptyDraftState()
+        : {
+            pages: {...(current.page?.pages?.nodes || {})},
+            site: {
+              siteMetadata: {...(current.site?.siteMetadata || {})}
+            },
+            widgets: [...(current.widget?.nodes || [])]
+          }
+
+      applyDelta(base, answer.delta)
+
+      const outbox = current.remote.outbox as Array<{change: JaenChange}>
 
       const merged = applyChanges(
-        remoteState,
+        base,
         outbox.map(entry => entry.change)
       )
 
@@ -444,9 +557,14 @@ export default (config: AgentConfig) => {
       store.dispatch(widgetActions.hydrateFromRemote(merged.widgets))
       store.dispatch(
         remoteActions.remoteHydrated({
-          revision,
-          publishedRevision,
-          authors: authors || undefined
+          revision: answer.revision,
+          publishedRevision: answer.publishedRevision,
+          authors: answer.delta?.authors || undefined,
+          // A delta carries only the fields it touched, so its authors are
+          // merged onto what is known; a full answer is the whole map and
+          // replaces it, which is also how a field whose author was pruned
+          // stops being attributed to somebody who no longer wrote it.
+          replaceAuthors: Boolean(answer.full)
         })
       )
     }
@@ -475,12 +593,7 @@ export default (config: AgentConfig) => {
           return
         }
 
-        hydrate(
-          draftDataToState(answer.data),
-          answer.revision,
-          answer.publishedRevision,
-          answer.authors
-        )
+        hydrate(answer)
       } catch (error) {
         // A poll that fails changes nothing. The save state belongs to the
         // flusher, and saying "offline" because a read timed out while every
@@ -528,7 +641,9 @@ export default (config: AgentConfig) => {
         return SOCKET_SAFETY_POLL_MS
       }
 
-      return isVisible() || inFlight || (state().remote?.outbox?.length || 0) > 0
+      return isVisible() ||
+        inFlight ||
+        (state().remote?.outbox?.length || 0) > 0
         ? config.activePollMs
         : config.pollMs
     }
@@ -563,7 +678,10 @@ export default (config: AgentConfig) => {
           // telling it about its own save, which is every save it makes. The
           // read is skipped and the mark is moved, which is what keeps a busy
           // editor from asking for a delta after each of their own writes.
-          if (typeof remote?.revision === 'number' && revision <= remote.revision) {
+          if (
+            typeof remote?.revision === 'number' &&
+            revision <= remote.revision
+          ) {
             if (typeof publishedRevision === 'number') {
               store.dispatch(
                 remoteActions.revisionSeen({revision, publishedRevision})

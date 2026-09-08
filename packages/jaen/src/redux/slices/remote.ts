@@ -117,13 +117,22 @@ const remoteSlice = createSlice({
       state.lastError = action.payload.message
     },
 
-    /** A read that answered a revision the client did not have. */
+    /**
+     * A read that answered a revision the client did not have.
+     *
+     * The authors map follows the answer it came with: a delta carries only
+     * the fields it touched and is merged, a full answer is the whole map and
+     * replaces it. Merging a full answer would keep attributing a field to
+     * somebody the object has forgotten about, and replacing with a delta
+     * would drop every attribution the delta did not mention.
+     */
     remoteHydrated: (
       state,
       action: PayloadAction<{
         revision: number
         publishedRevision?: number | null
         authors?: JaenAuthors
+        replaceAuthors?: boolean
       }>
     ) => {
       state.revision = action.payload.revision
@@ -132,8 +141,10 @@ const remoteSlice = createSlice({
         state.publishedRevision = action.payload.publishedRevision
       }
 
-      if (action.payload.authors) {
-        state.authors = action.payload.authors
+      if (action.payload.replaceAuthors) {
+        state.authors = action.payload.authors || {}
+      } else if (action.payload.authors) {
+        state.authors = {...state.authors, ...action.payload.authors}
       }
     },
 
@@ -145,7 +156,10 @@ const remoteSlice = createSlice({
      */
     revisionSeen: (
       state,
-      action: PayloadAction<{revision: number; publishedRevision?: number | null}>
+      action: PayloadAction<{
+        revision: number
+        publishedRevision?: number | null
+      }>
     ) => {
       state.revision = action.payload.revision
 
@@ -155,10 +169,7 @@ const remoteSlice = createSlice({
     },
 
     /** A publish was accepted. What it took is live once the build lands. */
-    publishQueued: (
-      state,
-      action: PayloadAction<{revision?: number}>
-    ) => {
+    publishQueued: (state, action: PayloadAction<{revision?: number}>) => {
       if (typeof action.payload.revision === 'number') {
         state.publishedRevision = action.payload.revision
       } else if (typeof state.revision === 'number') {

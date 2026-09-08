@@ -20,11 +20,7 @@
  * site" and "The escape from Cloudflare".
  */
 import {accessTokenFromOidcStorage} from '../../utils/oidc-session'
-import type {
-  JaenAuthors,
-  JaenChange,
-  JaenDraftData
-} from '../../redux/apply-change'
+import type {JaenAuthors, JaenChange} from '../../redux/apply-change'
 
 export interface AgentConfig {
   url: string
@@ -46,6 +42,41 @@ export interface AgentConfig {
   debounceMs: number
 }
 
+/**
+ * Where the media catalogue lives, learned by the object from the first
+ * catalogue write. jaen has exactly one field that holds a catalogue rather
+ * than a value, and the object stores its entries one key per node, so putting
+ * them back means knowing which field they came out of.
+ */
+export interface MediaField {
+  pageId: string
+  fieldType: string
+  fieldName: string
+}
+
+/**
+ * What changed at or above the reader's revision.
+ *
+ * A page is carried whole, because a page node is small and a field level
+ * delta of a page would be a second merge algorithm beside the build's. The
+ * catalogue is not carried whole, because it is 118 KB on booklimo, which is
+ * the entire reason its nodes are one key each.
+ */
+export interface DraftDelta {
+  /** Page id to page node, the shape the redux `page` slice holds. */
+  pages?: Record<string, any> | null
+  /** Media node id to node, for the field `mediaField` names. */
+  media?: Record<string, unknown> | null
+  /** Media nodes that went. Empty in a full answer. */
+  removedMedia?: string[] | null
+  /** Present only when the site metadata changed. */
+  site?: {siteMetadata?: any} | null
+  widgets?: any[] | null
+  /** fieldKey -> {sub, name, at}, the ones this delta touched. */
+  authors?: JaenAuthors | null
+  mediaField?: MediaField | null
+}
+
 export interface DraftAnswer {
   site: string
   /** The object's revision this answer was read at. */
@@ -54,8 +85,14 @@ export interface DraftAnswer {
   publishedRevision?: number | null
   /** False when `sinceRevision` is still the object's revision. */
   changed: boolean
-  data?: JaenDraftData | null
-  authors?: JaenAuthors | null
+  /**
+   * The answer replaces the reader's copy instead of merging onto it. A reader
+   * with no revision, one older than the object's pruned window, or one the
+   * object has never reached, which is what a lost object looks like from the
+   * outside, gets one of these.
+   */
+  full?: boolean
+  delta?: DraftDelta | null
   readAt: string
 }
 
@@ -79,13 +116,41 @@ export interface ViewerAnswer {
   at: string
 }
 
+/**
+ * What a publish did, and what it did not do, read off the agent's own
+ * `PublishResult` (`packages/jaen-agent/src/index.ts`, landed 2026-09-08).
+ *
+ * `published` and `queued` are two different questions and the CMS must not
+ * merge them: a migration can be written and committed on a site that has no
+ * build workflow, which is both limousine sites today, and answering "nothing
+ * happened" there would be a lie about a file that is now part of the chain.
+ */
 export interface PublishAnswer {
+  /** One migration file, one line, one commit were written. */
+  published: boolean
+  /** The draft revision this publish took. */
+  revision?: number | null
+  /** The revision that is published after this call. */
+  publishedRevision?: number | null
+  migrationUrl?: string | null
+  commitUrl?: string | null
+  publishedAt?: string | null
+  /** A build was dispatched, which is a separate thing from `published`. */
   queued: boolean
-  /** The revision this publish took, which becomes `publishedRevision`. */
-  revision?: number
-  workflow?: string
-  runUrl?: string
-  reason?: string
+  workflow?: string | null
+  runUrl?: string | null
+  reason?: string | null
+}
+
+/** The handle `subscribe` mints for one socket. Single use and short lived. */
+export interface DraftTicket {
+  site: string
+  ticket: string
+  /** Where to open the socket. The agent's transport fills this in. */
+  url?: string | null
+  expiresAt?: string | null
+  /** The object's revision at the moment the ticket was minted. */
+  revision?: number | null
 }
 
 /**
@@ -172,13 +237,30 @@ const request = async <T>(
 }
 
 /**
- * The revision is declared `Number` and not `Int`, and that is not a slip.
+ * The documents, and the two things about them that will bite.
  *
- * Pylon derives the agent's schema from its TypeScript and renders a `number`
- * argument as the scalar `Number`. An operation declaring `Int` is refused
- * with `GRAPHQL_VALIDATION_FAILED` before the resolver is reached, which is
- * the same trap the storage gateway's `signedUrl` cost a run
+ * **`Number`, not `Int`.** Pylon derives the agent's schema from its
+ * TypeScript and renders a `number` argument as the scalar `Number`. An
+ * operation declaring `Int` is refused with `GRAPHQL_VALIDATION_FAILED` before
+ * the resolver is reached, and no save is made at all. It is the same trap the
+ * storage gateway's `signedUrl` cost a run
  * (docs/architecture/private-storage.md, "Two things a caller has to know").
+ *
+ * **`draft` and `subscribe` are written against an agent that has not landed.**
+ * `publish` is the agent's own `PublishResult` and is read off its committed
+ * source. `draft`, `save` and `subscribe` are read off the draft store's
+ * interface, `packages/jaen-agent/src/draft/store.ts`, which is another
+ * session's and was uncommitted when this was written. What is certain is the
+ * shape of the answers; what is not is how Pylon renders each field. A
+ * `Record<string, X>` becomes a scalar and takes no subselection, a typed
+ * interface becomes an object type and demands one, and getting either wrong
+ * fails the whole operation rather than one field. So the fields at risk are
+ * exactly `delta.pages`, `delta.media`, `delta.site`, `delta.widgets` and
+ * `delta.authors`, selected here as scalars, and `delta.mediaField`, selected
+ * as an object. Check them against the agent's generated `schema.graphql`
+ * before this is trusted, and read the client's own tolerance below: every one
+ * of them is optional at runtime, so a field that arrives as something else is
+ * an editor who sees less rather than a CMS that throws.
  */
 const DRAFT = `query JaenAgentDraft($site: String!, $sinceRevision: Number) {
   draft(site: $site, sinceRevision: $sinceRevision) {
@@ -186,8 +268,20 @@ const DRAFT = `query JaenAgentDraft($site: String!, $sinceRevision: Number) {
     revision
     publishedRevision
     changed
-    data
-    authors
+    full
+    delta {
+      pages
+      media
+      removedMedia
+      site
+      widgets
+      authors
+      mediaField {
+        pageId
+        fieldType
+        fieldName
+      }
+    }
     readAt
   }
 }`
@@ -212,10 +306,25 @@ const VIEWER = `query JaenAgentViewer($site: String!) {
   }
 }`
 
-const PUBLISH = `mutation JaenAgentPublish($site: String!) {
-  publish(site: $site) {
-    queued
+const SUBSCRIBE = `mutation JaenAgentSubscribe($site: String!) {
+  subscribe(site: $site) {
+    site
+    ticket
+    url
+    expiresAt
     revision
+  }
+}`
+
+const PUBLISH = `mutation JaenAgentPublish($site: String!, $message: String) {
+  publish(site: $site, message: $message) {
+    published
+    revision
+    publishedRevision
+    migrationUrl
+    commitUrl
+    publishedAt
+    queued
     workflow
     runUrl
     reason
@@ -300,13 +409,32 @@ export const warmAuth = async (
 }
 
 export const publishSite = async (
-  config: AgentConfig
+  config: AgentConfig,
+  message?: string
 ): Promise<PublishAnswer> => {
   const data = await request<{publish: PublishAnswer}>(config, PUBLISH, {
-    site: config.site
+    site: config.site,
+    message: message || null
   })
 
   return data.publish
+}
+
+/**
+ * The handle for one socket.
+ *
+ * Minting it is an ordinary GraphQL call and therefore carries the bearer like
+ * everything else, which is the whole point: the socket itself never has to,
+ * and the ticket that does travel is single use and short lived.
+ */
+export const subscribeDraft = async (
+  config: AgentConfig
+): Promise<DraftTicket> => {
+  const data = await request<{subscribe: DraftTicket}>(config, SUBSCRIBE, {
+    site: config.site
+  })
+
+  return data.subscribe
 }
 
 // ---------------------------------------------------------------------------
@@ -314,11 +442,13 @@ export const publishSite = async (
 // ---------------------------------------------------------------------------
 
 /**
- * Where the object's socket is.
+ * Where the object's socket is, when the agent's own ticket does not say.
  *
- * `https://agent.example/graphql` becomes `wss://agent.example/draft`, and the
- * site is a path segment so a proxy can route on it and a log line says which
- * site a connection belongs to without reading a frame.
+ * `https://agent.example/graphql` becomes `wss://agent.example/draft/<site>`,
+ * and the site is a path segment so a proxy can route on it and a log line
+ * says which site a connection belongs to without reading a frame. The agent's
+ * `subscribe` answers a `url` of its own and that one wins: this is what a
+ * deployment whose transport does not fill it in falls back to.
  */
 export const draftSocketUrl = (config: AgentConfig): string | null => {
   const base = config.socketUrl || config.url
@@ -326,9 +456,17 @@ export const draftSocketUrl = (config: AgentConfig): string | null => {
   if (!base) return null
 
   try {
-    const url = new URL(base, typeof location === 'undefined' ? undefined : location.href)
+    const url = new URL(
+      base,
+      typeof location === 'undefined' ? undefined : location.href
+    )
 
-    url.protocol = url.protocol === 'http:' ? 'ws:' : url.protocol === 'https:' ? 'wss:' : url.protocol
+    url.protocol =
+      url.protocol === 'http:'
+        ? 'ws:'
+        : url.protocol === 'https:'
+          ? 'wss:'
+          : url.protocol
 
     if (!config.socketUrl) {
       url.pathname = url.pathname.replace(/\/graphql\/?$/, '') + '/draft'
@@ -372,12 +510,22 @@ const SOCKET_RETRY_MS = [1000, 2000, 5000, 10000, 30000]
 /**
  * The object's push channel, with its own reconnect.
  *
- * **The token travels as a subprotocol and never as a query parameter.** A
+ * Two steps, and the first is why the second is safe. `subscribe` is an
+ * ordinary GraphQL call carrying the bearer, and it answers a ticket that is
+ * single use, short lived and worth nothing on its own. The socket then opens
+ * with that ticket and never with the person's token.
+ *
+ * **The ticket travels as a subprotocol and never as a query parameter.** A
  * browser `WebSocket` cannot carry an `Authorization` header, and the two ways
- * round that are `?token=` and `Sec-WebSocket-Protocol`. The first is the one
- * `private-storage.md` refuses outright, because a token in a URL lands in a
- * log, in a `Referer` and in a shared link. A JWT's alphabet is legal in a
- * subprotocol token, so the second costs nothing.
+ * round that are `?ticket=` and `Sec-WebSocket-Protocol`. The first is the one
+ * `private-storage.md` refuses outright, because a credential in a URL lands
+ * in a log, in a `Referer` and in a shared link, and that a ticket expires in
+ * a minute makes it a smaller leak rather than not one. The alphabet of a
+ * ticket is legal in a subprotocol token, so the second costs nothing.
+ *
+ * A ticket is spent by the socket that used it, so every reconnect mints a new
+ * one. That is a round trip per reconnect and no round trip at all while the
+ * socket is up, which is the right way round.
  *
  * Returns the closer. Calling it stops the reconnect as well as the socket.
  */
@@ -385,9 +533,7 @@ export const openDraftSocket = (
   config: AgentConfig,
   handlers: DraftSocketHandlers
 ): (() => void) => {
-  const url = draftSocketUrl(config)
-
-  if (!url || typeof WebSocket === 'undefined') {
+  if (typeof WebSocket === 'undefined') {
     return () => undefined
   }
 
@@ -396,6 +542,7 @@ export const openDraftSocket = (
   let attempts = 0
   let stopped = false
   let live = false
+  let opening = false
 
   const setLive = (next: boolean) => {
     if (live === next) return
@@ -413,30 +560,57 @@ export const openDraftSocket = (
 
     retryTimer = setTimeout(() => {
       retryTimer = undefined
-      open()
+      void open()
     }, wait)
   }
 
-  const open = () => {
-    if (stopped || socket) return
+  const open = async () => {
+    if (stopped || socket || opening) return
 
-    const token = bearer()
+    opening = true
+
+    let ticket: DraftTicket
+
+    try {
+      ticket = await subscribeDraft(config)
+    } catch (error) {
+      // An agent that does not know `subscribe` yet, an agent that is down and
+      // a browser with no network all land here, and none of them is an
+      // outage: the poll is reading the same draft over the same HTTP the
+      // saves go over. That is what makes the socket an optimisation rather
+      // than a dependency.
+      console.debug('jaen agent: no draft ticket, the poll carries it', error)
+      opening = false
+      scheduleRetry()
+      return
+    }
+
+    if (stopped) {
+      opening = false
+      return
+    }
+
+    const url = ticket.url || draftSocketUrl(config)
+
+    if (!url || !ticket.ticket) {
+      opening = false
+      scheduleRetry()
+      return
+    }
 
     let next: WebSocket
 
     try {
-      next = token
-        ? new WebSocket(url, ['jaen-draft.v1', `bearer.${token}`])
-        : new WebSocket(url, ['jaen-draft.v1'])
+      next = new WebSocket(url, ['jaen-draft.v1', `ticket.${ticket.ticket}`])
     } catch (error) {
-      // A blocked or malformed socket is not an outage: the poll is still
-      // reading the same draft over the same HTTP the saves go over.
       console.debug('jaen agent: the draft socket did not open', error)
+      opening = false
       scheduleRetry()
       return
     }
 
     socket = next
+    opening = false
 
     next.onopen = () => {
       attempts = 0
@@ -453,9 +627,9 @@ export const openDraftSocket = (
       }
 
       // Lenient about the name of the frame and strict about the field. The
-      // agent may call it `hello`, `revision` or `changed`; what this client
-      // acts on is a number it did not have, and acting on it is asking the
-      // `draft` query, so a frame that means nothing costs one read at worst.
+      // object may call it `hello`, `revision` or `changed`; what this client
+      // acts on is a number, and acting on it is asking the `draft` query, so
+      // a frame that means nothing costs one read at worst.
       if (payload && typeof payload.revision === 'number') {
         handlers.onRevision(
           payload.revision,
@@ -478,7 +652,7 @@ export const openDraftSocket = (
     }
   }
 
-  open()
+  void open()
 
   return () => {
     stopped = true

@@ -612,43 +612,72 @@ export const CMSManagementProvider = withRedux(
       // claiming everything already is. See docs/architecture/draft-state.md.
       if (jaenAgent) {
         try {
-          const confirmed = await notification.confirm({
-            icon: FaRocket,
-            title: 'Publish',
-            message:
-              'Publish the shared draft? Everything saved becomes one migration and the site is rebuilt.',
-            confirmText: 'Publish',
-            cancelText: 'Cancel'
-          })
+          // The migration carries a message, the way every patch of this CMS
+          // always has, and it is the line the publish list shows. The agent
+          // replaces an empty one rather than refusing it.
+          const message = await notification.prompt(
+            {
+              icon: FaRocket,
+              title: 'Publish',
+              message:
+                'Publish the shared draft? Everything saved becomes one migration and the site is rebuilt.',
+              confirmText: 'Publish',
+              cancelText: 'Cancel'
+            },
+            `Update ${
+              Object.values((store.getState() as RootState).page.pages.nodes)
+                .length
+            } pages`
+          )
 
-          if (!confirmed) return
+          if (!message) return
 
-          const answer = await publishSite(jaenAgent)
+          const answer = await publishSite(jaenAgent, message)
 
-          if (answer.queued) {
-            setIsPublishing(true)
-
+          // `published` and `queued` are two different questions and this is
+          // the place they must not be merged. A site with no build workflow,
+          // which is both limousine sites today, publishes a migration and
+          // queues nothing, and saying "nothing happened" there would be a lie
+          // about a file that is now part of the chain.
+          if (answer.published) {
             // What the publish took is what the site will serve, so the CMS
             // stops saying there is something unpublished. The agent's own
             // answer wins over this browser's guess where it carries one.
-            dispatch(remoteActions.publishQueued({revision: answer.revision}))
+            dispatch(
+              remoteActions.publishQueued({
+                revision:
+                  answer.publishedRevision ?? answer.revision ?? undefined
+              })
+            )
+          }
 
+          if (answer.queued) {
+            setIsPublishing(true)
+          }
+
+          if (answer.published && answer.queued) {
             notification.toast({
               status: 'success',
               title: 'Publish',
               description: answer.runUrl
-                ? `The build was started: ${answer.runUrl}`
-                : 'The build was started'
+                ? `Published, and the build was started: ${answer.runUrl}`
+                : 'Published, and the build was started'
             })
-          } else {
-            // The agent reports what GitHub answered and does not pretend a
-            // build started. Both limousine sites are built by hand today.
+          } else if (answer.published) {
+            // The migration and the commit are real and the build is not, and
+            // the editor is told both halves rather than the reassuring one.
             notification.toast({
-              status: 'info',
+              status: 'success',
               title: 'Publish',
               description:
                 answer.reason ||
-                'This site has no automatic build; the operator builds it.'
+                'Published. This site has no automatic build; the operator builds it.'
+            })
+          } else {
+            notification.toast({
+              status: 'error',
+              title: 'Publish',
+              description: answer.reason || 'Nothing was published.'
             })
           }
         } catch (error) {
