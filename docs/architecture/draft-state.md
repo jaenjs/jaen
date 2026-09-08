@@ -1054,3 +1054,119 @@ in `FleetTitle` and `publishedRevision` 29, which is that session's to set back.
 published 13, so it is left with unpublished revisions the way it was found. The lockout arrived before a last publish could tidy that, and a publish
 in the middle of another session's edits would have taken their work live in any
 case.
+
+## Verified adversarially 2026-09-08, and one edit was lost
+
+An Opus session that built none of this drove the scenarios below on the
+deployed booklimo.at, reading every value back out of the draft object with a
+credential of its own beside the browser's. It reproduced
+`tests/10-draft-persistence.ipynb` first, **35 PASS 0 FAIL 0 SKIP 2 WARN**, the
+run of 11:23 local time, and then went past it. The verifier is
+`tests/support/adversarial-draft.py`, beside the notebooks' own harness, which
+it reuses for the origin, the sign in and the way into edit mode. booklimo only;
+nothing was written on limosen and its working tree is untouched.
+
+### What holds
+
+| what was asked                                 | what the live systems answered                                                                                                                                         |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| an unpublished edit is not on the built site   | the draft at revision 59 against `publishedRevision` 29, and a local production build naming the marker in **0** of 8,798 files and in 0 bytes of the sourced data     |
+| and it is on it after a publish                | after one publish, **22** files of `public/` and the home page itself carry it, and the sourced data's `FleetTitle` is the marker                                      |
+| exactly one gateway file, one line, one commit | 668 B at `…/storage/BQACAgQAAx0Ed6zoewACBixqn98LC4tSBMRXG_xNenEmtxT6LAACRx4AAlWvAAFRh54O3uMe3e09BA`, `patches.txt` +1 −0, commit `4f642ce` alone between the two heads |
+| the shape and the gate                         | top level exactly `createdAt`, `data`, `message`, no `authors`; 401 anonymously, 200 to the KRC storage token                                                          |
+| in the publishing editor's name                | author `Taxi Test Admin`, committer `jaen-agent`, the body naming the migration, revision 59 and the publisher                                                         |
+| through the CMS's own control                  | both publishes were made from the frame's menu item and its prompt, not from a mutation; the fallback the verifier carries was not taken                               |
+| a reload one second after the blur             | the change is in the outbox in `localStorage`, survives the reload and drains into the object                                                                          |
+| a reload five seconds after the blur           | already saved before the reload, and unchanged after it                                                                                                                |
+| the agent host refusing every request          | the edit is in `localStorage`, `saveState` `offline`, one change waiting, the object unmoved at revision 53                                                            |
+| and the same browser with the host back        | drained on its own, the object took it at revision 54 and named the editor                                                                                             |
+| two contexts racing on one field               | two saves, two revisions (55 → 57), last write stands, both browsers converged on it within seconds and neither kept anything waiting                                  |
+| every edit set back                            | the field is `Our fleet` again, `revision 60 = publishedRevision 60`, read back out of a browser whose storage was emptied                                             |
+
+### The one that failed: an edit is lost inside the field's own debounce
+
+**Type and close the tab at once, and the edit is gone.** Measured twice on the
+live site, and not by a flag: `localStorage` holds the previous value and the
+object never hears of it.
+
+| the tab goes away                                | in `localStorage` when it does                  | in the object afterwards                      |
+| ------------------------------------------------ | ----------------------------------------------- | --------------------------------------------- |
+| 0 ms after the blur                              | the **old** value, outbox 0, `saveState` `idle` | only because the tab did not really go        |
+| 300 ms after the blur                            | the **old** value, outbox 0                     | only because the tab did not really go        |
+| 700 ms after the blur                            | the typed value, outbox 1, `saving`             | the typed value                               |
+| 2000 ms after the blur                           | the typed value, `saved`                        | the typed value                               |
+| a real `page.close()` at once, with a blur first | the old value                                   | the old value                                 |
+| a real `page.close()` at once, with no blur      | the old value                                   | the old value                                 |
+| a reload 200 ms after the blur                   | the old value                                   | the old value, and the field comes back at it |
+
+**The cause is above everything this design touches.**
+`packages/jaen/src/fields/TextField/TextField.tsx` wires `onBlur` to
+`handleContentBlur`, which calls `handleTextSave`, which is
+`useDebouncedCallback(…, 500)`. That debounce is the only thing that turns a
+person's typing into a `pages/field_write`: nothing is dispatched while they
+type, only on blur, and then half a second later. Until it fires there is no
+action, no store change, no outbox entry and nothing for `persist-state.ts` to
+write. Its `flush()` is never called, by anything, and no `visibilitychange` or
+`pagehide` listener exists above the redux layer.
+
+So the safety argument of `editing-performance.md` ("Held by a synchronous write
+on `visibilitychange` to hidden and on `pagehide`") is true of the layer it names
+and does not reach this one. The synchronous write on the way out writes a store
+that does not have the edit yet.
+
+**Why the notebook does not see it.** `tests/support/editing-browser.py`
+`run_safety` waits 700 ms before it hides the tab, and its own comment says why:
+"The field's own 500 ms debounce has to pass before anything is written at all".
+Every green hidden-tab and reload check in `10` is taken outside the window in
+which the loss happens.
+
+**What would hold it**, for whoever takes it: flush the field's debounce on
+`visibilitychange` to hidden and on `pagehide` in the same place the store is
+flushed, and dispatch on input rather than only on blur so a person who types
+and closes without leaving the field is covered too. Neither is this run's to
+build, and neither is a regression: the debounce is older than the shared draft
+and `editing-performance.md` describes it as the path of today.
+
+### Doubts, and things found beside the question
+
+- **The anonymous refusal is not a 401 on the wire.** `draft` without a token
+  answers HTTP **200** with `AUTH_REQUIRED` and `statusCode: 401` inside the
+  GraphQL error's extensions. The refusal is real and `data` is null; the
+  sentence above that says "with status 401" describes the extension and not the
+  response, and a caller that reads `res.ok` is told the opposite of the truth.
+- **`rebased` and `overwrote` depend on the caller volunteering a base.**
+  `src/draft/object.ts` sets `rebased` only when `baseRevision` is a number and
+  differs, so a write that sends none overwrites another editor's field, answers
+  `rebased: false` and names nothing. Measured: a `save` with a null base
+  replaced a value the object held and reported an empty `overwrote`. The
+  shipped client always sends the base, so this is a property of the interface
+  rather than a live defect, and it is worth a refusal or a default.
+- **The build serves the migration payloads.** After the publish, the marker is
+  in `public/osg/<id>.json`, one of **20** patch payloads the build downloads out
+  of the private gateway and writes into the public output. The rendered site is
+  correct after the set-back and that file still carries the value. This is the
+  decision "that the build publishes patch payloads at all" which the transition
+  named and did not take; it is now measured on a payload this run created.
+- **GitHub's `main` still ends with the two head lines.** `patches.txt` there
+  carries `live.json` and `live-media.json` above the migrations, so the hard
+  rule "nothing in `patches.txt` names a draft" is met in this checkout and not
+  on the remote, exactly as the deploy section says. Both of this run's publishes
+  were appended to that chain and repeated here by hand as `e005ea0` and
+  `10b8946`.
+- **A second run of this same verification was live throughout.** Another agent
+  of the same session was publishing to booklimo and building the same checkout
+  while this ran: it published revision 29 at 09:29 UTC, and its marker
+  `verify-unpublished-…` was in the draft when this run's first scenario read the
+  field. Every number above was therefore taken with a second reader against the
+  object and with the author's `sub` on each field, and the first reload run was
+  discarded rather than reported. Two verifiers on one live object is not a
+  measurement anybody should have to disentangle.
+- **The booklimo machine admin lost `jaen:admin` mid-run**, between 09:40 and
+  09:47 UTC: `taxi-test-admin-krc-api` answered `FORBIDDEN` on `draft` having
+  answered it minutes before. The likeliest cause is the concurrent run granting
+  that role for its own publish and revoking it afterwards, which is what this
+  file says such a run does. The verifier reads with the browser's own session
+  token now and does not depend on it.
+- **One local build failed and the next did not**, on writing a downloaded
+  gateway image into `public/osg/`, at "source and transform nodes" after 273 s.
+  It was not reproduced and is recorded rather than explained.
