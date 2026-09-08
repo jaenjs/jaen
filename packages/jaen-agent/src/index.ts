@@ -1,15 +1,21 @@
 /**
  * jaen-agent
  *
- * The one process that reads a site's jaen data from its repository and
- * writes every saved change back as a git commit. There is no database: the
- * repository is the store, the draft of a site is the site's own jaen data in
- * its own repository in the structure it has today, and what editors share is
- * the repository's HEAD.
+ * The one process the CMS of a site talks to. Two lifecycles and two homes,
+ * which is the whole design (`draft-state.md`, "The two lifecycles"):
  *
- * `save` and `draft` are the shared draft's two verbs and are being moved off
- * the repository and into one Durable Object per site (`draft-state.md`, "The
- * draft: one Durable Object per site").
+ * **The draft** lives in one Durable Object per site. `save` applies a batch
+ * of changes inside that object and bumps a revision, `draft` reads what
+ * changed above the revision the caller has, and `subscribe` hands out the
+ * handle for the socket the object pushes revisions down. None of the three
+ * touches a repository or the storage gateway, and nothing in `patches.txt`
+ * ever names a draft.
+ *
+ * Until 2026-09-08 `save` was a git commit and the shared draft was the site's
+ * repository HEAD, which produced a commit per blur and put every unfinished
+ * edit into the built site. That path is gone from this service, together with
+ * the head patch, the split of it and the blob sha lock it was serialised
+ * with. The GitHub client stays for the one thing that writes history.
  *
  * `publish` is the only act of this service that writes a repository: one
  * migration file on the storage gateway, one line appended to
@@ -21,7 +27,7 @@
  */
 import {
   app,
-  getEnv,
+  getContext,
   ServiceError,
   useAuth,
   type PylonConfig
@@ -30,11 +36,11 @@ import {
 import type {JaenChangeInput} from './apply-change'
 import {cachedIntrospection} from './auth/cache'
 import {editor as callerEditor, requireSiteAdmin} from './auth'
-import {env, site as siteEntry, USER_AGENT} from './env'
-import {durableDraftStore} from './draft/durable'
+import {env, site as siteEntry, USER_AGENT, type AgentEnv} from './env'
+import {connectDraftSocket, durableDraftStore} from './draft/durable'
 import {publish as publishSite} from './publish'
-import {readHead, readHeadSha, save as saveToRepository} from './store'
-import type {FieldAuthors} from './types'
+
+export {JaenDraftObject} from './draft/object'
 
 // --------------------------------------------------------------------------
 // The answers
@@ -46,18 +52,61 @@ export interface Version {
   builtAt: string | null
 }
 
+/** Where the media catalogue lives, see ./draft/store. */
+export interface MediaField {
+  pageId: string
+  fieldType: string
+  fieldName: string
+}
+
+/**
+ * What changed at or above the reader's revision.
+ *
+ * Everything jaen shaped in here is a JSON scalar on the wire and not an
+ * object type: a page node, a media node and a widget are whatever their field
+ * types store, and pylon renders `Record<string, any>` as `JSONObject`. The
+ * one object type is `mediaField`, because it is three known strings and the
+ * client selects it as one.
+ */
+export interface DraftDelta {
+  /** Page id to page node, the shape the redux `page` slice holds. */
+  pages: Record<string, any>
+  /** Media node id to node, for the field `mediaField` names. */
+  media: Record<string, any>
+  /** Media nodes that went. Empty in a full answer, which carries none. */
+  removedMedia: string[]
+  /** Present only when the site metadata changed. */
+  site?: Record<string, any> | null
+  widgets: Record<string, any>[]
+  /** fieldKey -> {sub, name, at}, the ones this delta touched. */
+  authors: Record<string, any>
+  mediaField?: MediaField | null
+}
+
 export interface Draft {
   site: string
-  /** The branch HEAD commit the answer was read at. */
-  headSha: string
-  /** jaen-data/live.json at that commit. Empty before the first save. */
-  blobSha: string
-  /** False when sinceSha is still the head. */
+  /** The object's revision this answer was read at. */
+  revision: number
+  /** What the last publish took, so the CMS can say what is live. */
+  publishedRevision: number
+  /** False when sinceRevision is still the object's revision. */
   changed: boolean
-  /** Null when changed is false. `{pages, site, widgets}`. */
-  data?: Record<string, any> | null
-  /** fieldKey -> {sub, name, at}. */
-  authors?: Record<string, any> | null
+  /**
+   * The answer replaces the reader's copy instead of merging onto it, which
+   * is what a reader with no revision, one below the pruned window, or one
+   * above the object's own revision gets. The last of those is what a lost or
+   * rebuilt object looks like from the outside.
+   */
+  full: boolean
+  /** Null when changed is false. */
+  delta?: DraftDelta | null
+  updatedAt: string | null
+  /** The Zitadel subject of the last writer. */
+  updatedBy: string | null
+  /** The backstop, so an operator can see it is being taken. */
+  snapshotRevision: number
+  snapshotAt: string | null
+  snapshotBytes: number
   readAt: string
 }
 
@@ -87,20 +136,40 @@ export interface FieldOverwrite {
 }
 
 export interface SaveResult {
-  headSha: string
-  blobSha: string
-  commitSha: string
-  commitUrl: string
-  savedAt: string
-  rebased: boolean
-  /** The fields whose remote value this save replaced, and who had written them. */
-  overwrote: FieldOverwrite[]
+  /** The object's revision after this write. */
+  revision: number
   /**
-   * The head files this save wrote, relative to the repository root. A text
-   * change writes `jaen-data/live.json` and a picture
-   * `jaen-data/live-media.json`, and neither writes the other.
+   * The write was made against a base the object had already moved past, so
+   * the object folded it onto the newer draft rather than refusing it. Never
+   * a reason to drop a change: a stale save is rebased and never rejected.
    */
-  wrote: string[]
+  rebased: boolean
+  /** The fields whose value this write replaced, and who had written them. */
+  overwrote: FieldOverwrite[]
+  /** The field keys this write stamped. */
+  touched: string[]
+  /** How many storage keys it wrote, which is the cost of a save. */
+  keys: number
+  savedAt: string
+}
+
+/**
+ * The handle `subscribe` mints for one socket.
+ *
+ * Single use and short lived, and it is not the editor's token: a browser's
+ * WebSocket constructor sets no header, so the only two ways to carry a
+ * credential onto a socket are a query parameter and a subprotocol, and the
+ * editor's access token belongs in neither. The identity is decided here, the
+ * one way, and the ticket is a handle onto that decision.
+ */
+export interface DraftTicket {
+  site: string
+  ticket: string
+  /** `wss://<this agent>/draft/<site>`, built from the request's own host. */
+  url: string
+  expiresAt: string
+  /** The object's revision when the ticket was minted. */
+  revision: number
 }
 
 /**
@@ -144,6 +213,34 @@ class BadRequestError extends ServiceError {
   }
 }
 
+/**
+ * `wss://<the host this call arrived on>/draft/<site>`.
+ *
+ * Built from the request rather than from configuration, because one Worker
+ * answers on one custom domain per site (`jaen-agent.booklimo.at` and
+ * `jaen-agent.limosen.at`) and an editor's socket has to go back to the host
+ * their CMS is already talking to. An empty answer is not a failure: the
+ * client derives the same URL from its own endpoint when the agent does not
+ * say.
+ */
+const socketUrl = (site: string): string => {
+  try {
+    const url = new URL(getContext().req.url)
+
+    url.protocol = url.protocol === 'http:' ? 'ws:' : 'wss:'
+    url.pathname = `${SOCKET_PATH}/${encodeURIComponent(site)}`
+    url.search = ''
+    url.hash = ''
+
+    return url.toString()
+  } catch {
+    return ''
+  }
+}
+
+/** The site rides in the path and never in the query, see ./draft/object. */
+const SOCKET_PATH = '/draft'
+
 // --------------------------------------------------------------------------
 // The API
 // --------------------------------------------------------------------------
@@ -159,7 +256,7 @@ export const graphql = {
       const e = env()
 
       return {
-        agent: e.AGENT_VERSION ?? '3.0.0',
+        agent: e.AGENT_VERSION ?? '4.0.0',
         commit: e.AGENT_COMMIT ?? null,
         builtAt: e.AGENT_BUILT_AT ?? null
       }
@@ -190,63 +287,73 @@ export const graphql = {
     },
 
     /**
-     * The site's jaen data at the repository's HEAD.
+     * What changed in the site's draft above the revision the caller has.
      *
-     * `sinceSha` is the head the caller already has. When it still matches,
-     * the answer is `changed: false` with no body, which is the five second
-     * poll of every open CMS and costs one commit lookup.
+     * `sinceRevision` is the revision the caller already holds. When it is
+     * still the object's revision the answer is `changed: false` with no
+     * delta, which is what almost every poll of every open CMS is: one key
+     * read inside the object and no list at all. Before this it was a GitHub
+     * commit lookup over the network.
+     *
+     * The poll stays, next to the socket, and is never switched off. A
+     * browser whose socket is refused, by a proxy or by a network that eats
+     * upgrades, keeps working on the poll alone and never notices.
      */
-    draft: async (site: string, sinceSha?: string): Promise<Draft> => {
+    draft: async (site: string, sinceRevision?: number): Promise<Draft> => {
       const entry = siteEntry(site)
 
       await requireSiteAdmin(site, entry)
 
-      // The poll that answers `changed: false` reads the branch head and no
-      // file at all, which is what almost every poll of every open CMS is.
-      if (sinceSha) {
-        const head = await readHeadSha(site, entry)
-
-        if (head === sinceSha) {
-          return {
-            site,
-            headSha: head,
-            blobSha: '',
-            changed: false,
-            data: null,
-            authors: null,
-            readAt: new Date().toISOString()
-          }
-        }
-      }
-
-      const state = await readHead(site, entry)
+      const answer = await durableDraftStore(env()).read(
+        site,
+        typeof sinceRevision === 'number' ? sinceRevision : null
+      )
 
       return {
-        site,
-        headSha: state.head,
-        blobSha: state.blobSha ?? '',
-        changed: true,
-        data: state.patch.data,
-        authors: (state.patch.authors ?? {}) as FieldAuthors,
-        readAt: state.readAt
+        site: answer.site,
+        revision: answer.revision,
+        publishedRevision: answer.publishedRevision,
+        changed: answer.changed,
+        full: answer.full,
+        delta: answer.delta
+          ? {
+              pages: answer.delta.pages,
+              media: answer.delta.media as Record<string, any>,
+              removedMedia: answer.delta.removedMedia,
+              site: (answer.delta.site as Record<string, any>) ?? null,
+              widgets: answer.delta.widgets as Record<string, any>[],
+              authors: answer.delta.authors,
+              mediaField: answer.delta.mediaField
+            }
+          : null,
+        updatedAt: answer.updatedAt,
+        updatedBy: answer.updatedBy,
+        snapshotRevision: answer.snapshotRevision,
+        snapshotAt: answer.snapshotAt,
+        snapshotBytes: answer.snapshotBytes,
+        readAt: answer.readAt
       }
     }
   },
 
   Mutation: {
     /**
-     * Applies the batch and commits it, in the editor's name, one commit per
-     * call.
+     * Applies the batch inside the site's object and bumps its revision.
      *
-     * `baseSha` is the head sha the client last saw. A save whose baseSha is
-     * not the current head is stale: it is rebased onto the document read
-     * under the lock and never rejected, and the answer says so and names the
-     * fields it overwrote.
+     * `baseRevision` is the revision the client last saw. A save whose base is
+     * not the object's current revision is stale: it is **rebased and never
+     * rejected**, which means the changes are applied onto the draft as it is
+     * now, the answer says `rebased: true`, and it names every field whose
+     * value it replaced together with who had written it. Dropping an edit
+     * because it was made a second late is the one failure this CMS may not
+     * have.
+     *
+     * No commit, no gateway file, no line in patches.txt. A save is a save.
      */
     save: async (
       site: string,
       changes: JaenChangeInput[],
-      baseSha?: string
+      baseRevision?: number
     ): Promise<SaveResult> => {
       const entry = siteEntry(site)
       const editor = await requireSiteAdmin(site, entry)
@@ -269,26 +376,47 @@ export const graphql = {
         )
       }
 
-      const outcome = await saveToRepository(site, entry, {
+      const outcome = await durableDraftStore(env()).write(site, {
         changes,
-        baseSha: baseSha ?? null,
+        baseRevision: typeof baseRevision === 'number' ? baseRevision : null,
         author: {sub: editor.sub, name: editor.name, email: editor.email}
       })
 
       return {
-        headSha: outcome.headSha,
-        blobSha: outcome.blobSha,
-        commitSha: outcome.commitSha,
-        commitUrl: outcome.commitUrl,
-        savedAt: outcome.savedAt,
+        revision: outcome.revision,
         rebased: outcome.rebased,
         overwrote: outcome.overwrote.map(o => ({
           field: o.field,
           previousAuthor: o.previousAuthor ?? null,
           previousAt: o.previousAt ?? null
         })),
-        wrote: outcome.wrote
+        touched: outcome.touched,
+        keys: outcome.keys,
+        savedAt: outcome.savedAt
       }
+    },
+
+    /**
+     * A handle for one socket, so the CMS is pushed to instead of polling.
+     *
+     * The identity is decided here and nowhere else, the one way, and what
+     * travels onto the socket is a random single use ticket that lives for a
+     * minute. The socket itself is `GET /draft/<site>` on this same Worker,
+     * with the ticket offered as a subprotocol, and it carries revisions and
+     * never content: the client reads the delta with the `draft` query above,
+     * so there is one read path and one authorisation path for the data.
+     */
+    subscribe: async (site: string): Promise<DraftTicket> => {
+      const entry = siteEntry(site)
+      const editor = await requireSiteAdmin(site, entry)
+
+      const minted = await durableDraftStore(env()).subscribe(site, {
+        sub: editor.sub,
+        name: editor.name,
+        email: editor.email
+      })
+
+      return {...minted, url: socketUrl(site)}
     },
 
     /**
@@ -392,6 +520,58 @@ app.use('*', async (ctx, next) => {
     },
     500
   )
+})
+
+/**
+ * The socket, which is the one route of this Worker that is not GraphQL.
+ *
+ * `GET /draft/<site>`, upgraded, with the ticket offered as a subprotocol.
+ * The upgrade is forwarded whole to the site's object, which is the only
+ * place that can say whether it minted that ticket and the only place that
+ * can make the 101 answer. Nothing else about a draft leaves the object.
+ *
+ * It is registered before pylon's own handler, so the GraphQL endpoint is
+ * untouched, and after the AUTH_ISSUER guard above, so a Worker that refuses
+ * to serve refuses this too.
+ */
+app.get('/draft/:site', async ctx => {
+  const site = ctx.req.param('site')
+
+  if ((ctx.req.header('upgrade') ?? '').toLowerCase() !== 'websocket') {
+    return ctx.json(
+      {
+        errors: [
+          {
+            message:
+              'This route is the draft socket and takes a WebSocket upgrade. ' +
+              'The draft itself is read with the `draft` query.',
+            extensions: {code: 'UPGRADE_REQUIRED'}
+          }
+        ]
+      },
+      426
+    )
+  }
+
+  try {
+    siteEntry(site)
+  } catch {
+    return ctx.json(
+      {
+        errors: [
+          {
+            message: `unknown site "${site}"`,
+            extensions: {code: 'UNKNOWN_SITE'}
+          }
+        ]
+      },
+      404
+    )
+  }
+
+  // `ctx.env` is hono's own Bindings type and the agent's env is a wider
+  // shape than it declares, so the cast goes through unknown.
+  return connectDraftSocket(ctx.env as unknown as AgentEnv, site, ctx.req.raw)
 })
 
 /**

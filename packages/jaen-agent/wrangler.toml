@@ -52,6 +52,10 @@ AUTH_ISSUER = "https://accounts.netsnek.com"
 AUTH_PROJECT_ID = "268283277977065078"
 AUTH_CACHE_TTL_MS = 60000
 DEFAULT_BRANCH = "main"
+# How long the draft object's alarm waits before it writes the snapshot. Five
+# minutes, and it is only armed while the draft has moved since the last one,
+# so an idle site costs no alarms at all.
+DRAFT_SNAPSHOT_INTERVAL_MS = 300000
 # Where a publish uploads its migration. Every read and every write of it
 # carries a Zitadel token (docs/architecture/private-storage.md).
 STORAGE_URL = "https://osg.netsnek.com"
@@ -75,17 +79,26 @@ PYLON_TELEMETRY_DISABLED = 1
 # contents:write on both repositories.
 SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"356348844407002709","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.booklimo.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_BOOKLIMO","osgTokenVar":"OSG_TOKEN_BOOKLIMO"},"limosen.at":{"repository":"netsnek/limosen.at","branch":"main","issuer":"https://accounts.netsnek.com","organizationId":"339284789469124181","projectIds":["268283277977065078"],"adminRole":"jaen:admin","iamApiUrl":"https://idm.limosen.at/graphql","orgManagerTokenVar":"ORG_USER_MANAGER_TOKEN_LIMOSEN","osgTokenVar":"OSG_TOKEN_LIMOSEN"}}'
 
-# Four kinds of key and nothing else. The read cache
-# (`head:<site>:<branch>`, thirty seconds), the in-flight lock (`lock:<site>`,
-# fifteen seconds), the introspected identity of a bearer (`auth:<sha256>`,
-# AUTH_CACHE_TTL_MS, so that a cold isolate does not pay the round trips a warm
-# one already paid), and one word saying that patches.txt already ends with the
-# head files (`patches:<site>:<branch>`, an hour). Plus the App installation
-# token for its hour.
+# The KV, which is a cache and one backstop.
 #
-# Nothing that is a store of record: every write re-reads GitHub before it
-# applies anything and every PUT carries the blob sha it read, so a cold or
-# lost KV is a slower request and never a lost change.
+# The cache: the introspected identity of a bearer (`auth:<sha256>`,
+# AUTH_CACHE_TTL_MS, so that a cold isolate does not pay the round trips a warm
+# one already paid). Losing it costs round trips and never a change.
+#
+# The backstop: `draft-snapshot:<site>` and `draft-snapshot:<site>:previous`,
+# written by the draft object's alarm. `draft-state.md` asks for the snapshot to
+# go "into one file that is not part of the chain" and
+# `okf/decisions/hard-rules.md` says a draft "reaches no repository and no
+# gateway file", so it goes where both hold: a KV entry, which is neither, is
+# not in the chain and cannot be reached by a build. Those two keys are the one
+# thing in this namespace that is worth keeping, and they have no expiry,
+# because a backstop that expires is not one. A namespace of their own would be
+# tidier and is not worth a migration today.
+#
+# Gone with the commit-on-save path: the thirty second head cache, the fifteen
+# second write lock and the `patches:<site>:<branch>` memory. There is no head
+# to cache and no lock to take, because the draft is single threaded inside its
+# own object.
 #
 # Created once with
 #   env -u CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID=92920a0740087f4d54d9201675220d43 \
@@ -95,8 +108,34 @@ SITES = '{"booklimo.at":{"repository":"netsnek/booklimo.at","branch":"main","iss
 binding = "CACHE"
 id = "6e75d473808c48e7ac39c4391cce02fb"
 
-# No [[d1_databases]], no prisma, no migrations directory, and no Durable
-# Object. The repository is the store.
+# The draft store: one Durable Object per site, addressed by the site's name,
+# so there is exactly one instance of it, it is single threaded, and two
+# editors cannot save onto stale bases. See docs/architecture/draft-state.md.
+#
+# `new_sqlite_classes` and not `new_classes`, for two reasons and not one.
+# Cloudflare recommends the SQLite backend for every new namespace, and since
+# 2025 an account without an existing key-value-backed namespace cannot create
+# one at all, so this is the only backend available here. It is also the one
+# with the larger limits: a key and its value together may reach 2 MB and an
+# object may hold 10 GB, against 128 KiB per value on the old backend
+# (developers.cloudflare.com/durable-objects/platform/limits, read 2026-09-08,
+# and the figures are in draft-state.md with their source). The key layout is
+# one key per page and one per media node either way, because what makes a save
+# cheap is writing only the keys it touched, not the ceiling on one of them.
+#
+# The class is exported from src/index.ts, which is what the bundle esbuild
+# writes to .pylon/index.js re-exports, so `main` carries both the Worker and
+# the object.
+[[durable_objects.bindings]]
+name = "DRAFTS"
+class_name = "JaenDraftObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["JaenDraftObject"]
+
+# No [[d1_databases]] and no prisma. A draft is not a relation and a migration
+# is a file in the chain.
 #
 # Secrets, `wrangler secret put <name>`, never values in this file:
 #   AUTH_KEY                the JSON key of an API app in AUTH_PROJECT_ID,

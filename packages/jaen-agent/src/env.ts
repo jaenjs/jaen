@@ -70,6 +70,17 @@ export interface AgentEnv {
   AGENT_COMMIT?: string
   AGENT_BUILT_AT?: string
   CACHE?: KVNamespace
+  /**
+   * The draft store: one Durable Object per site, addressed by the site's
+   * name. Typed as unknown rather than as a DurableObjectNamespace here so
+   * that nothing outside src/draft names a Cloudflare type, which is the
+   * escape `draft-state.md` asks for. ./draft/durable is the one file that
+   * casts it, and it is the one file a single process implementation would
+   * replace.
+   */
+  DRAFTS?: unknown
+  /** How long the object's alarm waits before it snapshots. Five minutes. */
+  DRAFT_SNAPSHOT_INTERVAL_MS?: string | number
   [key: string]: unknown
 }
 
