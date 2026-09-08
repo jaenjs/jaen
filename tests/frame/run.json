@@ -1,0 +1,2555 @@
+{
+  "origin": "https://booklimo.at",
+  "siteDir": "/home/snekmin/git/limosen-v3/booklimo.at",
+  "only": null,
+  "startedAt": 1788890514.2492423,
+  "signedIn": true,
+  "editing": {
+    "entered": true,
+    "editableFields": 41,
+    "idle": {
+      "seconds": 5,
+      "commitsPerSecond": 58.4,
+      "framesPerSecond": 29.4,
+      "writesPerSecond": 3.2,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  "trigger": {
+    "left": {
+      "tag": "button",
+      "ariaHasPopup": "dialog",
+      "ariaExpanded": "false",
+      "ariaControls": null,
+      "dataScope": "dialog",
+      "dataPart": "trigger",
+      "box": {
+        "x": 16,
+        "y": 14,
+        "w": 36,
+        "h": 36
+      }
+    },
+    "right": {
+      "tag": "button",
+      "ariaHasPopup": "dialog",
+      "ariaExpanded": "false",
+      "ariaControls": null,
+      "dataScope": "dialog",
+      "dataPart": "trigger",
+      "box": {
+        "x": 1388,
+        "y": 14,
+        "w": 36,
+        "h": 36
+      }
+    }
+  },
+  "typed": {
+    "target": {
+      "x": 719.9921875,
+      "y": 701.5,
+      "text": "Our fleet test"
+    },
+    "original": "Our fleet test",
+    "after": {
+      "outbox": 0,
+      "revision": 117,
+      "publishedRevision": 97,
+      "saveState": "saved"
+    }
+  },
+  "firstClick": {
+    "1440x900": {
+      "left": {
+        "label": "Open main menu",
+        "side": "left",
+        "rounds": 10,
+        "openedOnFirstClick": 10,
+        "stayedOpen": 10,
+        "startedShut": 10,
+        "openedAtMs": [0, 0, 0, 6, 6, 6, 6, 6, 6, 6],
+        "attempts": [
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 84,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 88,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 84,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 84,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          }
+        ]
+      },
+      "right": {
+        "label": "Open user menu",
+        "side": "right",
+        "rounds": 10,
+        "openedOnFirstClick": 10,
+        "stayedOpen": 10,
+        "startedShut": 10,
+        "openedAtMs": [0, 0, 0, 0, 0, 0, 0, 5, 5, 7],
+        "attempts": [
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 7,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 7,
+                "open": true
+              }
+            ],
+            "commits": 89,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 5,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "commits": 91,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 91,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 89,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 5,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "commits": 91,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 89,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 91,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 85,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 93,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 87,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          }
+        ]
+      }
+    },
+    "390x844": {
+      "left": {
+        "label": "Open main menu",
+        "side": "left",
+        "rounds": 10,
+        "openedOnFirstClick": 10,
+        "stayedOpen": 10,
+        "startedShut": 10,
+        "openedAtMs": [0, 0, 0, 6, 6, 6, 6, 6, 6, 6],
+        "attempts": [
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 88,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 84,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 88,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 90,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 88,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 90,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 88,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 84,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          }
+        ]
+      },
+      "right": {
+        "label": "Open user menu",
+        "side": "right",
+        "rounds": 10,
+        "openedOnFirstClick": 10,
+        "stayedOpen": 10,
+        "startedShut": 10,
+        "openedAtMs": [0, 0, 0, 0, 0, 0, 0, 0, 5, 6],
+        "attempts": [
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 5,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "commits": 89,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 91,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 93,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 95,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 95,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 93,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 87,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 89,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 91,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 356,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 0,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 0,
+                "open": true
+              }
+            ],
+            "commits": 93,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          }
+        ]
+      }
+    }
+  },
+  "cross": {
+    "rounds": 4,
+    "switchedOnOneClick": 4,
+    "pairs": [
+      {
+        "from": "left",
+        "to": "right",
+        "firstOpened": true,
+        "secondOpened": true,
+        "firstStillOpen": false,
+        "windowSawPointerdown": true,
+        "documentSawPointerdown": false,
+        "inertBefore": {
+          "bodyPointerEvents": "none",
+          "bodyOverflow": "hidden",
+          "rootAriaHidden": "true",
+          "dialogNodes": 1,
+          "topAtTrigger": "html",
+          "topLabel": null
+        }
+      },
+      {
+        "from": "right",
+        "to": "left",
+        "firstOpened": true,
+        "secondOpened": true,
+        "firstStillOpen": false,
+        "windowSawPointerdown": true,
+        "documentSawPointerdown": false,
+        "inertBefore": {
+          "bodyPointerEvents": "none",
+          "bodyOverflow": "hidden",
+          "rootAriaHidden": "true",
+          "dialogNodes": 1,
+          "topAtTrigger": "html",
+          "topLabel": null
+        }
+      },
+      {
+        "from": "left",
+        "to": "right",
+        "firstOpened": true,
+        "secondOpened": true,
+        "firstStillOpen": false,
+        "windowSawPointerdown": true,
+        "documentSawPointerdown": false,
+        "inertBefore": {
+          "bodyPointerEvents": "none",
+          "bodyOverflow": "hidden",
+          "rootAriaHidden": "true",
+          "dialogNodes": 1,
+          "topAtTrigger": "html",
+          "topLabel": null
+        }
+      },
+      {
+        "from": "right",
+        "to": "left",
+        "firstOpened": true,
+        "secondOpened": true,
+        "firstStillOpen": false,
+        "windowSawPointerdown": true,
+        "documentSawPointerdown": false,
+        "inertBefore": {
+          "bodyPointerEvents": "none",
+          "bodyOverflow": "hidden",
+          "rootAriaHidden": "true",
+          "dialogNodes": 1,
+          "topAtTrigger": "html",
+          "topLabel": null
+        }
+      }
+    ]
+  },
+  "ownTrigger": {
+    "left": {
+      "rounds": 5,
+      "closedByItsOwnButton": 5,
+      "attempts": [
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "svg"
+        },
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "svg"
+        },
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "svg"
+        },
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "svg"
+        },
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "svg"
+        }
+      ]
+    },
+    "right": {
+      "rounds": 5,
+      "closedByItsOwnButton": 5,
+      "attempts": [
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "button"
+        },
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "button"
+        },
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "button"
+        },
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "button"
+        },
+        {
+          "opened": true,
+          "closedAfter": true,
+          "topAtTrigger": "button"
+        }
+      ]
+    }
+  },
+  "burst": {
+    "left": {
+      "rounds": 3,
+      "openAtEnd": 0,
+      "nextClickOpened": 3,
+      "attempts": [
+        {
+          "clicks": 4,
+          "gapMs": 100,
+          "pointerdownsSeen": 4,
+          "realSpanMs": 480,
+          "openAtEnd": false,
+          "transitions": [
+            {
+              "at": 0,
+              "open": false
+            }
+          ],
+          "nextClickOpened": true
+        },
+        {
+          "clicks": 4,
+          "gapMs": 100,
+          "pointerdownsSeen": 4,
+          "realSpanMs": 452,
+          "openAtEnd": false,
+          "transitions": [
+            {
+              "at": 0,
+              "open": false
+            }
+          ],
+          "nextClickOpened": true
+        },
+        {
+          "clicks": 4,
+          "gapMs": 100,
+          "pointerdownsSeen": 4,
+          "realSpanMs": 473,
+          "openAtEnd": false,
+          "transitions": [
+            {
+              "at": 0,
+              "open": false
+            }
+          ],
+          "nextClickOpened": true
+        }
+      ]
+    },
+    "right": {
+      "rounds": 3,
+      "openAtEnd": 0,
+      "nextClickOpened": 3,
+      "attempts": [
+        {
+          "clicks": 4,
+          "gapMs": 150,
+          "pointerdownsSeen": 4,
+          "realSpanMs": 574,
+          "openAtEnd": false,
+          "transitions": [
+            {
+              "at": 0,
+              "open": false
+            }
+          ],
+          "nextClickOpened": true
+        },
+        {
+          "clicks": 4,
+          "gapMs": 150,
+          "pointerdownsSeen": 4,
+          "realSpanMs": 643,
+          "openAtEnd": false,
+          "transitions": [
+            {
+              "at": 0,
+              "open": false
+            }
+          ],
+          "nextClickOpened": true
+        },
+        {
+          "clicks": 4,
+          "gapMs": 150,
+          "pointerdownsSeen": 4,
+          "realSpanMs": 656,
+          "openAtEnd": false,
+          "transitions": [
+            {
+              "at": 0,
+              "open": false
+            }
+          ],
+          "nextClickOpened": true
+        }
+      ]
+    }
+  },
+  "storm": {
+    "start": {
+      "started": true,
+      "diagnostic": {
+        "roots": 1,
+        "fibers": 85,
+        "withStore": ["S"],
+        "stateKeys": ["site", "page", "status", "popup", "widget", "remote"]
+      }
+    },
+    "outboxBefore": {
+      "outbox": 0,
+      "revision": 117,
+      "publishedRevision": 97,
+      "saveState": "saved"
+    },
+    "cost": {
+      "seconds": 5,
+      "commitsPerSecond": 52.6,
+      "framesPerSecond": 17.6,
+      "writesPerSecond": 3.0,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      }
+    },
+    "firstClick": {
+      "left": {
+        "label": "Open main menu",
+        "side": "left",
+        "rounds": 10,
+        "openedOnFirstClick": 10,
+        "stayedOpen": 10,
+        "startedShut": 10,
+        "openedAtMs": [6, 6, 6, 6, 6, 6, 6, 6, 6, 7],
+        "attempts": [
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 83,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 81,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 79,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 81,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 84,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 83,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 75,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 84,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 7,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 7,
+                "open": true
+              }
+            ],
+            "commits": 84,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 34,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 81,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "path",
+              "topLabel": "Open main menu"
+            },
+            "stillOpen": true
+          }
+        ]
+      },
+      "right": {
+        "label": "Open user menu",
+        "side": "right",
+        "rounds": 10,
+        "openedOnFirstClick": 10,
+        "stayedOpen": 10,
+        "startedShut": 10,
+        "openedAtMs": [5, 5, 5, 6, 6, 6, 6, 6, 6, 6],
+        "attempts": [
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 5,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "commits": 87,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 88,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 5,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "commits": 87,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 86,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 5,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 5,
+                "open": true
+              }
+            ],
+            "commits": 91,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 88,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 83,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 87,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 83,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          },
+          {
+            "at": {
+              "x": 1406,
+              "y": 32
+            },
+            "openBefore": false,
+            "openedAtMs": 6,
+            "openAtEnd": true,
+            "transitions": [
+              {
+                "at": 6,
+                "open": true
+              }
+            ],
+            "commits": 83,
+            "mounts": {
+              "left": 0,
+              "right": 0
+            },
+            "inserted": {
+              "left": 0,
+              "right": 0
+            },
+            "windowSawPointerdown": true,
+            "documentSawPointerdown": true,
+            "inertBefore": {
+              "bodyPointerEvents": "auto",
+              "bodyOverflow": "visible",
+              "rootAriaHidden": null,
+              "dialogNodes": 0,
+              "topAtTrigger": "span",
+              "topLabel": "Open user menu"
+            },
+            "stillOpen": true
+          }
+        ]
+      }
+    },
+    "survives": {
+      "opened": true,
+      "openAfterFiveSeconds": true,
+      "commits": 236,
+      "mounts": {
+        "left": 0,
+        "right": 0
+      },
+      "inserted": {
+        "left": 0,
+        "right": 0
+      }
+    },
+    "stop": {
+      "stopped": true,
+      "dispatched": 11408,
+      "seconds": 84.5595
+    },
+    "outboxAfter": {
+      "outbox": 0,
+      "revision": 117,
+      "publishedRevision": 97,
+      "saveState": "saved"
+    }
+  },
+  "setBack": {
+    "found": {
+      "x": 719.9921875,
+      "y": 580.5,
+      "text": "Our fleet test frame probe"
+    },
+    "remove": 12,
+    "readBack": [
+      "Our fleet test",
+      "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality."
+    ],
+    "remoteAfter": {
+      "outbox": 0,
+      "revision": 118,
+      "publishedRevision": 97,
+      "saveState": "saved"
+    }
+  },
+  "endedAt": 1788890884.058871
+}
