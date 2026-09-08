@@ -255,7 +255,19 @@ const remoteSlice = createSlice({
       state.discardedRevision = action.payload.revision
       state.discardedAt = action.payload.at || new Date().toISOString()
       state.discardedBy = action.payload.by || undefined
-      state.saveState = 'saved'
+      // Only the three states that claim something is outstanding are
+      // corrected, and `idle` is what a browser that has never saved goes back
+      // to. Setting `saved` here unconditionally would have made every browser
+      // that opens a site somebody once discarded read "Saved" with no time
+      // beside it, because nothing in it had ever been saved.
+      if (
+        state.saveState === 'pending' ||
+        state.saveState === 'error' ||
+        state.saveState === 'offline'
+      ) {
+        state.saveState = state.lastSavedAt ? 'saved' : 'idle'
+      }
+
       state.lastError = undefined
       state.lastOverwrote = []
     }

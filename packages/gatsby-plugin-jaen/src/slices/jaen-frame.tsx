@@ -110,6 +110,13 @@ const Slice: React.FC<SliceProps> = props => {
    */
   const seenDiscardAt = useRef<string | undefined>(undefined)
   const discardWatchStarted = useRef(false)
+  /**
+   * A discard from before this tab opened is history and not news. The first
+   * read of every browser carries the last discard the object ever took, so
+   * without this a tab opened days later would announce it as though it had
+   * just happened.
+   */
+  const frameOpenedAt = useRef(Date.now())
 
   useEffect(() => {
     const at = manager.sharedDraft.discardedAt
@@ -123,6 +130,8 @@ const Slice: React.FC<SliceProps> = props => {
     if (!at || at === seenDiscardAt.current) return
 
     seenDiscardAt.current = at
+
+    if (new Date(at).getTime() < frameOpenedAt.current) return
 
     toast({
       status: 'warning',
