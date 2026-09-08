@@ -33,8 +33,33 @@ import {useDeepEqualSelector} from '../utils/use-deep-equal-selector'
 
 export const persistKey = 'jaenjs-state'
 
-const {loadState, persistState, persistMiddleware} =
-  PersistState<RootState>(persistKey)
+/**
+ * The jaen agent, when the site was built with the `agent` plugin option.
+ * Everything below is a no-op without it, so a site that has not been rebuilt
+ * behaves exactly as it did before the shared draft existed.
+ *
+ * It is read here, above the persister, because the persister needs to know
+ * whether anything can hand the media catalogue back: see `dropCatalogue`.
+ */
+const agent = agentConfig()
+
+const {loadState, persistState, persistMiddleware} = PersistState<RootState>(
+  persistKey,
+  {
+    /**
+     * Change 2 of docs/architecture/editing-performance.md, with the safety
+     * condition the plan leaves implicit made explicit.
+     *
+     * The catalogue is 99% of the persisted payload on booklimo.at, it is
+     * never edited by hand, and the agent's poller hands it back within
+     * `activePollMs` of the store coming up. Without the agent nothing hands
+     * it back at all and `localStorage` is the only store there is, so every
+     * picture added since the last publish would be dropped on the next
+     * write. The invariant wins over the bytes: no agent, no dropping.
+     */
+    dropCatalogue: Boolean(agent)
+  }
+)
 
 const combinedReducer = combineReducers({
   site,
@@ -45,12 +70,6 @@ const combinedReducer = combineReducers({
   remote
 })
 
-/**
- * The jaen agent, when the site was built with the `agent` plugin option.
- * Everything below is a no-op without it, so a site that has not been rebuilt
- * behaves exactly as it did before the shared draft existed.
- */
-const agent = agentConfig()
 const remoteState =
   agent && typeof window !== 'undefined' ? RemoteState(agent) : null
 
