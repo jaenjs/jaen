@@ -1,25 +1,25 @@
 {
   "notebook": "10-draft-persistence",
-  "started": 1788853157.8728802,
+  "started": 1788854457.118519,
   "testkit_version": "1.0.0",
   "counts": {
-    "PASS": 29,
+    "PASS": 30,
     "FAIL": 0,
     "SKIP": 5,
     "WARN": 2,
-    "TOTAL": 36
+    "TOTAL": 37
   },
   "checks": [
     {
       "index": 1,
       "name": "the harness bundles out of the jaen source",
       "status": "PASS",
-      "evidence": "bundled 1754054 B",
+      "evidence": "bundled 1754078 B",
       "detail": "",
       "section": "the harness",
       "notebook": "10-draft-persistence",
-      "duration_ms": 63,
-      "timestamp": 1788853157.9369009
+      "duration_ms": 71,
+      "timestamp": 1788854457.191593
     },
     {
       "index": 2,
@@ -29,11 +29,22 @@
       "detail": "",
       "section": "the fixture",
       "notebook": "10-draft-persistence",
-      "duration_ms": 2,
-      "timestamp": 1788853157.940405
+      "duration_ms": 4,
+      "timestamp": 1788854457.197835
     },
     {
       "index": 3,
+      "name": "every document the client sends validates against the agent's schema",
+      "status": "PASS",
+      "evidence": "5 document(s): JaenAgentDraft, JaenAgentSave, JaenAgentViewer, JaenAgentSubscribe, JaenAgentP.... JaenAgentDraft. JaenAgentSave. JaenAgentViewer. JaenAgentSubscribe. JaenAgentPublish. draft, save, viewer, subscribe and publish",
+      "detail": "",
+      "section": "the wire",
+      "notebook": "10-draft-persistence",
+      "duration_ms": 71,
+      "timestamp": 1788854457.415314
+    },
+    {
+      "index": 4,
       "name": "the payload carries the unsent change and the edit",
       "status": "PASS",
       "evidence": "the edit is in the payload, read back out of it. changes waiting in the outbox. what is waiting",
@@ -41,10 +52,10 @@
       "section": "the persisted payload",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853158.496604
+      "timestamp": 1788854457.8750732
     },
     {
-      "index": 4,
+      "index": 5,
       "name": "the payload does not carry the media catalogue",
       "status": "PASS",
       "evidence": "1086 B payload, 0 media nodes in it, 2 B of catalogue. change 2 of the plan: the catalogue is not persisted",
@@ -52,21 +63,21 @@
       "section": "the persisted payload",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853158.496641
+      "timestamp": 1788854457.8751714
     },
     {
-      "index": 5,
+      "index": 6,
       "name": "an edit survives the browser being started again",
       "status": "PASS",
       "evidence": "the value the second process read out of storage. and 0 media nodes came back with it",
       "detail": "",
       "section": "a reload",
       "notebook": "10-draft-persistence",
-      "duration_ms": 501,
-      "timestamp": 1788853159.0094013
+      "duration_ms": 499,
+      "timestamp": 1788854458.4047923
     },
     {
-      "index": 6,
+      "index": 7,
       "name": "a hidden tab has the edit in storage with no waiting",
       "status": "PASS",
       "evidence": "2 listener(s) heard visibilitychange. read back out of storage in the same frame as the event",
@@ -74,10 +85,10 @@
       "section": "a hidden tab",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853159.3728979
+      "timestamp": 1788854458.7682176
     },
     {
-      "index": 7,
+      "index": 8,
       "name": "the edit is in storage within the idle deadline anyway",
       "status": "WARN",
       "evidence": "read back 300 ms after the dispatch. the write is asynchronous: nothing was in storage in the dispatch's own frame, which is what ...",
@@ -85,10 +96,10 @@
       "section": "a hidden tab",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853159.3730059
+      "timestamp": 1788854458.7686293
     },
     {
-      "index": 8,
+      "index": 9,
       "name": "an edit made offline is kept, in the store and in storage",
       "status": "PASS",
       "evidence": "read back out of storage while the agent is unreachable. waiting in the outbox. what the toolbar says",
@@ -96,10 +107,10 @@
       "section": "offline",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853166.3508883
+      "timestamp": 1788854465.7730432
     },
     {
-      "index": 9,
+      "index": 10,
       "name": "the queue drains on its own when the agent comes back",
       "status": "PASS",
       "evidence": "the outbox is empty again. and the value is still the one that was typed. drained 5.0 s after the network came back",
@@ -107,10 +118,10 @@
       "section": "offline",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853166.3509889
+      "timestamp": 1788854465.7733877
     },
     {
-      "index": 10,
+      "index": 11,
       "name": "the documented first retry is the one the code takes",
       "status": "WARN",
       "evidence": "first retry at 5.0 s, while draft-state.md and the plan both say 2 s: RETRY_SECONDS is indexe...",
@@ -118,21 +129,21 @@
       "section": "offline",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853166.3510988
+      "timestamp": 1788854465.7737527
     },
     {
-      "index": 11,
+      "index": 12,
       "name": "the browser saying online drains it at once",
       "status": "PASS",
-      "evidence": "the outbox is empty. the value read back out of storage. drained 25 ms after the online event",
+      "evidence": "the outbox is empty. the value read back out of storage. drained 24 ms after the online event",
       "detail": "",
       "section": "offline",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853166.3511758
+      "timestamp": 1788854465.7740037
     },
     {
-      "index": 12,
+      "index": 13,
       "name": "three field writes inside the window are one commit",
       "status": "PASS",
       "evidence": "1 call(s) to the agent, [3] change(s) each. change 3 of editing-performance.md: one call, not three",
@@ -140,10 +151,10 @@
       "section": "the quiet window",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853169.1824892
+      "timestamp": 1788854468.6037104
     },
     {
-      "index": 13,
+      "index": 14,
       "name": "none of the three values is lost, whatever the batching",
       "status": "PASS",
       "evidence": "all three read back out of the store. and all three left the outbox",
@@ -151,10 +162,10 @@
       "section": "the quiet window",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853169.1825564
+      "timestamp": 1788854468.6039257
     },
     {
-      "index": 14,
+      "index": 15,
       "name": "a poll does not overwrite an unsent change",
       "status": "PASS",
       "evidence": "the remote draft says 'Our fleet'. the store after the hydration. and storage, read back. the change is still waiting",
@@ -162,10 +173,10 @@
       "section": "a poll mid-edit",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853170.0463595
+      "timestamp": 1788854469.515081
     },
     {
-      "index": 15,
+      "index": 16,
       "name": "discard drops the unsent changes and keeps the revision",
       "status": "PASS",
       "evidence": "something to discard. the outbox is empty. the edit is gone from the store, read back. and out of storage. the revision the read gave us survives, so the next read asks for a delta. and so do the authors",
@@ -173,10 +184,10 @@
       "section": "discard",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853170.9306543
+      "timestamp": 1788854470.3780866
     },
     {
-      "index": 16,
+      "index": 17,
       "name": "without the agent the CMS still saves to localStorage alone",
       "status": "PASS",
       "evidence": "no agent is configured. the edit read back out of storage. and nothing left the browser. no outbox is kept",
@@ -184,10 +195,10 @@
       "section": "the escape",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853171.4046905
+      "timestamp": 1788854470.8617225
     },
     {
-      "index": 17,
+      "index": 18,
       "name": "and the catalogue is still persisted, because nothing else holds it",
       "status": "PASS",
       "evidence": "77091 B payload, 140 media nodes in it. the escape keeps the media library",
@@ -195,10 +206,10 @@
       "section": "the escape",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853171.4047601
+      "timestamp": 1788854470.8619566
     },
     {
-      "index": 18,
+      "index": 19,
       "name": "the socket comes up and carries the other editor",
       "status": "PASS",
       "evidence": "connection socket, 1 socket(s), 1 ticket(s), wss://agent.example.invalid/draft/booklimo.at. the client says the object is pushing. the frame reached one open socket",
@@ -206,21 +217,21 @@
       "section": "the socket",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853171.5243766
+      "timestamp": 1788854470.9748461
     },
     {
-      "index": 19,
+      "index": 20,
       "name": "the other editor's field is read back off this store",
       "status": "PASS",
-      "evidence": "9.9 ms from the frame to the value, 1 draft call(s) after it. the value, not a flag. under the two seconds draft-state.md asks of two editors. one read per frame: the frame carries a number and the read carries the data",
+      "evidence": "10.7 ms from the frame to the value, 1 draft call(s) after it. the value, not a flag. under the two seconds draft-state.md asks of two editors. one read per frame: the frame carries a number and the read carries the data",
       "detail": "",
       "section": "the socket",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853171.5244374
+      "timestamp": 1788854470.9752011
     },
     {
-      "index": 20,
+      "index": 21,
       "name": "the token never travels on the socket",
       "status": "PASS",
       "evidence": "subprotocols ['jaen-draft.v1', 'ticket.ticket-1']. the ticket is a subprotocol. and it is not the person's token. nothing in the query string: wss://agent.example.invalid/draft/booklimo.at",
@@ -228,10 +239,10 @@
       "section": "the socket",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853171.5244892
+      "timestamp": 1788854470.975493
     },
     {
-      "index": 21,
+      "index": 22,
       "name": "a refused socket leaves the client on the poll",
       "status": "PASS",
       "evidence": "1 subscribe call(s), 0 socket(s) opened. the client says so. no socket was opened at all, the ticket was refused first",
@@ -239,21 +250,21 @@
       "section": "the poll as the fallback",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853172.5868373
+      "timestamp": 1788854472.0557406
     },
     {
-      "index": 22,
+      "index": 23,
       "name": "the other editor's field arrives on the poll alone",
       "status": "PASS",
-      "evidence": "205 ms, 4 draft call(s). read back off the store. and out of localStorage. it arrived",
+      "evidence": "204 ms, 4 draft call(s). read back off the store. and out of localStorage. it arrived",
       "detail": "",
       "section": "the poll as the fallback",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853172.5869365
+      "timestamp": 1788854472.0560198
     },
     {
-      "index": 23,
+      "index": 24,
       "name": "who wrote it came with it",
       "status": "PASS",
       "evidence": "the authors map names the field: ['JaenPage //IMA:TextField/FleetTitle']",
@@ -261,10 +272,10 @@
       "section": "the poll as the fallback",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853172.5870023
+      "timestamp": 1788854472.0561938
     },
     {
-      "index": 24,
+      "index": 25,
       "name": "the first save was taken",
       "status": "PASS",
       "evidence": "the value this browser wrote. the object answered a revision: 1",
@@ -272,21 +283,21 @@
       "section": "the object restarted",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853175.3945572
+      "timestamp": 1788854474.8765128
     },
     {
-      "index": 25,
+      "index": 26,
       "name": "the client noticed the revision going backwards",
       "status": "PASS",
-      "evidence": "objectRestartedAt 2026-09-08T07:39:33.980Z, revision now 0. a read below the held revision was recognised. the object's own revision was adopted",
+      "evidence": "objectRestartedAt 2026-09-08T08:01:13.459Z, revision now 0. a read below the held revision was recognised. the object's own revision was adopted",
       "detail": "",
       "section": "the object restarted",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853175.3946602
+      "timestamp": 1788854474.8769116
     },
     {
-      "index": 26,
+      "index": 27,
       "name": "the edit the person made is still there",
       "status": "PASS",
       "evidence": "on the screen, read back off the store. and in localStorage",
@@ -294,10 +305,10 @@
       "section": "the object restarted",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853175.3947117
+      "timestamp": 1788854474.877085
     },
     {
-      "index": 27,
+      "index": 28,
       "name": "and the next save goes through to the new object",
       "status": "PASS",
       "evidence": "2 save(s) reached the object, it is at revision 1. the second value. in localStorage. nothing left waiting. and the toolbar says so. both saves reached an object",
@@ -305,10 +316,10 @@
       "section": "the object restarted",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853175.3948252
+      "timestamp": 1788854474.8779142
     },
     {
-      "index": 28,
+      "index": 29,
       "name": "this browser saved against a base the object had passed",
       "status": "PASS",
       "evidence": "sent baseRevision 0, the object was at 2. the save carried the revision this browser held. exactly one save reached the object",
@@ -316,10 +327,10 @@
       "section": "two editors on one field",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.570479
+      "timestamp": 1788854477.0788474
     },
     {
-      "index": 29,
+      "index": 30,
       "name": "the rebase named the field it took",
       "status": "PASS",
       "evidence": "overwrote ['JaenPage //IMA:TextField/FleetTitle']. the CMS can say what the race cost",
@@ -327,10 +338,10 @@
       "section": "two editors on one field",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.5708256
+      "timestamp": 1788854477.0791059
     },
     {
-      "index": 30,
+      "index": 31,
       "name": "a read follows the rebase at once",
       "status": "PASS",
       "evidence": "1 draft call(s) between the save and the settle. the browser asked for the delta rather than waiting out an interval",
@@ -338,10 +349,10 @@
       "section": "two editors on one field",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.5709093
+      "timestamp": 1788854477.0795546
     },
     {
-      "index": 31,
+      "index": 32,
       "name": "nothing was lost and last write stands",
       "status": "PASS",
       "evidence": "read back off the store. and out of localStorage. nothing left waiting. and the toolbar says so",
@@ -349,10 +360,10 @@
       "section": "two editors on one field",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.5709817
+      "timestamp": 1788854477.0798185
     },
     {
-      "index": 32,
+      "index": 33,
       "name": "a reload, a hidden tab, an offline edit and a second editor",
       "status": "SKIP",
       "evidence": "this build carries no agent option: the transition removed it from both sites, so there is no...",
@@ -360,10 +371,10 @@
       "section": "the browser",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.5901613
+      "timestamp": 1788854477.1228666
     },
     {
-      "index": 33,
+      "index": 34,
       "name": "an edit survives the tab being hidden and the page reloaded",
       "status": "SKIP",
       "evidence": "the browser half did not run",
@@ -371,10 +382,10 @@
       "section": "the browser",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.5902474
+      "timestamp": 1788854477.1230009
     },
     {
-      "index": 34,
+      "index": 35,
       "name": "an edit made offline is kept and drains when the network is back",
       "status": "SKIP",
       "evidence": "the browser half did not run",
@@ -382,10 +393,10 @@
       "section": "the browser",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.5903072
+      "timestamp": 1788854477.1231065
     },
     {
-      "index": 35,
+      "index": 36,
       "name": "a second editor reads the change out of the repository",
       "status": "SKIP",
       "evidence": "the browser half did not run",
@@ -393,10 +404,10 @@
       "section": "the browser",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.5903854
+      "timestamp": 1788854477.1232088
     },
     {
-      "index": 36,
+      "index": 37,
       "name": "the live field is back to the value the run found",
       "status": "SKIP",
       "evidence": "the browser half did not run",
@@ -404,7 +415,7 @@
       "section": "the browser",
       "notebook": "10-draft-persistence",
       "duration_ms": 0,
-      "timestamp": 1788853177.5904412
+      "timestamp": 1788854477.123306
     }
   ]
 }

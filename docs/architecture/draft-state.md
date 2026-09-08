@@ -417,16 +417,34 @@ writes a migration and a commit and queues nothing. Reading only `queued` there
 would call a real publish a failure. The migration takes a message again, which
 is the line the publish list shows.
 
-`draft`, `save` and `subscribe` are read off `packages/jaen-agent/src/draft/store.ts`,
-another session's, which was uncommitted while this was written. What is settled
-is the shape of the answers. What is **not** settled, and is the one thing a
-reader should check first, is how Pylon renders each field of the delta: a
-`Record<string, X>` becomes a scalar and takes no subselection, a typed
-interface becomes an object type and demands one, and getting either wrong fails
-the whole operation rather than one field. The fields at risk are named in the
-client where the documents are, and every one of them is optional at runtime, so
-a field that arrives as something else is an editor who sees less rather than a
-CMS that throws.
+`draft`, `save` and `subscribe` were written against
+`packages/jaen-agent/src/draft/store.ts` while it was still another session's
+uncommitted work, and the object landed in `7ace7ad` before this session ended.
+So the guess is gone and the two halves are checked against each other by a
+machine: `tests/support/validate-agent-documents.cjs` parses every document out
+of the client and validates it against `packages/jaen-agent/.pylon/schema.graphql`,
+the agent's own generated schema, and
+`tests/10-draft-persistence.ipynb` runs it. **Five of five valid.**
+
+That check exists because this client is hand written and a field renamed on the
+agent's side is not a compile error anywhere: it is a
+`GRAPHQL_VALIDATION_FAILED` at runtime that refuses the whole operation rather
+than one field, which for `save` means an editor's work is never sent at all.
+
+What it settled, and what could not have been settled by reading: Pylon renders
+`delta.pages`, `delta.media`, `delta.site` and `delta.authors` as the scalar
+`JSONObject` and `delta.widgets` as `[JSONObject!]!`, all of which take no
+subselection, while `delta.mediaField` is an object type and demands one. Every
+one is still optional at runtime in the client, so a field that ever arrives as
+something else is an editor who sees less rather than a CMS that throws.
+
+The socket agrees as well, read off the agent's own `object.ts`: the path is
+`/draft/<site>` with the site in the path and nothing in the query, the
+subprotocols are `jaen-draft.v1` and `ticket.<handle>` and `jaen-draft.v1` is
+echoed back, and the frames are `{type: 'hello', revision, publishedRevision}`
+on connect and `{type: 'revision', revision}` on every accepted write. The
+client is lenient about the name of the frame and strict about the field, so
+both are acted on and a third would be too.
 
 The revision arguments are declared `Number` and not `Int`, because Pylon
 renders a `number` argument as the scalar `Number` and an operation declaring
@@ -435,8 +453,8 @@ gateway's `signedUrl` already cost a run.
 
 #### Measured, and what is not
 
-`tests/09-editing-latency.ipynb` 13 PASS 0 FAIL 5 SKIP, and
-`tests/10-draft-persistence.ipynb` 29 PASS 0 FAIL 5 SKIP 2 WARN, both stored in
+`tests/09-editing-latency.ipynb` 16 PASS 0 FAIL 5 SKIP 1 WARN, and
+`tests/10-draft-persistence.ipynb` 30 PASS 0 FAIL 5 SKIP 2 WARN, both stored in
 `tests/draft-object/`. The three scenarios this design names are new and green:
 the object restarted between two saves, the socket refused so the poll carries
 it, and two editors racing on one field. Beside them the socket carrying it,

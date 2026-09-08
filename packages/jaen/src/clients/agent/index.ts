@@ -246,21 +246,23 @@ const request = async <T>(
  * storage gateway's `signedUrl` cost a run
  * (docs/architecture/private-storage.md, "Two things a caller has to know").
  *
- * **`draft` and `subscribe` are written against an agent that has not landed.**
- * `publish` is the agent's own `PublishResult` and is read off its committed
- * source. `draft`, `save` and `subscribe` are read off the draft store's
- * interface, `packages/jaen-agent/src/draft/store.ts`, which is another
- * session's and was uncommitted when this was written. What is certain is the
- * shape of the answers; what is not is how Pylon renders each field. A
- * `Record<string, X>` becomes a scalar and takes no subselection, a typed
- * interface becomes an object type and demands one, and getting either wrong
- * fails the whole operation rather than one field. So the fields at risk are
- * exactly `delta.pages`, `delta.media`, `delta.site`, `delta.widgets` and
- * `delta.authors`, selected here as scalars, and `delta.mediaField`, selected
- * as an object. Check them against the agent's generated `schema.graphql`
- * before this is trusted, and read the client's own tolerance below: every one
- * of them is optional at runtime, so a field that arrives as something else is
- * an editor who sees less rather than a CMS that throws.
+ * **They are validated against the agent's own schema, and nothing else keeps
+ * them right.** This client is hand written, so a field renamed on the agent's
+ * side is not a compile error anywhere: it is a `GRAPHQL_VALIDATION_FAILED` at
+ * runtime that refuses the whole operation rather than one field, which for
+ * `save` means an editor's work is never sent at all. The check that closes
+ * that is `tests/support/validate-agent-documents.cjs`, run by
+ * `tests/10-draft-persistence.ipynb`: every document below is validated against
+ * `packages/jaen-agent/.pylon/schema.graphql`, the agent's own generated
+ * schema. Five of five, 2026-09-08.
+ *
+ * The fields it settles, because they cannot be settled by reading: Pylon
+ * renders `delta.pages`, `delta.media`, `delta.site` and `delta.authors` as the
+ * scalar `JSONObject` and `delta.widgets` as `[JSONObject!]!`, all of which
+ * take no subselection, while `delta.mediaField` is an object type and demands
+ * one. Every one of them is still optional at runtime here, so a field that
+ * ever arrives as something else is an editor who sees less rather than a CMS
+ * that throws.
  */
 const DRAFT = `query JaenAgentDraft($site: String!, $sinceRevision: Number) {
   draft(site: $site, sinceRevision: $sinceRevision) {

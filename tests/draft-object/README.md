@@ -15,13 +15,22 @@ it, and a run nobody can read afterwards is not evidence.
 | notebook                     | PASS | FAIL | SKIP | WARN |
 | ---------------------------- | ---- | ---- | ---- | ---- |
 | `09-editing-latency.ipynb`   | 16   | 0    | 5    | 1    |
-| `10-draft-persistence.ipynb` | 29   | 0    | 5    | 2    |
+| `10-draft-persistence.ipynb` | 30   | 0    | 5    | 2    |
 
 **What the baseline's red checks did.** `09`'s three acceptance checks are green:
 one blur is one whole-store write rather than four, 1,312 B rather than 309,253,
 and its p95 in node is 4.98 ms against one frame at 16. `10`'s two are green as
 well: the catalogue is out of the persisted payload, and three field writes
 120 ms apart are one call rather than three.
+
+**The client and the agent are checked against each other by a machine.** `10`
+grew one check that is not a scenario: `support/validate-agent-documents.cjs`
+parses every GraphQL document out of `packages/jaen/src/clients/agent` and
+validates it against `packages/jaen-agent/.pylon/schema.graphql`, the agent's
+own generated schema. Five of five. The client is hand written on purpose, so a
+field renamed on the agent's side is not a compile error anywhere: it is a
+`GRAPHQL_VALIDATION_FAILED` at runtime that refuses the whole operation rather
+than one field, which for `save` means an editor's work is never sent at all.
 
 **One browser measurement was taken back.** `09` grew a `localBlur` mode: the
 same field typed and left in the real CMS on a local production build of
