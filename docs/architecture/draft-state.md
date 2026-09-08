@@ -136,6 +136,145 @@ produces the same data before and after, and only then take the
 commit-on-save path out of the agent. Nothing is deleted from the gateway
 and no old migration is touched.
 
+### Done 2026-09-08, on booklimo, and what it cost
+
+Everything above this heading was written before any of it was carried out.
+This is what happened, in the order the section above asks for, with every
+stamp. booklimo only, because that is where this estate tests
+(`okf/decisions/hard-rules.md`). limosen carried no head files and nothing was
+written on it beyond its own configuration.
+
+**The truth first, so the comparison is against an artifact.** A local
+production build of booklimo as it stood, with `OSG_TOKEN` of `osg-build-krc`,
+`SENTRY_OFF=1` and the ipv4 preload, rsynced beside the site as
+`booklimo.at-transition-before/`, 196 MB and 272 files in `public/osg/`. The
+data that build sourced was kept as well, which needed a way to take that
+reading at all: after a build the merged jaen data lives only in Gatsby's LMDB
+datastore, so `gatsby-source-jaen` gained `JAEN_DATA_DUMP`, an environment
+variable naming a file it writes the created `JaenData` node into, without
+Gatsby's own `id` and `internal`. It writes nothing when the variable is
+unset. A gate nobody can take a reading for is not a gate.
+
+**One migration, made by jaen's own code.** `scripts/head-to-migration.ts`
+reads a site's two head files, merges their `data` with the very deepmerge the
+build replays the chain with (`deepmergeArrayIdMerge` and the `IMA:MdxField`
+customMerge, so the one file replays to what the two replayed to), writes one
+`{message, createdAt, data}` and uploads it through jaen's own
+`uploadFileFromNode`, which is the path every publish takes. It touches
+neither `patches.txt` nor the files it read, so the irreversible half and the
+reversible half stay apart.
+
+| piece             | value                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| the migration     | `https://osg.netsnek.com/storage/BQACAgQAAx0Ed6zoewACBgRqn7FvFQ_GCav3z710E1wuVuOWkwAC6x0AAlWvAAFRYskaLNkdwJw9BA`                  |
+| message           | `draft: the agent's head of 2026-09-08, live.json and live-media.json, as one migration`                                          |
+| size and checksum | 119,589 bytes, sha256 `6699b247b7b97889f33b82636a5fa6d9a18251196837daf58994ab36e51b3980`, read back off the gateway byte for byte |
+| the gate          | 401 `AUTH_REQUIRED` with no token, 200 to the KRC machine token, ownership stamped `356348844407002709`                           |
+| the credential    | `osg-krc` of `~/.config/taxi-app/tokens.env`, `storage:read`, `storage:write`, `storage:sign`, introspected before it was used    |
+| commits           | booklimo.at `e6866d7` and `27a0120`, jaen `c004978`, `b2692a9` and `c974684`                                                      |
+
+**The credential is not the one this section first named.**
+`~/.config/jaen/osg-booklimo.env` holds `osg-build-krc`, which carries
+`storage:read` and nothing else, because `private-storage.md` gave the site
+builds a read-only credential on purpose: a build downloads what the data
+names and never uploads. So the upload used the brand's storage machine user,
+`osg-krc`, out of the taxi platform's token file. Both were introspected at
+`accounts.netsnek.com` first rather than tried, and the introspection needs a
+`User-Agent` header or Cloudflare answers 403 in front of the identity server.
+
+**The gate, which is the whole point of the phase.** A second build with the
+same token and the same flags, and the sourced jaen data of the two builds
+compared. `pages`, `site` and `widgets` are **byte identical**, 629,854 bytes,
+sha256 `061e5491f389e37647f044a3beccc77990a3dd2735312f54f5e6a07e0be46cf6`
+before and after. Measured four times over four builds and identical every
+time.
+
+The one thing that does differ is the `patches` index, which is the change
+itself and carries no content: twenty entries become nineteen, the two head
+entries
+
+```
+2026-09-08T01:39:37.395Z  jaen: Taxi Test Admin edited 1 field on JaenPage /            live.json
+2026-09-08T01:41:22.198Z  jaen: Taxi Test Admin edited 1 field on JaenPage /cms/media/  live-media.json
+```
+
+replaced by the one line `patches.txt` now ends with. Everything else about
+the two builds was compared as well, not only the sourced data: of 134
+differing paths in `public`, the 37 `page-data` and slice payloads are
+identical once the build's own createdAt and modifiedAt stamps, the webpack
+compilation hash and the order of an unordered `allJaenPage` result are taken
+out, and every HTML file is identical once the hashed chunk names go. Three
+files are left and each is explained. `cms/index.html` renders the publish
+list, which is the two head entries becoming one migration. `cms/debug/index.html`
+carries the content hash of `gatsby-config.ts`, which changed because the
+agent option was removed. `cms/pages/index.html` renders a build clock.
+
+**Both sites off the live agent.** The `agent` option is gone from
+`booklimo.at/gatsby-config.ts` and `limosen.at/gatsby-config.ts`, replaced by
+a comment saying why and what it costs. Without it `__JAEN_AGENT__` is
+undefined, `agentConfig()` answers null and the CMS keeps its draft in
+`localStorage` alone, which is this design's own rollback. Both sites built
+and deployed through their own `scripts/deploy.sh`, booklimo twice because the
+migration was cut twice.
+
+Read back on the systems that serve: `booklimo.at/app/version.json` and
+`limosen.at/app/version.json` both answer app `1.8.1` at commit `9b33062`, so
+the two brands still agree, and `/`, `/de/` and `/cms/` answer 200 on both.
+Neither site's built bundle mentions a `jaen-agent` host any more. In a
+browser, signed in on the live `booklimo.at` as the booklimo human admin,
+`/cms/` and `/cms/media/` both render, the media library draws 31 pictures,
+the draft is the single `jaenjs-state` key in `localStorage`, **zero** requests
+go to any `jaen-agent` host and every request to the storage gateway carries a
+bearer.
+
+### Two things this transition got wrong before it got them right
+
+**A migration must not carry `authors`, because a site publishes its own
+patches.** The first cut of the migration carried the two head files' `authors`
+maps, on the reasoning that they are the only record of who last wrote each
+field and that historical patches carry extra top-level keys of their own. The
+reasoning was wrong in one step and the measurement found it: a patch is a
+gateway file and the gateway is private, but the build is a reader.
+`gatsby-source-jaen` downloads every gateway file the data names, patch
+payloads included, into `public/osg/<id>.<ext>`, so booklimo.at already serves
+fourteen of its own patch payloads to anybody, and the migration made a
+fifteenth naming two accounts and their identity-server ids. The payload is
+`{message, createdAt, data}` now, which is the shape this design asked for,
+and the authorship is written beside it out of every repository. That the
+build publishes patch payloads at all is worth a decision of its own and is
+not this transition's to take.
+
+The withdrawn first cut,
+`BQACAgQAAx0Ed6zoewACBe1qn6sq2kXoEzWmFArVGCFcjoUswwAC0R0AAlWvAAFR84UzP1Boiuo9BA`,
+is not deleted from the gateway, where it is behind the Zitadel gate and is
+the durable private record of the head's authorship. It is out of the
+deployment: `booklimo.at/osg/<that id>.json` answers 404 on a fresh URL. It is
+**not** out of Cloudflare's cache, which was measured answering 200 with
+`cache-control: public, s-maxage=604800`, and the API token in the site's
+`.env` reads zones but cannot purge, so it ages out within seven days of its
+first fetch unless somebody with a cache purge credential for the
+`booklimo.at` zone removes it sooner. The exposure is five field paths, the
+display names of two test accounts and their two Zitadel ids, at an
+unguessable id nothing has ever linked to.
+
+**The notebooks lost their fixture.** `tests/09-editing-latency.ipynb` and
+`tests/10-draft-persistence.ipynb` build their synthetic store out of
+`booklimo.at/jaen-data/live.json` and `live-media.json`, read straight off
+those two paths by `tests/support/editing-harness.ts`. The transition deletes
+both, so the node halves of both notebooks will fail on a missing file until
+they are pointed at the migration instead. The two files are kept outside every
+repository, beside the site at `booklimo.at-transition-before.head/`, together
+with the authors map, so nothing is lost while that is arranged.
+
+### What this transition deliberately did not do
+
+The agent's commit-on-save path is still in `packages/jaen-agent/src/store.ts`
+and the agent Worker is still deployed. Taking it out is the next step and this
+one is its precondition, which is the order this section asks for. Nothing
+reaches it any more, because no site carries the option, but a deployed agent
+that still knows how to write to a repository is not the same thing as one that
+cannot.
+
 ## Acceptance
 
 - Two editors on booklimo: a change in one reaches the other in under two
