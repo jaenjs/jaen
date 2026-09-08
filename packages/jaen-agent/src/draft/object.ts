@@ -1103,7 +1103,10 @@ export class JaenDraftObject {
     // Everything about the page that is not a field and not its own stamp.
     // `modifiedAt` is left out on purpose: a discard is about content, and a
     // page whose only difference is when it was touched has nothing to undo.
-    const {jaenFields, sections, modifiedAt, ...rest} = page
+    // `id` goes because it is the key this is already indexed by, and a
+    // snapshot writes it into the node where the store's own page key may not
+    // have it.
+    const {jaenFields, sections, modifiedAt, id: _id, ...rest} = page
 
     out.set(`${id}/page`, stable(rest))
 
@@ -1119,10 +1122,11 @@ export class JaenDraftObject {
    * something the last migration did not produce whenever a build and a
    * publish disagree.
    */
-  private async diffAgainstPublished(
+  private diffSnapshots(
     meta: DraftMeta,
+    current: DraftSnapshot,
     published: DraftSnapshot
-  ): Promise<{
+  ): {
     pages: number
     fields: number
     fieldKeys: string[]
@@ -1136,9 +1140,16 @@ export class JaenDraftObject {
     mediaChanged: number
     siteChanged: boolean
     widgetsChanged: number
-  }> {
+  } {
+    // Both sides go through the same fold, which is the whole reason this
+    // takes two snapshots rather than the draft's own keys on one side. A
+    // snapshot carries a page's `id` inside the node and makes a page for the
+    // catalogue's own field even where the draft store holds none, so the two
+    // shapes differ in ways that have nothing to do with anybody's edit: the
+    // first cut compared the store against a snapshot and reported the site
+    // as changed the instant after it was published.
     const target = this.unfold(published, meta.mediaField)
-    const draft = await this.loadDraft()
+    const draft = this.unfold(current, meta.mediaField)
 
     const ids = new Set([
       ...Object.keys(draft.pages),
@@ -1175,29 +1186,21 @@ export class JaenDraftObject {
     let mediaRemoved = 0
     let mediaChanged = 0
 
-    // The catalogue is read once, here, and never one key at a time: a
-    // published state names as many pictures as the draft does, and a get per
-    // picture would be 140 storage reads on booklimo for a question two lists
-    // answer.
-    const live = new Set<string>()
-
-    for (const [key, value] of await this.listAll<unknown>(KEY.media)) {
-      const id = key.slice(KEY.media.length)
-      const there = Object.prototype.hasOwnProperty.call(target.media, id)
-
-      if (value.deleted) {
-        if (there) mediaRemoved += 1
-        continue
+    // The catalogue as both sides hold it. A tombstone never appears here,
+    // because a snapshot is the catalogue as it is, so a deleted picture is
+    // simply one the draft no longer names.
+    for (const [id, node] of Object.entries(draft.media)) {
+      if (!Object.prototype.hasOwnProperty.call(target.media, id)) {
+        mediaAdded += 1
+      } else if (stable(node) !== stable(target.media[id])) {
+        mediaChanged += 1
       }
-
-      live.add(id)
-
-      if (!there) mediaAdded += 1
-      else if (stable(value.v) !== stable(target.media[id])) mediaChanged += 1
     }
 
     for (const id of Object.keys(target.media)) {
-      if (!live.has(id)) mediaRemoved += 1
+      if (!Object.prototype.hasOwnProperty.call(draft.media, id)) {
+        mediaRemoved += 1
+      }
     }
 
     if ((mediaAdded || mediaRemoved || mediaChanged) && meta.mediaField) {
@@ -1302,7 +1305,7 @@ export class JaenDraftObject {
       }
     }
 
-    const diff = await this.diffAgainstPublished(meta, published)
+    const diff = this.diffSnapshots(meta, await this.snapshot(site), published)
     const editors = await this.editorsOf(diff.fieldKeys)
 
     // `fields` carries the catalogue's own key whenever a picture moved, so
@@ -1396,7 +1399,10 @@ export class JaenDraftObject {
       )
     }
 
-    let diff = await this.diffAgainstPublished(meta, published)
+    // Taken before anything is written, because the backstop rotates the
+    // previous discard's copy into `:previous` and a discard that turns out to
+    // have nothing to do must not cost the undo of the one before it.
+    let diff = this.diffSnapshots(meta, await this.snapshot(site), published)
 
     if (diff.fields === 0) {
       // Nothing to undo. The revision may still be past the published one,
@@ -1444,7 +1450,9 @@ export class JaenDraftObject {
 
     if (!before) return refuse('The backstop could not be taken.')
 
-    diff = await this.diffAgainstPublished(meta, published)
+    // Against the very snapshot that went into the backstop, so what the
+    // answer says went is what the backstop holds.
+    diff = this.diffSnapshots(meta, before, published)
 
     const editors = await this.editorsOf(diff.fieldKeys)
     const revision = meta.revision + 1
