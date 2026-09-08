@@ -222,3 +222,59 @@ documents say, and the notebook records it as a WARN rather than a failure.
 
 The stored runs of both notebooks are in `tests/baseline/`, and the review this
 file asks for is still open.
+
+## After the draft became an object, 2026-09-08
+
+The four changes of this file are unchanged and still in force. What moved
+under them is the backend: `docs/architecture/draft-state.md` took the shared
+draft out of the site's repository and put it in one Durable Object per site,
+so a save is no longer a commit. This section records only what that did to the
+measurements in this file, because the browser side of it did not change at
+all.
+
+**Nothing in the persistence path moved.** `persist-state.ts` is byte for byte
+what change 1 and change 2 made it, the quiet window of change 3 is the same
+window, and the toolbar still says `pending`, `saving`, `saved`, `offline` and
+`error`. It says one thing more, "Saved 14:02, not published", whenever the
+draft's revision is past the published one, which is a sentence the CMS could
+not say while a save was a commit.
+
+**What the quiet window saves is one thing fewer than it was.** It used to save
+a commit, a round trip and a whole-store write per field. The commit was the
+wrong direction and is gone, so it saves a round trip and a whole-store write,
+which is what it was for.
+
+**The numbers hold.** Re-measured with the same two notebooks after the change,
+against the same draft: one blur is one whole-store write of 1,312 B where the
+baseline measured four of 309,253, its p95 in node is 4.98 ms against the
+baseline's 27.2 and against one frame at 16, and in chromium one blur is
+0.010 ms of serialisation and write where the baseline measured 1.680. The
+store is 77,096 B and the catalogue is 99.0% of it, the same figures this file
+recorded, which is what makes the two runs comparable.
+
+**The fixture had to move and the numbers say it moved honestly.** These
+notebooks read `booklimo.at/jaen-data/live.json` and `live-media.json` straight
+off the site, and the transition deleted both, because a head named in
+`patches.txt` made every unfinished edit part of the published site. The two
+files are kept beside the site at `booklimo.at-transition-before.head/`, and the
+notebooks merge them into one draft, which is the shape the object's own
+`snapshot(site)` answers. 77,096 B against the 77,090 this file measured is the
+proof that the same thing is being weighed.
+
+**Two things this file measured are still true and still unfixed.** The first
+retry after a failed save is at five seconds and not the two both documents
+claim, because `RETRY_SECONDS` is indexed with a failure count that has already
+been incremented, and the notebook still records it as a WARN. And the
+registration storm this file found, about forty-seven store writes a second with
+edit mode on and nobody touching anything, is untouched: change 1 coalesces its
+cost into one idle callback and the dispatches and the React work they drag are
+still there. Neither was this session's to fix and both are named again here so
+the reviewer does not have to find them twice.
+
+**What is not measured.** Every browser half of both notebooks skips, because
+the transition removed the `agent` option from both sites and a built site has
+no shared draft to drive. The blur to paint gap in the real CMS, which is the
+one number in this file that came from a person's own machine rather than from
+a bench, is therefore not re-measured after the change. It should be, the day a
+site carries the option again. The stored runs are in `tests/draft-object/`
+beside `tests/baseline/`.

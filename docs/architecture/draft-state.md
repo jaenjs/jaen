@@ -183,6 +183,135 @@ gateway and the live identity server, and it has not been driven from a browser
 on the live `booklimo.at`. That is the deploy step's, and until it is taken the
 acceptance below is measured and not served.
 
+### Built 2026-09-08, the client half
+
+`packages/jaen/src/clients/agent` and `packages/jaen/src/redux/remote-state.ts`,
+after the transition and against the agent as it stands.
+`packages/jaen/src/redux/apply-change.ts` is not touched, and neither is the
+browser side of `editing-performance.md`.
+
+**The whole of "where the draft is" is one number.** `headSha` and `blobSha` are
+gone from the wire, from the redux store and from what `localStorage` carries.
+They only ever made sense while a save was a commit. What replaces them is
+`revision` on a read (`sinceRevision`) and on a write (`baseRevision`), and
+`publishedRevision` beside it, which is what lets the CMS say what is saved and
+not yet published. That sentence is now a label in the toolbar: "Saved 14:02,
+not published" whenever `revision` is past `publishedRevision`, and the plain
+"Saved 14:02" only when it is not. The save state item opens nothing any more,
+because a save produces no commit to open.
+
+**A read is a delta.** The design says a reader asks for everything above a
+revision, and the draft store's interface answers `full` or a `delta` of pages,
+media, `removedMedia`, site, widgets, authors and the `mediaField` the catalogue
+belongs to. So the client merges rather than replaces: a page whole by id, the
+catalogue node by node with `removedMedia` deleting, the site metadata only when
+the answer carries it, because `null` there means leave it and not empty it, and
+widgets by id. The order that holds the invariant is unchanged and is still in
+one place: the remote answer is the base, this browser's unsent outbox is
+applied on top of it, and only then is the store hydrated.
+
+**The socket carries revisions and never content.** `subscribe` is an ordinary
+GraphQL call with the bearer and answers a single use, short lived ticket; the
+`WebSocket` opens with that ticket and never with the person's token, and the
+ticket travels as `Sec-WebSocket-Protocol` and never as a query parameter, for
+the reason `private-storage.md` gives about a credential in a URL. A frame is a
+number this browser did not have, and what it makes the client do is ask the
+same `draft` query the poll asks. That keeps one read path, one authorisation
+path and one place where the outbox is folded back on. A ticket is spent by the
+socket that used it, so every reconnect mints a new one and a live socket costs
+none.
+
+**The poll is never switched off, only slowed.** With a socket up it runs every
+thirty seconds instead of every 1,500 ms. It could be switched off and the CMS
+would be faster and cheaper, and it is not, because an open socket that has
+stopped delivering frames is indistinguishable from a site nobody is editing,
+and the failure that produces is an editor looking at a stale field for as long
+as they keep the tab open. Thirty seconds of a `changed: false` answer is what
+that costs. Where the plan and speed disagree, the plan wins; where the plan and
+safety disagree, safety wins and it is written down, and this is one of the two
+places it did.
+
+**An agent that does not know `subscribe` costs nothing.** The mint fails, the
+client logs it, the poll carries everything and the CMS behaves exactly as it
+did. That is what makes the socket an optimisation rather than a dependency, and
+it is what the notebook's `socketRefused` scenario measures.
+
+#### The second place safety won: a revision that goes backwards
+
+A revision is monotonic while its object lives. A read that comes back **below**
+the revision this browser already holds is therefore not a race, it is a
+different object answering in the place of one that is gone, at a state older
+than what is on the screen. Applying it would take an edit away from the person
+who made it.
+
+So the client skips exactly that answer, adopts the object's revision so the
+next save carries a base the new object recognises, records the instant in
+`remote.objectRestartedAt`, and warns. Everything after that read arrives
+normally, so it self heals and does not need a person.
+
+**What this does not recover, and nothing in a browser can**: what the _other_
+editors had written into the object that died. The design's answer to that is
+the snapshot the object writes outside itself, and it is the agent's. This is
+the client refusing to make the loss worse.
+
+#### Where the client and the agent meet, and what could not be checked
+
+`publish` is read off the agent's own `PublishResult`, which landed in `d583d2e`,
+and the CMS answers both of its questions: `published` and `queued` are
+different, and a site with no build workflow, which is both limousine sites,
+writes a migration and a commit and queues nothing. Reading only `queued` there
+would call a real publish a failure. The migration takes a message again, which
+is the line the publish list shows.
+
+`draft`, `save` and `subscribe` are read off `packages/jaen-agent/src/draft/store.ts`,
+another session's, which was uncommitted while this was written. What is settled
+is the shape of the answers. What is **not** settled, and is the one thing a
+reader should check first, is how Pylon renders each field of the delta: a
+`Record<string, X>` becomes a scalar and takes no subselection, a typed
+interface becomes an object type and demands one, and getting either wrong fails
+the whole operation rather than one field. The fields at risk are named in the
+client where the documents are, and every one of them is optional at runtime, so
+a field that arrives as something else is an editor who sees less rather than a
+CMS that throws.
+
+The revision arguments are declared `Number` and not `Int`, because Pylon
+renders a `number` argument as the scalar `Number` and an operation declaring
+`Int` is refused before the resolver is reached. That is the trap the storage
+gateway's `signedUrl` already cost a run.
+
+#### Measured, and what is not
+
+`tests/09-editing-latency.ipynb` 13 PASS 0 FAIL 5 SKIP, and
+`tests/10-draft-persistence.ipynb` 29 PASS 0 FAIL 5 SKIP 2 WARN, both stored in
+`tests/draft-object/`. The three scenarios this design names are new and green:
+the object restarted between two saves, the socket refused so the poll carries
+it, and two editors racing on one field. Beside them the socket carrying it,
+which also asserts that the ticket is a subprotocol, that the person's token is
+not, and that the query string is empty.
+
+The eleven checks that were already there are unchanged and still green, and the
+two acceptances of `editing-performance.md` that the baseline had red are green:
+one blur is one whole-store write of 1,312 B rather than four of 309,253, and
+three field writes 120 ms apart are one call rather than three.
+
+**The ten SKIPs are the honest part.** Every one is a browser half, and every one
+skips for the same measured reason: the transition removed the `agent` option
+from both sites, so a built site carries no shared draft to drive. The guard
+reads the built bundle rather than a configuration file. **The client against a
+real agent is therefore not measured at all**, and it cannot be until the
+agent's `draft`, `save` and `subscribe` land and a site carries the option
+again. What is measured is what the client does against a stand in that behaves
+the way this design says the object does, including in the two ways it is not
+supposed to.
+
+The fixture moved with the transition. `live.json` and `live-media.json` are
+gone from the site, so the notebooks merge the two the transition kept beside it
+into one draft, which is the shape `snapshot(site)` answers. It is deliberately
+the draft and not the build's sourced jaen data, which the transition also kept
+and which is three and a half times larger: the store holds the draft, and the
+larger fixture would inflate every number against the baseline. Measured 77,096 B
+of store against the baseline's 77,090, and the catalogue 99.0% of it either way.
+
 ## What localStorage does
 
 It keeps being the per browser copy and the offline queue, which is what
