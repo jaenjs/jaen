@@ -816,6 +816,25 @@ local build against the live agent:
   ancestor scrolls: at 1440 by 900 and at 390 by 780 the grid grew 23 to 53 to
   143 nodes, the whole library.
 
+**Built and served, 2026-09-08 shortly after two in the morning.** Everything
+above was measured on a local production build against the live agent, so it
+was not on the two sites until this deploy. The three dists were rebuilt in
+this checkout first (`jaen`, `gatsby-source-jaen`, `gatsby-plugin-jaen`), then
+each site through its own `scripts/deploy.sh` with
+`JAEN_APP_COMMIT=eed49d1` passed to both so the four values name one sha:
+booklimo built `2026-09-07T23:47:23Z` and deployed as `19e69aba`, limosen
+built `23:55:17Z` and deployed as `1a8a5096`. The app is untouched at 1.8.1
+and the pylons at 1.8.0, because nothing of `app/` changed and this fix lives
+in packages of the jaen checkout.
+
+Read back off both live sites: `/app/version.json` answers `1.8.1` and
+`eed49d1` on booklimo.at and on limosen.at, `/cms/` and `/cms/media/` answer
+200 on both, the shared chunk each media page loads carries `media-load-more`,
+the test id of the sentinel the new load more observes, and the bundle each
+site serves carries `activePollMs:1500` beside the idle `pollMs: 5000`. The
+old window scroll listener is gone from both. The deploy line is in the taxi-app
+checkout, `okf/operations/versions.md`.
+
 ## Acceptance
 
 - Two browser contexts signed in as two admins of booklimo.at: a text
