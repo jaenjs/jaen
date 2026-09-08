@@ -2691,3 +2691,198 @@ run had nothing to measure that the machine account could not answer.
   reflog stands and nothing is safe until it is pushed.
 - **The Fable 5.1 review of the whole editing path is still open**, and this run
   adds the deployed revert gate and the harness repair to what it has to read.
+
+## Verified adversarially 2026-09-09, the revert gate on the live booklimo.at
+
+An Opus session that built none of this drove the gate shipped the section
+above on the deployed `https://booklimo.at`, signed in as the booklimo human
+admin, against `jaen-agent` 4.4.0 (`091d3f1`, built `2026-09-08T18:49:12Z`,
+read off the host rather than assumed). It changed no behaviour. booklimo
+only, because that is where this estate tests
+(`okf/decisions/hard-rules.md`); nothing was written on limosen, whose draft
+object still answers `revision 0`, `publishedRevision 0`, `updatedAt null`.
+
+The shape of the question was the one the fix has to answer where a person
+meets it, with a larger denominator than the two runs per scenario the
+shipping run took, with a second **browser** rather than a machine account,
+and with every value read back from somewhere other than the screen it was
+typed on. The default was FAIL on anything that could not be reproduced.
+
+**The verdict is PASS on all six**, with three doubts named below and none of
+them a lost or reverted edit.
+
+### How it was driven, so a reader can weigh the readings
+
+`tests/support/adversarial-revert-live.py`, beside the notebooks' own
+harness, whose sign in, edit-mode init script and store handle it reuses, and
+whose `holdNextOp` it reuses to park an answer **after** the network has
+produced it. Nothing about a request is rewritten and no answer is invented.
+The runs are in `tests/adversarial-revert/`.
+
+Two things about the gestures are deliberately not the harness's.
+
+- **The caret is placed through the Selection API and never with `End`.**
+  `End` in a contenteditable that wraps goes to the end of the visual line,
+  which is what corrupted `AboutP2` on 2026-09-08
+  (`editing-performance.md`). A field that has grown by twenty markers wraps,
+  so the older gesture would have typed into the middle of it and this run
+  would have read its own damage as a revert.
+- **The set-back does not depend on a browser.** `tests/support/draft-guard.py`
+  writes every moved field back through the agent's own `save` and reads each
+  one back out of the object byte for byte. It ran after every scenario.
+
+The fixture fields are `FaqSubtitle` and `ServicesSubtitle`, and for the plain
+path `ServicesTitle`, `FeedbackBoxText` and `FaqTitle` beside them. Every one
+of them held the site's own published text, compared against what
+`https://booklimo.at/` serves before anything was typed. The owner's four
+unpublished fields (`FleetTitle`, `AboutP1`, `AboutP2`, `AboutP3`, which carry
+`dudhd…`, `.eueh`, `.uejej` and `.uejer`) were read and **never written**.
+
+### The forced race, twenty times, in one long lived session
+
+`tests/adversarial-revert/forced20.json`. One browser, twenty rounds, and the
+race made the same way in each: the next `draft` answer is armed to be held,
+the second editor moves the object so a socket frame causes that read, the
+answer the object produced **before** the keystroke is parked, the person
+types and leaves, the save lands, and only then is the stale answer released.
+
+| what was asked                                        | what the live systems answered                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| the race was really forced, every round               | 20 of 20 answers held, 2,340 to 2,578 ms each, released after the save         |
+| and it was the shape the design names                 | every held answer carried the field's **old** value, read out of its own bytes |
+| the store keeps what the person typed                 | **20 of 20**                                                                   |
+| the object keeps it                                   | **20 of 20**, read with a credential of the run's own                          |
+| the screen keeps it                                   | **20 of 20**, the marker in the field's own DOM                                |
+| the stale answer is refused rather than applied       | `staleAnswers` 0 → 20, **exactly one per round**                               |
+| the applied mark never moves down                     | 20 of 20, `applied` 404 → 444 monotonically                                    |
+| reverts written by a hydrate                          | **0**, over 123 recorded store states and 20 hydrates                          |
+| hydrates that moved the field under the person at all | **0**                                                                          |
+| and no commit and no gateway file                     | `netsnek/booklimo.at` main `e1ec2748` before and after, `patches.txt` 26 lines |
+
+Read against the reproduce run of 2026-09-08 morning on this same site and
+this same scenario: the store took the old value, the mark went 207 back to
+206, and the screen showed the value the person had replaced for 45.1 s.
+
+### Two browsers and two humans, which had never been driven
+
+`tests/adversarial-revert/two-browsers.json`. Every earlier run of this design
+records "two people in two browsers is not measured" because the second editor
+was a machine account writing through `save`. This run took the grant the file
+describes: `jaen:admin` was added to the human customer's existing
+authorization `389619073622742619` through `idm.booklimo.at`
+(`krc:customer` → `jaen:admin, krc:customer`), it was used for the length of
+the run, and it was **revoked afterwards and read back twice**, from the
+directory and from the agent.
+
+Browser A is the booklimo human admin typing into `FaqSubtitle`, browser B the
+booklimo human customer typing into `ServicesSubtitle`, both inside A's quiet
+window so the two saves overlap the way two people do. Six rounds.
+
+| what was asked                                | what the live systems answered                                                                    |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| A keeps its own field                         | 6 of 6                                                                                            |
+| B keeps its own field                         | 6 of 6                                                                                            |
+| the object holds both                         | 6 of 6                                                                                            |
+| each browser ends up seeing the other's field | both stores and both screens carry `… A0 A1 A2 A3 A4 A5` and `… B0 B1 B2 B3 B4 B5`                |
+| both over the object's socket                 | `connection: "socket"` in both, throughout                                                        |
+| reverts written by a hydrate                  | **0** in A over 6 hydrates, **0** in B over 8                                                     |
+| and the object says they are two people       | the authors map names sub `389619062902101595` on one field and `389619070703507059` on the other |
+
+That last row is the one that could not be taken before: two distinct human
+subs on two fields of one draft, written from two browsers in the same
+seconds.
+
+### The caret in the field while a read lands
+
+`tests/adversarial-revert/focused-same.json`, five rounds, no forcing at all:
+the person types and keeps the caret in `FaqSubtitle`, and the second editor
+writes ` OTHER` onto that very field from outside the browser.
+
+| what was asked                          | what happened                                                              |
+| --------------------------------------- | -------------------------------------------------------------------------- |
+| the visible text is the person's own    | **5 of 5**, the marker present and `OTHER` absent from the field's DOM     |
+| the caret is still in the field         | 5 of 5                                                                     |
+| the next two keystrokes land at the end | 5 of 5, the field ends `…ZZ` and never begins with it                      |
+| what the object was left holding        | the person's value in all five, their blur writing over the other editor's |
+
+**And the store did take the other editor's value while the screen did not.**
+Three of the five hydrates moved the store to `… OTHER` while the caret was in
+the field, and the person's own text was what stayed painted until they left.
+That is the design working as written rather than a defect: the store is the
+shared draft and the freeze is on the paint. It is recorded because a reader
+comparing "the store" against "what a person sees" will find them different
+here on purpose, and because it is what makes the last write the person's.
+
+### The plain path, and a reload
+
+`tests/adversarial-revert/plain-five.json`. Five fields typed into in turn,
+each left, then the page reloaded, which is the gesture nobody forces.
+
+All five stand after the reload, in the store, in the field's own DOM and in
+the object: `FaqSubtitle`, `ServicesSubtitle`, `ServicesTitle`,
+`FeedbackBoxText` and `FaqTitle`, `revision 481` before the reload and 481
+after it, outbox 0, `saveState: "saved"`.
+
+### Read back from somewhere else
+
+`tests/adversarial-revert/readback-third-context.json`, taken while the five
+markers stood: a third browser, a fresh sign in, no memory of either earlier
+run, agreeing with the object field for field on all five. The object was read
+with the run's own credential and not through the browser.
+
+### Every fixture value set back, and proven
+
+`tests/adversarial-revert/draft-after.json` and
+`readback-setback.json`. Every text field of booklimo's draft is byte for byte
+what `draft-before.json` holds, the owner's four unpublished fields included,
+read back both out of the object and out of a fourth fresh browser context.
+The object went from **400 to 486**, `publishedRevision` is **183**, which is
+where every run since 2026-09-08 has found it. Nothing was published and
+nothing was discarded. `netsnek/booklimo.at` main is `e1ec2748` before and
+after and its `patches.txt` is 26 lines, so no history was written, and the
+served `booklimo.at/` carries **zero** occurrences of any marker this run
+typed while `/`, `/de/` and `/cms/` answer 200.
+
+**One field was added to the draft and it could not be removed.** `FaqTitle`
+carried no draft entry before this run, because nobody had edited it, so the
+plain path's fifth field created one. The change vocabulary has no way to
+remove a field, which this file already records, so it was set to the
+published value the site serves, `Frequently asked questions`, read off
+`https://booklimo.at/` rather than typed from memory. The draft's content is
+therefore what it was and its shape is one entry larger. A run that needs a
+fifth field on this site either accepts that or writes into somebody's
+unpublished work, and this run took the first.
+
+**The grant was revoked and read back twice.** The directory answers
+`krc:customer` alone on authorization `389619073622742619`, and the customer's
+own browser token, asked for `draft` past the agent's sixty second
+introspection cache, is refused: `FORBIDDEN`, `statusCode 403`, `data: null`,
+with the message naming `jaen:admin on booklimo.at`. A run of 2026-09-08 left
+exactly this grant standing for eight hours by reading its own intention
+instead of the directory.
+
+### The doubts this run names
+
+- **The two browser run exercised no refusal.** `staleAnswers` stayed at zero
+  in both browsers through all six rounds, because nothing raced hard enough
+  for an answer to arrive below the mark. So that run proves convergence and
+  the absence of a revert between two people, and it does **not** prove the
+  guard. The guard is proven by the twenty forced rounds, where the second
+  editor is a machine account.
+- **`staleAnswers` is undefined until the first refusal.** It is declared
+  optional in `packages/jaen/src/redux/types.ts` and incremented from
+  `|| 0`, so a browser that has refused nothing reads `null` and not `0`. A
+  reader of these files should take the increment and not the absolute
+  number, which is what this design already says for a different reason.
+- **Two of the twenty saves came back `rebased: false`** (rounds 15 and 19),
+  with a `baseRevision` already equal to the object's revision, so the client
+  had merged the second editor's write before it typed. The held answer was
+  still below the revision the browser reached and was still refused, and
+  `staleAnswers` still moved by one in both. The race is therefore forced in
+  all twenty and is at its sharpest in eighteen.
+- **The natural rate is still not measured**, as every run of this file has
+  said. What is proven is the mechanism and the guard on a fast link.
+- **One field, one page, one machine, one viewport**, and the second editor of
+  the forced rounds is still a machine account.
+- **Nothing here re-measures the blur to paint gap**, which
+  `editing-performance.md` owns and which this run did not touch.
