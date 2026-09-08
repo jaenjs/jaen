@@ -86,6 +86,17 @@ const TICKET_PROTOCOL = 'ticket.'
 const PUT_BATCH = 100
 /** One list page. The object pages until a prefix is exhausted. */
 const LIST_PAGE = 500
+/**
+ * How long a tombstone is kept, which is how far behind a reader may be and
+ * still be told what went rather than handed the whole draft.
+ *
+ * By the tombstone's own age and not by the snapshot, which is what the first
+ * cut did: pruning at every snapshot meant an editor whose CMS had been open
+ * for five minutes was pushed into a full read by a picture somebody else
+ * deleted, and the test that read a delta across a snapshot was flaky for the
+ * same reason. An hour costs a few hundred bytes per deleted picture.
+ */
+const TOMBSTONE_TTL_MS = 3_600_000
 
 interface Stored<T> {
   /** The revision this key last changed at. */
@@ -93,6 +104,8 @@ interface Stored<T> {
   v?: T
   /** A media node that was removed. Kept so a delta can say so. */
   deleted?: boolean
+  /** When a tombstone was made, which is what its pruning goes by. */
+  t?: number
 }
 
 const isCatalogueChange = (change: JaenChangeInput): boolean =>
@@ -168,9 +181,7 @@ export class JaenDraftObject {
           return json(
             await this.read(
               site,
-              typeof body.sinceRevision === 'number'
-                ? body.sinceRevision
-                : null
+              typeof body.sinceRevision === 'number' ? body.sinceRevision : null
             )
           )
         case 'write':
@@ -198,7 +209,8 @@ export class JaenDraftObject {
   private async meta(site: string): Promise<DraftMeta> {
     const stored = await this.storage.get<DraftMeta>(KEY.meta)
 
-    if (stored) return {...emptyMeta(site), ...stored, site: stored.site || site}
+    if (stored)
+      return {...emptyMeta(site), ...stored, site: stored.site || site}
 
     return emptyMeta(site)
   }
@@ -253,7 +265,8 @@ export class JaenDraftObject {
     let siteState: JaenSiteState | null = null
 
     for (const [key, value] of await this.listAll<JaenPageNode>(KEY.page)) {
-      if (value.r > since && value.v) pages[key.slice(KEY.page.length)] = value.v
+      if (value.r > since && value.v)
+        pages[key.slice(KEY.page.length)] = value.v
     }
 
     for (const [key, value] of await this.listAll<unknown>(KEY.media)) {
@@ -277,7 +290,8 @@ export class JaenDraftObject {
     }
 
     for (const [key, value] of await this.listAll<FieldAuthor>(KEY.author)) {
-      if (value.r > since && value.v) authors[key.slice(KEY.author.length)] = value.v
+      if (value.r > since && value.v)
+        authors[key.slice(KEY.author.length)] = value.v
     }
 
     const stored = await this.storage.get<Stored<JaenSiteState>>(KEY.site)
@@ -363,7 +377,10 @@ export class JaenDraftObject {
       for (const [id, page] of Object.entries(draft.pages)) {
         if (beforePages.get(id) === stable(page)) continue
 
-        writes.set(KEY.page + id, {r: revision, v: page} as Stored<JaenPageNode>)
+        writes.set(KEY.page + id, {
+          r: revision,
+          v: page
+        } as Stored<JaenPageNode>)
       }
 
       for (const widget of draft.widgets) {
@@ -376,7 +393,10 @@ export class JaenDraftObject {
       }
 
       if (stable(draft.site) !== beforeSite) {
-        writes.set(KEY.site, {r: revision, v: draft.site} as Stored<JaenSiteState>)
+        writes.set(KEY.site, {
+          r: revision,
+          v: draft.site
+        } as Stored<JaenSiteState>)
       }
 
       for (const key of result.touched) {
@@ -404,7 +424,9 @@ export class JaenDraftObject {
       )
 
       const entries =
-        change.value && typeof change.value === 'object' && !Array.isArray(change.value)
+        change.value &&
+        typeof change.value === 'object' &&
+        !Array.isArray(change.value)
           ? (change.value as Record<string, unknown>)
           : {}
 
@@ -413,12 +435,18 @@ export class JaenDraftObject {
         // send a merge does. Everything it does not name is gone.
         const given = new Set(Object.keys(entries))
 
-        for (const [storedKey, value] of await this.listAll<unknown>(KEY.media)) {
+        for (const [storedKey, value] of await this.listAll<unknown>(
+          KEY.media
+        )) {
           const id = storedKey.slice(KEY.media.length)
 
           if (given.has(id) || value.deleted) continue
 
-          writes.set(storedKey, {r: revision, deleted: true} as Stored<unknown>)
+          writes.set(storedKey, {
+            r: revision,
+            deleted: true,
+            t: Date.now()
+          } as Stored<unknown>)
         }
 
         // A merge can never overwrite somebody else's value, because it only
@@ -438,7 +466,11 @@ export class JaenDraftObject {
         for (const id of removed) {
           if (typeof id !== 'string') continue
 
-          writes.set(KEY.media + id, {r: revision, deleted: true} as Stored<unknown>)
+          writes.set(KEY.media + id, {
+            r: revision,
+            deleted: true,
+            t: Date.now()
+          } as Stored<unknown>)
         }
       }
 
@@ -736,19 +768,26 @@ export class JaenDraftObject {
     if (meta.revision !== meta.snapshotRevision) {
       const snapshot = await this.snapshot(meta.site)
       const bytes = await this.sink.put(snapshot)
+      const pruned = await this.pruneTombstones()
 
-      meta.snapshotRevision = snapshot.revision
-      meta.snapshotAt = snapshot.takenAt
-      meta.snapshotBytes = bytes
+      // Read again rather than writing back the meta this handler started
+      // with. The object is single threaded and its input gate closes around
+      // a storage operation, but the snapshot above is a KV write and not
+      // storage, so a save can land while it is in flight. Writing the old
+      // object back would roll the revision counter backwards, and a revision
+      // that is handed out twice is two editors' work under one number.
+      const now = await this.meta(meta.site)
 
-      // A tombstone older than the snapshot has no reader left that could
-      // need it: anybody that far behind is answered with the whole draft.
-      // The pruning window is the snapshot, so it is the same act.
-      const pruned = await this.pruneTombstones(meta.snapshotRevision)
+      now.snapshotRevision = snapshot.revision
+      now.snapshotAt = snapshot.takenAt
+      now.snapshotBytes = bytes
 
-      if (pruned) meta.prunedBefore = meta.snapshotRevision
+      // Only a tombstone that is actually gone narrows the window a delta can
+      // be answered in, and it narrows it to the highest revision that was
+      // pruned and no further.
+      if (pruned > now.prunedBefore) now.prunedBefore = pruned
 
-      await this.storage.put(KEY.meta, meta)
+      await this.storage.put(KEY.meta, now)
     }
 
     await this.pruneTickets()
@@ -765,12 +804,21 @@ export class JaenDraftObject {
     return Number.isFinite(n) && n >= 1000 ? n : SNAPSHOT_INTERVAL_MS
   }
 
-  /** Set only when none is pending, so a burst of saves does not push it out. */
+  /**
+   * Set only when none is pending, so a burst of saves does not push it out.
+   *
+   * A pending alarm whose time has passed is set again rather than trusted: an
+   * alarm that was scheduled and did not run is not going to run because it is
+   * still in the store, and without this line a draft can sit unsnapshotted
+   * behind a stale alarm for as long as the object lives.
+   */
   private async armSnapshot(at?: number): Promise<void> {
     const pending = await this.storage.getAlarm()
     const when = at ?? Date.now() + this.interval()
 
-    if (pending === null || pending > when) await this.storage.setAlarm(when)
+    if (pending === null || pending > when || pending <= Date.now()) {
+      await this.storage.setAlarm(when)
+    }
   }
 
   private async onLastEditorLeft(): Promise<void> {
@@ -779,18 +827,26 @@ export class JaenDraftObject {
     await this.armSnapshot(Date.now() + LAST_EDITOR_MS)
   }
 
-  private async pruneTombstones(upTo: number): Promise<number> {
+  /** Answers the highest revision it removed, which is the new window. */
+  private async pruneTombstones(): Promise<number> {
+    const older = Date.now() - TOMBSTONE_TTL_MS
     const gone: string[] = []
+    let highest = 0
 
     for (const [key, value] of await this.listAll<unknown>(KEY.media)) {
-      if (value.deleted && value.r <= upTo) gone.push(key)
+      if (!value.deleted) continue
+      // A tombstone without a stamp was written before this file carried one.
+      if ((value.t ?? 0) > older) continue
+
+      gone.push(key)
+      highest = Math.max(highest, value.r)
     }
 
     for (let i = 0; i < gone.length; i += PUT_BATCH) {
       await this.storage.delete(gone.slice(i, i + PUT_BATCH))
     }
 
-    return gone.length
+    return highest
   }
 
   private async pruneTickets(): Promise<void> {
@@ -891,7 +947,9 @@ export class JaenDraftObject {
     const entries = Array.from(writes.entries())
 
     for (let i = 0; i < entries.length; i += PUT_BATCH) {
-      await this.storage.put(Object.fromEntries(entries.slice(i, i + PUT_BATCH)))
+      await this.storage.put(
+        Object.fromEntries(entries.slice(i, i + PUT_BATCH))
+      )
     }
   }
 }

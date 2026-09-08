@@ -75,7 +75,9 @@ const call = async <T>(
       // Not JSON, which means the runtime answered rather than the object.
     }
 
-    throw new DraftStoreUnavailableError(`${op} answered ${response.status}, ${reason}`)
+    throw new DraftStoreUnavailableError(
+      `${op} answered ${response.status}, ${reason}`
+    )
   }
 
   return JSON.parse(text) as T

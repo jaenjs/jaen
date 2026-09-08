@@ -1,30 +1,37 @@
 /**
- * The agent against a local `wrangler dev` and a throwaway branch of
- * netsnek/booklimo.at.
+ * The agent against a local `wrangler dev`, the site's own Durable Object and
+ * a throwaway branch of netsnek/booklimo.at.
  *
  * Run it with the package's own runner, `npm test`, which is node's: these
- * are not notebooks on purpose, because they drive a Worker and a repository
- * rather than an API a person reads along with.
+ * are not notebooks on purpose, because they drive a Worker, an object and a
+ * repository rather than an API a person reads along with.
  *
  * What it proves, which is the design's acceptance list:
- *   1. a save is one commit in the site's repository, in the editor's name,
- *      and the change is readable back through the agent;
- *   2. a second save whose baseSha is stale is rebased onto the current head
- *      and never rejected;
- *   3. the agent refuses another site's admin, a caller without the role, and
- *      an anonymous call;
- *   4. a poll whose sinceSha is still the head costs an answer with no body;
-   5. a text save writes jaen-data/live.json and never the media catalogue,
-      and a picture writes jaen-data/live-media.json and never the pages;
-   6. a fieldMerge adds and removes keys of the catalogue without carrying
-      the keys it does not touch, so two editors keep both pictures;
-   7. the cheap warm up call answers who is calling and reads no repository.
+ *   1. a save reaches the site's Durable Object, bumps its revision and
+ *      writes no commit at all, which is the whole of the 2026-09-08 redesign;
+ *   2. a poll whose sinceRevision is the revision answers with no delta, and a
+ *      delta carries what changed above a revision and nothing else;
+ *   3. a save whose base is stale is rebased onto the current draft and never
+ *      rejected;
+ *   4. concurrent writers are serialised inside the object, one revision each
+ *      and none of them lost;
+ *   5. a picture writes one key per node and never the pages, and a removed
+ *      picture is named in a delta and gone from a full read;
+ *   6. the draft survives the object being restarted between two saves;
+ *   7. the alarm snapshots the draft on its own;
+ *   8. the object's socket is pushed a revision, and refuses a connection
+ *      without a ticket;
+ *   9. the agent refuses another site's admin, a caller without the role, and
+ *      an anonymous call, on the draft as on everything else;
+ *  10. a publish writes exactly one gateway file, one line and one commit.
  *
  * The branch is created before and deleted after, so nothing of this reaches
- * booklimo.at's main. Nothing runs against limosen.at at all.
+ * booklimo.at's main. Nothing runs against limosen.at at all. Only the publish
+ * half touches the repository now: the draft half moves no branch, which one
+ * of its own assertions is about.
  *
  * Credentials come from the machine's own files and are never printed:
- *   ~/.config/taxi-app/tokens.env         the three caller tokens
+ *   ~/.config/taxi-app/tokens.env         the caller tokens and osg-krc
  *   ~/git/taxi-app/pylon/.dev.vars        AUTH_ISSUER and AUTH_KEY
  *   `gh auth token`                       the repository credential
  *
@@ -46,6 +53,7 @@ import {
   rmSync,
   writeFileSync
 } from 'node:fs'
+import http from 'node:http'
 import {homedir, tmpdir} from 'node:os'
 import path from 'node:path'
 import test, {after, before} from 'node:test'
@@ -180,17 +188,26 @@ const call = async (
   return (await res.json()) as any
 }
 
-const DRAFT = `query D($site: String!, $sinceSha: String) {
-  draft(site: $site, sinceSha: $sinceSha) {
-    site headSha blobSha changed data authors readAt
+const DRAFT = `query D($site: String!, $sinceRevision: Number) {
+  draft(site: $site, sinceRevision: $sinceRevision) {
+    site revision publishedRevision changed full
+    updatedAt updatedBy snapshotRevision snapshotAt snapshotBytes readAt
+    delta {
+      pages media removedMedia site widgets authors
+      mediaField { pageId fieldType fieldName }
+    }
   }
 }`
 
-const SAVE = `mutation S($site: String!, $changes: [SaveChangesInput!]!, $baseSha: String) {
-  save(site: $site, changes: $changes, baseSha: $baseSha) {
-    headSha blobSha commitSha commitUrl savedAt rebased wrote
+const SAVE = `mutation S($site: String!, $changes: [SaveChangesInput!]!, $baseRevision: Number) {
+  save(site: $site, changes: $changes, baseRevision: $baseRevision) {
+    revision rebased savedAt touched keys
     overwrote { field previousAuthor previousAt }
   }
+}`
+
+const SUBSCRIBE = `mutation Sub($site: String!) {
+  subscribe(site: $site) { site ticket url expiresAt revision }
 }`
 
 const VIEWER = `query V($site: String!) {
@@ -199,11 +216,69 @@ const VIEWER = `query V($site: String!) {
 
 const PUBLISH = `mutation P($site: String!, $message: String) {
   publish(site: $site, message: $message) {
-    published revision publishedRevision
-    migrationUrl migrationBytes commitSha commitUrl publishedAt
-    queued workflow runUrl reason
+    published revision publishedRevision migrationUrl migrationBytes
+    commitSha commitUrl publishedAt queued workflow runUrl reason
   }
 }`
+
+/**
+ * An upgrade request made by hand, because `fetch` refuses to send one.
+ *
+ * undici answers `invalid upgrade header` rather than sending it, so the
+ * ticketless upgrade is spoken over node's own http client. It answers what
+ * the server said, whether that is a 101 or a refusal.
+ */
+const rawUpgrade = (target: string): Promise<{status: number; body: string}> =>
+  new Promise((resolve, reject) => {
+    const url = new URL(target.replace(/^ws/, 'http'))
+
+    const request = http.request({
+      host: url.hostname,
+      port: url.port,
+      path: url.pathname,
+      headers: {
+        Upgrade: 'websocket',
+        Connection: 'Upgrade',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        'User-Agent': UA
+      }
+    })
+
+    request.on('response', response => {
+      let body = ''
+
+      response.on('data', chunk => {
+        body += String(chunk)
+      })
+      response.on('end', () =>
+        resolve({status: response.statusCode ?? 0, body})
+      )
+    })
+
+    request.on('upgrade', response =>
+      resolve({status: response.statusCode ?? 0, body: ''})
+    )
+    request.on('error', reject)
+    request.end()
+  })
+
+/** Waits for a condition the runtime reaches on its own, or says what did not. */
+const waitFor = async (
+  ready: () => boolean,
+  message: string,
+  timeoutMs = 15_000
+): Promise<void> => {
+  const until = Date.now() + timeoutMs
+
+  for (;;) {
+    if (ready()) return
+
+    if (Date.now() > until) throw new Error(message)
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+}
 
 const errorCode = (answer: {errors?: any[]}): string | undefined =>
   answer.errors?.[0]?.extensions?.code
@@ -237,6 +312,83 @@ const waitForAgent = async (): Promise<void> => {
   }
 }
 
+/**
+ * The Worker, started and stopped by name, because one test restarts it.
+ *
+ * `--persist-to` keeps the Durable Object's storage in a directory of this
+ * run's own, so a restart loses the runtime and the object and keeps the
+ * draft, which is exactly the loss scenario `10-draft-persistence.ipynb`
+ * names as "the object restarted between two saves".
+ */
+const startWorker = async (): Promise<void> => {
+  worker = spawn(
+    'npx',
+    [
+      'wrangler',
+      'dev',
+      '--port',
+      String(PORT),
+      '--ip',
+      '127.0.0.1',
+      '--var',
+      `SITES:${sitesVar}`,
+      '--var',
+      'AUTH_CACHE_TTL_MS:0',
+      // Two seconds rather than the deployed five minutes, so the alarm can
+      // be watched inside a test run. Nothing else about it differs.
+      '--var',
+      'DRAFT_SNAPSHOT_INTERVAL_MS:2000',
+      '--persist-to',
+      persistTo
+    ],
+    {
+      cwd: PACKAGE,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        // Node's fetch dies on this machine's unreachable AAAA records.
+        NODE_OPTIONS: '--no-network-family-autoselection',
+        PYLON_DISABLE_TELEMETRY: 'true',
+        WRANGLER_SEND_METRICS: 'false',
+        CLOUDFLARE_API_TOKEN: ''
+      }
+    }
+  )
+
+  worker.stdout?.on('data', chunk => {
+    if (process.env.JAEN_AGENT_TEST_VERBOSE) process.stdout.write(String(chunk))
+  })
+  worker.stderr?.on('data', chunk => {
+    if (process.env.JAEN_AGENT_TEST_VERBOSE) process.stderr.write(String(chunk))
+  })
+
+  await waitForAgent()
+}
+
+const stopWorker = async (): Promise<void> => {
+  const running = worker
+
+  worker = null
+
+  if (!running) return
+
+  const ended = new Promise<void>(resolve =>
+    running.once('exit', () => resolve())
+  )
+
+  running.kill('SIGTERM')
+
+  await Promise.race([
+    ended,
+    new Promise<void>(resolve => setTimeout(resolve, 10_000))
+  ])
+
+  // The port has to be free before the next `wrangler dev` binds it.
+  await new Promise(resolve => setTimeout(resolve, 1000))
+}
+
+let sitesVar = ''
+
 before(async () => {
   const main = await gh(`/repos/${REPOSITORY}/git/ref/heads/main`)
 
@@ -269,7 +421,7 @@ before(async () => {
     {mode: 0o600}
   )
 
-  const sites = JSON.stringify({
+  sitesVar = JSON.stringify({
     [SITE]: {
       repository: REPOSITORY,
       branch: BRANCH,
@@ -282,48 +434,11 @@ before(async () => {
     }
   })
 
-  worker = spawn(
-    'npx',
-    [
-      'wrangler',
-      'dev',
-      '--port',
-      String(PORT),
-      '--ip',
-      '127.0.0.1',
-      '--var',
-      `SITES:${sites}`,
-      '--var',
-      'AUTH_CACHE_TTL_MS:0',
-      '--persist-to',
-      persistTo
-    ],
-    {
-      cwd: PACKAGE,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        // Node's fetch dies on this machine's unreachable AAAA records.
-        NODE_OPTIONS: '--no-network-family-autoselection',
-        PYLON_DISABLE_TELEMETRY: 'true',
-        WRANGLER_SEND_METRICS: 'false',
-        CLOUDFLARE_API_TOKEN: ''
-      }
-    }
-  )
-
-  worker.stdout?.on('data', chunk => {
-    if (process.env.JAEN_AGENT_TEST_VERBOSE) process.stdout.write(String(chunk))
-  })
-  worker.stderr?.on('data', chunk => {
-    if (process.env.JAEN_AGENT_TEST_VERBOSE) process.stderr.write(String(chunk))
-  })
-
-  await waitForAgent()
+  await startWorker()
 })
 
 after(async () => {
-  worker?.kill('SIGTERM')
+  await stopWorker()
 
   if (existsSync(devVars)) rmSync(devVars)
 
@@ -376,136 +491,241 @@ test('an unknown site is not answered at all', async () => {
 })
 
 // --------------------------------------------------------------------------
-// The three verbs
+// The draft: one Durable Object per site
 // --------------------------------------------------------------------------
+//
+// What this section proves, which is the acceptance list of
+// docs/architecture/draft-state.md: a save reaches the object and no
+// repository, a stale save is rebased rather than rejected, two writers
+// serialise, the draft survives the object being restarted, the alarm takes
+// its snapshot, and none of it is answered to somebody who is not the site's
+// admin.
+//
+// The object starts empty on a site nobody has edited, and that is right: it
+// holds the **unpublished** draft and the published content comes from the
+// build. So these tests read back what they wrote and never assume the site's
+// own content is in there.
 
 const PAGE = 'JaenPage /'
 const FIELD_TYPE = 'IMA:TextField'
+const MEDIA_PAGE = 'JaenPage /cms/media/'
+const MEDIA_TYPE = 'IMA:MEDIA_NODES'
 
-let firstHead = ''
-let secondHead = ''
+/** The run's own prefix, so a re-run never reads the previous run's fields. */
+const RUN = `t${Date.now().toString(36)}`
 
-const fieldValue = (data: any, fieldName: string): unknown =>
-  data?.pages?.find((page: any) => page.id === PAGE)?.jaenFields?.[
-    FIELD_TYPE
-  ]?.[fieldName]?.value
+const fieldValue = (delta: any, fieldName: string): unknown =>
+  delta?.pages?.[PAGE]?.jaenFields?.[FIELD_TYPE]?.[fieldName]?.value
 
-test('the draft reads the head of the repository', async () => {
-  const answer = await call(DRAFT, {site: SITE}, ADMIN)
+const write = async (
+  fieldName: string,
+  value: unknown,
+  baseRevision: number | null = null,
+  token = ADMIN
+) =>
+  call(
+    SAVE,
+    {
+      site: SITE,
+      baseRevision,
+      changes: [
+        {
+          kind: 'fieldWrite',
+          pageId: PAGE,
+          fieldType: FIELD_TYPE,
+          fieldName,
+          value,
+          props: {},
+          at: new Date().toISOString()
+        }
+      ]
+    },
+    token
+  )
+
+const readDraft = async (sinceRevision: number | null = null) =>
+  call(DRAFT, {site: SITE, sinceRevision}, ADMIN)
+
+let revision = 0
+
+test('the draft answers a revision, and the object starts empty', async () => {
+  const answer = await readDraft()
 
   assert.equal(answer.errors, undefined)
   assert.equal(answer.data.draft.site, SITE)
   assert.equal(answer.data.draft.changed, true)
-  assert.match(answer.data.draft.headSha, /^[0-9a-f]{40}$/)
+  // No revision of the caller's is no revision the object can send a delta
+  // against, so the answer replaces rather than merges.
+  assert.equal(answer.data.draft.full, true)
+  assert.equal(typeof answer.data.draft.revision, 'number')
 
-  firstHead = answer.data.draft.headSha
+  revision = answer.data.draft.revision
 })
 
-test('a save is one commit in the editor s name, and reads back', async () => {
-  const value = `agent test ${new Date().toISOString()}`
+test('a save bumps the revision, reads back, and writes no commit', async () => {
+  const head = await branchHead()
+  const value = `agent draft ${new Date().toISOString()}`
 
-  const answer = await call(
-    SAVE,
-    {
-      site: SITE,
-      baseSha: firstHead,
-      changes: [
-        {
-          kind: 'fieldWrite',
-          pageId: PAGE,
-          fieldType: FIELD_TYPE,
-          fieldName: 'agentTestOne',
-          value,
-          props: {},
-          at: new Date().toISOString()
-        }
-      ]
-    },
-    ADMIN
-  )
+  const answer = await write(`${RUN}One`, value, revision)
 
   assert.equal(answer.errors, undefined)
   assert.equal(answer.data.save.rebased, false)
-  assert.match(answer.data.save.commitSha, /^[0-9a-f]{40}$/)
-  assert.ok(answer.data.save.commitUrl.startsWith('https://github.com/'))
-
-  // booklimo.at's live.json still carries the media catalogue, because it was
-  // written before the split existed. The first save after it lifts the
-  // catalogue into its own file, once, and every save after this one writes
-  // one file.
-  assert.deepEqual(answer.data.save.wrote, [
-    'jaen-data/live.json',
-    'jaen-data/live-media.json'
+  assert.equal(answer.data.save.revision, revision + 1)
+  // The field key, the page key and the meta key. A save writes what it
+  // touched and nothing else, which is the whole reason for the key layout.
+  assert.ok(answer.data.save.keys <= 4, `wrote ${answer.data.save.keys} keys`)
+  assert.deepEqual(answer.data.save.touched, [
+    `${PAGE}/${FIELD_TYPE}/${RUN}One`
   ])
 
-  secondHead = answer.data.save.headSha
+  revision = answer.data.save.revision
 
-  // The commit is in the repository, and its author is the editor rather than
-  // the agent. This is the audit trail the design asks for, and it is the
-  // same thing `git log --format='%an <%ae>'` shows.
-  const commit = await gh(
-    `/repos/${REPOSITORY}/commits/${answer.data.save.commitSha}`
+  const read = await readDraft()
+
+  assert.equal(fieldValue(read.data.draft.delta, `${RUN}One`), value)
+  assert.ok(
+    read.data.draft.delta.authors[`${PAGE}/${FIELD_TYPE}/${RUN}One`],
+    'the field carries who wrote it'
   )
+  assert.equal(read.data.draft.updatedBy?.length > 0, true)
 
-  assert.equal(commit.commit.committer.name, 'jaen-agent')
-  assert.notEqual(commit.commit.author.name, 'jaen-agent')
-  assert.ok(commit.commit.message.startsWith('jaen: '))
+  // The claim the whole redesign is about: the branch did not move. Before
+  // 2026-09-08 this save was a commit.
+  assert.equal(await branchHead(), head)
+})
 
-  // And the agent answers it back, from the repository and from nowhere else.
-  const read = await call(DRAFT, {site: SITE}, ADMIN)
+test('a poll whose sinceRevision is the revision answers with no delta', async () => {
+  const answer = await readDraft(revision)
+
+  assert.equal(answer.errors, undefined)
+  assert.equal(answer.data.draft.changed, false)
+  assert.equal(answer.data.draft.delta, null)
+  assert.equal(answer.data.draft.revision, revision)
+})
+
+test('a delta carries what changed above the revision and nothing else', async () => {
+  const before = revision
+  const value = `agent delta ${Date.now()}`
+
+  const answer = await write(`${RUN}Two`, value, revision)
+  revision = answer.data.save.revision
+
+  const read = await readDraft(before)
 
   assert.equal(read.data.draft.changed, true)
-  assert.equal(fieldValue(read.data.draft.data, 'agentTestOne'), value)
-  // fieldKey() joins pageId, the empty section part, the field type and the
-  // field name with slashes, so a page id that already ends in one gives the
-  // doubled slash below.
-  assert.ok(read.data.draft.authors[`${PAGE}/${FIELD_TYPE}/agentTestOne`])
+  assert.equal(read.data.draft.full, false)
+  assert.equal(fieldValue(read.data.draft.delta, `${RUN}Two`), value)
+  // One page changed, so one page is carried, and the authors map carries the
+  // one field this delta stamped rather than every field ever written.
+  assert.deepEqual(Object.keys(read.data.draft.delta.pages), [PAGE])
+  assert.deepEqual(Object.keys(read.data.draft.delta.authors), [
+    `${PAGE}/${FIELD_TYPE}/${RUN}Two`
+  ])
+  assert.deepEqual(read.data.draft.delta.removedMedia, [])
 })
 
-test('the head patches are the last lines of patches.txt', async () => {
-  const file = await gh(
-    `/repos/${REPOSITORY}/contents/jaen-data%2Fpatches.txt?ref=${BRANCH}`
+test('a stale save is rebased onto the current draft, not rejected', async () => {
+  const stale = revision - 1
+  const value = `agent stale ${Date.now()}`
+
+  const answer = await write(`${RUN}Three`, value, stale)
+
+  assert.equal(answer.errors, undefined)
+  assert.equal(answer.data.save.rebased, true)
+  assert.equal(answer.data.save.revision, revision + 1)
+
+  revision = answer.data.save.revision
+
+  const read = await readDraft()
+
+  // The rebase kept what was already there. That is what "rebased and never
+  // rejected" has to mean: the stale save adds its change onto the draft as
+  // it is now instead of writing an older draft back over it.
+  assert.equal(fieldValue(read.data.draft.delta, `${RUN}Three`), value)
+  assert.ok(fieldValue(read.data.draft.delta, `${RUN}One`))
+  assert.ok(fieldValue(read.data.draft.delta, `${RUN}Two`))
+})
+
+test('two writers at once are serialised and neither loses the other', async () => {
+  const before = revision
+  const writers = 6
+
+  // All six in flight together. The object is single threaded, so they queue
+  // inside it rather than racing a read-modify-write, which is the guarantee
+  // the KV lock of the first build could not give.
+  const answers = await Promise.all(
+    Array.from({length: writers}, (_, i) =>
+      write(`${RUN}Race${i}`, `race ${i}`, before)
+    )
   )
 
-  const lines = Buffer.from(file.content, 'base64')
-    .toString('utf8')
-    .split('\n')
-    .map(line => line.trim())
-    .filter(Boolean)
+  for (const answer of answers) assert.equal(answer.errors, undefined)
 
-  // The catalogue file is listed after the pages file, so a picture saved
-  // into it wins its own field in the build's merge.
-  assert.deepEqual(lines.slice(-2), ['live.json', 'live-media.json'])
+  const revisions = answers
+    .map(a => a.data.save.revision as number)
+    .sort((a, b) => a - b)
+
+  // One revision each, consecutive, no two the same.
+  assert.deepEqual(
+    revisions,
+    Array.from({length: writers}, (_, i) => before + 1 + i)
+  )
+
+  revision = revisions[revisions.length - 1]!
+
+  const read = await readDraft()
+
+  for (let i = 0; i < writers; i++) {
+    assert.equal(
+      fieldValue(read.data.draft.delta, `${RUN}Race${i}`),
+      `race ${i}`,
+      `writer ${i} was lost`
+    )
+  }
+
+  // Only the first of the six had the current revision as its base, so the
+  // other five were folded onto a draft that had moved. None of them was
+  // refused, which is the point.
+  assert.equal(answers.filter(a => a.data.save.rebased).length, writers - 1)
 })
 
-test('a poll whose sinceSha is the head answers with no body', async () => {
-  const head = (await call(DRAFT, {site: SITE}, ADMIN)).data.draft.headSha
+// The identity of both writers above is the same account, and that is a gap
+// worth naming rather than hiding: accounts.netsnek.com offers no password
+// grant, and booklimo has exactly one machine account holding `jaen:admin`, so
+// a second identity would have to be granted the role by the test itself and a
+// run that died would leave that grant behind on a real identity server. What
+// is proven here is what the object guarantees, that concurrent writes each
+// get a revision and none is lost. The other half, that `overwrote` names the
+// other editor, needs two people and belongs to the live CMS run where the
+// grant is made and revoked under a human's eye.
 
-  const answer = await call(DRAFT, {site: SITE, sinceSha: head}, ADMIN)
+test('a picture writes one key per node and never the pages', async () => {
+  const id = `${RUN}-picture-a`
 
-  assert.equal(answer.data.draft.changed, false)
-  assert.equal(answer.data.draft.data, null)
-  assert.equal(answer.data.draft.headSha, head)
-})
-
-test('a stale save is rebased onto the current head, not rejected', async () => {
-  const value = `agent test stale ${Date.now()}`
-
-  // firstHead is the head before the save above, so this save is stale by one
-  // commit, which is exactly the second editor's case.
   const answer = await call(
     SAVE,
     {
       site: SITE,
-      baseSha: firstHead,
+      baseRevision: revision,
       changes: [
         {
-          kind: 'fieldWrite',
-          pageId: PAGE,
-          fieldType: FIELD_TYPE,
-          fieldName: 'agentTestTwo',
-          value,
-          props: {},
+          kind: 'fieldMerge',
+          pageId: MEDIA_PAGE,
+          fieldType: MEDIA_TYPE,
+          fieldName: 'media_nodes',
+          value: {
+            [id]: {
+              id,
+              createdAt: new Date().toISOString(),
+              description: id,
+              fileType: 'image/png',
+              url: `https://osg.netsnek.com/storage/${id}`,
+              width: 4,
+              height: 4,
+              revisions: []
+            }
+          },
+          props: {removed: []},
           at: new Date().toISOString()
         }
       ]
@@ -514,16 +734,274 @@ test('a stale save is rebased onto the current head, not rejected', async () => 
   )
 
   assert.equal(answer.errors, undefined)
-  assert.equal(answer.data.save.rebased, true)
-  assert.notEqual(answer.data.save.headSha, secondHead)
+  revision = answer.data.save.revision
 
-  // The rebase kept the earlier editor's field. That is what "rebased and
-  // never rejected" has to mean: the stale save adds its own change onto the
-  // current document instead of writing an old document back over it.
-  const read = await call(DRAFT, {site: SITE}, ADMIN)
+  // The node, its author and the meta key. The catalogue is 140 nodes on
+  // booklimo and a picture used to rewrite all of them.
+  assert.equal(answer.data.save.keys, 3)
 
-  assert.equal(fieldValue(read.data.draft.data, 'agentTestTwo'), value)
-  assert.ok(fieldValue(read.data.draft.data, 'agentTestOne'))
+  const read = await readDraft()
+
+  assert.ok(read.data.draft.delta.media[id], 'the node is in the catalogue')
+  assert.deepEqual(read.data.draft.delta.mediaField, {
+    pageId: MEDIA_PAGE,
+    fieldType: MEDIA_TYPE,
+    fieldName: 'media_nodes'
+  })
+  // The pages the delta carries do not carry the catalogue at all.
+  assert.equal(read.data.draft.delta.pages[MEDIA_PAGE], undefined)
+  assert.ok(fieldValue(read.data.draft.delta, `${RUN}One`))
+})
+
+test('a removed picture is named in a delta and gone from a full read', async () => {
+  const id = `${RUN}-picture-a`
+  const before = revision
+
+  const answer = await call(
+    SAVE,
+    {
+      site: SITE,
+      baseRevision: revision,
+      changes: [
+        {
+          kind: 'fieldMerge',
+          pageId: MEDIA_PAGE,
+          fieldType: MEDIA_TYPE,
+          fieldName: 'media_nodes',
+          value: {},
+          props: {removed: [id]},
+          at: new Date().toISOString()
+        }
+      ]
+    },
+    ADMIN
+  )
+
+  assert.equal(answer.errors, undefined)
+  revision = answer.data.save.revision
+
+  const delta = await readDraft(before)
+
+  assert.deepEqual(
+    delta.data.draft.delta.removedMedia,
+    [id],
+    `read since ${before}: full ${delta.data.draft.full}, revision ${
+      delta.data.draft.revision
+    }, media ${JSON.stringify(Object.keys(delta.data.draft.delta.media))}`
+  )
+
+  const full = await readDraft()
+
+  assert.equal(full.data.draft.full, true)
+  assert.equal(full.data.draft.delta.media[id], undefined)
+  assert.deepEqual(full.data.draft.delta.removedMedia, [])
+})
+
+test('the object keeps its draft when it is restarted between two saves', async () => {
+  const before = revision
+  const value = `agent restart ${Date.now()}`
+
+  await write(`${RUN}Before`, value, revision)
+
+  // The whole runtime goes, the object with it, and comes back on the same
+  // persisted storage. There is no in-memory copy of a draft to lose, which
+  // is what this is here to prove rather than to assume.
+  await stopWorker()
+  await startWorker()
+
+  const answer = await write(`${RUN}After`, 'after the restart', null)
+
+  assert.equal(answer.errors, undefined)
+  // The counter continued rather than starting again, so nothing that was
+  // written before the restart can be overwritten by a revision reused after
+  // it.
+  assert.equal(answer.data.save.revision, before + 2)
+
+  revision = answer.data.save.revision
+
+  const read = await readDraft()
+
+  assert.equal(fieldValue(read.data.draft.delta, `${RUN}Before`), value)
+  assert.equal(
+    fieldValue(read.data.draft.delta, `${RUN}After`),
+    'after the restart'
+  )
+})
+
+test('the alarm snapshots the draft, on its own', async () => {
+  // The suite runs the object with DRAFT_SNAPSHOT_INTERVAL_MS at two seconds
+  // rather than the deployed five minutes. Nothing else about the alarm is
+  // different, and it is armed by a save and by nothing this test does.
+  await write(`${RUN}Snapshot`, `snapshot ${Date.now()}`, revision)
+
+  const until = Date.now() + 60_000
+  let answer: any
+
+  for (;;) {
+    answer = await readDraft()
+
+    if (answer.data.draft.snapshotRevision === answer.data.draft.revision) break
+
+    if (Date.now() > until) {
+      throw new Error(
+        `the alarm did not snapshot: revision ${answer.data.draft.revision}, ` +
+          `snapshot ${answer.data.draft.snapshotRevision}`
+      )
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 1000))
+  }
+
+  revision = answer.data.draft.revision
+
+  assert.ok(answer.data.draft.snapshotAt, 'the snapshot is stamped')
+  // It is the whole draft and not a delta, so it is bigger than the field
+  // that triggered it and small enough to be one value.
+  assert.ok(
+    answer.data.draft.snapshotBytes > 200,
+    `the snapshot is ${answer.data.draft.snapshotBytes} bytes`
+  )
+})
+
+test('the socket is pushed a revision, and is refused without a ticket', async () => {
+  const minted = await call(SUBSCRIBE, {site: SITE}, ADMIN)
+
+  assert.equal(minted.errors, undefined)
+  assert.match(
+    minted.data.subscribe.url,
+    new RegExp(`^wss?://[^/]+/draft/${SITE.replace('.', '\\.')}$`),
+    `subscribe answered the url ${minted.data.subscribe.url}`
+  )
+  assert.ok(minted.data.subscribe.ticket)
+
+  // The agent builds the socket URL from the host the call arrived on, and
+  // `wrangler dev` reports the host of the configured route rather than the
+  // local one: inside the dev server `getContext().req.url` is
+  // `https://jaen-agent.booklimo.at/graphql`, so the answer names the live
+  // host. That is right in production and wrong for this run, which would
+  // otherwise open a socket against the deployed agent. So the path is the
+  // agent's and the origin is the local one.
+  const url = `${ORIGIN.replace(/^http/, 'ws')}${
+    new URL(minted.data.subscribe.url).pathname
+  }`
+
+  // A socket without a ticket is not a socket. The upgrade is refused inside
+  // the object, which is the only place that knows what it minted. Done
+  // before the good one, so a run that cannot open a socket at all still says
+  // whether the route is there.
+  // The route exists and says what it is for, which separates "no route" from
+  // "the upgrade was refused" in a run that fails.
+  const plain = await fetch(url.replace(/^ws/, 'http'), {
+    headers: {'User-Agent': UA}
+  })
+
+  assert.equal(
+    plain.status,
+    426,
+    `GET on the socket route answered ${plain.status}: ${(await plain.text()).slice(0, 120)}`
+  )
+
+  const refused = await rawUpgrade(url)
+
+  assert.equal(
+    refused.status,
+    401,
+    `the ticketless upgrade answered ${refused.status}: ${refused.body.slice(
+      0,
+      200
+    )}`
+  )
+
+  const socket = new WebSocket(url, [
+    'jaen-draft.v1',
+    `ticket.${minted.data.subscribe.ticket}`
+  ])
+
+  const frames: any[] = []
+
+  socket.addEventListener('message', event => {
+    try {
+      frames.push(JSON.parse(String((event as MessageEvent).data)))
+    } catch {
+      // A frame that is not JSON is not one this client acts on.
+    }
+  })
+
+  await new Promise<void>((resolve, reject) => {
+    socket.addEventListener('open', () => resolve())
+    socket.addEventListener('error', () =>
+      reject(new Error('the socket did not open'))
+    )
+    setTimeout(
+      () => reject(new Error('the socket did not open in ten seconds')),
+      10_000
+    )
+  })
+
+  // The hello carries where the object is, so a client that has just
+  // connected knows whether it is behind before it reads anything.
+  await waitFor(() => frames.some(f => f.type === 'hello'), 'no hello frame')
+
+  const answer = await write(`${RUN}Push`, `pushed ${Date.now()}`, revision)
+  revision = answer.data.save.revision
+
+  await waitFor(
+    () => frames.some(f => f.revision === revision && f.type === 'revision'),
+    `no push for revision ${revision}`
+  )
+
+  const pushed = frames.find(f => f.type === 'revision')
+
+  // The socket carries revisions and never content: one read path and one
+  // authorisation path for the data.
+  assert.equal(pushed.site, SITE)
+  assert.equal(typeof pushed.revision, 'number')
+  assert.equal(pushed.pages, undefined)
+
+  socket.close()
+})
+
+test('a save is refused anonymously and to a caller without the role', async () => {
+  // An empty string and not `undefined`: a default parameter would put the
+  // admin's token back and the call would be made as the admin.
+  const anonymous = await write(`${RUN}Anonymous`, 'nobody', null, '')
+
+  assert.equal(anonymous.data?.save, undefined)
+  assert.equal(errorCode(anonymous), 'AUTH_REQUIRED')
+
+  const customer = await write(
+    `${RUN}Customer`,
+    'not an editor',
+    null,
+    CUSTOMER
+  )
+
+  assert.equal(customer.data?.save, undefined)
+  assert.equal(errorCode(customer), 'FORBIDDEN')
+
+  const foreign = await write(
+    `${RUN}Foreign`,
+    "another site's admin",
+    null,
+    FOREIGN
+  )
+
+  assert.equal(foreign.data?.save, undefined)
+  assert.equal(errorCode(foreign), 'FORBIDDEN')
+
+  // And nothing of the three reached the draft.
+  const read = await readDraft()
+
+  assert.equal(fieldValue(read.data.draft.delta, `${RUN}Anonymous`), undefined)
+  assert.equal(fieldValue(read.data.draft.delta, `${RUN}Customer`), undefined)
+  assert.equal(fieldValue(read.data.draft.delta, `${RUN}Foreign`), undefined)
+})
+
+test('subscribe is refused to a caller without the role', async () => {
+  const answer = await call(SUBSCRIBE, {site: SITE}, CUSTOMER)
+
+  assert.equal(answer.data?.subscribe, undefined)
+  assert.equal(errorCode(answer), 'FORBIDDEN')
 })
 
 // --------------------------------------------------------------------------
@@ -542,213 +1020,6 @@ test('viewer answers who is calling and touches no repository', async () => {
   const anonymous = await call(VIEWER, {site: SITE})
 
   assert.equal(errorCode(anonymous), 'AUTH_REQUIRED')
-})
-
-// --------------------------------------------------------------------------
-// The split: the pages and the catalogue in two files
-// --------------------------------------------------------------------------
-
-const MEDIA_PAGE = 'JaenPage /cms/media/'
-const MEDIA_TYPE = 'IMA:MEDIA_NODES'
-
-const readJson = async (path: string): Promise<any> => {
-  const file = await gh(
-    `/repos/${REPOSITORY}/contents/${encodeURIComponent(path)}?ref=${BRANCH}`
-  )
-
-  return JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'))
-}
-
-const mediaNodes = (data: any): Record<string, any> =>
-  data?.pages?.find((page: any) => page.id === MEDIA_PAGE)?.jaenFields?.[
-    MEDIA_TYPE
-  ]?.media_nodes?.value || {}
-
-const node = (id: string) => ({
-  id,
-  createdAt: new Date().toISOString(),
-  description: id,
-  fileType: 'image/png',
-  url: `https://osg.netsnek.com/storage/${id}`,
-  width: 4,
-  height: 4,
-  revisions: []
-})
-
-let firstPicture = ''
-
-test('a picture writes the catalogue and never the pages', async () => {
-  firstPicture = `agent-test-${Date.now()}-a`
-
-  const answer = await call(
-    SAVE,
-    {
-      site: SITE,
-      changes: [
-        {
-          kind: 'fieldMerge',
-          pageId: MEDIA_PAGE,
-          fieldType: MEDIA_TYPE,
-          fieldName: 'media_nodes',
-          value: {[firstPicture]: node(firstPicture)},
-          props: {removed: []},
-          at: new Date().toISOString()
-        }
-      ]
-    },
-    ADMIN
-  )
-
-  assert.equal(answer.errors, undefined)
-  assert.deepEqual(answer.data.save.wrote, ['jaen-data/live-media.json'])
-
-  const media = await readJson('jaen-data/live-media.json')
-  const pages = await readJson('jaen-data/live.json')
-
-  assert.ok(mediaNodes(media.data)[firstPicture])
-  // The pages file carries no catalogue at all any more.
-  assert.equal(Object.keys(mediaNodes(pages.data)).length, 0)
-
-  // The agent answers one document, both files merged.
-  const read = await call(DRAFT, {site: SITE}, ADMIN)
-
-  assert.ok(mediaNodes(read.data.draft.data)[firstPicture])
-  assert.ok(fieldValue(read.data.draft.data, 'agentTestOne'))
-})
-
-test('a second picture writes only the catalogue', async () => {
-  const second = `agent-test-${Date.now()}-b`
-
-  const pagesBefore = await gh(
-    `/repos/${REPOSITORY}/contents/jaen-data%2Flive.json?ref=${BRANCH}`
-  )
-
-  const answer = await call(
-    SAVE,
-    {
-      site: SITE,
-      changes: [
-        {
-          kind: 'fieldMerge',
-          pageId: MEDIA_PAGE,
-          fieldType: MEDIA_TYPE,
-          fieldName: 'media_nodes',
-          value: {[second]: node(second)},
-          props: {removed: []},
-          at: new Date().toISOString()
-        }
-      ]
-    },
-    ADMIN
-  )
-
-  assert.equal(answer.errors, undefined)
-  assert.deepEqual(answer.data.save.wrote, ['jaen-data/live-media.json'])
-
-  const pagesAfter = await gh(
-    `/repos/${REPOSITORY}/contents/jaen-data%2Flive.json?ref=${BRANCH}`
-  )
-
-  // Byte for byte the same file: a picture does not touch the pages.
-  assert.equal(pagesAfter.sha, pagesBefore.sha)
-
-  // The merge kept the picture that was already there, which is the whole
-  // point of sending the difference rather than the catalogue.
-  const media = await readJson('jaen-data/live-media.json')
-  const nodes = mediaNodes(media.data)
-
-  assert.ok(nodes[firstPicture])
-  assert.ok(nodes[second])
-})
-
-test('a text change writes only the pages', async () => {
-  const mediaBefore = await gh(
-    `/repos/${REPOSITORY}/contents/jaen-data%2Flive-media.json?ref=${BRANCH}`
-  )
-
-  const value = `agent test split ${Date.now()}`
-
-  const answer = await call(
-    SAVE,
-    {
-      site: SITE,
-      changes: [
-        {
-          kind: 'fieldWrite',
-          pageId: PAGE,
-          fieldType: FIELD_TYPE,
-          fieldName: 'agentTestThree',
-          value,
-          props: {},
-          at: new Date().toISOString()
-        }
-      ]
-    },
-    ADMIN
-  )
-
-  assert.equal(answer.errors, undefined)
-  assert.deepEqual(answer.data.save.wrote, ['jaen-data/live.json'])
-
-  const mediaAfter = await gh(
-    `/repos/${REPOSITORY}/contents/jaen-data%2Flive-media.json?ref=${BRANCH}`
-  )
-
-  assert.equal(mediaAfter.sha, mediaBefore.sha)
-
-  const read = await call(DRAFT, {site: SITE}, ADMIN)
-
-  assert.equal(fieldValue(read.data.draft.data, 'agentTestThree'), value)
-  assert.ok(mediaNodes(read.data.draft.data)[firstPicture])
-})
-
-test('a merge removes a key without carrying the rest', async () => {
-  const answer = await call(
-    SAVE,
-    {
-      site: SITE,
-      changes: [
-        {
-          kind: 'fieldMerge',
-          pageId: MEDIA_PAGE,
-          fieldType: MEDIA_TYPE,
-          fieldName: 'media_nodes',
-          value: {},
-          props: {removed: [firstPicture]},
-          at: new Date().toISOString()
-        }
-      ]
-    },
-    ADMIN
-  )
-
-  assert.equal(answer.errors, undefined)
-  assert.deepEqual(answer.data.save.wrote, ['jaen-data/live-media.json'])
-
-  const read = await call(DRAFT, {site: SITE}, ADMIN)
-  const nodes = mediaNodes(read.data.draft.data)
-
-  assert.equal(nodes[firstPicture], undefined)
-  // Everything the site had before this run is still there. The catalogue on
-  // booklimo.at is 140 nodes and the merge carried one id.
-  assert.ok(Object.keys(nodes).length > 100)
-})
-
-test('patches.txt ends with live.json and then live-media.json', async () => {
-  const file = await gh(
-    `/repos/${REPOSITORY}/contents/jaen-data%2Fpatches.txt?ref=${BRANCH}`
-  )
-
-  const lines = Buffer.from(file.content, 'base64')
-    .toString('utf8')
-    .split('\n')
-    .map(line => line.trim())
-    .filter(Boolean)
-
-  assert.deepEqual(lines.slice(-2), ['live.json', 'live-media.json'])
-  // Exactly once each, or the build would read the same file twice.
-  assert.equal(lines.filter(l => l === 'live.json').length, 1)
-  assert.equal(lines.filter(l => l === 'live-media.json').length, 1)
 })
 
 // --------------------------------------------------------------------------
@@ -916,7 +1187,9 @@ test('a publish writes one gateway file, one line and one commit', async () => {
 
   const result = answer.data.publish
 
-  assert.equal(result.published, true)
+  // The reason travels into the failure message. A publish that answers
+  // `published: false` always says why, and a test that hid it cost a run.
+  assert.equal(result.published, true, `not published: ${result.reason}`)
   assert.ok(typeof result.revision === 'number' && result.revision > 0)
   assert.equal(result.publishedRevision, result.revision)
   assert.match(result.migrationUrl, /^https:\/\/osg\.[^/]+\/storage\/.+/)

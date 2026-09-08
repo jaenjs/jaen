@@ -571,11 +571,7 @@ app.get('/draft/:site', async ctx => {
 
   // `ctx.env` is hono's own Bindings type and the agent's env is a wider
   // shape than it declares, so the cast goes through unknown.
-  return connectDraftSocket(
-    ctx.env as unknown as AgentEnv,
-    site,
-    ctx.req.raw
-  )
+  return connectDraftSocket(ctx.env as unknown as AgentEnv, site, ctx.req.raw)
 })
 
 /**
