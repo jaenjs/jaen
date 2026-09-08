@@ -458,6 +458,18 @@ again. What is measured is what the client does against a stand in that behaves
 the way this design says the object does, including in the two ways it is not
 supposed to.
 
+One browser measurement was taken back rather than left as a skip. `09` grew a
+`localBlur` mode, the same field typed and left in the real CMS on a local
+production build of booklimo signed in as the booklimo human admin, with
+`localStorage` as the only store, which is what a site without the `agent`
+option is and which is this design's own rollback. It measures that the rollback
+holds: no request to any agent host, nothing queued, the toolbar claiming no
+save because none was made, the edit in `localStorage`, the field set back, and
+the value read back out of an emptied browser being the one the run found. And
+one WARN, that the blur to paint gap is still 25.0 ms against one frame at 16,
+whose cause `editing-performance.md` already named and which this session did
+not touch.
+
 The fixture moved with the transition. `live.json` and `live-media.json` are
 gone from the site, so the notebooks merge the two the transition kept beside it
 into one draft, which is the shape `snapshot(site)` answers. It is deliberately

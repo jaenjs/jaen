@@ -271,10 +271,33 @@ cost into one idle callback and the dispatches and the React work they drag are
 still there. Neither was this session's to fix and both are named again here so
 the reviewer does not have to find them twice.
 
-**What is not measured.** Every browser half of both notebooks skips, because
-the transition removed the `agent` option from both sites and a built site has
-no shared draft to drive. The blur to paint gap in the real CMS, which is the
-one number in this file that came from a person's own machine rather than from
-a bench, is therefore not re-measured after the change. It should be, the day a
-site carries the option again. The stored runs are in `tests/draft-object/`
-beside `tests/baseline/`.
+**The blur in the real CMS, re-measured without an agent.** Every browser half
+that needs a live shared draft skips, because the transition removed the `agent`
+option from both sites. The blur to paint gap is the one number in this file
+that came off a person's own machine rather than off a bench, and a number
+nobody can take any more is not an acceptance, so `09` grew a `localBlur` mode:
+the same field typed and left in the real CMS on a local production build of
+booklimo.at signed in as the booklimo human admin, with `localStorage` as the
+only store, which is what a site without the option is and which is exactly the
+half of this file that does not depend on the agent.
+
+In the four seconds after the blur the store was written **12 times and
+33,873 B**, against the **185 and 187 times and 14.4 MB** this file measured
+before the change. The escape holds beside it: the built site carries no agent
+option, no request went to any agent host, nothing was queued, and the toolbar
+claims no save because none was made. The edit reached `localStorage`, the field
+was set back, and the value read out of a browser whose storage was emptied is
+the one the run found.
+
+**And the gap is still 25.0 ms.** Against the baseline's 24.0 and 24.8, and
+still over one frame at 16. Change 1 coalesced the writes and did not remove the
+dispatches, which is what this file said it would do before it was built: the
+cause is the registration storm above, and it is React work rather than the
+persistence path. The notebook records it as a WARN rather than a FAIL for that
+reason. The acceptance at the top of this file, "the main-thread block of one
+field blur ... measured as the sum of the serialisation and the storage write",
+is met and is met by a wide margin, 0.012 ms in chromium against one frame; the
+gap a person feels is a different number with a different cause and this file
+now carries both.
+
+The two runs are stored in `tests/draft-object/` beside `tests/baseline/`.
