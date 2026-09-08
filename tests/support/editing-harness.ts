@@ -110,6 +110,20 @@ const mediaNodes = (state: any) =>
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
+/**
+ * The idle deadline of the asynchronous writer, plus room.
+ *
+ * `persist-state` defers the write into a `requestIdleCallback` with a 250 ms
+ * timeout and falls back to a `setTimeout` of the same 250 ms where there is no
+ * idle callback, which is every node run. So a scenario that reads the value
+ * back out of storage has to wait that deadline out first: before change 1 the
+ * write happened inside the dispatch and 20 ms was enough, after it a shorter
+ * wait would be measuring the deadline rather than the payload. The two
+ * scenarios that are about the deadline itself, `hiddenTab` and the immediate
+ * read in it, do not use this.
+ */
+const PERSIST_DEADLINE_MS = 400
+
 const emit = (payload: any) => {
   flushToDisk()
   process.stdout.write(JSON.stringify(payload, null, 1))
@@ -211,6 +225,13 @@ const scenarios: Record<string, () => Promise<any>> = {
         await sleep(5)
       }
 
+      // The write is deferred now, so the blur is not over when its last
+      // dispatch returns: the coalesced write lands up to 250 ms later. Waiting
+      // it out here is what keeps `writes` and `bytes` the cost of this blur
+      // rather than of the one before it. Nothing dispatches in the wait (the
+      // poller is idle and the outbox is empty), so `ms` is unaffected.
+      await sleep(PERSIST_DEADLINE_MS)
+
       const top = log.filter(entry => entry.depth === 0)
 
       for (const entry of log) {
@@ -238,7 +259,11 @@ const scenarios: Record<string, () => Promise<any>> = {
       clone: [] as number[],
       walk: [] as number[],
       stringify: [] as number[],
-      write: [] as number[]
+      write: [] as number[],
+      // What one write costs after change 1: one stringify with the replacer,
+      // then the storage write of what it produced.
+      single: [] as number[],
+      singleWrite: [] as number[]
     }
 
     const removeLoadingAndError = (obj: Record<string, any>) => {
@@ -253,8 +278,29 @@ const scenarios: Record<string, () => Promise<any>> = {
       }
     }
 
+    // The replacer of `persist-state` after change 1, copied for the same
+    // reason the walk above is: the function itself has no seam between its
+    // steps. `JAEN_HARNESS_DROP_CATALOGUE=0` measures it without change 2.
+    const dropCatalogue = process.env.JAEN_HARNESS_DROP_CATALOGUE !== '0'
+    const replacer = (key: string, value: unknown) => {
+      if (key === 'isLoading' || key === 'error') return undefined
+      if (dropCatalogue && key === MEDIA_FIELD_TYPE) return undefined
+      return value
+    }
+
+    let singleBytes = 0
+
     for (let i = 0; i < samples; i += 1) {
       let started = performance.now()
+      const serialSingle = JSON.stringify(state, replacer)
+      legs.single.push(performance.now() - started)
+      singleBytes = Buffer.byteLength(serialSingle, 'utf8')
+
+      started = performance.now()
+      storage.setItem('jaen-harness-leg', serialSingle)
+      legs.singleWrite.push(performance.now() - started)
+
+      started = performance.now()
       const clone = JSON.parse(JSON.stringify(state))
       legs.clone.push(performance.now() - started)
 
@@ -295,11 +341,14 @@ const scenarios: Record<string, () => Promise<any>> = {
       perAction: Object.fromEntries(
         Object.entries(byType).map(([type, values]) => [type, stat(values)])
       ),
+      singleBytes,
       legs: {
         clone: stat(legs.clone),
         walk: stat(legs.walk),
         stringify: stat(legs.stringify),
-        write: stat(legs.write)
+        write: stat(legs.write),
+        single: stat(legs.single),
+        singleWrite: stat(legs.singleWrite)
       }
     }
   },
@@ -313,7 +362,7 @@ const scenarios: Record<string, () => Promise<any>> = {
     setNetwork('offline')
     fieldWrite('the payload check')
 
-    await sleep(30)
+    await sleep(PERSIST_DEADLINE_MS)
 
     const raw = storage.getItem(PERSIST_KEY) || ''
     const state = persisted()
@@ -341,7 +390,10 @@ const scenarios: Record<string, () => Promise<any>> = {
     hydrateBooklimo()
     fieldWrite(process.env.JAEN_HARNESS_VALUE || 'survives a reload')
 
-    await sleep(20)
+    // The reload check is about the ordinary path: the edit is written by the
+    // idle callback, nobody hides the tab and nobody closes it politely. The
+    // synchronous path is `hiddenTab`.
+    await sleep(PERSIST_DEADLINE_MS)
 
     return {
       scenario: 'editThenExit',
@@ -370,7 +422,17 @@ const scenarios: Record<string, () => Promise<any>> = {
 
     fieldWrite('written while offline')
 
-    await sleep(50)
+    await sleep(PERSIST_DEADLINE_MS)
+
+    // Since change 3 a field write waits out the quiet window before it is
+    // even attempted, so the store does not know it is offline until the
+    // first flush has failed. The snapshot below is what the toolbar says
+    // once it does know, and the backoff measured after it starts from the
+    // failure rather than from the keystroke.
+    for (let waited = 0; waited < 5000; waited += 50) {
+      if ((store.getState() as any).remote.saveState === 'offline') break
+      await sleep(50)
+    }
 
     const whileOffline = {
       value: fieldValue(store.getState()),
@@ -450,7 +512,7 @@ const scenarios: Record<string, () => Promise<any>> = {
     setNetwork('offline')
 
     fieldWrite('typed and not yet sent')
-    await sleep(30)
+    await sleep(PERSIST_DEADLINE_MS)
 
     // What the poller does on a new head, taken from `remote-state.hydrate`:
     // the remote document is the base and the outbox is folded on top of it.
@@ -471,7 +533,7 @@ const scenarios: Record<string, () => Promise<any>> = {
     store.dispatch(widgetActions.hydrateFromRemote(merged.widgets))
     store.dispatch(remoteActions.remoteHydrated({headSha: 'harness-head-new'}))
 
-    await sleep(20)
+    await sleep(PERSIST_DEADLINE_MS)
 
     return {
       scenario: 'pollMidEdit',
@@ -507,13 +569,16 @@ const scenarios: Record<string, () => Promise<any>> = {
     setNetwork('offline')
     fieldWrite('about to be discarded')
 
-    await sleep(30)
+    await sleep(PERSIST_DEADLINE_MS)
 
     const before = store.getState() as any
 
+    // Past the deadline on purpose: this asks what is in storage once the
+    // discarded state has been written back, not merely that the key was
+    // removed.
     resetState()
 
-    await sleep(20)
+    await sleep(PERSIST_DEADLINE_MS)
 
     const after = store.getState() as any
 
@@ -544,7 +609,7 @@ const scenarios: Record<string, () => Promise<any>> = {
     setNetwork('offline')
 
     fieldWrite('written while offline')
-    await sleep(50)
+    await sleep(PERSIST_DEADLINE_MS)
 
     const queued = (store.getState() as any).remote.outbox.length
 
@@ -561,6 +626,11 @@ const scenarios: Record<string, () => Promise<any>> = {
       }
       await sleep(25)
     }
+
+    // The drain empties the outbox in milliseconds and its `saveSucceeded`
+    // owes a write, so storage is read after the deadline rather than in the
+    // frame the loop broke out of.
+    await sleep(PERSIST_DEADLINE_MS)
 
     return {
       scenario: 'onlineEvent',
@@ -588,8 +658,11 @@ const scenarios: Record<string, () => Promise<any>> = {
 
     fieldWrite('typed and then the tab went away')
 
-    // No await at all: this is the frame the dispatch returned in.
-    const immediately = fieldValue(persisted())
+    // No await at all: this is the frame the dispatch returned in. `?? null`
+    // because an undefined is dropped by JSON.stringify and the notebook asks
+    // this key by name: after change 1 there is nothing in storage yet, which
+    // is the answer rather than a broken harness.
+    const immediately = fieldValue(persisted()) ?? null
 
     ;(fakeDocument as any).visibilityState = 'hidden'
     const heard = fire('document', 'visibilitychange')
@@ -606,17 +679,23 @@ const scenarios: Record<string, () => Promise<any>> = {
       scenario: 'hiddenTab',
       listeners: heard,
       immediately,
-      afterHidden,
-      afterIdleDeadline,
+      afterHidden: afterHidden ?? null,
+      afterIdleDeadline: afterIdleDeadline ?? null,
       writes: writes.length
     }
   },
 
   /** The escape: no agent option at all, localStorage as the only store. */
   async noAgent() {
+    // The catalogue is put into the store first, because the escape is where
+    // change 2 must not apply: without the agent nothing hands the catalogue
+    // back, so dropping it from the payload would drop every picture the
+    // browser holds and has not published. The count below is the proof.
+    hydrateBooklimo()
+
     fieldWrite('saved without the agent')
 
-    await sleep(20)
+    await sleep(PERSIST_DEADLINE_MS)
 
     const state = persisted()
 
@@ -626,7 +705,9 @@ const scenarios: Record<string, () => Promise<any>> = {
       persistedValue: fieldValue(state),
       outboxLength: (state?.remote?.outbox || []).length,
       saveCalls: calls.filter(call => call.query === 'save').length,
-      writes: writes.length
+      writes: writes.length,
+      mediaNodeCount: Object.keys(mediaNodes(state) || {}).length,
+      bytes: Buffer.byteLength(storage.getItem(PERSIST_KEY) || '', 'utf8')
     }
   }
 }
