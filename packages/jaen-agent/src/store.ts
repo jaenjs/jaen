@@ -564,7 +564,7 @@ const ensureHeadLines = async (
   if (kv) {
     const seen = await kv.get(memory).catch(() => null)
 
-    // `both` covers every save; `live` covers one that wrote no catalogue.
+    // `both` covers every save, `live` covers one that wrote no catalogue.
     if (seen === 'both' || (seen === 'live' && !options.media)) return
   }
 

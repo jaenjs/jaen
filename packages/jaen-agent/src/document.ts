@@ -271,7 +271,7 @@ export const splitPatch = (
  * The two files put back together, which is what a `draft` answer is.
  *
  * The catalogue wins its own field, because it is the file the picture saves
- * write; everything else comes from the pages file. Merging at field level
+ * write, and everything else comes from the pages file. Merging at field level
  * and not key level is what makes a deleted media node stay deleted in the
  * CMS.
  */
