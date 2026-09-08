@@ -932,6 +932,13 @@ site serves carries `activePollMs:1500` beside the idle `pollMs: 5000`. The
 old window scroll listener is gone from both. The deploy line is in the taxi-app
 checkout, `okf/operations/versions.md`.
 
+## The editing path is being reworked, 2026-09-08
+
+The owner measured the CMS as laggy on the evening this shipped. The
+cause is the persistence path around the draft rather than the agent, and
+the plan is `editing-performance.md`, which also carries the requirement
+that a Fable 5.1 session reviews it.
+
 ## Acceptance
 
 - Two browser contexts signed in as two admins of booklimo.at: a text
