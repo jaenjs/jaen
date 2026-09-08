@@ -950,6 +950,180 @@ snapshot publish keeps rather than by replaying the chain, so the result
 is exactly what the last migration produced. The other editors are told
 who discarded and when, not merely reverted under their hands.
 
+### Built 2026-09-08, discard, and it is one of the three
+
+Everything above this heading was written before any of it was built. What
+shipped is **discard alone**. Import and restore are not built, are not
+stubbed, and the interface says so out loud rather than leaving a reader to
+find out: `packages/jaen-agent/src/draft/store.ts` names all three and marks
+two of them missing.
+
+Nothing is deployed. The agent on Cloudflare is still 4.3.0 and neither site
+has been rebuilt, so everything below is measured against a local
+`wrangler dev`, the site's own Durable Object with its storage in a directory
+of the run's own, the real accounts.netsnek.com and a throwaway branch of
+`netsnek/booklimo.at`.
+
+**The published state is a thing the object keeps now.** The design says the
+published state "is restored from the snapshot publish keeps rather than by
+replaying the chain, so the result is exactly what the last migration
+produced", and nothing kept it: `markPublished` stored a number. It takes the
+snapshot publish uploaded as well, and the object writes it under
+`published:0000…`, chunked at a megabyte because one key and its value together
+may be 2 MB on a SQLite backed object and a catalogue is allowed to grow past
+that.
+
+It goes into the object's own storage and **not** into the KV the alarm's
+backstop uses, and that is the one storage decision of this run worth arguing
+with. KV gives no read-after-write guarantee, so a discard made a second after
+a publish could restore what KV had last settled on rather than what that
+publish wrote. The object's storage is strongly consistent and is read inside
+the same single threaded actor that writes it, which also makes the whole
+discard atomic. The cost is that the object carries its published state twice
+over, once as the draft and once as the copy, about 240 KB for booklimo against
+a 10 GB ceiling.
+
+**What that costs on the deployed sites, which is not nothing.** booklimo's
+object is at `publishedRevision 97` and has no stored published state, because
+every publish so far was made by a build that only recorded the number. So the
+first discard there is **refused**, with a reason that says exactly that and
+tells the person to publish once. It is the right refusal and it is worth
+naming: a restore taken from anywhere else, the chain above all, would not be
+what the last migration produced, and this design says twice that it must be.
+
+**The order inside the operation is the safety.**
+
+1. The draft as it stands is written to the backstop, under a key of its own
+   (`draft-discard:<site>`, with `:previous` beside it) rather than the alarm's,
+   because a discard changes the revision and the very next alarm takes a
+   snapshot: had the two shared a key, the undo of a discard would have been
+   rotated away within the interval.
+2. The object is read again, because step 1 is a KV write and a Durable
+   Object's input gate does not close around one. A save that landed inside it
+   would be discarded and not be in the backstop, which is the one loss this
+   design exists to prevent, so the snapshot is taken again, up to three times,
+   and the discard is refused rather than made if the draft will not stand
+   still.
+3. The keys are rewritten to the published state and everything it does not
+   name is deleted, pages, catalogue nodes, widgets and the per field
+   authorship alike. The authorship that comes back is the one publish recorded
+   with the state, because attributing a published field to whoever last
+   changed it in a draft that has been thrown away is a lie about who wrote the
+   site.
+4. `prunedBefore` is raised to the new revision, so **every** reader is
+   answered with the whole draft rather than a delta. The delta vocabulary has
+   no page tombstone, so a discard that removed a page could not be described
+   as one and a reader would keep a page that is gone.
+5. Every editor is pushed a frame that carries the new revision, the
+   invalidation, and who discarded and when.
+
+**`publishedRevision` moves with the discard, and that is a claim.** What the
+object holds afterwards is exactly what the last migration produced, so there
+is nothing unpublished in it. Leaving the stamp behind would make every CMS say
+"not published" about content the site already serves and would invite a
+publish that writes a migration saying what the chain already says, which is
+the file and commit explosion this whole design was written to stop.
+
+#### The one write this store refuses, and the window it costs
+
+Every other stale write in this system is rebased and never rejected, because
+rejecting one is how an edit is lost. A write whose `baseRevision` is **below**
+the last discard is different in kind: those changes are exactly the ones an
+admin asked to be gone, and rebasing them would put part of what was just
+undone back into every editor's browser. So it is refused, with
+`DRAFT_DISCARDED` and the revision that invalidated it, and the client acts on
+that code rather than retrying it.
+
+`baseRevision === discardedRevision` is accepted, because that is the browser
+that has already read the discard and whatever it sends now was typed against
+the restored draft. A write that volunteers **no** base at all is also
+accepted, and that is a hole: the object cannot tell a stale client from a
+caller that never sends one, and refusing every such write would break a client
+this interface still allows. The shipped CMS always sends a base.
+
+The window this costs is real and it is named here rather than left to be
+found. A person typing while an admin somewhere else confirms a discard has
+their change refused or dropped a second or two after they made it. Nothing
+shared may keep it, and this browser can, so `remote-state.ts` parks the
+dropped outbox in `localStorage` under `jaenjs-state-discarded`, the last five
+discards deep, before it empties it. Nothing reads it back automatically. It is
+there for the person who says "it deleted what I was writing", and it is the
+best this run could do for an invariant that says an edit a person made is
+never lost while an operation says these particular edits must go.
+
+#### The client, and where the invalidation is honoured
+
+Every read carries `discardedRevision`, and not only the socket frame, because
+a browser that was offline through the discard was not there for the frame. The
+client keeps the last discard it honoured, so one discard invalidates it once,
+and on a higher number it parks its outbox, drops it, drops its local copy and
+takes the answer whole. Two paths reach that and both converge on it: a read
+that names a discard this browser has not honoured, and a save the object
+refused.
+
+The browser that pressed the button does **not** apply anything to itself. The
+object pushes the new revision to every editor, this one included, and the same
+invalidation path runs there. One path for everybody, and no second
+implementation of "put the draft back" in the browser that happened to ask.
+
+The frame's control asks the agent what would go rather than counting in a
+store that is only part of the draft, and puts that sentence in front of the
+person: how many changes on how many pages, written by whom, since when. The
+revision the sentence was true at is passed with the discard, and a draft that
+moved under it is refused rather than discarded around. Nothing is said on
+success by the button, because every editor of the site, the one who pressed it
+included, is told the same thing in the same words by the toast the discard
+raises.
+
+#### Measured, and how
+
+| what was asked                                            | what the systems answered                                                                                                           |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| the agent's suite, seven new checks in it                 | **34 of 34**, `npm test` in `packages/jaen-agent`, about two minutes against `wrangler dev` and a throwaway branch                  |
+| a discard restores the published state                    | the field written after the publish is gone from a full read and the field the migration wrote is what it wrote, `published two`    |
+| and writes no commit                                      | the branch head and every line of `patches.txt` unmoved across the discard                                                          |
+| the confirmation names what will go                       | `canDiscard`, pages, fields, the editors by name and `since`, and it answers `false` with a reason when nothing differs             |
+| a stale confirmation is refused                           | `atRevision` one behind answers `discarded: false`, the revision unmoved and the field still there                                  |
+| a second editor's outbox is dropped rather than reapplied | a save carrying a base from before the discard answers `DRAFT_DISCARDED` with the invalidating revision, and the draft is unchanged |
+| and the refusal stays narrow                              | a save carrying the restored draft's own revision is taken as usual, one revision later                                             |
+| the snapshot before it can be read back                   | `discardedDraft` answers the draft one instant before, with the discarded value in it                                               |
+| a non-admin is refused                                    | anonymous `AUTH_REQUIRED`, a `krc:customer` of the site `FORBIDDEN`, another site's admin `FORBIDDEN`, on all three calls           |
+| the client speaks the agent's schema                      | **7 of 7** documents valid, `tests/support/validate-agent-documents.cjs`, the two new ones among them                               |
+| the frame's messages are messages                         | **77 of 77** parsed and formatted in their own locale, `tests/support/validate-frame-messages.mjs`, eleven ids across seven locales |
+
+Two of those checks were written after a first cut got it wrong, and both are
+worth recording. The diff first compared the object's own page keys against the
+unfolded published snapshot and reported a site as changed the instant after it
+was published: a snapshot writes a page's id into the node and makes a page for
+the catalogue's field where the store holds none, so the two shapes differed in
+ways no edit caused. Both sides go through the same fold now. And the suite's
+own `draft` document had to grow the four discard fields, without which the
+invalidation could not be read at all, which is the same trap
+`validate-agent-documents.cjs` exists for, seen from the test's side.
+
+#### What is not built, and what is not measured
+
+- **Import and restore.** Neither exists. Restore is the one that matters for
+  this run's own safety: the backstop a discard writes can be read back and
+  cannot be put back, so a discard is undoable in the sense that nothing was
+  destroyed and not in the sense that a person can undo it from the CMS. The
+  read is there (`discardedDraft`) so that "undoable" is something anybody can
+  check rather than believe.
+- **Nothing is deployed and no browser has run any of it.** The frame's
+  control, the confirmation, the toast and the client's invalidation are
+  measured only in the sense that they compile, that their documents validate
+  against the agent's schema and that their messages format. Two editors on the
+  live booklimo.at, one discarding while the other types, is the acceptance and
+  it has not been taken.
+- **The first discard on either deployed site will refuse**, until a publish
+  has stored a published state.
+- **A save with no base is not refused after a discard**, see above.
+- **A draft that differs from the published state in nothing but its revision**
+  has its stamp corrected by a discard rather than being discarded, which is one
+  storage write and no push. Nobody has seen that state in the wild.
+- **The parked outbox is never read back.** It is a key in `localStorage` and a
+  sentence in this file.
+
 ## Acceptance
 
 - Two editors on booklimo: a change in one reaches the other in under two
@@ -980,6 +1154,8 @@ who discarded and when, not merely reverted under their hands.
 | byte identical data before and after the transition            | met 2026-09-08, four builds, sha256 `061e5491f389e376…`                                                                                      |
 | every loss scenario of `10-draft-persistence.ipynb`            | **met**, 35 PASS 0 FAIL 0 SKIP against the deployed agent                                                                                    |
 | the CMS still works on `localStorage` alone                    | met 2026-09-08 against the build the transition left; not re-measurable on a build that carries the option                                   |
+| discard is site wide, undoable from its snapshot, no outbox    | **built and measured against the object, not deployed and not driven from a browser**: 34 of 34 in the agent's suite, seven of them new      |
+| importing a patch writes only what differs                     | **not built**                                                                                                                                |
 
 ## Verified adversarially 2026-09-08, after the deploy
 
