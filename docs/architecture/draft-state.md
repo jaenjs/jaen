@@ -1647,9 +1647,7 @@ generated schema before the deploy, **7 of 7 valid**
 them), and the frame's eleven message ids **77 of 77** parsed and formatted in
 their own locale.
 
-### The first discard on this site was refused, exactly as this file said it
-
-### would be
+### The first discard on this site was refused, as this file said it would be
 
 `discardPreview` on the deployed object answered `canDiscard: false` with
 
