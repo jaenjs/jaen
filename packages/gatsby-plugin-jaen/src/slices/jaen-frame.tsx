@@ -299,9 +299,12 @@ const Slice: React.FC<SliceProps> = props => {
        * shared draft".
        */
       const discardAllItem = {
+        // One word in the drawer, where the button said "Discard Changes"
+        // for years and a sentence does not fit. The whole of it is said in
+        // the confirmation, which is where a person needs to read it.
         label: intl.formatMessage({
           id: 'CmsFrameDiscardAll',
-          defaultMessage: 'Discard all unpublished changes'
+          defaultMessage: 'Discard'
         }),
         icon: FaTrash,
         order: 3,

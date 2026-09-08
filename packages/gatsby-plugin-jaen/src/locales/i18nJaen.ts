@@ -32,7 +32,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveDraft: 'Entwurf speichern',
         CmsFrameImportDraft: 'Entwurf importieren',
         CmsFrameDiscardChanges: 'Änderungen verwerfen',
-        CmsFrameDiscardAll: 'Alle unveröffentlichten Änderungen verwerfen',
+        CmsFrameDiscardAll: 'Verwerfen',
         CmsFrameDiscardAllTitle: 'Alle unveröffentlichten Änderungen verwerfen',
         CmsFrameDiscardAllConfirm:
           '{fields, plural, one {# unveröffentlichte Änderung} other {# unveröffentlichte Änderungen}} auf {pages, plural, one {# Seite} other {# Seiten}} werden für alle rückgängig gemacht{who}{when}. Die Website geht auf den Stand der letzten Veröffentlichung zurück.',
@@ -806,7 +806,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveDraft: 'Taslağı kaydet',
         CmsFrameImportDraft: 'Taslağı içe aktar',
         CmsFrameDiscardChanges: 'Değişiklikleri at',
-        CmsFrameDiscardAll: 'Yayınlanmamış tüm değişiklikleri at',
+        CmsFrameDiscardAll: 'Vazgeç',
         CmsFrameDiscardAllTitle: 'Yayınlanmamış tüm değişiklikleri at',
         CmsFrameDiscardAllConfirm:
           '{pages, plural, one {# sayfadaki} other {# sayfadaki}} {fields, plural, one {# yayınlanmamış değişiklik} other {# yayınlanmamış değişiklik}} herkes için geri alınacak{who}{when}. Site son yayınlanan haline döner.',
@@ -1555,7 +1555,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveDraft: 'حفظ المسودة',
         CmsFrameImportDraft: 'استيراد المسودة',
         CmsFrameDiscardChanges: 'تجاهل التغييرات',
-        CmsFrameDiscardAll: 'تجاهل كل التغييرات غير المنشورة',
+        CmsFrameDiscardAll: 'تجاهل',
         CmsFrameDiscardAllTitle: 'تجاهل كل التغييرات غير المنشورة',
         CmsFrameDiscardAllConfirm:
           'سيتم التراجع للجميع عن {fields, plural, other {# تغييرًا غير منشور}} في {pages, plural, other {# صفحة}}{who}{when}. سيعود الموقع إلى آخر نشر.',
@@ -2278,7 +2278,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveDraft: 'Shrani osnutek',
         CmsFrameImportDraft: 'Uvozi osnutek',
         CmsFrameDiscardChanges: 'Zavrzi spremembe',
-        CmsFrameDiscardAll: 'Zavrzi vse neobjavljene spremembe',
+        CmsFrameDiscardAll: 'Zavrzi',
         CmsFrameDiscardAllTitle: 'Zavrzi vse neobjavljene spremembe',
         CmsFrameDiscardAllConfirm:
           '{fields, plural, one {# neobjavljena sprememba} other {# neobjavljenih sprememb}} na {pages, plural, one {# strani} other {# straneh}} bo za vse razveljavljenih{who}{when}. Spletno mesto se vrne na zadnjo objavo.',
@@ -3039,7 +3039,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveDraft: 'Salva bozza',
         CmsFrameImportDraft: 'Importa bozza',
         CmsFrameDiscardChanges: 'Scarta le modifiche',
-        CmsFrameDiscardAll: 'Scarta tutte le modifiche non pubblicate',
+        CmsFrameDiscardAll: 'Scarta',
         CmsFrameDiscardAllTitle: 'Scarta tutte le modifiche non pubblicate',
         CmsFrameDiscardAllConfirm:
           '{fields, plural, one {# modifica non pubblicata} other {# modifiche non pubblicate}} su {pages, plural, one {# pagina} other {# pagine}} verranno annullate per tutti{who}{when}. Il sito torna a quanto prodotto dall’ultima pubblicazione.',
@@ -3808,7 +3808,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveDraft: '下書きを保存',
         CmsFrameImportDraft: '下書きをインポート',
         CmsFrameDiscardChanges: '変更を破棄',
-        CmsFrameDiscardAll: '未公開の変更をすべて破棄',
+        CmsFrameDiscardAll: '破棄',
         CmsFrameDiscardAllTitle: '未公開の変更をすべて破棄',
         CmsFrameDiscardAllConfirm:
           '{pages, plural, other {#ページ}}の未公開の変更{fields, plural, other {#件}}が全員分取り消されます{who}{when}。サイトは最後の公開の状態に戻ります。',
@@ -4556,7 +4556,7 @@ export function getI18nJaen(code: I18nCode) {
       CmsFrameSaveDraft: 'Save draft',
       CmsFrameImportDraft: 'Import draft',
       CmsFrameDiscardChanges: 'Discard changes',
-      CmsFrameDiscardAll: 'Discard all unpublished changes',
+      CmsFrameDiscardAll: 'Discard',
       CmsFrameDiscardAllTitle: 'Discard all unpublished changes',
       CmsFrameDiscardAllConfirm:
         '{fields, plural, one {# unpublished change} other {# unpublished changes}} on {pages, plural, one {# page} other {# pages}} will be undone for everybody{who}{when}. The site goes back to what the last publish made.',
