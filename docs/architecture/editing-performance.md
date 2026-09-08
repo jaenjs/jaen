@@ -803,3 +803,215 @@ is left standing the way it was found.
 - **The storm is still there.** Every number above was taken with it running,
   which is the honest condition, and the notebook WARNs on it so the day it is
   fixed the reading changes visibly rather than silently.
+
+## The storm at its root, 2026-09-08
+
+This file has carried the same unfixed finding since its baseline: with edit
+mode on and nobody touching anything the store is dispatched about forty-seven
+times a second, change 1 coalesced the writes those dispatches caused and left
+every dispatch standing, and every run since has repeated the sentence. It is
+fixed here, the cause is named all the way down, and `09-editing-latency.ipynb`
+now fails unless the number is zero.
+
+The runs are stored in `tests/register/`. The probe is
+`tests/support/register-probe.py`.
+
+### How it was measured, and why not by counting writes
+
+A write counter cannot see this any more. Change 1 defers the write into one
+idle callback with a 250 ms deadline, so forty-seven dispatches a second appear
+as three writes a second, which is what the drawer run above reported.
+
+So the dispatches are counted where they are made. jaen's store is built with
+`devTools: true`, and `configureStore` composes its enhancers through
+`window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__` whenever that global exists, so a
+shim installed by `add_init_script` before any script of the page can append one
+enhancer of its own. It is appended **inside** the middleware, so the dispatch
+it wraps is the one that reaches the root reducer and no action is missed,
+including the ones the recorder middleware makes. It counts by action type,
+keeps a histogram of the `fieldName` of every `pages/field_register`, and stores
+stacks. Beside it: a wrapper around `localStorage.setItem`, a long task
+observer, React's own commit and fiber-deletion counters through the devtools
+hook, a `requestAnimationFrame` counter, and a 50 ms `setTimeout` loop whose
+real interval is the main thread's own answer about how busy it is.
+
+Everything was run on booklimo's own production build served under its own name
+behind a socat TLS listener, signed in as the booklimo human admin, against the
+live agent. The same build directory,
+`limosen-v3/booklimo.at-storm-build`, was rebuilt for each of the two readings,
+so before and after differ in jaen's `dist` and in nothing else.
+
+### The measurement
+
+Two five second windows with nobody touching anything, on the same build, the
+same browser and the same machine.
+
+| five seconds, untouched, edit mode on  | before           | after        |
+| -------------------------------------- | ---------------- | ------------ |
+| dispatches a second                    | 55.6 to 57.2     | **0.0**      |
+| all of them `pages/field_register`     | 100%             | none         |
+| `localStorage` writes a second         | 3.0 to 3.2       | **0.0**      |
+| bytes written per five seconds         | 41,730 to 44,512 | **0**        |
+| React commits a second                 | 55.6 to 57.2     | 0.2          |
+| React fiber deletions per five seconds | 32,200 to 33,120 | **0**        |
+| animation frames a second              | 28.0 to 28.8     | 59.7 to 60.0 |
+| a 50 ms `setTimeout` fires at          | 72.7 to 74.8 ms  | 50 ms        |
+| longest long task                      | 0 to 68 ms       | 0 ms         |
+
+Edit mode off is the control and is 0.0 dispatches a second, 0.0 writes and
+59.9 frames a second in both readings.
+
+Beside them, on the same runs: eight blurs of a real field, clicked with the
+mouse and left with Tab, caused **1,212 dispatches before and 0 after**, and the
+longest long task in the second after a click on a field was 0, 71, 0, 0, 0 and
+59 ms before and 0 ms on all six clicks after.
+
+### Which fields, and how many
+
+**Two.** Every one of the fifty-five dispatches a second came from
+`FooterTagline` and `FooterRights`, twenty-eight times a second each, on a page
+with forty-one editable fields. The other thirty-nine register once when the
+page boots and never again: the boot window shows thirty-six
+`pages/field_register`, one per field, and then nothing.
+
+That is what turned a general suspicion into a cause. A storm that came from
+the registration path as such would have shown every field in it.
+
+### The loop, link by link
+
+1. **The site remounts the footer.** booklimo's own
+   `src/gatsby-plugin-jaen/components/Layout.tsx` builds the footer as
+   `const FooterWithLocale: React.FC = () => <Footer fieldNamePrefix={localePrefix} />`
+   inside `Layout`'s render. A component type created during a render is a new
+   type on every render, and React answers a new type by unmounting the whole
+   subtree and mounting a new one. Nothing else on the page is built that way,
+   which is why nothing else stormed.
+2. **A remount runs the registration effect.** `TextField`'s effect has
+   `[jaenField.isEditing]` for its dependency list and is therefore correct as
+   written: it does not re-run because a dependency changed, it re-runs because
+   the component is new. It calls `connectField`'s register, which calls
+   `useField`'s register.
+3. **The registration was a dispatch whatever it said.** `useField` dispatched
+   `pages/field_register` unconditionally, and the reducer then replaced
+   `state.page.pages.nodes[pageId]` with a spread, so the page node's identity
+   changed even when not one byte of it did.
+4. **A new page node re-renders the page.** `usePage` subscribes to the store
+   and calls `setDynamicPage(populateDynamicPage({...dynamicPage, id}))` on
+   every dispatch, unconditionally and with a fresh object, so every consumer of
+   a page re-renders. `Layout` is one of them.
+5. Back to 1.
+
+The measurement holds each link. The count of times each footer field's DOM
+node was replaced, watched in a `requestAnimationFrame` loop, equals the count
+of that field's registrations to within one: 144 against 143, 145 against 145,
+140 against 140 in three windows. So it is exactly one registration per
+remount. And when the dispatch of step 3 goes, everything stops: no commits, no
+fiber deletions, no remounts, sixty frames a second. That is the proof the loop
+was closed through the store and not driven from outside it.
+
+### What was changed, and where
+
+**`useField`'s `register` dispatches only when the store would change.** It
+reads the field out of the store and compares the registration it is about to
+write with the one already there. A registration carries no value and is never
+recorded as a change (`remote-state.ts` records `pages/field_write` and never
+`pages/field_register`), so one that says what the store says has no
+consequence at all except its cost, and its cost was the whole storm.
+`utils/registration.ts` holds the comparison: by key set and by value, with an
+`undefined` value counting as absent, which is what `JSON.stringify` does to it
+on the way into `localStorage` anyway.
+
+The guard is in the hook rather than in the reducer because a dispatch that
+changes no state still runs every store subscriber, still marks the persister
+dirty and still costs a notification. Stopping it in the reducer would have
+left all of that, which is damping rather than fixing. **The reducer carries the
+same test as a second line** for any caller that is not this hook, and that also
+stops it replacing the page node's identity for nothing.
+
+**And the three things this file asked for in `use-field.ts`** in "The engine of
+the storm", which are real defects whether or not they were this engine. The
+reader leaves both dependency lists through a ref instead of being rebuilt into
+them on every render, so the first effect no longer runs after every render and
+no longer hands `setField` the reader itself. The first effect sets state only
+when the value really differs. The store subscription is made once per field
+rather than once per change, and it compares by identity before it serialises
+anything: the store is immer's, so a field nothing wrote comes back as the very
+same object, where the old code serialised both the new field and the old one on
+every dispatch for every field on the page, forty-one fields twice each per
+dispatch.
+
+The section a write and a registration name is memoised by its content, because
+`SectionBlockContext` is a fresh object on every render of its provider and a
+dependency list carrying it is unstable for every field inside a section.
+
+### What was deliberately not changed
+
+- **booklimo's `FooterWithLocale`.** It is the cause of the remount and it is
+  the site's own file. Fixing it there would take the remount off booklimo and
+  leave every other site exposed to the same storm, and a CMS cannot rely on
+  its consumers never defining a component during a render. It is named here so
+  it can be fixed in the site as well, which would additionally save the footer
+  being rebuilt on every page render.
+- **`usePage`'s unconditional `setDynamicPage`.** It is the amplifier of step 4
+  and it is still there: one legitimate field write hands every page consumer a
+  fresh object and re-renders the page tree, which on booklimo remounts the
+  footer once. That is one remount and not a loop, so the gate is met without
+  it. It was left because it is not this run's to take, it is not the frame's
+  either, and it touches how page data reaches every field. Whoever takes it
+  should compare the produced page with the previous one before setting state,
+  the way the field subscription now does.
+- **Nothing in the persistence path, the agent or the frame moved.**
+
+### The doubts, named
+
+- **No build made from this working tree can hydrate its draft.** The agent
+  client in `packages/jaen/src/clients/agent/index.ts` asks a `Draft` for
+  `discardedRevision`, `discardedAt`, `discardedBy`, `discardedByName` and
+  `discarded`, and the deployed jaen-agent 4.0.0 has none of them, so every
+  draft read answers `GRAPHQL_VALIDATION_FAILED`, the CMS never hydrates and
+  `remote.revision` stays null while the socket is open and the agent answers
+  200 to `viewer` and to `subscribe`. That is somebody else's work in flight and
+  not this change: it is identical before and after, the storm is a client
+  render loop that does not depend on the draft, and a save still reaches the
+  object, revision 119 and then 120 during this run. It does mean that until the
+  agent is redeployed or the query is put back, every draft-dependent check of
+  `09` and `10` is measuring a CMS that never received a draft. It was worked
+  around here by rewriting the query on the wire, read only, to read the draft
+  back.
+- **The blur to the next painted frame is unchanged**, 14.9 ms median over eight
+  blurs before and 20.6 ms after, and neither is a verdict. The gap is the wait
+  for the next vsync in both cases: a page painting 28 frames a second and one
+  painting 60 both hand the next frame over in about a frame. The first one or
+  two blurs of a run are slower than the rest, 71 and 80 ms, because the field
+  highlighter builds its frame the first time a field is focused. What the fix
+  removes is the work, and the dispatch count is the honest reading of it.
+- **The main thread a blur holds was measured with `setTimeout(0)`**, which the
+  browser may run after a rendering step, so the 26.9 ms median it reports is an
+  upper bound on a task rather than the task. It is recorded and not asserted
+  on.
+- **One machine, one browser, one viewport, one page.** Apple M1 Max under
+  Asahi, headless chromium at 1440x900, booklimo's home page with forty-one
+  editable fields.
+- **The count is of actions reaching the reducer.** An action a middleware
+  swallowed before the reducer would not be counted. Nothing in jaen does that.
+- **The notebook's own gate was validated against the two stored runs** rather
+  than by running `09` end to end, which needs the node bench and three more
+  browser scenarios. Every assertion of the new section passes on
+  `tests/register/after.json` and fails on `before.json`.
+
+### What this run left on the live site
+
+One field, typed and set back, and it took two attempts to set back.
+`FleetTitle` was `Our fleet`, went to `Our fleet storm-probe` at revision 119,
+and is `Our fleet` again at revision 120, read back out of the object with an
+empty outbox and `publishedRevision` 97. The first restore was dispatched
+through the probe's own handle on the store, which is the innermost store below
+the middleware chain, so the recorder never saw it, no change reached the outbox
+and no save left the browser: the object kept the typed value until it was
+corrected by typing in the field the way a person would. The probe says so at
+the seam now, because a test that can leave a live draft dirty without noticing
+is worse than no test.
+
+The draft's other fields carry other sessions' text (`Our services etst`,
+`bebrnf` on `FaqSubtitle`) and were left exactly as they were found. Nothing was
+written on limosen.
