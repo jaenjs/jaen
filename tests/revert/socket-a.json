@@ -1,0 +1,222 @@
+{
+  "scenario": "socket",
+  "origin": "https://booklimo.at",
+  "site": "booklimo.at",
+  "field": "FaqSubtitle",
+  "otherField": "ServicesSubtitle",
+  "startedAt": "2026-09-08T21:28:13.297399+00:00",
+  "objectBefore": {
+    "revision": 222,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T21:28:13.148Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "draftFieldsBefore": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like.",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service.",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+  },
+  "signedIn": true,
+  "draftSeen": true,
+  "editable": true,
+  "armed": true,
+  "stateAtStart": {
+    "revision": 222,
+    "publishedRevision": 183,
+    "outbox": 0,
+    "saveState": "idle",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "fieldAtStart": "Short answers about booking, vehicles and service.",
+  "otherAtStart": "Get a quick overview. See details if you like.",
+  "secondEditorAnswer": {
+    "data": {
+      "save": {
+        "revision": 224,
+        "rebased": true,
+        "keys": 3,
+        "savedAt": "2026-09-08T21:28:27.847Z",
+        "overwrote": []
+      }
+    }
+  },
+  "secondEditorAt": 0.06835103034973145,
+  "otherSeenAfterSeconds": 0.5735197067260742,
+  "otherOnScreen": "Get a quick overview. See details if you like. D",
+  "stateAfter": {
+    "revision": 224,
+    "publishedRevision": 183,
+    "outbox": 0,
+    "saveState": "saved",
+    "connection": "socket",
+    "isEditing": true
+  },
+  "calls": [
+    {
+      "op": "Save",
+      "sentAt": 6749.6,
+      "sentIso": "2026-09-08T21:28:27.763Z",
+      "sinceRevision": null,
+      "baseRevision": 222,
+      "changes": 1,
+      "changeValues": [
+        "FaqSubtitle=Short answers about booking, vehicles and service. EEE"
+      ],
+      "clientAtSend": {
+        "revision": 222,
+        "publishedRevision": 183,
+        "outbox": 1,
+        "saveState": "saving"
+      },
+      "held": false,
+      "answeredAt": 6814.2,
+      "answeredIso": "2026-09-08T21:28:27.828Z",
+      "status": 200,
+      "answer": {
+        "revision": 223,
+        "rebased": false,
+        "keys": null
+      },
+      "deliveredAt": 6814.2
+    },
+    {
+      "op": "Draft",
+      "sentAt": 6854.8,
+      "sentIso": "2026-09-08T21:28:27.868Z",
+      "sinceRevision": 223,
+      "baseRevision": null,
+      "changes": null,
+      "changeValues": null,
+      "clientAtSend": {
+        "revision": 223,
+        "publishedRevision": 183,
+        "outbox": 0,
+        "saveState": "saved"
+      },
+      "held": false,
+      "answeredAt": 6882.5,
+      "answeredIso": "2026-09-08T21:28:27.896Z",
+      "status": 200,
+      "answer": {
+        "revision": 224,
+        "publishedRevision": 183,
+        "changed": true,
+        "full": false,
+        "discardedRevision": 183,
+        "fieldValue": "Short answers about booking, vehicles and service. EEE"
+      },
+      "deliveredAt": 6882.5
+    }
+  ],
+  "rows": [
+    {
+      "at": 5745.9,
+      "iso": "2026-09-08T21:28:26.759Z",
+      "client": {
+        "revision": 222,
+        "publishedRevision": 183,
+        "outbox": 0,
+        "saveState": "idle"
+      },
+      "store": "Short answers about booking, vehicles and service. EEE",
+      "dom": "Short answers about booking, vehicles and service. EEE",
+      "actions": {
+        "pages/field_write": 1
+      }
+    },
+    {
+      "at": 5748.9,
+      "iso": "2026-09-08T21:28:26.762Z",
+      "client": {
+        "revision": 222,
+        "publishedRevision": 183,
+        "outbox": 1,
+        "saveState": "pending"
+      },
+      "store": "Short answers about booking, vehicles and service. EEE",
+      "dom": "Short answers about booking, vehicles and service. EEE",
+      "actions": {
+        "remote/record": 1
+      }
+    },
+    {
+      "at": 6748.7,
+      "iso": "2026-09-08T21:28:27.762Z",
+      "client": {
+        "revision": 222,
+        "publishedRevision": 183,
+        "outbox": 1,
+        "saveState": "saving"
+      },
+      "store": "Short answers about booking, vehicles and service. EEE",
+      "dom": "Short answers about booking, vehicles and service. EEE",
+      "actions": {
+        "remote/saveStarted": 1
+      }
+    },
+    {
+      "at": 6815.8,
+      "iso": "2026-09-08T21:28:27.829Z",
+      "client": {
+        "revision": 223,
+        "publishedRevision": 183,
+        "outbox": 0,
+        "saveState": "saved"
+      },
+      "store": "Short answers about booking, vehicles and service. EEE",
+      "dom": "Short answers about booking, vehicles and service. EEE",
+      "actions": {
+        "remote/saveSucceeded": 1
+      }
+    },
+    {
+      "at": 6885.2,
+      "iso": "2026-09-08T21:28:27.899Z",
+      "client": {
+        "revision": 224,
+        "publishedRevision": 183,
+        "outbox": 0,
+        "saveState": "saved"
+      },
+      "store": "Short answers about booking, vehicles and service. EEE",
+      "dom": "Short answers about booking, vehicles and service. EEE",
+      "actions": {
+        "pages/hydrateFromRemote": 1,
+        "site/hydrateFromRemote": 1,
+        "widget/hydrateFromRemote": 1,
+        "remote/remoteHydrated": 1
+      }
+    }
+  ],
+  "warns": [],
+  "error": null,
+  "draftFieldsAfter": {
+    "FleetTitle": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+    "ServicesTitle": "Our services",
+    "ServicesSubtitle": "Get a quick overview. See details if you like. D",
+    "AboutP1": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+    "FeedbackBoxText": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+    "FaqSubtitle": "Short answers about booking, vehicles and service. EEE",
+    "AboutP2": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+    "AboutP3": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer"
+  },
+  "objectAfter": {
+    "revision": 224,
+    "publishedRevision": 183,
+    "discardedRevision": 183,
+    "updatedAt": "2026-09-08T21:28:27.847Z",
+    "updatedBy": "389619038474475123",
+    "full": true,
+    "changed": true
+  },
+  "endedAt": "2026-09-08T21:28:28.561882+00:00"
+}

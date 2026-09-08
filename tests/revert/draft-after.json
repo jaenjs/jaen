@@ -1,0 +1,118 @@
+{
+  "revision": 284,
+  "publishedRevision": 183,
+  "discardedRevision": 183,
+  "updatedAt": "2026-09-08T21:34:18.225Z",
+  "updatedBy": "389619038474475123",
+  "full": true,
+  "changed": true,
+  "delta": {
+    "pages": {
+      "JaenPage /": {
+        "childPages": [],
+        "modifiedAt": "2026-09-08T21:34:18.225Z",
+        "jaenFields": {
+          "IMA:TextField": {
+            "FleetTitle": {
+              "value": "dudhdtttttOur fleet &nbsp;test &nbsp;dudhd",
+              "props": {
+                "id": "FleetTitle"
+              }
+            },
+            "ServicesTitle": {
+              "value": "Our services",
+              "props": {
+                "id": "ServicesTitle"
+              }
+            },
+            "ServicesSubtitle": {
+              "value": "Get a quick overview. See details if you like."
+            },
+            "AboutP1": {
+              "value": "Since 2016 KRC Limousinenservice KG has provided service 24 hours a day all year while following developments in the industry and technology.eueh",
+              "props": {
+                "id": "AboutP1"
+              }
+            },
+            "FeedbackBoxText": {
+              "value": "Write a review for KRC Limousinenservice on Google. The button opens the review window straight away, so there is nothing to look for.",
+              "props": {
+                "id": "FeedbackBoxText"
+              }
+            },
+            "FaqSubtitle": {
+              "value": "Short answers about booking, vehicles and service."
+            },
+            "AboutP2": {
+              "value": "Our fleet grows steadily with modern Mercedes Benz vehicles and friendly professional experienced drivers. We work reliably economically and with comfort in mind and keep improving service quality.uejej",
+              "props": {
+                "id": "AboutP2"
+              }
+            },
+            "AboutP3": {
+              "value": "Customer satisfaction is our top priority. Our vision is to serve the destinations in our portfolio in the best way and deliver the highest quality.uejer",
+              "props": {
+                "id": "AboutP3"
+              }
+            }
+          }
+        },
+        "id": "JaenPage /",
+        "childPagesOrder": [],
+        "jaenPageMetadata": {}
+      }
+    },
+    "authors": {
+      "JaenPage //IMA:TextField/AboutP1": {
+        "sub": "356353596016563797",
+        "name": "Florian Kleber",
+        "at": "2026-09-08T21:07:40.300Z"
+      },
+      "JaenPage //IMA:TextField/AboutP2": {
+        "sub": "356353596016563797",
+        "name": "Florian Kleber",
+        "at": "2026-09-08T21:07:44.078Z"
+      },
+      "JaenPage //IMA:TextField/AboutP3": {
+        "sub": "356353596016563797",
+        "name": "Florian Kleber",
+        "at": "2026-09-08T21:07:45.903Z"
+      },
+      "JaenPage //IMA:TextField/FaqSubtitle": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T21:34:18.225Z"
+      },
+      "JaenPage //IMA:TextField/FeedbackBoxText": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T18:54:06.289Z"
+      },
+      "JaenPage //IMA:TextField/FleetTitle": {
+        "sub": "356353596016563797",
+        "name": "Florian Kleber",
+        "at": "2026-09-08T21:08:50.664Z"
+      },
+      "JaenPage //IMA:TextField/ProbeField": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T09:42:05.899Z"
+      },
+      "JaenPage //IMA:TextField/ServicesSubtitle": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T21:32:34.141Z"
+      },
+      "JaenPage //IMA:TextField/ServicesTitle": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T18:54:06.289Z"
+      },
+      "JaenPage //page": {
+        "sub": "389619038474475123",
+        "name": "taxi-test-admin-krc-api",
+        "at": "2026-09-08T09:44:25.579Z"
+      }
+    }
+  }
+}
