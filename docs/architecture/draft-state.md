@@ -1101,3 +1101,82 @@ first time the estate sees a token, because that is Zitadel's introspection and
 userinfo, and the only ways past it are a longer `AUTH_CACHE_TTL_MS`, which the
 cache already caps against the token's own expiry, or not introspecting, which
 is not on offer.
+
+## Shipped, 2026-09-08 in the evening
+
+The split catalogue, the merged field and the shared introspection cache are
+deployed, and this is what the live estate does with them.
+
+**The stamps.** `jaen-agent` 3.1.0 (`8a5a057`, built `2026-09-08T01:14:38Z`,
+Cloudflare version `40894ec7-5687-4e42-b47b-7eda357e6224`) through
+`packages/jaen-agent/scripts/deploy.sh`, one Worker on both custom domains, and
+`{ version { agent commit builtAt } }` read back off each of them:
+`jaen-agent.booklimo.at` and `jaen-agent.limosen.at` both answer
+`3.1.0 8a5a057`. The three dists were rebuilt in this checkout first, `jaen`,
+`gatsby-plugin-jaen` and `gatsby-source-jaen`, and both sites were built and
+deployed with their own `scripts/deploy.sh`, booklimo as `6330d647` and limosen
+as `9ded768c`, `JAEN_APP_COMMIT=2c7e0eb` on both so the four values name one
+sha. `/app/version.json` answers `1.8.1` and `2c7e0eb` on both brands: no app
+version moves for a change that lives in jaen alone, the way none moved on
+2026-09-05.
+
+**The served bundle carries the field level save.** One chunk of each site,
+`/0bad5841-cdd6efe2108514223b12.js` on booklimo.at and
+`/0bad5841-0b8a1928fde7cf4453a4.js` on limosen.at, carries `fieldMerge`, the
+`removed` prop beside it and the `viewer(` warm up call. `live-media.json` is
+not in the client and is not meant to be: which file a change belongs in is the
+agent's decision and the client never names a path.
+
+**The catalogue came out of `live.json`, once, on the first save.** Before the
+first live save `jaen-data/live.json` of `netsnek/booklimo.at` was 120 156
+bytes. After it `live.json` is 1 899 and `live-media.json` is 118 531, and
+`patches.txt` ends with `live.json` and then `live-media.json` in that order,
+recorded by its own commit `jaen: record the head patches in patches.txt`.
+Every save after it wrote one file: the four text saves touched `live.json` and
+nothing else, the eleven media saves touched `live-media.json` and nothing else.
+`limosen.at` was deployed and not written to, so its own `live.json` still
+carries its catalogue and will split on its first save the same way.
+
+**The two legs, live, two browser contexts of the booklimo human admin.** The
+clock starts on the blur of the home page's first field, or on the file being
+handed to the upload button, and stops when the second context renders the
+change. Three samples each, and the row above them is the adversarial read of
+the same morning against the agent as it was deployed before this work.
+
+| what                            | before, 2026-09-08 02:30 | now                |
+| ------------------------------- | ------------------------ | ------------------ |
+| a text change, the first sample | 8.77 s and 8.24 s        | 6.25 s             |
+| a text change, the warm samples | 7.44, 6.36, 6.58, 6.52 s | 5.27, 6.08, 5.56 s |
+| a picture                       | 9.82 s and 9.71 s        | 8.25, 9.15, 9.76 s |
+
+The finding is the first row. The first save of a session used to be two
+seconds slower than the rest, in both runs of the adversarial read, and both of
+those samples were over eight seconds. It is not slower any more, and the 6.25 s
+sample is the one that also carried the catalogue out of `live.json`, so the
+steady state is the three below it. `viewer(site)` is what did it: the CMS asks
+who is calling while the toolbar comes up, the estate's KV holds the answer for
+the minute, and no editor pays the introspection inside a save.
+
+The picture leg did not move the way the text leg did, and the reason is not
+the save. Watched on the wire during one upload, the gateway takes three
+requests of 1 265, 1 252 and 1 981 ms starting 82 ms after the file is picked,
+and the save mutation starts at 1 751 ms and takes 4 089 ms. So a picture waits
+for `osg.netsnek.com` before the agent hears about it at all, and that is not
+something this work touched. What this work did to the picture is the request:
+one new node used to send the whole catalogue and now sends the node.
+
+**The save itself, on the live agent.** A text save is 587 bytes and 3 376 ms,
+putting the field back is 578 bytes and 2 930 ms, and a picture save is 1 104
+bytes and 3 840 ms in one run and 4 089 in another. These are bigger than the
+1.1 to 1.8 s the local A/B measured and they are supposed to be: the local runs
+had a `wrangler dev` on this machine talking to GitHub over this machine's
+link, and this is a browser in Vienna to Cloudflare to GitHub. The ratio the
+local run measured is what carries over. The absolute figure is this one.
+
+**Reverted.** The home page's field is `"Our fleet"` again in `live.json`, which
+is 1 191 bytes of JSON carrying no marker, and `live-media.json` holds the same
+140 nodes it held before the run, the same ids in the same set, with no
+`shipmedia`, `shipwire` or `shiposg` anywhere in it. The five test pictures were
+deleted through the library the way an editor deletes one. Their blobs stay on
+the storage gateway with nothing pointing at them, which is the open point below
+and not a regression of this run.
