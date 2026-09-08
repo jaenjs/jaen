@@ -54,12 +54,17 @@ import {
   emptyMeta,
   KEY,
   type DraftDelta,
+  type DraftDiscardInput,
+  type DraftDiscardPreview,
+  type DraftDiscardResult,
+  type DraftEditor,
   type DraftMeta,
   type DraftRead,
   type DraftSnapshot,
   type DraftTicket,
   type DraftWriteInput,
-  type DraftWriteResult
+  type DraftWriteResult,
+  type MediaField
 } from './store'
 
 /** The env a draft object is constructed with. */
@@ -97,6 +102,54 @@ const LIST_PAGE = 500
  * same reason. An hour costs a few hundred bytes per deleted picture.
  */
 const TOMBSTONE_TTL_MS = 3_600_000
+/**
+ * One chunk of the published state.
+ *
+ * A SQLite backed object allows 2 MB for a key and its value together
+ * (draft-state.md, "What a Durable Object actually allows"), so half of that
+ * leaves room for the serialisation the runtime puts around a string and for a
+ * catalogue that grows. booklimo's whole published state is about 120 KB, so
+ * it is one chunk today and the chunking exists for the site that is not
+ * booklimo.
+ */
+const CHUNK_BYTES = 1_000_000
+/** How many times a discard re-takes its backstop before it gives up. */
+const DISCARD_ATTEMPTS = 3
+
+/**
+ * A write that would fold a browser's unsent changes back on top of a discard.
+ *
+ * It is the one refusal this store makes, and it is deliberate. Every other
+ * stale write is rebased, because rebasing is how an edit is not lost; a write
+ * whose base is below the last discard is different in kind, because those
+ * changes are exactly the ones an admin asked to be gone, and applying them
+ * would resurrect part of what was just undone in every other editor's browser
+ * as well. The client is told which revision invalidated it, drops its outbox
+ * and reads the draft whole. See draft-state.md, "Three operations that
+ * rewrite the shared draft".
+ */
+export class DraftDiscardedWriteError extends Error {
+  readonly code = 'DRAFT_DISCARDED'
+  readonly status = 409
+  readonly discardedRevision: number
+  readonly discardedAt: string | null
+  readonly discardedByName: string | null
+
+  constructor(meta: DraftMeta) {
+    super(
+      `The unpublished changes of ${meta.site} were discarded at revision ` +
+        `${meta.discardedRevision}` +
+        (meta.discardedByName ? ` by ${meta.discardedByName}` : '') +
+        `. This save was made against revision ` +
+        `${meta.discardedRevision - 1} or older, so it would put back part of ` +
+        `what was discarded and is refused.`
+    )
+    this.name = 'DraftDiscardedWriteError'
+    this.discardedRevision = meta.discardedRevision
+    this.discardedAt = meta.discardedAt
+    this.discardedByName = meta.discardedByName
+  }
+}
 
 interface Stored<T> {
   /** The revision this key last changed at. */
@@ -191,14 +244,48 @@ export class JaenDraftObject {
         case 'snapshot':
           return json(await this.snapshot(site))
         case 'published':
-          return json(await this.markPublished(site, Number(body.revision)))
+          return json(
+            await this.markPublished(
+              site,
+              Number(body.revision),
+              (body.published as DraftSnapshot | null) ?? null
+            )
+          )
+        case 'discardPreview':
+          return json(await this.discardPreview(site))
+        case 'discard':
+          return json(await this.discard(site, body.input as DraftDiscardInput))
+        case 'discarded':
+          return json({snapshot: await this.discardedSnapshot(site)})
         default:
           return json({error: `unknown draft operation ${op}`}, 404)
       }
     } catch (error) {
       console.error('jaen-agent draft object', op, error)
 
-      return json({error: (error as Error).message ?? String(error)}, 500)
+      // A refusal this object means is answered with its own code and its own
+      // status, so the Worker can turn it back into the refusal the client
+      // knows rather than into "the draft store is unreachable", which is what
+      // every 500 out of here becomes and which would make a client wait and
+      // retry for ever.
+      const known = error as {code?: string; status?: number; message?: string}
+
+      return json(
+        {
+          error: known?.message ?? String(error),
+          code: known?.code ?? null,
+          ...(known?.code === 'DRAFT_DISCARDED'
+            ? {
+                discardedRevision: (error as DraftDiscardedWriteError)
+                  .discardedRevision,
+                discardedAt: (error as DraftDiscardedWriteError).discardedAt,
+                discardedByName: (error as DraftDiscardedWriteError)
+                  .discardedByName
+              }
+            : {})
+        },
+        known?.status ?? 500
+      )
     }
   }
 
@@ -235,6 +322,14 @@ export class JaenDraftObject {
       publishedRevision: meta.publishedRevision,
       updatedAt: meta.updatedAt,
       updatedBy: meta.updatedBy,
+      // Every read carries the invalidation, and not only the socket frame:
+      // a browser that was offline through a discard was not there for the
+      // frame, and the first answer it gets has to tell it that what it holds
+      // was thrown away.
+      discardedRevision: meta.discardedRevision,
+      discardedAt: meta.discardedAt,
+      discardedBy: meta.discardedBy,
+      discardedByName: meta.discardedByName,
       snapshotRevision: meta.snapshotRevision,
       snapshotAt: meta.snapshotAt,
       snapshotBytes: meta.snapshotBytes,
@@ -336,6 +431,29 @@ export class JaenDraftObject {
     }
 
     const meta = await this.meta(site)
+
+    /**
+     * The one write this store refuses, see DraftDiscardedWriteError.
+     *
+     * A base below the last discard's revision is a browser holding the draft
+     * that was discarded, so its unsent changes are the ones an admin asked to
+     * be gone. `baseRevision === discardedRevision` is the browser that has
+     * already read the discard, and it is accepted: whatever it sends now was
+     * typed against the restored draft.
+     *
+     * A write that volunteers no base at all is **not** refused, because the
+     * object cannot tell a stale client from a caller that never sends one,
+     * and refusing every such write would break a client this interface still
+     * allows. The shipped CMS always sends a base.
+     */
+    if (
+      meta.discardedRevision > 0 &&
+      typeof input.baseRevision === 'number' &&
+      input.baseRevision < meta.discardedRevision
+    ) {
+      throw new DraftDiscardedWriteError(meta)
+    }
+
     const beforeMediaField = stable(meta.mediaField)
     const revision = meta.revision + 1
 
@@ -558,6 +676,9 @@ export class JaenDraftObject {
     meta.revision = revision
     meta.updatedAt = stampedAt
     meta.updatedBy = author.sub
+    // The name beside the subject, because a confirmation and a push have to
+    // print who wrote something and a Zitadel subject is not a person's name.
+    meta.updatedByName = author.name
     writes.set(KEY.meta, meta)
 
     await this.putAll(writes)
@@ -806,16 +927,669 @@ export class JaenDraftObject {
     }
   }
 
-  async markPublished(site: string, revision: number): Promise<DraftMeta> {
+  /**
+   * What publish took, and the state it wrote, which is what a discard
+   * restores.
+   *
+   * The number alone was enough while nothing could put the draft back. It is
+   * not enough now: `draft-state.md` says a discard restores "from the
+   * snapshot publish keeps rather than by replaying the chain, so the result
+   * is exactly what the last migration produced", and only the payload that
+   * publish uploaded is exactly that. Taking a fresh snapshot here would keep
+   * whatever the draft holds at this instant, which is the published state
+   * plus any save that landed while the commit was being made.
+   *
+   * The state is stored beside the meta rather than in place of it, and the
+   * two are written in one handler, so an object that has a `publishedRevision`
+   * always has the state that goes with it.
+   */
+  async markPublished(
+    site: string,
+    revision: number,
+    published?: DraftSnapshot | null
+  ): Promise<DraftMeta> {
     const meta = await this.meta(site)
 
     meta.publishedRevision = Number.isFinite(revision)
       ? revision
       : meta.revision
 
+    if (published?.data) {
+      const bytes = await this.writePublished({
+        ...published,
+        revision: meta.publishedRevision
+      })
+
+      meta.publishedAt = published.takenAt ?? new Date().toISOString()
+      meta.publishedBytes = bytes
+    }
+
     await this.storage.put(KEY.meta, meta)
 
     return meta
+  }
+
+  // ------------------------------------------------------------------
+  // the published state, which is what a discard restores
+  // ------------------------------------------------------------------
+
+  /** Chunked, and the old chunks go first so a shorter state cannot leave a tail. */
+  private async writePublished(snapshot: DraftSnapshot): Promise<number> {
+    const body = JSON.stringify(snapshot)
+    const stale = (await this.listAll<unknown>(KEY.published)).map(
+      ([key]) => key
+    )
+
+    for (let i = 0; i < stale.length; i += PUT_BATCH) {
+      await this.storage.delete(stale.slice(i, i + PUT_BATCH))
+    }
+
+    const writes = new Map<string, unknown>()
+
+    for (let i = 0, n = 0; i < body.length; i += CHUNK_BYTES, n += 1) {
+      writes.set(
+        KEY.published + String(n).padStart(4, '0'),
+        body.slice(i, i + CHUNK_BYTES)
+      )
+    }
+
+    await this.putAll(writes)
+
+    return body.length
+  }
+
+  private async readPublished(): Promise<DraftSnapshot | null> {
+    const chunks = await this.listAll<unknown>(KEY.published)
+
+    if (chunks.length === 0) return null
+
+    // `listAll` answers in key order and the keys are zero padded, so the
+    // chunks come back in the order they were written.
+    const body = chunks.map(([, value]) => String(value as unknown)).join('')
+
+    try {
+      return JSON.parse(body) as DraftSnapshot
+    } catch (error) {
+      // A published state that cannot be parsed is a discard that must not be
+      // made: restoring half of it would be worse than refusing.
+      console.error('jaen-agent: the published state is not readable', error)
+
+      return null
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // discard: the draft put back to what the last publish wrote
+  // ------------------------------------------------------------------
+
+  /**
+   * The published state, split the way this object stores a draft.
+   *
+   * `snapshot()` folds the catalogue back into the field it came out of, so a
+   * published state carries it inside a page node. Storing it again means
+   * taking it out: the pages go to `page:` without it and the catalogue's
+   * entries go to `media:` one key each, which is the layout the rest of this
+   * file reads and writes.
+   */
+  private unfold(
+    published: DraftSnapshot,
+    field: MediaField | null
+  ): {
+    pages: Record<string, JaenPageNode>
+    media: Record<string, unknown>
+    site: JaenSiteState
+    widgets: JaenWidget[]
+  } {
+    const pages: Record<string, JaenPageNode> = {}
+
+    for (const page of published.data?.pages ?? []) {
+      const id = String(page?.id ?? '')
+
+      if (!id) continue
+
+      pages[id] = {...page}
+    }
+
+    const media: Record<string, unknown> = {}
+
+    if (field) {
+      const page = pages[field.pageId]
+      const value = page?.jaenFields?.[field.fieldType]?.[field.fieldName]
+        ?.value as Record<string, unknown> | undefined
+
+      if (value && typeof value === 'object') {
+        for (const [id, node] of Object.entries(value)) media[id] = node
+      }
+
+      if (page?.jaenFields?.[field.fieldType]?.[field.fieldName]) {
+        const byType = {...page.jaenFields[field.fieldType]!}
+
+        delete byType[field.fieldName]
+
+        const fields = {...page.jaenFields}
+
+        if (Object.keys(byType).length) fields[field.fieldType] = byType
+        else delete fields[field.fieldType]
+
+        pages[field.pageId] = {...page, jaenFields: fields}
+      }
+    }
+
+    return {
+      pages,
+      media,
+      site: published.data?.site ?? {siteMetadata: {}},
+      widgets: published.data?.widgets ?? []
+    }
+  }
+
+  /** Every field of a page as `pageId/fieldType/fieldName`, plus its sections. */
+  private fieldKeysOf(
+    id: string,
+    page: JaenPageNode | undefined
+  ): Map<string, string> {
+    const out = new Map<string, string>()
+
+    if (!page) return out
+
+    for (const [type, byName] of Object.entries(page.jaenFields ?? {})) {
+      for (const [name, value] of Object.entries(byName ?? {})) {
+        out.set(`${id}/${type}/${name}`, stable(value))
+      }
+    }
+
+    if (page.sections?.length) out.set(`${id}/sections`, stable(page.sections))
+
+    // Everything about the page that is not a field and not its own stamp.
+    // `modifiedAt` is left out on purpose: a discard is about content, and a
+    // page whose only difference is when it was touched has nothing to undo.
+    const {jaenFields, sections, modifiedAt, ...rest} = page
+
+    out.set(`${id}/page`, stable(rest))
+
+    return out
+  }
+
+  /**
+   * What the draft holds that the last publish did not, in the shape a
+   * confirmation reads out.
+   *
+   * The diff is taken against the published state and never against the chain:
+   * the chain is what a build replays, and replaying it here would restore
+   * something the last migration did not produce whenever a build and a
+   * publish disagree.
+   */
+  private async diffAgainstPublished(
+    meta: DraftMeta,
+    published: DraftSnapshot
+  ): Promise<{
+    pages: number
+    fields: number
+    fieldKeys: string[]
+    pagesAdded: string[]
+    pagesRemoved: string[]
+    mediaAdded: number
+    mediaRemoved: number
+    /** A picture whose node differs. It is neither added nor removed, and it
+     * is still a difference, so it counts in `fields` through the catalogue's
+     * own key and not in either of the two numbers a person reads. */
+    mediaChanged: number
+    siteChanged: boolean
+    widgetsChanged: number
+  }> {
+    const target = this.unfold(published, meta.mediaField)
+    const draft = await this.loadDraft()
+
+    const ids = new Set([
+      ...Object.keys(draft.pages),
+      ...Object.keys(target.pages)
+    ])
+
+    const fieldKeys: string[] = []
+    const pagesAdded: string[] = []
+    const pagesRemoved: string[] = []
+    let pages = 0
+
+    for (const id of ids) {
+      const here = draft.pages[id]
+      const there = target.pages[id]
+
+      if (here && !there) pagesAdded.push(id)
+      if (!here && there) pagesRemoved.push(id)
+
+      const a = this.fieldKeysOf(id, here)
+      const b = this.fieldKeysOf(id, there)
+      let differs = false
+
+      for (const key of new Set([...a.keys(), ...b.keys()])) {
+        if (a.get(key) === b.get(key)) continue
+
+        fieldKeys.push(key)
+        differs = true
+      }
+
+      if (differs) pages += 1
+    }
+
+    let mediaAdded = 0
+    let mediaRemoved = 0
+    let mediaChanged = 0
+
+    // The catalogue is read once, here, and never one key at a time: a
+    // published state names as many pictures as the draft does, and a get per
+    // picture would be 140 storage reads on booklimo for a question two lists
+    // answer.
+    const live = new Set<string>()
+
+    for (const [key, value] of await this.listAll<unknown>(KEY.media)) {
+      const id = key.slice(KEY.media.length)
+      const there = Object.prototype.hasOwnProperty.call(target.media, id)
+
+      if (value.deleted) {
+        if (there) mediaRemoved += 1
+        continue
+      }
+
+      live.add(id)
+
+      if (!there) mediaAdded += 1
+      else if (stable(value.v) !== stable(target.media[id])) mediaChanged += 1
+    }
+
+    for (const id of Object.keys(target.media)) {
+      if (!live.has(id)) mediaRemoved += 1
+    }
+
+    if ((mediaAdded || mediaRemoved || mediaChanged) && meta.mediaField) {
+      fieldKeys.push(
+        `${meta.mediaField.pageId}/${meta.mediaField.fieldType}/${meta.mediaField.fieldName}`
+      )
+    }
+
+    const siteChanged = stable(draft.site) !== stable(target.site)
+
+    if (siteChanged) fieldKeys.push('site/siteMetadata')
+
+    const byId = new Map(target.widgets.map(w => [w.id, stable(w)]))
+    let widgetsChanged = 0
+
+    for (const widget of draft.widgets) {
+      if (byId.get(widget.id) === stable(widget)) continue
+
+      widgetsChanged += 1
+      fieldKeys.push(`widget/${widget.id}`)
+    }
+
+    const here = new Set(draft.widgets.map(w => w.id))
+
+    for (const widget of target.widgets) {
+      if (here.has(widget.id)) continue
+
+      widgetsChanged += 1
+      fieldKeys.push(`widget/${widget.id}`)
+    }
+
+    return {
+      pages,
+      fields: fieldKeys.length,
+      fieldKeys,
+      pagesAdded,
+      pagesRemoved,
+      mediaAdded,
+      mediaRemoved,
+      mediaChanged,
+      siteChanged,
+      widgetsChanged
+    }
+  }
+
+  /** Who wrote the fields that differ, latest instant per person. */
+  private async editorsOf(fieldKeys: string[]): Promise<DraftEditor[]> {
+    const authors = await this.loadAuthors(fieldKeys)
+    const bySub = new Map<string, DraftEditor>()
+
+    for (const author of Object.values(authors)) {
+      if (!author?.sub) continue
+
+      const known = bySub.get(author.sub)
+
+      if (!known || (author.at ?? '') > (known.at ?? '')) {
+        bySub.set(author.sub, {
+          sub: author.sub,
+          name: author.name,
+          at: author.at ?? null
+        })
+      }
+    }
+
+    return Array.from(bySub.values()).sort((a, b) =>
+      (a.at ?? '') < (b.at ?? '') ? -1 : 1
+    )
+  }
+
+  async discardPreview(site: string): Promise<DraftDiscardPreview> {
+    const meta = await this.meta(site)
+    const takenAt = new Date().toISOString()
+    const base = {
+      site,
+      revision: meta.revision,
+      publishedRevision: meta.publishedRevision,
+      pages: 0,
+      fields: 0,
+      pagesAdded: [] as string[],
+      pagesRemoved: [] as string[],
+      mediaAdded: 0,
+      mediaRemoved: 0,
+      siteChanged: false,
+      widgetsChanged: 0,
+      editors: [] as DraftEditor[],
+      since: null as string | null,
+      publishedAt: meta.publishedAt,
+      takenAt
+    }
+
+    const published = await this.readPublished()
+
+    if (!published) {
+      return {
+        ...base,
+        canDiscard: false,
+        reason:
+          'This site has not been published since the draft store began ' +
+          'keeping what a publish wrote, so there is no published state to ' +
+          'restore. Publish once and the next discard can undo everything ' +
+          'after it.'
+      }
+    }
+
+    const diff = await this.diffAgainstPublished(meta, published)
+    const editors = await this.editorsOf(diff.fieldKeys)
+
+    // `fields` carries the catalogue's own key whenever a picture moved, so
+    // it is the whole test and the media counts are what the person reads.
+    const nothing = diff.fields === 0
+
+    return {
+      ...base,
+      pages: diff.pages,
+      fields: diff.fields,
+      pagesAdded: diff.pagesAdded,
+      pagesRemoved: diff.pagesRemoved,
+      mediaAdded: diff.mediaAdded,
+      mediaRemoved: diff.mediaRemoved,
+      siteChanged: diff.siteChanged,
+      widgetsChanged: diff.widgetsChanged,
+      editors,
+      since: editors[0]?.at ?? null,
+      canDiscard: !nothing,
+      reason: nothing
+        ? 'Nothing in the draft differs from the published state.'
+        : null
+    }
+  }
+
+  /**
+   * Every unpublished change of this site, undone at once.
+   *
+   * The order is the safety and it is the whole of this operation:
+   *
+   *   1. the draft as it stands is written to the backstop, under its own key,
+   *      so the discard is undoable and nothing a person wrote is destroyed by
+   *      a machine;
+   *   2. the object is read again, because step 1 is a KV write and a save can
+   *      land while it is in flight. A draft that moved is snapshotted again
+   *      rather than discarded around, which is the only way the backstop can
+   *      be a true "one instant before";
+   *   3. the keys are rewritten to the published state and everything the
+   *      published state does not name is deleted;
+   *   4. `prunedBefore` is raised to this revision, so every reader is
+   *      answered with the whole draft rather than a delta. The delta
+   *      vocabulary has no page tombstone, so a discard that removed a page
+   *      could not be described as one, and a reader would keep a page that
+   *      is gone;
+   *   5. every editor is pushed the new revision together with who discarded
+   *      and when, and a client below the invalidation drops its outbox.
+   */
+  async discard(
+    site: string,
+    input: DraftDiscardInput
+  ): Promise<DraftDiscardResult> {
+    const actor = input?.actor ?? {sub: '', name: '', email: ''}
+    let meta = await this.meta(site)
+    const at = new Date().toISOString()
+
+    const refuse = (reason: string): DraftDiscardResult => ({
+      site,
+      discarded: false,
+      revision: meta.revision,
+      previousRevision: meta.revision,
+      publishedRevision: meta.publishedRevision,
+      pages: 0,
+      fields: 0,
+      editors: [],
+      snapshotRevision: 0,
+      snapshotAt: null,
+      snapshotBytes: 0,
+      by: {sub: actor.sub, name: actor.name, at},
+      at,
+      reason
+    })
+
+    if (
+      typeof input?.atRevision === 'number' &&
+      input.atRevision !== meta.revision
+    ) {
+      return refuse(
+        `The draft moved from revision ${input.atRevision} to ` +
+          `${meta.revision} while the confirmation was open, so it no longer ` +
+          `says what would go. Nothing was discarded; ask again.`
+      )
+    }
+
+    const published = await this.readPublished()
+
+    if (!published) {
+      return refuse(
+        'This site has not been published since the draft store began ' +
+          'keeping what a publish wrote, so there is no published state to ' +
+          'restore and nothing was discarded.'
+      )
+    }
+
+    let diff = await this.diffAgainstPublished(meta, published)
+
+    if (diff.fields === 0) {
+      // Nothing to undo. The revision may still be past the published one,
+      // which happens when an edit and its own undo were both saved, and the
+      // CMS reads that as "there is something unpublished" for ever. The
+      // stamp is corrected without a revision, without a snapshot and without
+      // a push, because no content moves.
+      if (meta.revision > meta.publishedRevision) {
+        meta.publishedRevision = meta.revision
+
+        await this.storage.put(KEY.meta, meta)
+      }
+
+      return refuse('Nothing in the draft differs from the published state.')
+    }
+
+    let before: DraftSnapshot | null = null
+    let snapshotBytes = 0
+
+    for (let attempt = 1; attempt <= DISCARD_ATTEMPTS; attempt += 1) {
+      before = await this.snapshot(site)
+      snapshotBytes = await this.sink.put(before, 'discard')
+
+      const now = await this.meta(site)
+
+      if (now.revision === before.revision) {
+        meta = now
+        break
+      }
+
+      // Somebody saved while the backstop was being written. The backstop
+      // would then be missing their work and the discard would take it, which
+      // is the one loss this whole design exists to prevent.
+      meta = now
+      before = null
+
+      if (attempt === DISCARD_ATTEMPTS) {
+        return refuse(
+          `The draft was written to ${DISCARD_ATTEMPTS} times while the ` +
+            `backstop was being taken, so nothing was discarded. Try again ` +
+            `when the other editors have stopped typing.`
+        )
+      }
+    }
+
+    if (!before) return refuse('The backstop could not be taken.')
+
+    diff = await this.diffAgainstPublished(meta, published)
+
+    const editors = await this.editorsOf(diff.fieldKeys)
+    const revision = meta.revision + 1
+    const target = this.unfold(published, meta.mediaField)
+
+    const writes = new Map<string, unknown>()
+    const gone: string[] = []
+
+    for (const [id, page] of Object.entries(target.pages)) {
+      writes.set(KEY.page + id, {r: revision, v: page} as Stored<JaenPageNode>)
+    }
+
+    for (const [key] of await this.listAll<JaenPageNode>(KEY.page)) {
+      const id = key.slice(KEY.page.length)
+
+      if (!Object.prototype.hasOwnProperty.call(target.pages, id))
+        gone.push(key)
+    }
+
+    for (const [id, node] of Object.entries(target.media)) {
+      writes.set(KEY.media + id, {r: revision, v: node} as Stored<unknown>)
+    }
+
+    // A tombstone is not written for a picture a discard removes, and a
+    // tombstone the draft carried is deleted outright, because step 4 forces
+    // every reader into a full answer and a full answer is the catalogue as it
+    // is. Keeping them would only cost storage and confuse the next prune.
+    for (const [key] of await this.listAll<unknown>(KEY.media)) {
+      const id = key.slice(KEY.media.length)
+
+      if (!Object.prototype.hasOwnProperty.call(target.media, id))
+        gone.push(key)
+    }
+
+    for (const widget of target.widgets) {
+      writes.set(KEY.widget + widget.id, {
+        r: revision,
+        v: widget
+      } as Stored<JaenWidget>)
+    }
+
+    const keep = new Set(target.widgets.map(widget => widget.id))
+
+    for (const [key] of await this.listAll<JaenWidget>(KEY.widget)) {
+      if (!keep.has(key.slice(KEY.widget.length))) gone.push(key)
+    }
+
+    writes.set(KEY.site, {r: revision, v: target.site} as Stored<JaenSiteState>)
+
+    // The authorship of the published state, which publish recorded with it.
+    // Everything else is authorship of an edit that no longer exists, so it
+    // goes: leaving it would attribute a published field to whoever last
+    // changed it in a draft that has been thrown away.
+    const authors = published.authors ?? {}
+
+    for (const [key, author] of Object.entries(authors)) {
+      writes.set(KEY.author + key, {
+        r: revision,
+        v: author
+      } as Stored<FieldAuthor>)
+    }
+
+    for (const [key] of await this.listAll<FieldAuthor>(KEY.author)) {
+      if (
+        !Object.prototype.hasOwnProperty.call(
+          authors,
+          key.slice(KEY.author.length)
+        )
+      )
+        gone.push(key)
+    }
+
+    for (let i = 0; i < gone.length; i += PUT_BATCH) {
+      await this.storage.delete(gone.slice(i, i + PUT_BATCH))
+    }
+
+    meta.revision = revision
+    meta.updatedAt = at
+    meta.updatedBy = actor.sub
+    meta.updatedByName = actor.name
+    meta.discardedRevision = revision
+    meta.discardedAt = at
+    meta.discardedBy = actor.sub
+    meta.discardedByName = actor.name
+    // Every reader is answered whole, see step 4 above.
+    meta.prunedBefore = revision
+    /**
+     * The published stamp moves with it, and that is a claim worth defending.
+     * What the object holds after this call is exactly what the last migration
+     * produced, so there is nothing unpublished in it, and leaving
+     * `publishedRevision` behind would make every CMS say "not published"
+     * about content the site already serves and would invite a publish that
+     * writes a migration saying what the chain already says.
+     */
+    meta.publishedRevision = revision
+
+    writes.set(KEY.meta, meta)
+
+    await this.putAll(writes)
+
+    this.broadcast({
+      type: 'discard',
+      site,
+      revision,
+      // Named twice on purpose: a client reads `revision` to know there is
+      // something new, and `invalidatedRevision` to know that what it holds
+      // below that number is to be dropped rather than folded back on top.
+      invalidatedRevision: revision,
+      publishedRevision: revision,
+      by: actor.sub,
+      name: actor.name,
+      at
+    })
+
+    await this.armSnapshot()
+
+    return {
+      site,
+      discarded: true,
+      revision,
+      previousRevision: before.revision,
+      publishedRevision: revision,
+      pages: diff.pages,
+      fields: diff.fields,
+      editors,
+      snapshotRevision: before.revision,
+      snapshotAt: before.takenAt,
+      snapshotBytes,
+      by: {sub: actor.sub, name: actor.name, at},
+      at,
+      reason: null
+    }
+  }
+
+  /**
+   * The draft as it stood one instant before the last discard.
+   *
+   * It is the read half of the backstop and it is not restore: it answers what
+   * was taken and writes nothing. Restore is the third of the three acts and
+   * is not built (draft-state.md, "Three operations that rewrite the shared
+   * draft"); until it is, this is how a person establishes that a discard is
+   * undoable rather than being asked to believe it.
+   */
+  async discardedSnapshot(site: string): Promise<DraftSnapshot | null> {
+    return await this.sink.get(site, 'discard')
   }
 
   /**

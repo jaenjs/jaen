@@ -14,7 +14,8 @@
  *      read it back before anything is committed,
  *   4. append its URL as one line to `jaen-data/patches.txt`,
  *   5. commit that one line, in the publishing editor's name,
- *   6. record `publishedRevision` in the draft store,
+ *   6. record `publishedRevision` in the draft store, together with the state
+ *      it wrote, which is what a discard restores to,
  *   7. trigger the build where the site has one, and say so honestly where it
  *      does not.
  *
@@ -341,7 +342,15 @@ export const publish = async (
 
   // Last, and deliberately after the commit: a failure here understates what
   // is live and never overstates it.
-  const meta = await store.markPublished(siteKey, snapshot.revision)
+  //
+  // The snapshot goes with the number, because it is what a discard restores.
+  // `draft-state.md` asks a discard to put the draft back "from the snapshot
+  // publish keeps rather than by replaying the chain, so the result is exactly
+  // what the last migration produced", and the only thing that is exactly that
+  // is the payload this call uploaded. The authors travel with it and the
+  // migration file still carries none: authorship belongs in the draft store
+  // and never in a file the build republishes.
+  const meta = await store.markPublished(siteKey, snapshot.revision, snapshot)
 
   return await build({
     published: true,

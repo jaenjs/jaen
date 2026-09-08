@@ -38,6 +38,21 @@
  *                                 single process implementation upgrades the
  *                                 same way, so this is plumbing rather than a
  *                                 second design.
+ *
+ * And the acts that rewrite the whole draft at once, of which one is built:
+ *
+ *   discardPreview(site)          what a discard would undo, so the person who
+ *                                 asks for one is shown what will go before it
+ *                                 goes.
+ *   discard(site, input)          the draft is put back to the state the last
+ *                                 publish wrote, from the snapshot that publish
+ *                                 kept and never by replaying the chain.
+ *   discardedSnapshot(site)       the draft as it was one instant before the
+ *                                 last discard, read back out of the backstop.
+ *
+ * Import and restore are the other two of that kind (draft-state.md, "Three
+ * operations that rewrite the shared draft") and are **not built**. They belong
+ * here when they are.
  */
 import type {FieldOverwrite, JaenChangeInput} from '../apply-change'
 import type {
@@ -69,9 +84,28 @@ export interface DraftMeta {
   revision: number
   /** What publish last wrote as a migration. 0 until it has. */
   publishedRevision: number
+  /** When that publish was made, and how large the state it wrote is. */
+  publishedAt: string | null
+  publishedBytes: number
   updatedAt: string | null
   /** The Zitadel subject of the last writer. */
   updatedBy: string | null
+  /** And their display name, which is what a confirmation can print. */
+  updatedByName: string | null
+  /**
+   * The revision the last discard produced, and who made it.
+   *
+   * It is the invalidation the design asks for: a client holding a revision
+   * **below** this one is holding a draft that was thrown away, so it drops
+   * its outbox and its local copy instead of folding them back on top. Every
+   * read carries it, so a browser that was offline through the discard learns
+   * of it on the first answer it gets rather than only from a socket frame it
+   * was not there for.
+   */
+  discardedRevision: number
+  discardedAt: string | null
+  discardedBy: string | null
+  discardedByName: string | null
   /** The revision the last snapshot was taken at. */
   snapshotRevision: number
   snapshotAt: string | null
@@ -126,10 +160,99 @@ export interface DraftRead {
   delta: DraftDelta | null
   updatedAt: string | null
   updatedBy: string | null
+  /**
+   * The invalidation, carried by every read.
+   *
+   * A client whose own revision is below `discardedRevision` was holding a
+   * draft that has been thrown away. It drops its outbox and its local copy
+   * and takes this answer whole, which is why a discard also forces every
+   * reader into a full answer. Zero means no discard has ever been made.
+   */
+  discardedRevision: number
+  discardedAt: string | null
+  discardedBy: string | null
+  discardedByName: string | null
   snapshotRevision: number
   snapshotAt: string | null
   snapshotBytes: number
   readAt: string
+}
+
+/** One person, as a confirmation and a push have to name them. */
+export interface DraftEditor {
+  sub: string
+  name: string
+  at: string | null
+}
+
+/**
+ * What a discard would undo, so that the confirmation names it before it is
+ * made. `draft-state.md`: "behind a confirmation that names what will go: how
+ * many pages, whose edits, since when".
+ */
+export interface DraftDiscardPreview {
+  site: string
+  revision: number
+  publishedRevision: number
+  /**
+   * False when there is nothing to discard, and false when there is nothing
+   * to restore **to**, which is the case this design cannot fix by trying
+   * harder: the published state comes from the snapshot publish keeps, and an
+   * object that has not published since that snapshot was introduced has none.
+   * Replaying the chain instead is what the design explicitly does not do.
+   */
+  canDiscard: boolean
+  reason: string | null
+  /** Pages whose content differs from the published state. */
+  pages: number
+  /** Field keys that differ, the media catalogue counted as one. */
+  fields: number
+  /** Pages that exist only in the draft, which a discard removes. */
+  pagesAdded: string[]
+  /** Pages the draft dropped, which a discard brings back. */
+  pagesRemoved: string[]
+  mediaAdded: number
+  mediaRemoved: number
+  siteChanged: boolean
+  widgetsChanged: number
+  /** Who wrote the unpublished fields, and when they last did. */
+  editors: DraftEditor[]
+  /** The oldest of those instants, which is the "since when". */
+  since: string | null
+  /** When the state a discard would restore was published. */
+  publishedAt: string | null
+  takenAt: string
+}
+
+export interface DraftDiscardInput {
+  actor: {sub: string; name: string; email: string}
+  /**
+   * The revision the confirmation named. A draft that has moved since is a
+   * confirmation about something else, so the discard is refused and the
+   * person is shown the new one. Null accepts whatever is there now.
+   */
+  atRevision: number | null
+}
+
+export interface DraftDiscardResult {
+  site: string
+  discarded: boolean
+  /** The revision the discard produced, which is also the invalidation. */
+  revision: number
+  /** The revision it replaced. */
+  previousRevision: number
+  publishedRevision: number
+  /** What the confirmation said would go, as it actually went. */
+  pages: number
+  fields: number
+  editors: DraftEditor[]
+  /** The backstop taken one instant before, so a discard is undoable. */
+  snapshotRevision: number
+  snapshotAt: string | null
+  snapshotBytes: number
+  by: DraftEditor
+  at: string
+  reason: string | null
 }
 
 export interface DraftWriteInput {
@@ -183,8 +306,27 @@ export interface DraftStore {
     viewer: {sub: string; name: string; email: string}
   ): Promise<DraftTicket>
   snapshot(site: string): Promise<DraftSnapshot>
-  /** Not one of the four, see the header. */
-  markPublished(site: string, revision: number): Promise<DraftMeta>
+  /**
+   * Not one of the four, see the header.
+   *
+   * It carries the state it published and not only the number, because that
+   * state is what a discard restores. Taking a fresh snapshot at discard time
+   * would restore whatever the draft happens to hold, and reading the chain
+   * back would restore what the build replays rather than what this publish
+   * wrote. The migration's own payload is the only thing that is exactly "what
+   * the last migration produced".
+   */
+  markPublished(
+    site: string,
+    revision: number,
+    published?: DraftSnapshot | null
+  ): Promise<DraftMeta>
+  /** What a discard would undo. */
+  discardPreview(site: string): Promise<DraftDiscardPreview>
+  /** The draft put back to the published state, site wide. */
+  discard(site: string, input: DraftDiscardInput): Promise<DraftDiscardResult>
+  /** The draft as it stood one instant before the last discard. */
+  discardedSnapshot(site: string): Promise<DraftSnapshot | null>
 }
 
 /** The keys the object stores, named once so both sides agree. */
@@ -195,15 +337,39 @@ export const KEY = {
   media: 'media:',
   widget: 'widget:',
   author: 'author:',
-  ticket: 'ticket:'
+  ticket: 'ticket:',
+  /**
+   * The state the last publish wrote, in chunks of at most CHUNK_BYTES.
+   *
+   * It lives in the object's own storage and not in the KV the alarm's
+   * backstop goes to, for one reason that decides it: KV is eventually
+   * consistent and gives no read-after-write guarantee, so a discard made a
+   * second after a publish could restore what KV last settled on rather than
+   * what that publish wrote. The object's storage is strongly consistent and
+   * is read inside the same single threaded actor that writes it, which also
+   * makes the whole discard atomic.
+   *
+   * Chunked and zero padded (`published:0000`), because one key and its value
+   * together may be 2 MB on a SQLite backed object and a site's catalogue is
+   * allowed to grow past that. Zero padded because `list` orders keys
+   * lexicographically and `published:10` sorts before `published:2`.
+   */
+  published: 'published:'
 } as const
 
 export const emptyMeta = (site: string): DraftMeta => ({
   site,
   revision: 0,
   publishedRevision: 0,
+  publishedAt: null,
+  publishedBytes: 0,
   updatedAt: null,
   updatedBy: null,
+  updatedByName: null,
+  discardedRevision: 0,
+  discardedAt: null,
+  discardedBy: null,
+  discardedByName: null,
   snapshotRevision: 0,
   snapshotAt: null,
   snapshotBytes: 0,

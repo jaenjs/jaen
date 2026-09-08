@@ -15,6 +15,9 @@ import {ServiceError} from '@getcronit/pylon'
 
 import type {AgentEnv} from '../env'
 import type {
+  DraftDiscardInput,
+  DraftDiscardPreview,
+  DraftDiscardResult,
   DraftMeta,
   DraftRead,
   DraftSnapshot,
@@ -32,6 +35,35 @@ export class DraftStoreUnavailableError extends ServiceError {
         `but nothing is shared until this is fixed.`,
       {statusCode: 503, code: 'DRAFT_STORE_UNAVAILABLE'}
     )
+  }
+}
+
+/**
+ * The one refusal the draft store makes, carried back out as itself.
+ *
+ * Every failure of the object below is a 500 and becomes "the draft store is
+ * unreachable", which tells a client to keep its changes and retry. That is
+ * right for an outage and wrong for this: a save refused because its base is
+ * below a discard must make the client drop what it holds, not retry it for
+ * ever. So the object answers a code and this turns it back into a refusal
+ * the CMS knows by name.
+ */
+export class DraftDiscardedError extends ServiceError {
+  constructor(
+    message: string,
+    readonly discardedRevision: number,
+    readonly discardedAt: string | null,
+    readonly discardedByName: string | null
+  ) {
+    super(message, {
+      statusCode: 409,
+      code: 'DRAFT_DISCARDED',
+      // The client reads these off the error's extensions and needs no second
+      // round trip to find out which revision invalidated it. Pylon's
+      // ServiceError puts anything beyond the code and the status under
+      // `details`, so that is where they go.
+      details: {discardedRevision, discardedAt, discardedByName}
+    })
   }
 }
 
@@ -68,11 +100,28 @@ const call = async <T>(
 
   if (!response.ok) {
     let reason = text.slice(0, 300)
+    let known: {
+      error?: string
+      code?: string | null
+      discardedRevision?: number
+      discardedAt?: string | null
+      discardedByName?: string | null
+    } = {}
 
     try {
-      reason = (JSON.parse(text) as {error?: string}).error ?? reason
+      known = JSON.parse(text)
+      reason = known.error ?? reason
     } catch {
       // Not JSON, which means the runtime answered rather than the object.
+    }
+
+    if (known.code === 'DRAFT_DISCARDED') {
+      throw new DraftDiscardedError(
+        reason,
+        known.discardedRevision ?? 0,
+        known.discardedAt ?? null,
+        known.discardedByName ?? null
+      )
     }
 
     throw new DraftStoreUnavailableError(
@@ -97,8 +146,21 @@ export const durableDraftStore = (env: AgentEnv): DraftStore => ({
 
   snapshot: site => call<DraftSnapshot>(env, site, 'snapshot', {}),
 
-  markPublished: (site, revision) =>
-    call<DraftMeta>(env, site, 'published', {revision})
+  markPublished: (site, revision, published) =>
+    call<DraftMeta>(env, site, 'published', {
+      revision,
+      published: published ?? null
+    }),
+
+  discardPreview: site =>
+    call<DraftDiscardPreview>(env, site, 'discardPreview', {}),
+
+  discard: (site, input: DraftDiscardInput) =>
+    call<DraftDiscardResult>(env, site, 'discard', {input}),
+
+  discardedSnapshot: async site =>
+    (await call<{snapshot: DraftSnapshot | null}>(env, site, 'discarded', {}))
+      .snapshot
 })
 
 /**

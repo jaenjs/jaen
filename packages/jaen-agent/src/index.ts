@@ -103,6 +103,18 @@ export interface Draft {
   updatedAt: string | null
   /** The Zitadel subject of the last writer. */
   updatedBy: string | null
+  /**
+   * The revision the last discard produced, which is the invalidation a
+   * client acts on: below it, a browser drops its outbox and its local copy
+   * instead of folding them back on top of this answer. Zero until a discard
+   * has been made. Carried by every read and not only by the socket frame,
+   * because a browser that was offline through the discard was not there for
+   * the frame.
+   */
+  discardedRevision: number
+  discardedAt: string | null
+  discardedBy: string | null
+  discardedByName: string | null
   /** The backstop, so an operator can see it is being taken. */
   snapshotRevision: number
   snapshotAt: string | null
@@ -201,6 +213,93 @@ export interface PublishResult {
   runUrl: string | null
   /** Why not, whenever `published` or `queued` is false. */
   reason: string | null
+}
+
+/** One person, as a confirmation and a push have to name them. */
+export interface DraftEditor {
+  sub: string
+  name: string
+  at: string | null
+}
+
+/**
+ * What a discard would undo, so the confirmation names it before it is made.
+ *
+ * `draft-state.md`: discard is "site wide, an admin's, behind a confirmation
+ * that names what will go: how many pages, whose edits, since when". This is
+ * that sentence as an answer, and the CMS prints it rather than inventing its
+ * own count out of a store it may only partly hold.
+ */
+export interface DiscardPreview {
+  site: string
+  revision: number
+  publishedRevision: number
+  /**
+   * False when nothing differs from the published state, and false when there
+   * is no published state to restore to at all, which is what a site that has
+   * not published since the object began keeping one looks like. Restoring by
+   * replaying the chain instead is what this design deliberately does not do.
+   */
+  canDiscard: boolean
+  reason: string | null
+  pages: number
+  fields: number
+  pagesAdded: string[]
+  pagesRemoved: string[]
+  mediaAdded: number
+  mediaRemoved: number
+  siteChanged: boolean
+  widgetsChanged: number
+  editors: DraftEditor[]
+  /** The oldest instant among those editors, the "since when". */
+  since: string | null
+  publishedAt: string | null
+  takenAt: string
+}
+
+/**
+ * What a discard did.
+ *
+ * `revision` is the invalidation as well as the new revision: every client at
+ * or below it drops its outbox and its local copy. `snapshotRevision` is the
+ * backstop taken one instant before, which is what makes the act undoable.
+ */
+export interface DiscardResult {
+  site: string
+  discarded: boolean
+  revision: number
+  previousRevision: number
+  publishedRevision: number
+  pages: number
+  fields: number
+  editors: DraftEditor[]
+  snapshotRevision: number
+  snapshotAt: string | null
+  snapshotBytes: number
+  by: DraftEditor
+  at: string
+  reason: string | null
+}
+
+/**
+ * The draft as it stood one instant before the last discard.
+ *
+ * The read half of the backstop, and not restore: it answers what was taken
+ * and writes nothing. Restore is the third of the three acts that rewrite the
+ * shared draft and is not built; until it is, this is how a person establishes
+ * that a discard is undoable instead of being asked to believe it.
+ */
+export interface DiscardedDraft {
+  site: string
+  /** False when no discard has been made, or the backstop is gone. */
+  found: boolean
+  revision: number
+  takenAt: string | null
+  bytes: number
+  pages: number
+  /** `{pages, site, widgets}`, the same payload a migration carries. */
+  data?: Record<string, any> | null
+  authors?: Record<string, any> | null
 }
 
 /** A call carries at most this many changes, and at most a megabyte. */
@@ -328,10 +427,69 @@ export const graphql = {
           : null,
         updatedAt: answer.updatedAt,
         updatedBy: answer.updatedBy,
+        discardedRevision: answer.discardedRevision,
+        discardedAt: answer.discardedAt,
+        discardedBy: answer.discardedBy,
+        discardedByName: answer.discardedByName,
         snapshotRevision: answer.snapshotRevision,
         snapshotAt: answer.snapshotAt,
         snapshotBytes: answer.snapshotBytes,
         readAt: answer.readAt
+      }
+    },
+
+    /**
+     * What a site wide discard would undo, and whether it may be made.
+     *
+     * It writes nothing. It exists because the design puts a discard "behind a
+     * confirmation that names what will go: how many pages, whose edits, since
+     * when", and a confirmation the CMS writes out of its own store would name
+     * what this browser knows rather than what the shared draft holds.
+     */
+    discardPreview: async (site: string): Promise<DiscardPreview> => {
+      const entry = siteEntry(site)
+
+      await requireSiteAdmin(site, entry)
+
+      return await durableDraftStore(env()).discardPreview(site)
+    },
+
+    /**
+     * The draft as it stood one instant before the last discard.
+     *
+     * Read only, and the reason it is here rather than in a restore that does
+     * not exist yet: a discard that cannot be shown to be undoable is a
+     * discard nobody should trust. See ./draft/object discardedSnapshot.
+     */
+    discardedDraft: async (site: string): Promise<DiscardedDraft> => {
+      const entry = siteEntry(site)
+
+      await requireSiteAdmin(site, entry)
+
+      const snapshot = await durableDraftStore(env()).discardedSnapshot(site)
+
+      if (!snapshot) {
+        return {
+          site,
+          found: false,
+          revision: 0,
+          takenAt: null,
+          bytes: 0,
+          pages: 0,
+          data: null,
+          authors: null
+        }
+      }
+
+      return {
+        site,
+        found: true,
+        revision: snapshot.revision,
+        takenAt: snapshot.takenAt,
+        bytes: JSON.stringify(snapshot).length,
+        pages: snapshot.data?.pages?.length ?? 0,
+        data: snapshot.data as unknown as Record<string, any>,
+        authors: snapshot.authors as unknown as Record<string, any>
       }
     }
   },
@@ -417,6 +575,41 @@ export const graphql = {
       })
 
       return {...minted, url: socketUrl(site)}
+    },
+
+    /**
+     * Every unpublished change of this site, undone at once.
+     *
+     * Site wide and an admin's, because a per browser discard stopped meaning
+     * anything the moment the draft became shared: a change reaches the object
+     * a second or two after it is typed, so "discard my changes" would leave
+     * them in everybody else's CMS. What the button became is this.
+     *
+     * The published state is restored from the snapshot publish kept, never by
+     * replaying the chain, so the result is exactly what the last migration
+     * produced. The draft as it stood is written to the backstop first, so the
+     * act is undoable. Every editor is pushed the new revision together with
+     * who discarded and when, and every client at or below `revision` drops its
+     * outbox and its local copy instead of folding them back on top.
+     *
+     * `atRevision` is the revision the confirmation named. A draft that moved
+     * while the person was reading the confirmation is a confirmation about
+     * something else, so the discard is refused and they are shown the new one.
+     *
+     * See ./draft/object discard and docs/architecture/draft-state.md, "Three
+     * operations that rewrite the shared draft".
+     */
+    discard: async (
+      site: string,
+      atRevision?: number
+    ): Promise<DiscardResult> => {
+      const entry = siteEntry(site)
+      const admin = await requireSiteAdmin(site, entry)
+
+      return await durableDraftStore(env()).discard(site, {
+        actor: {sub: admin.sub, name: admin.name, email: admin.email},
+        atRevision: typeof atRevision === 'number' ? atRevision : null
+      })
     },
 
     /**

@@ -20,20 +20,31 @@
  * `draft-snapshot:<site>:previous` is the one it replaced. No expiry: a
  * backstop that expires is not one.
  *
+ * Two kinds, and they are kept apart on purpose. `draft` is the alarm's
+ * rolling backstop. `discard` is the draft as it stood one instant before a
+ * site wide discard, and it must survive every alarm that runs afterwards: a
+ * discard changes the revision, so the very next alarm takes a snapshot, and
+ * had the two shared a key the undo of a discard would have been rotated away
+ * within the interval. That is what makes a discard undoable rather than
+ * merely snapshotted.
+ *
  * The sink is an interface because the store is. A single process
  * implementation writes the same JSON to a file beside its database.
  */
 import type {DraftSnapshot} from './store'
 
+export type SnapshotKind = 'draft' | 'discard'
+
 export interface SnapshotSink {
-  put(snapshot: DraftSnapshot): Promise<number>
-  get(site: string): Promise<DraftSnapshot | null>
+  put(snapshot: DraftSnapshot, kind?: SnapshotKind): Promise<number>
+  get(site: string, kind?: SnapshotKind): Promise<DraftSnapshot | null>
 }
 
-const key = (site: string) => `draft-snapshot:${site}`
+const key = (site: string, kind: SnapshotKind = 'draft') =>
+  kind === 'discard' ? `draft-discard:${site}` : `draft-snapshot:${site}`
 
 export const kvSnapshotSink = (kv: KVNamespace | null): SnapshotSink => ({
-  put: async snapshot => {
+  put: async (snapshot, kind = 'draft') => {
     const body = JSON.stringify(snapshot)
 
     if (!kv) {
@@ -47,23 +58,23 @@ export const kvSnapshotSink = (kv: KVNamespace | null): SnapshotSink => ({
       return body.length
     }
 
-    const previous = await kv.get(key(snapshot.site)).catch(() => null)
+    const previous = await kv.get(key(snapshot.site, kind)).catch(() => null)
 
     if (previous) {
       await kv
-        .put(`${key(snapshot.site)}:previous`, previous)
+        .put(`${key(snapshot.site, kind)}:previous`, previous)
         .catch(error => console.error('jaen-agent: snapshot rotate', error))
     }
 
-    await kv.put(key(snapshot.site), body)
+    await kv.put(key(snapshot.site, kind), body)
 
     return body.length
   },
 
-  get: async site => {
+  get: async (site, kind = 'draft') => {
     if (!kv) return null
 
-    const raw = await kv.get(key(site)).catch(() => null)
+    const raw = await kv.get(key(site, kind)).catch(() => null)
 
     if (!raw) return null
 
