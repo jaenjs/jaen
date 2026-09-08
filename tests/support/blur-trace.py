@@ -13,6 +13,7 @@ instrument perturbs the subject can be recognised as one.
 import asyncio
 import collections
 import importlib.util
+import os
 import json
 import pathlib
 import statistics
@@ -36,6 +37,20 @@ CATEGORIES = [
     # selector on this element is 17 ms".
     "disabled-by-default-devtools.timeline.invalidationTracking"
 ]
+
+TYPED = os.environ.get("JAEN_BLUR_TYPE") == "1"
+
+CARET_END = """() => {
+  const node = document.activeElement
+  if (!node || !node.isContentEditable) return false
+  const range = document.createRange()
+  range.selectNodeContents(node)
+  range.collapse(false)
+  const selection = window.getSelection()
+  selection.removeAllRanges()
+  selection.addRange(range)
+  return true
+}"""
 
 ARM = """() => {
   if (window.__btListener) {
@@ -74,7 +89,7 @@ async def main():
 
         client = await context.new_cdp_session(page)
         for index in range(6):
-            control = index >= 4
+            control = index >= 4 and not TYPED
             if control:
                 target = page.locator("a[href]").first
                 try:
@@ -86,6 +101,14 @@ async def main():
                 if handle is None:
                     break
                 await handle.click(timeout=5000)
+                if TYPED:
+                    # The gate's own gesture: one character, then leave. The
+                    # rounds alternate so the field ends at the value it had.
+                    await page.evaluate(CARET_END)
+                    if index % 2 == 0:
+                        await page.keyboard.type("x", delay=40)
+                    else:
+                        await page.keyboard.press("Backspace")
             await page.wait_for_timeout(400)
             await page.evaluate(ARM)
             events = []
@@ -146,7 +169,7 @@ async def main():
                                   "events": window[:1200],
                                   "traced": len(events)})
             print("gap %s ms, %d events in window" % (gap, len(window)), flush=True)
-            await page.wait_for_timeout(600)
+            await page.wait_for_timeout(2500)
         await browser.close()
     site.stop()
     gaps = [r["gap"] for r in out["rounds"] if r["gap"] is not None]
@@ -159,8 +182,9 @@ async def main():
                 total[event["name"]] += event["ms"]
     out["msByPhase"] = total.most_common(25)
     out["endedAt"] = time.time()
+    name = "blur-trace-typed" if TYPED else "blur-trace"
     target = HERE.parent / "adversarial" / (
-        "blur-trace.json" if RP.LIVE else "blur-trace-local.json")
+        "%s.json" % name if RP.LIVE else "%s-local.json" % name)
     target.write_text(json.dumps(out, indent=2))
     print("median gap", out["gapMedian"])
     for name, ms in out["msByPhase"][:20]:
