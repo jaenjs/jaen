@@ -214,13 +214,33 @@ async def enter_editing(page):
 
 
 async def wait_for_draft(page, timeout=60):
-    """Wait until the agent's draft has been hydrated into this browser."""
+    """Wait until the shared draft has been hydrated into this browser.
+
+    `revision` and not `headSha`: since the redesign of 2026-09-08 the draft
+    lives in one Durable Object per site whose revision is a monotonic counter,
+    and a save is no longer a commit, so there is no sha for anything here to
+    wait on. A site built without the `agent` option never gets one at all,
+    which is what `has_agent` below is for.
+    """
     for _ in range(timeout):
         state = await page.evaluate(READ_STATE)
-        if state and state.get("remote", {}).get("headSha"):
+        if state and state.get("remote", {}).get("revision") is not None:
             return state
         await page.wait_for_timeout(1000)
     return await page.evaluate(READ_STATE)
+
+
+async def has_agent(page):
+    """Whether this build carries the agent option at all.
+
+    The transition of `docs/architecture/draft-state.md` removed it from both
+    sites, so `__JAEN_AGENT__` is undefined, `agentConfig()` answers null and the
+    CMS keeps its draft in `localStorage` alone. Every scenario that needs a
+    shared draft skips on this rather than timing out on a wait that can never
+    finish.
+    """
+    return await page.evaluate(
+        "() => typeof __JAEN_AGENT__ !== 'undefined' && Boolean(__JAEN_AGENT__)")
 
 
 async def wait_for_saved(page, timeout=60):
@@ -447,7 +467,13 @@ async def run_blur(pw, args):
 
     state = await enter_editing(page)
 
-    if not state or not state.get("remote", {}).get("headSha"):
+    if not await has_agent(page):
+        await browser.close()
+        return {"scenario": "blur",
+                "skipped": "this build carries no agent option, so there is no "
+                           "shared draft to drive; run localBlur instead"}
+
+    if not state or state.get("remote", {}).get("revision") is None:
         await browser.close()
         return {"scenario": "blur", "skipped": "no draft arrived from the agent",
                 "remote": (state or {}).get("remote"), "notes": notes[-25:]}
@@ -515,6 +541,162 @@ async def run_blur(pw, args):
 
 
 # ---------------------------------------------------------------------------
+# localBlur: the same blur, on a site that carries no agent
+# ---------------------------------------------------------------------------
+
+
+async def run_local_blur(pw, args):
+    """One blur in the real CMS with `localStorage` as the only store.
+
+    `blur` measures the same gesture against a live shared draft and skips on a
+    site that carries no `agent` option, which since the transition of
+    2026-09-08 is both of them. This one measures what is left, and what is left
+    is exactly the browser side of `editing-performance.md`: the deferred single
+    pass persist, the quiet window and the toolbar. That side does not depend on
+    the agent at all, so it can still be measured on a person's own machine, and
+    a number nobody can take any more is not an acceptance.
+
+    Nothing leaves the browser. There is no agent to write to and no repository
+    is touched, so unlike `blur` this makes no commit and needs no setting back
+    beyond the field, which it does anyway and reads back out of a browser whose
+    storage was emptied first.
+    """
+    browser, context = await new_browser(pw)
+    page = await context.new_page()
+    notes = []
+    page.on("pageerror", lambda error: notes.append("pageerror: %s" % str(error)[:200]))
+    page.on("requestfailed", lambda request: notes.append(
+        "requestfailed: %s %s" % (request.url[:120], request.failure)))
+
+    agent_requests = []
+    page.on("request", lambda request: agent_requests.append(request.url)
+            if "jaen-agent" in request.url or "/draft/" in request.url else None)
+
+    if not await sign_in(page):
+        await browser.close()
+        return {"scenario": "localBlur", "skipped": "the human admin did not sign in"}
+
+    carries_agent = await has_agent(page)
+
+    await enter_editing(page)
+    await page.wait_for_timeout(3000)
+
+    # Without an agent the store starts empty: it holds this browser's own
+    # unpublished changes and nothing else, and the field's current value comes
+    # out of the built page rather than out of `localStorage`. So the value this
+    # run starts from is read off the DOM, which is also what the person sees.
+    handle = None
+
+    for _ in range(30):
+        for candidate in await page.locator('[contenteditable="true"]').all():
+            text = (await candidate.inner_text()).strip()
+            if text:
+                handle = candidate
+                break
+        if handle is not None:
+            break
+        await page.wait_for_timeout(1000)
+
+    if handle is None:
+        await browser.close()
+        return {"scenario": "localBlur", "skipped": "no editable field on the page",
+                "carriesAgent": carries_agent, "notes": notes}
+
+    original = (await handle.inner_text()).strip()
+
+    probe = await type_and_leave(page, handle, " probe")
+    written = await page.evaluate(FIELD_VALUE)
+
+    # What the store says about itself. Without an agent `saveState` never
+    # leaves `idle`, because nothing is ever sent, and that is the escape
+    # working rather than a fault.
+    state_after = await page.evaluate(READ_STATE)
+
+    # The value out of `localStorage`, which without an agent is the only place
+    # this edit exists at all.
+    persisted = await page.evaluate(
+        """(written) => {
+          try {
+            const raw = JSON.parse(localStorage.getItem('%s') || 'null')
+            const nodes = raw && raw.page && raw.page.pages && raw.page.pages.nodes
+            if (!nodes) return null
+            // Which field it was is not known here, so the payload is searched
+            // for the value that was typed: this asks whether the edit reached
+            // storage at all, which is the whole question without an agent.
+            for (const node of Object.values(nodes)) {
+              for (const byType of Object.values(node.jaenFields || {})) {
+                for (const field of Object.values(byType || {})) {
+                  if (field && field.value === written) return field.value
+                }
+              }
+            }
+            return null
+          } catch (error) {
+            return 'error: ' + String(error)
+          }
+        }""" % PERSIST_KEY, written)
+
+    # Set the field back, then read it out of a browser with no memory of the
+    # run. Without an agent that read is the built site's own data, which is
+    # what the value was before this run touched it.
+    restored = None
+    handle = await editable_for(page, written)
+
+    if handle is not None:
+        await handle.click()
+        await page.keyboard.press("Control+a")
+        await page.keyboard.type(original or "", delay=30)
+        await page.keyboard.press("Tab")
+        await page.wait_for_timeout(2000)
+        restored = await page.evaluate(FIELD_VALUE)
+
+    # Emptied and reloaded: without an agent there is no shared draft to read
+    # back from, so what the page shows is the built site's own value, and that
+    # is the thing this run must not have changed.
+    await page.evaluate("() => localStorage.removeItem('%s')" % PERSIST_KEY)
+    await page.goto(ORIGIN + "/", wait_until="domcontentloaded")
+    await page.wait_for_timeout(3000)
+    read_back = await page.evaluate(
+        """(text) => {
+          const nodes = Array.from(document.querySelectorAll('h1, h2, h3, p, span, div'))
+          const found = nodes.find(node => node.textContent.trim() === text)
+          return found ? found.textContent.trim() : null
+        }""", original)
+
+    await browser.close()
+
+    blur_at = probe.get("blurAt")
+    frame_at = probe.get("frameAt")
+    after_blur = [entry for entry in probe.get("writes", [])
+                  if blur_at is not None and entry["at"] >= blur_at]
+    long_after = [entry for entry in probe.get("longTasks", [])
+                  if blur_at is not None and entry["at"] >= blur_at]
+    remote = (state_after or {}).get("remote", {})
+
+    return {
+        "scenario": "localBlur",
+        "carriesAgent": carries_agent,
+        "agentRequests": agent_requests[:10],
+        "original": original,
+        "written": written,
+        "persisted": persisted,
+        "restored": restored,
+        "readBack": read_back,
+        "saveState": remote.get("saveState"),
+        "outbox": len(remote.get("outbox") or []),
+        "revision": remote.get("revision"),
+        "blurToFrameMs": (frame_at - blur_at) if (blur_at and frame_at) else None,
+        "writesAfterBlur": after_blur,
+        "bytesAfterBlur": sum(entry["bytes"] for entry in after_blur),
+        "storeWritesAfterBlur": len([entry for entry in after_blur
+                                     if entry["key"] == PERSIST_KEY]),
+        "longTasksAfterBlur": long_after,
+        "longestTaskMs": max([entry["ms"] for entry in long_after], default=0),
+        "notes": notes[:10],
+    }
+
+
+# ---------------------------------------------------------------------------
 # safety: the browser-only scenarios
 # ---------------------------------------------------------------------------
 
@@ -534,7 +716,7 @@ async def run_safety(pw, args):
 
     state = await enter_editing(page)
 
-    if not state or not state.get("remote", {}).get("headSha"):
+    if not state or state.get("remote", {}).get("revision") is None:
         await browser.close()
         return {"scenario": "safety", "skipped": "no draft arrived from the agent",
                 "remote": (state or {}).get("remote")}
@@ -648,6 +830,8 @@ async def main():
                 answer = await run_cost(pw, args)
             elif command == "blur":
                 answer = await run_blur(pw, args)
+            elif command == "localBlur":
+                answer = await run_local_blur(pw, args)
             elif command == "safety":
                 answer = await run_safety(pw, args)
             else:

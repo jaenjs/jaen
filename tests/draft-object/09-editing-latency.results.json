@@ -1,13 +1,13 @@
 {
   "notebook": "09-editing-latency",
-  "started": 1788853198.5505898,
+  "started": 1788854099.3564465,
   "testkit_version": "1.0.0",
   "counts": {
-    "PASS": 13,
+    "PASS": 16,
     "FAIL": 0,
     "SKIP": 5,
-    "WARN": 0,
-    "TOTAL": 18
+    "WARN": 1,
+    "TOTAL": 22
   },
   "checks": [
     {
@@ -19,7 +19,7 @@
       "section": "the fixture",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853198.5510771
+      "timestamp": 1788854099.3580694
     },
     {
       "index": 2,
@@ -29,8 +29,8 @@
       "detail": "",
       "section": "the fixture",
       "notebook": "09-editing-latency",
-      "duration_ms": 0,
-      "timestamp": 1788853198.551853
+      "duration_ms": 2,
+      "timestamp": 1788854099.3603477
     },
     {
       "index": 3,
@@ -41,7 +41,7 @@
       "section": "the draft on disk",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853198.626812
+      "timestamp": 1788854099.4842362
     },
     {
       "index": 4,
@@ -52,7 +52,7 @@
       "section": "the draft on disk",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853198.627153
+      "timestamp": 1788854099.4846056
     },
     {
       "index": 5,
@@ -63,18 +63,18 @@
       "section": "the draft on disk",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853198.6271672
+      "timestamp": 1788854099.4846187
     },
     {
       "index": 6,
       "name": "the harness bundles out of the jaen source",
       "status": "PASS",
-      "evidence": "bundled 1754054 B",
+      "evidence": "bundled 1754078 B",
       "detail": "",
       "section": "the persistence path in node",
       "notebook": "09-editing-latency",
-      "duration_ms": 68,
-      "timestamp": 1788853198.7039626
+      "duration_ms": 81,
+      "timestamp": 1788854099.588133
     },
     {
       "index": 7,
@@ -84,19 +84,19 @@
       "detail": "",
       "section": "the persistence path in node",
       "notebook": "09-editing-latency",
-      "duration_ms": 36907,
-      "timestamp": 1788853235.6122563
+      "duration_ms": 36996,
+      "timestamp": 1788854136.585505
     },
     {
       "index": 8,
       "name": "the write is one pass over the state, not three",
       "status": "PASS",
-      "evidence": "the old four steps 0.977 ms, the one pass 0.016 ms, 918 B against 77096 B. one stringify with a replacer against a clone, a walk and two stringifies",
+      "evidence": "the old four steps 1.100 ms, the one pass 0.017 ms, 918 B against 77096 B. one stringify with a replacer against a clone, a walk and two stringifies",
       "detail": "",
       "section": "the persistence path in node",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853235.6123438
+      "timestamp": 1788854136.5856407
     },
     {
       "index": 9,
@@ -107,18 +107,18 @@
       "section": "the persistence path in node",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853235.6123886
+      "timestamp": 1788854136.5857174
     },
     {
       "index": 10,
       "name": "a blur blocks the main thread for less than one frame (node)",
       "status": "PASS",
-      "evidence": "median 1.42 ms, p95 4.98 ms over 60 blurs. p95 of the whole blur, four serialisations included",
+      "evidence": "median 3.16 ms, p95 7.76 ms over 60 blurs. p95 of the whole blur, four serialisations included",
       "detail": "",
       "section": "acceptance, node",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853235.6309028
+      "timestamp": 1788854136.599279
     },
     {
       "index": 11,
@@ -129,29 +129,29 @@
       "section": "the persistence path in the browser",
       "notebook": "09-editing-latency",
       "duration_ms": 455,
-      "timestamp": 1788853236.1034255
+      "timestamp": 1788854137.0813966
     },
     {
       "index": 12,
       "name": "the persistence path costs, measured in chromium",
       "status": "PASS",
-      "evidence": "77085 B, one whole-store save 0.420 ms (batch), 60 samples. after change 1, one pass on the same payload: 0.225 ms; with change 2 as well, 0.010 ms and 8.... the browser measured something",
+      "evidence": "77085 B, one whole-store save 0.380 ms (batch), 60 samples. after change 1, one pass on the same payload: 0.200 ms; with change 2 as well, 0.012 ms and 8.... the browser measured something",
       "detail": "",
       "section": "the persistence path in the browser",
       "notebook": "09-editing-latency",
-      "duration_ms": 1884,
-      "timestamp": 1788853237.9880736
+      "duration_ms": 1904,
+      "timestamp": 1788854138.9856946
     },
     {
       "index": 13,
       "name": "one blur in the browser is under one frame of work",
       "status": "PASS",
-      "evidence": "before 1.680 ms for a blur, after 0.010 ms. one frame at 16 ms",
+      "evidence": "before 1.520 ms for a blur, after 0.012 ms. one frame at 16 ms",
       "detail": "",
       "section": "the persistence path in the browser",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853237.9881954
+      "timestamp": 1788854138.985778
     },
     {
       "index": 14,
@@ -162,7 +162,7 @@
       "section": "the real CMS",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853238.0047448
+      "timestamp": 1788854139.0020878
     },
     {
       "index": 15,
@@ -173,10 +173,54 @@
       "section": "the real CMS",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853238.00479
+      "timestamp": 1788854139.002106
     },
     {
       "index": 16,
+      "name": "a field is typed and left in the CMS, and set back",
+      "status": "PASS",
+      "evidence": "the edit reached the field. and localStorage, which without an agent is the only place it exists. the field was set back. read back out of an emptied browser",
+      "detail": "",
+      "section": "the real CMS, no agent",
+      "notebook": "09-editing-latency",
+      "duration_ms": 86309,
+      "timestamp": 1788854225.3280313
+    },
+    {
+      "index": 17,
+      "name": "the escape holds: nothing left the browser",
+      "status": "PASS",
+      "evidence": "the built site carries no agent option. and no request went to an agent host. nothing was queued. the toolbar claims no save, because none was made",
+      "detail": "",
+      "section": "the real CMS, no agent",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788854225.3284526
+    },
+    {
+      "index": 18,
+      "name": "the writes a blur causes collapsed against the baseline",
+      "status": "PASS",
+      "evidence": "12 store write(s) and 33873 B in the four seconds after the blur, against 185 and 187 writes .... change 1 coalesces the registration storm into one write per idle deadline. the bytes a blur writes, against 14.4 MB",
+      "detail": "",
+      "section": "the real CMS, no agent",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788854225.3289652
+    },
+    {
+      "index": 19,
+      "name": "the blur to paint gap, which change 1 does not fix",
+      "status": "WARN",
+      "evidence": "25.0 ms from the blur to the next painted frame, longest task 54 ms. still over one frame at 16 ms, and the cause is the registration storm this file names, not t...",
+      "detail": "",
+      "section": "the real CMS, no agent",
+      "notebook": "09-editing-latency",
+      "duration_ms": 0,
+      "timestamp": 1788854225.3293831
+    },
+    {
+      "index": 20,
       "name": "a blur is painted within one frame",
       "status": "SKIP",
       "evidence": "the browser half did not run",
@@ -184,10 +228,10 @@
       "section": "acceptance, browser",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853238.0206354
+      "timestamp": 1788854225.3598707
     },
     {
-      "index": 17,
+      "index": 21,
       "name": "the writes after a blur are what the deferred writer allows",
       "status": "SKIP",
       "evidence": "the browser half did not run",
@@ -195,10 +239,10 @@
       "section": "acceptance, browser",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853238.0206554
+      "timestamp": 1788854225.3599906
     },
     {
-      "index": 18,
+      "index": 22,
       "name": "the bytes a blur writes collapsed",
       "status": "SKIP",
       "evidence": "the browser half did not run",
@@ -206,7 +250,7 @@
       "section": "acceptance, browser",
       "notebook": "09-editing-latency",
       "duration_ms": 0,
-      "timestamp": 1788853238.02067
+      "timestamp": 1788854225.3600957
     }
   ]
 }
