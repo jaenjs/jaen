@@ -174,17 +174,29 @@ const Slice: React.FC<SliceProps> = props => {
                       id: 'CmsFrameSaveStatePending',
                       defaultMessage: 'Not saved yet'
                     })
-                  : intl.formatMessage(
-                      {
-                        id: 'CmsFrameSaveStateSaved',
-                        defaultMessage: 'Saved {at}'
-                      },
-                      {
-                        at: sharedDraft.lastSavedAt
-                          ? intl.formatTime(new Date(sharedDraft.lastSavedAt))
-                          : ''
-                      }
-                    ),
+                  : sharedDraft.hasUnpublished
+                    ? intl.formatMessage(
+                        {
+                          id: 'CmsFrameSaveStateSavedUnpublished',
+                          defaultMessage: 'Saved {at}, not published'
+                        },
+                        {
+                          at: sharedDraft.lastSavedAt
+                            ? intl.formatTime(new Date(sharedDraft.lastSavedAt))
+                            : ''
+                        }
+                      )
+                    : intl.formatMessage(
+                        {
+                          id: 'CmsFrameSaveStateSaved',
+                          defaultMessage: 'Saved {at}'
+                        },
+                        {
+                          at: sharedDraft.lastSavedAt
+                            ? intl.formatTime(new Date(sharedDraft.lastSavedAt))
+                            : ''
+                        }
+                      ),
         icon:
           sharedDraft.saveState === 'offline'
             ? FaPlug
@@ -194,11 +206,12 @@ const Slice: React.FC<SliceProps> = props => {
                 ? FaRegClock
                 : FaCloudUploadAlt,
         isLoading: sharedDraft.saveState === 'saving',
-        onClick: () => {
-          if (sharedDraft.lastCommitUrl) {
-            window.open(sharedDraft.lastCommitUrl, '_blank', 'noreferrer')
-          }
-        },
+        // No link any more. A save wrote the site's shared draft and no commit
+        // exists to open: the repository is written by a publish alone, and
+        // this item's job is to say which of the two has happened. See
+        // docs/architecture/draft-state.md, "Publish: the only writer of
+        // history".
+        onClick: () => undefined,
         order: 2
       }
 
@@ -473,7 +486,8 @@ const Slice: React.FC<SliceProps> = props => {
     intl.locale,
     sharedDraft.saveState,
     sharedDraft.lastSavedAt,
-    sharedDraft.pending
+    sharedDraft.pending,
+    sharedDraft.hasUnpublished
   ])
 
   return (

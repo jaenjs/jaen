@@ -33,8 +33,15 @@ export interface JaenPluginOptions extends PluginOptions {
     site?: string
     siteKey?: string
     /**
-     * Poll interval of the shared draft while the tab is hidden, ms.
-     * Default 5000.
+     * Where the draft object's WebSocket is, when it is not derived from
+     * `url`. Derived it is `url` with the scheme swapped to `wss` and a
+     * trailing `/graphql` replaced by `/draft/<site>`; an agent behind a proxy
+     * that terminates the socket elsewhere needs this.
+     */
+    socketUrl?: string
+    /**
+     * Poll interval of the shared draft while the tab is hidden and the
+     * object's socket is not up, ms. Default 5000.
      */
     pollMs?: number
     /**
@@ -115,14 +122,16 @@ export const pluginOptionsSchema: GatsbyNode['pluginOptionsSchema'] = ({
       url: Joi.string().uri().required(),
       site: Joi.string(),
       siteKey: Joi.string(),
+      socketUrl: Joi.string().uri({scheme: ['ws', 'wss']}),
       pollMs: Joi.number().integer().min(1000),
       activePollMs: Joi.number().integer().min(500),
       debounceMs: Joi.number().integer().min(100)
     })
       .or('site', 'siteKey')
       .description(
-        'The jaen agent that holds the shared draft. Every change is ' +
-          "committed to this site's repository as it happens."
+        'The jaen agent that holds the shared draft. A save reaches the ' +
+          "site's Durable Object and no repository; a publish writes the " +
+          'one migration file and the one commit.'
       ),
     storageUrl: Joi.string().uri(),
     zitadelGql: Joi.object({
@@ -257,6 +266,7 @@ export const onCreateWebpackConfig: GatsbyNode['onCreateWebpackConfig'] =
               ? {
                   url: pluginOptions.agent.url,
                   site: pluginOptions.agent.site || pluginOptions.agent.siteKey,
+                  socketUrl: pluginOptions.agent.socketUrl,
                   pollMs: pluginOptions.agent.pollMs,
                   activePollMs: pluginOptions.agent.activePollMs,
                   debounceMs: pluginOptions.agent.debounceMs
