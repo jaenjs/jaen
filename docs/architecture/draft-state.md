@@ -952,6 +952,263 @@ The gate is a notebook scenario and not a code reading: type into a
 field, let a read that was answered before the keystroke arrive after it,
 and prove the typed value is what the object and the screen both hold.
 
+### Reproduced on demand 2026-09-08 at night, and it is all three
+
+An Opus session that built none of this drove the question on the deployed
+`https://booklimo.at`, signed in as the booklimo human admin, against
+`jaen-agent` 4.4.0. It changed no behaviour. booklimo only, and nothing was
+written on limosen.
+
+**The verdict.** The mechanism this section names first is real and reproduces
+2 of 2 when the race is forced. The second candidate, a hydrate that lands
+while the caret is in the field, is real as well, reproduces 2 of 2 with no
+forcing at all beyond a second editor writing the same field, and is the one
+whose fingerprint is in the owner's own draft. The third, a socket push that
+is not held while a save is in flight, is real and is not a revert: it is
+staleness of up to the safety poll's thirty seconds, and it widens the window
+the first two act in.
+
+Against this design's own acceptance, "a field never reverts: no read is
+applied below the revision the client has reached, and a focused field is not
+written from the outside", the reading is **red on both halves**. A read below
+the client's revision is applied, because the guard compares against a
+revision the browser has already left behind. A focused field is written from
+the outside, because the freeze that exists holds only for the field's own
+echo.
+
+#### How it was driven, so a reader can weigh the readings
+
+`tests/support/revert-probe.py`, beside the notebooks' own harness, whose sign
+in, edit-mode init script and store handle it reuses. Nine runs in
+`tests/revert/`, and the draft as it stood before any of them in
+`draft-before-203.json` beside the draft afterwards in `draft-after.json`.
+
+One init script installed before any script of the page does the whole of the
+instrumentation. It wraps `window.fetch` and records every call to the agent
+host: the operation, the `sinceRevision` or `baseRevision` it carried, the
+revision the client had reached when it was sent, the instant the network
+answered, the instant the answer was handed to the client, and the value that
+answer carries for the field under test read out of its own bytes. Beside it a
+subscription to jaen's own store records every distinct state of
+`remote.revision`, `remote.publishedRevision`, the outbox length, `saveState`,
+the store's value for the field, the value the browser paints, and which redux
+actions ran since the row before. So a revert is a row with a cause named
+beside it rather than a value somebody noticed moving.
+
+The race is forced by delaying an answer and by nothing else. `holdNextOp`
+parks the answer of one named operation **after the network has produced it**,
+so the bytes are the object's own and were genuinely made before the save.
+Nothing about a request is rewritten and no answer is invented.
+
+The second editor is the booklimo machine admin `taxi-test-admin-krc-api`,
+writing through the agent's own `save` with a credential of the run's own. It
+is a second editor as far as the object is concerned, a different sub with its
+own base, and it avoids granting `jaen:admin` to a second human on a real
+identity server for the length of a run, which a run of this same day left
+behind for eight hours.
+
+The field under test is `FaqSubtitle` and the second editor's is
+`ServicesSubtitle`. Both were last written by the machine test account and both
+held the site's published text, so neither is anybody's unpublished work. The
+owner's own four unpublished edits of this evening were read and never written.
+
+#### The first mechanism, forced, and the revisions
+
+Two runs, `tests/revert/forced-a.json` and `forced-b.json`.
+
+| what happened                             | run A                                                                          | run B                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| the client and the object at the start    | revision 205                                                                   | revision 209                                           |
+| the second editor writes another field    | object to 206                                                                  | object to 210                                          |
+| the poll the socket frame causes          | sent 21:22:30.430Z with `sinceRevision` 205                                    | 21:24:41.846Z with 209                                 |
+| what the object answered it               | revision 206, `changed: true`, the field's **old** value                       | revision 210, the same                                 |
+| that answer is held                       | 3,525 ms                                                                       | 3,548 ms                                               |
+| the person types and leaves the field     | ` AAA`                                                                         | ` BBB`                                                 |
+| the save                                  | sent 21:22:33.178Z, `baseRevision` 205, answered revision 207, `rebased: true` | 21:24:44.610Z, base 209, revision 211, `rebased: true` |
+| `saveSucceeded` empties the outbox        | outbox 1 to 0, `remote.revision` 205 to 207                                    | the same                                               |
+| the held answer is released               | 21:22:33.981Z, 803 ms after the save came back                                 | 21:24:45.435Z                                          |
+| what `pages/hydrateFromRemote` then wrote | the field's **old** value                                                      | the field's **old** value                              |
+| and what it did to the client's own mark  | `remote.revision` **207 back to 206**                                          | **211 back to 210**                                    |
+| what the object held throughout           | the typed value                                                                | the typed value                                        |
+| what the screen showed                    | the old value for **45.1 s**                                                   | the old value for **45.1 s**                           |
+| what put it right                         | the thirty second safety poll                                                  | the same                                               |
+
+So the store, the screen and the object disagreed for three quarters of a
+minute, with the browser showing a value the person had replaced and the object
+holding the one they typed. Nothing warned, nothing was queued, and the toolbar
+said `saved` the whole time.
+
+**The guard that exists for this did not fire, and the reason is one line.**
+`remote-state.ts` skips an answer whose revision is below the one the browser
+holds, which is the design's own "a revision that goes backwards". `poll()`
+reads `const remote = state().remote` **before** its `await`, so the comparison
+`answer.revision < remote.revision` is against the revision the browser had when
+the read was sent and never against the one it has reached. In run A that
+comparison was 206 < 205, false, while the browser stood at 207. No
+`console.warn` was recorded in either run, which is how the absence was
+measured rather than argued.
+
+`remoteHydrated` then sets `state.revision = answer.revision` unconditionally,
+so the browser's own mark goes backwards as well. That is what makes the run
+self heal: the next delta is asked for from 206 and carries the typed value
+back. A client whose mark had stayed at 207 would have asked from 207, been
+answered `changed: false`, and shown the old value until something else wrote
+that page.
+
+**The re-read a rebased save asks for never happens.** `flush()` ends its `try`
+with `if (answer.rebased) void poll()`, and `inFlight` is cleared in the
+`finally` **after** that, while `poll()`'s first line returns when `inFlight` is
+set. Measured by absence in both runs: `rebased: true` came back at 21:22:33.2
+and the next `draft` call was at 21:22:56.7, which is the thirty second
+interval's own tick and not a re-read. So the one thing that would have
+repaired the revert in a second is dropped.
+
+#### The second mechanism, and it needs no forcing
+
+Two runs, `tests/revert/focused-a.json` and `focused-b.json`. A person types
+into `FaqSubtitle` and **keeps the caret in it**. The second editor writes the
+same field. No answer is held and no request is touched.
+
+| what was asked                            | what the live systems answered                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| the hydrate reaches the store             | 1.0 s after the second editor's save, `pages/hydrateFromRemote`, the store now the other editor's value |
+| the field dispatches its own text back    | 76 ms later, `pages/field_write`, the store the person's value again                                    |
+| and then the DOM is re-set from the store | 1.0 s later the screen carries the **other editor's** value and the person's own text is gone           |
+| where the caret went                      | run A: the next two keystrokes landed at the **start**, `ZZShort answers about booking, …`              |
+| and the value does not settle             | it flips again, and again: **4 saves in 13 s** in both runs, alternating between the two values         |
+| what the object was left holding          | the person's value in both runs, after four writes it did not need                                      |
+
+**The owner's own draft carries this fingerprint.** When this run started,
+`FleetTitle` held `dudhdtttttOur fleet &nbsp;test &nbsp;dudhd`, written by
+Florian Kleber at 21:08:50.664Z and unpublished. `dudhd` appears twice, once at
+the very front of a field whose text he was appending to. A caret put back at
+position 0 is what does that, and putting the caret back at position 0 is what
+`dangerouslySetInnerHTML` does when the string it is given changes. That is not
+proof of what he saw and it is the closest thing to it that exists.
+
+**And the forced run taken with the caret still in the field says the two are
+independent.** `tests/revert/forced-focused.json` is the first mechanism driven
+again with no blur: the store reverted exactly as in runs A and B, revision 215
+back to 214, and the screen kept the person's ` CCC` until the safety poll
+repaired the store 22 s later. So a stale answer reverts the store whether or
+not the field has focus, and what focus decides is whether the person watches
+it happen.
+
+**This is the freeze in `TextField` working as it is written.** The echo of a
+field's own dispatch is not handed back to React while the caret is in it, and
+the comment above it says the narrowness is deliberate: "a value that arrives
+from anywhere else, another editor's change over the socket above all, is
+written into the DOM exactly as it was before this change, caret and all". What
+the measurement adds is that "exactly as before" means the person's own
+unfinished sentence is replaced under their hands and their caret is moved, and
+that the two sides then fight, each flip costing a save.
+
+#### The third, which is not a revert
+
+`tests/revert/saveflight-a.json`. The window is a hundred milliseconds wide on
+this link, so it was made rather than waited for: the **save's** answer was
+held, the second editor wrote while it was held, and the frame the object
+pushed therefore arrived with `inFlight` set. The first attempt is kept beside
+it as `socket-a.json` and it missed, which is the reason the second was shaped
+this way: the second editor's write was timed from outside the browser and
+landed 84 ms after the save had already come back, so the frame was answered
+normally and the other editor's value was on the screen in 0.57 s. A window
+that narrow cannot be hit by waiting.
+
+| what was asked                           | what happened                                                   |
+| ---------------------------------------- | --------------------------------------------------------------- |
+| the save is out                          | sent 21:29:23.557Z, `baseRevision` 226, held 1,756 ms           |
+| the second editor writes inside that     | object to 228 at 21:29:24.058Z, and the object pushes the frame |
+| what the frame made the client do        | **nothing**, `poll()` returns at once while `inFlight` is set   |
+| and the save's own answer did not rescue | `rebased: false` here, and even `true` is swallowed, see above  |
+| when the other editor's change was seen  | **24.77 s** later, on the thirty second safety poll             |
+
+The acceptance of this design is two seconds. What this says is that the two
+seconds hold except when the frame lands inside a save of this browser's own,
+which is exactly when a person is editing, and that the fallback is the safety
+poll the design deliberately kept. Nothing is lost by it. It is written down
+here because it is the same `inFlight` early return that swallows the rebased
+re-read, and because a browser that is thirty seconds behind is a browser in
+which the first mechanism has thirty seconds to act.
+
+#### How often it happens without forcing
+
+Two sessions of a person editing with a second editor writing throughout, no
+answer held and nothing rewritten.
+
+| session                                   | rounds | saves | `draft` calls | hydrates | hydrates that moved the field | reverts |
+| ----------------------------------------- | ------ | ----- | ------------- | -------- | ----------------------------- | ------- |
+| the second editor on another field        | 12     | 18    | 14            | 12       | 0                             | **0**   |
+| the second editor on the field under test | 8      | 8     | 9             | 8        | 7                             | **0**   |
+
+So on this machine, this link and this cadence the first mechanism was never
+seen in twenty hydrates without forcing. That is the honest number and it is a
+narrow one: the window is one network round trip wide, and what decides the
+rate is whether a read's answer is delivered later than a save that started
+after it. Every round trip in these runs was tens of milliseconds. Nothing here
+says what the rate is on a phone, on a hotel connection, or on a browser whose
+tab has just come back.
+
+The second session is the sharper reading of the two. Seven of its eight
+hydrates moved the field under the person and not one of them was a revert of
+their own text, for one reason: the caret was never in the field when they
+landed, because the harness leaves the field before each one. The second
+mechanism needs the person to still be typing, and when they are it fires every
+time.
+
+#### What this run did not establish
+
+- **The natural rate of the first mechanism.** Zero in twenty hydrates says the
+  window is narrow on a fast link and says nothing about a slow one. Measuring
+  it honestly needs a real slow connection rather than a delayed answer, and a
+  delayed answer is forcing by another name.
+- **The screen follows the store late, and nobody chased why.** After the
+  revert the DOM took **8.0 s** to show what the store held, and after the
+  repair **30.3 s**, in both forced runs. Both changes arrived in a row that
+  also carried `pages/field_register`, so the field appears to paint a value
+  from outside only when something else re-renders it. That is its own question
+  and it means "what the store holds" and "what a person sees" are two readings
+  in this CMS and were taken as two here.
+- **One field, one page, one browser, one machine, one viewport.**
+- **The second editor is a machine account and not a second human browser.**
+  What the object sees is a second sub with its own base, which is what the
+  mechanisms turn on. Two people in two browsers is not measured.
+- **Nothing was fixed.** This phase was asked to change no behaviour and did
+  not.
+
+#### What the fix has to take, on top of what this section already asked for
+
+This section already says it: nothing is applied whose revision is not strictly
+greater than the highest the client has reached, and a focused field is not
+written from the outside. The measurement adds where each of those has to go.
+
+- The comparison must be against the store **at the moment the answer arrives**
+  and not against the snapshot `poll()` took before its request, which is the
+  line that let every one of these reverts through.
+- `remoteHydrated` must not move `revision` backwards. It is what heals the
+  revert today and it is also what would hide a worse one.
+- A field that has focus must keep what the person typed and hold the outside
+  value until they leave, rather than taking it and dispatching its own text
+  back a frame later. The flip is what turns one late answer into four saves.
+- The `inFlight` early return has to stop swallowing the two reads that exist
+  to repair exactly this: the re-read a `rebased` save asks for, and the socket
+  frame that arrives while a save is out.
+
+#### What this run left on the live site
+
+Every field of booklimo's draft is byte for byte what the run found it, read
+back out of the object and compared against
+`tests/revert/draft-before-203.json`, which is the whole draft as it stood at
+revision 203 before anything was typed. The owner's own four unpublished fields
+(`FleetTitle`, `AboutP1`, `AboutP2`, `AboutP3`) were never written and are still
+his in the authors map at the instants he wrote them. The two fixture fields
+carry the machine account's stamp and the site's published text.
+
+The object went from revision 203 to 284 and `publishedRevision` is 183, which
+is where the run found it. `netsnek/booklimo.at` main is `e1ec2748` before and
+after, `patches.txt` unmoved, no gateway file, nothing published and nothing
+discarded.
+
 ## Three operations that rewrite the shared draft
 
 Import, discard and restore are one kind of thing: an act that changes the
