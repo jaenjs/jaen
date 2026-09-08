@@ -4,6 +4,7 @@ import {v4 as uuidv4} from 'uuid'
 import {JaenPage, SectionType} from '../../types'
 import {deepRemoveUndefinedProperties} from '../../utils/deep-remove-undefined-properties'
 import {findSection, insertSectionIntoTree} from '../../utils/page/section'
+import {sameRegistration} from '../../utils/registration'
 import {IPageState} from '../types'
 
 export const pageInitialState: IPageState = {
@@ -314,6 +315,38 @@ const pagesSlice = createSlice({
       }>
     ) {
       const {pageId, section, fieldType, fieldName, props} = action.payload
+
+      /**
+       * A registration that says what the store already says writes nothing.
+       *
+       * Second line only. `useField`'s own `register` does not dispatch at
+       * all in that case, which is where the cost actually is, and this is
+       * here for any caller that is not that hook. What it protects beyond
+       * the bytes is the identity of the page node: the assignment below
+       * replaces `state.nodes[pageId]` on every registration, and everything
+       * that reads a page out of the store, `usePage` above all, then reads a
+       * new object and re-renders the page. See
+       * docs/architecture/editing-performance.md, "The storm at its root".
+       */
+      const registered = (() => {
+        const existing = state.nodes[pageId]
+
+        if (!existing) {
+          return undefined
+        }
+
+        if (section) {
+          return findSection(existing.sections || [], section.path)?.items.find(
+            item => item.id === section.id
+          )?.jaenFields?.[fieldType]?.[fieldName]
+        }
+
+        return existing.jaenFields?.[fieldType]?.[fieldName]
+      })()
+
+      if (registered && sameRegistration(registered.props, props)) {
+        return
+      }
 
       // find the page
       // Create the page if not found
