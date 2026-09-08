@@ -46,6 +46,21 @@ const de = {
   // Actions
   SendOffer: 'Angebot senden',
   SendOfferAgain: 'Angebot erneut senden',
+  // The customer's answer taken on the telephone, dispatch.md section 14.1.
+  // The confirm replaces the bare "Bestätigen" of an OFFERED ride: the
+  // dispatcher is not confirming, the customer is, through them.
+  ConfirmForCustomer: 'Für den Kunden bestätigen',
+  ConfirmForCustomerTitle: 'Für den Kunden bestätigen?',
+  ConfirmForCustomerBody:
+    'Der Kunde hat telefonisch zugesagt. Die Fahrt gilt dann als bestätigt, Sie werden als Urheber vermerkt, und die Bestätigung geht trotzdem an den Kunden.',
+  DeclineForCustomer: 'Für den Kunden ablehnen',
+  DeclineForCustomerTitle: 'Für den Kunden ablehnen?',
+  DeclineForCustomerBody:
+    'Der Kunde hat telefonisch abgesagt. Das Angebot gilt dann als abgelehnt, die Fahrt wird storniert, solange sie noch niemand gefahren ist, Sie werden als Urheber vermerkt, und die Absage geht trotzdem an den Kunden.',
+  DeclinedForCustomer: 'Für den Kunden abgelehnt',
+  DeclineFailed: 'Die Absage konnte nicht gespeichert werden',
+  ConfirmedBy: 'Für den Kunden bestätigt von {name}',
+  DeclinedBy: 'Für den Kunden abgelehnt von {name}',
   ConfirmAsAdmin: 'Bestätigen',
   ConfirmAsAdminTitle: 'Angebot als bestätigt markieren?',
   ConfirmAsAdminBody:
@@ -146,6 +161,18 @@ const en: OffersStrings = {
 
   SendOffer: 'Send offer',
   SendOfferAgain: 'Send offer again',
+  ConfirmForCustomer: 'Confirm for the customer',
+  ConfirmForCustomerTitle: 'Confirm for the customer?',
+  ConfirmForCustomerBody:
+    'The customer said yes on the telephone. The ride then counts as confirmed, you are recorded as the author, and the confirmation still goes to the customer.',
+  DeclineForCustomer: 'Decline for the customer',
+  DeclineForCustomerTitle: 'Decline for the customer?',
+  DeclineForCustomerBody:
+    'The customer said no on the telephone. The offer then counts as declined, the ride is cancelled as long as nobody has driven it, you are recorded as the author, and the refusal still goes to the customer.',
+  DeclinedForCustomer: 'Declined for the customer',
+  DeclineFailed: 'The refusal could not be saved',
+  ConfirmedBy: 'Confirmed for the customer by {name}',
+  DeclinedBy: 'Declined for the customer by {name}',
   ConfirmAsAdmin: 'Confirm',
   ConfirmAsAdminTitle: 'Mark the offer as confirmed?',
   ConfirmAsAdminBody:
@@ -242,6 +269,18 @@ const tr: OffersStrings = {
 
   SendOffer: 'Teklif gönder',
   SendOfferAgain: 'Teklifi yeniden gönder',
+  ConfirmForCustomer: 'Müşteri adına onayla',
+  ConfirmForCustomerTitle: 'Müşteri adına onaylansın mı?',
+  ConfirmForCustomerBody:
+    'Müşteri telefonda onayladı. Transfer onaylanmış sayılır, işlemi yapan olarak siz kaydedilirsiniz ve onay yine de müşteriye gönderilir.',
+  DeclineForCustomer: 'Müşteri adına reddet',
+  DeclineForCustomerTitle: 'Müşteri adına reddedilsin mi?',
+  DeclineForCustomerBody:
+    'Müşteri telefonda iptal etti. Teklif reddedilmiş sayılır, henüz kimse sürmediyse transfer iptal edilir, işlemi yapan olarak siz kaydedilirsiniz ve ret yine de müşteriye gönderilir.',
+  DeclinedForCustomer: 'Müşteri adına reddedildi',
+  DeclineFailed: 'Ret kaydedilemedi',
+  ConfirmedBy: 'Müşteri adına {name} onayladı',
+  DeclinedBy: 'Müşteri adına {name} reddetti',
   ConfirmAsAdmin: 'Onayla',
   ConfirmAsAdminTitle: 'Teklif onaylandı olarak işaretlensin mi?',
   ConfirmAsAdminBody:
@@ -337,6 +376,18 @@ const ar: OffersStrings = {
 
   SendOffer: 'إرسال العرض',
   SendOfferAgain: 'إعادة إرسال العرض',
+  ConfirmForCustomer: 'تأكيد نيابة عن العميل',
+  ConfirmForCustomerTitle: 'تأكيد نيابة عن العميل؟',
+  ConfirmForCustomerBody:
+    'وافق العميل هاتفياً. تُعد الرحلة مؤكدة، ويُسجل اسمك كمن أجرى التأكيد، ويصل التأكيد إلى العميل كالمعتاد.',
+  DeclineForCustomer: 'رفض نيابة عن العميل',
+  DeclineForCustomerTitle: 'رفض نيابة عن العميل؟',
+  DeclineForCustomerBody:
+    'اعتذر العميل هاتفياً. يُعد العرض مرفوضاً، وتُلغى الرحلة ما دام لم يقم بها أحد، ويُسجل اسمك كمن أجرى الرفض، ويصل الاعتذار إلى العميل كالمعتاد.',
+  DeclinedForCustomer: 'تم الرفض نيابة عن العميل',
+  DeclineFailed: 'تعذر حفظ الرفض',
+  ConfirmedBy: 'أكّد نيابة عن العميل {name}',
+  DeclinedBy: 'رفض نيابة عن العميل {name}',
   ConfirmAsAdmin: 'تأكيد',
   ConfirmAsAdminTitle: 'هل تريد تعليم العرض كمؤكد؟',
   ConfirmAsAdminBody:

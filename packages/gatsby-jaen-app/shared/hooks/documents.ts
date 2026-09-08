@@ -23,83 +23,84 @@
  * The admin's confirmation is `confirmOffer(args:{transferId})`, the
  * customer's link is the same field with `token`, see pylon/src/offers.
  */
-import { useCallback, useMemo } from "react";
-import { keepPreviousData } from "@tanstack/react-query";
-import { fetchGraphQL } from "../../client/limosen";
+import {useCallback, useMemo} from 'react'
+import {keepPreviousData} from '@tanstack/react-query'
+import {fetchGraphQL} from '../../client/limosen'
+import {appError} from '../errors'
 import {
   cachedRead,
   invalidateTransfers,
   keys,
   queryClient,
   useAppQuery,
-  usePager,
-} from "./query";
-import { call, invalidateOffers, isUnknownField } from "./offers";
-import { fetchTransfer, rememberTransfer, type TransferRow } from "./transfers";
+  usePager
+} from './query'
+import {call, invalidateOffers, isUnknownField} from './offers'
+import {fetchTransfer, rememberTransfer, type TransferRow} from './transfers'
 
 // --------------- The row ---------------
 
-export type DocumentKind = "OFFER" | "INVOICE";
+export type DocumentKind = 'OFFER' | 'INVOICE'
 
 export interface TransferDocument {
   /** `document:<uuid>`, the key documentUrl takes. */
-  id: string;
-  transferId: string;
-  kind: DocumentKind;
+  id: string
+  transferId: string
+  kind: DocumentKind
   /** AN-260001 for an offer, whatever the invoice carries, or undefined. */
-  number?: string;
-  filename: string;
-  contentType: string;
+  number?: string
+  filename: string
+  contentType: string
   /** Bytes. */
-  size: number;
+  size: number
   /** de | en | tr | ar. */
-  language: string;
-  createdAt: string;
-  updatedAt?: string;
+  language: string
+  createdAt: string
+  updatedAt?: string
   /** When and to whom the document was last mailed, written by the send. */
-  sentAt?: string;
-  sentTo?: string;
+  sentAt?: string
+  sentTo?: string
   /** The offer's JSON, for a generated document. */
-  data?: unknown;
+  data?: unknown
 }
 
 const str = (v: unknown): string | undefined =>
-  typeof v === "string" && v.length ? v : undefined;
+  typeof v === 'string' && v.length ? v : undefined
 
 export const mapDocument = (node: any): TransferDocument => ({
-  id: String(node?.id ?? ""),
-  transferId: String(node?.transferId ?? ""),
-  kind: node?.kind === "INVOICE" ? "INVOICE" : "OFFER",
+  id: String(node?.id ?? ''),
+  transferId: String(node?.transferId ?? ''),
+  kind: node?.kind === 'INVOICE' ? 'INVOICE' : 'OFFER',
   number: str(node?.number),
-  filename: str(node?.filename) ?? "",
-  contentType: str(node?.contentType) ?? "application/pdf",
-  size: typeof node?.size === "number" ? node.size : 0,
-  language: str(node?.language) ?? "de",
-  createdAt: str(node?.createdAt) ?? "",
+  filename: str(node?.filename) ?? '',
+  contentType: str(node?.contentType) ?? 'application/pdf',
+  size: typeof node?.size === 'number' ? node.size : 0,
+  language: str(node?.language) ?? 'de',
+  createdAt: str(node?.createdAt) ?? '',
   updatedAt: str(node?.updatedAt),
   sentAt: str(node?.sentAt),
   sentTo: str(node?.sentTo),
-  data: node?.data && typeof node.data === "object" ? node.data : undefined,
-});
+  data: node?.data && typeof node.data === 'object' ? node.data : undefined
+})
 
 const DOCUMENT_FIELDS =
-  "{ id transferId kind number filename contentType size language createdAt updatedAt sentAt sentTo }";
+  '{ id transferId kind number filename contentType size language createdAt updatedAt sentAt sentTo }'
 
 /** The offer's validity, from its stored JSON, for the timeline. */
 const DOCUMENT_FIELDS_WITH_DATA =
-  "{ id transferId kind number filename contentType size language createdAt updatedAt sentAt sentTo data }";
+  '{ id transferId kind number filename contentType size language createdAt updatedAt sentAt sentTo data }'
 
 // --------------- The list ---------------
 
 export const documentsKey = (transferId: string) =>
-  ["documents", transferId] as const;
+  ['documents', transferId] as const
 
 export const invalidateDocuments = (transferId?: string) =>
   queryClient.invalidateQueries({
-    queryKey: transferId ? documentsKey(transferId) : ["documents"],
-  });
+    queryKey: transferId ? documentsKey(transferId) : ['documents']
+  })
 
-const EMPTY: TransferDocument[] = [];
+const EMPTY: TransferDocument[] = []
 
 /**
  * The documents of one ride, by id or code. A schema without the store,
@@ -107,66 +108,64 @@ const EMPTY: TransferDocument[] = [];
  * error: the ride's page is not broken by a field it cannot have yet.
  */
 export const readDocuments = async (
-  transferId: string,
+  transferId: string
 ): Promise<TransferDocument[]> => {
   try {
     const rows: any[] =
       (await call(
-        "transferDocuments",
-        { args: { transferId } },
-        DOCUMENT_FIELDS_WITH_DATA,
-      )) ?? [];
-    return rows.map(mapDocument);
+        'transferDocuments',
+        {args: {transferId}},
+        DOCUMENT_FIELDS_WITH_DATA
+      )) ?? []
+    return rows.map(mapDocument)
   } catch (err) {
     // The pylon from before the document store: no documents, not an error.
-    if (isUnknownField(err)) return EMPTY;
-    throw err;
+    if (isUnknownField(err)) return EMPTY
+    throw err
   }
-};
+}
 
 export function useTransferDocuments(transferId: string | undefined) {
-  const key = transferId ?? "";
+  const key = transferId ?? ''
   const {
     query: q,
     isLoading,
     error,
-    refetch,
+    refetch
   } = useAppQuery({
     queryKey: documentsKey(key),
     queryFn: () => readDocuments(key),
-    enabled: !!transferId,
-  });
-  const documents = q.data ?? EMPTY;
-  const offer = documents.find((d) => d.kind === "OFFER");
-  const invoice = documents.find((d) => d.kind === "INVOICE");
+    enabled: !!transferId
+  })
+  const documents = q.data ?? EMPTY
+  const offer = documents.find(d => d.kind === 'OFFER')
+  const invoice = documents.find(d => d.kind === 'INVOICE')
 
   /** A document as a write answered it, into the list at once. */
   const remember = useCallback(
     (doc: TransferDocument) => {
-      queryClient.setQueryData<TransferDocument[]>(
-        documentsKey(key),
-        (held) => {
-          const rows = held ?? [];
-          return rows.some((d) => d.kind === doc.kind)
-            ? rows.map((d) => (d.kind === doc.kind ? doc : d))
-            : [...rows, doc];
-        },
-      );
+      queryClient.setQueryData<TransferDocument[]>(documentsKey(key), held => {
+        const rows = held ?? []
+        return rows.some(d => d.kind === doc.kind)
+          ? rows.map(d => (d.kind === doc.kind ? doc : d))
+          : [...rows, doc]
+      })
     },
-    [key],
-  );
+    [key]
+  )
 
-  return { documents, offer, invoice, isLoading, error, refetch, remember };
+  return {documents, offer, invoice, isLoading, error, refetch, remember}
 }
 
 // --------------- The link ---------------
 
 /** The document's URL on the storage gateway, what the pylon has on the row. */
 export const fetchDocumentUrl = async (id: string): Promise<string> => {
-  const url = await call("documentUrl", { args: { id } }, "");
-  if (typeof url !== "string" || !url) throw new Error("no link in the answer");
-  return url;
-};
+  const url = await call('documentUrl', {args: {id}}, '')
+  if (typeof url !== 'string' || !url)
+    throw appError('NoLink', 'no link in the answer')
+  return url
+}
 
 /**
  * Open a document in a new tab. The tab is opened on the click, before the
@@ -176,33 +175,33 @@ export const fetchDocumentUrl = async (id: string): Promise<string> => {
  * and not yet migrated answers DOCUMENT_NOT_MIGRATED.
  */
 export const openDocument = async (id: string): Promise<void> => {
-  const tab = typeof window !== "undefined" ? window.open("", "_blank") : null;
+  const tab = typeof window !== 'undefined' ? window.open('', '_blank') : null
   try {
-    const url = await fetchDocumentUrl(id);
-    if (tab) tab.location.href = url;
-    else if (typeof window !== "undefined") window.location.href = url;
+    const url = await fetchDocumentUrl(id)
+    if (tab) tab.location.href = url
+    else if (typeof window !== 'undefined') window.location.href = url
   } catch (err) {
-    tab?.close();
-    throw err;
+    tab?.close()
+    throw err
   }
-};
+}
 
 // --------------- The upload ---------------
 
-export const MAX_INVOICE_BYTES = 10 * 1024 * 1024;
+export const MAX_INVOICE_BYTES = 10 * 1024 * 1024
 
 /** The bytes start with %PDF, whatever the file's name says. */
 const looksLikePdf = async (file: Blob): Promise<boolean> => {
-  const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+  const head = new Uint8Array(await file.slice(0, 5).arrayBuffer())
   return (
     head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46
-  );
-};
+  )
+}
 
 export class InvoiceFileError extends Error {
-  constructor(public readonly reason: "type" | "size") {
-    super(reason === "size" ? "file too large" : "not a PDF");
-    this.name = "InvoiceFileError";
+  constructor(public readonly reason: 'type' | 'size') {
+    super(reason === 'size' ? 'file too large' : 'not a PDF')
+    this.name = 'InvoiceFileError'
   }
 }
 
@@ -213,35 +212,35 @@ export class InvoiceFileError extends Error {
  * `gatewayFileOf` below is the one place that translation is written.
  */
 export interface GatewayFile {
-  fileId: string;
-  url: string;
-  thumbUrl?: string;
-  size: number;
-  mimeType?: string;
-  filename?: string;
+  fileId: string
+  url: string
+  thumbUrl?: string
+  size: number
+  mimeType?: string
+  filename?: string
 }
 
 /** jaen's uploadFile answer as the mutation wants it. */
 export const gatewayFileOf = (
   uploaded: {
     data?: {
-      file_id?: string;
-      file_size?: number;
-      mime_type?: string;
-      file_name?: string;
-    };
-    fileUrl?: string;
-    fileThumbUrl?: string;
+      file_id?: string
+      file_size?: number
+      mime_type?: string
+      file_name?: string
+    }
+    fileUrl?: string
+    fileThumbUrl?: string
   },
-  fallback: { name?: string; size?: number; type?: string } = {},
+  fallback: {name?: string; size?: number; type?: string} = {}
 ): GatewayFile => ({
-  fileId: String(uploaded?.data?.file_id ?? ""),
-  url: String(uploaded?.fileUrl ?? ""),
+  fileId: String(uploaded?.data?.file_id ?? ''),
+  url: String(uploaded?.fileUrl ?? ''),
   thumbUrl: uploaded?.fileThumbUrl || undefined,
   size: uploaded?.data?.file_size ?? fallback.size ?? 0,
-  mimeType: uploaded?.data?.mime_type || fallback.type || "application/pdf",
-  filename: uploaded?.data?.file_name || fallback.name || undefined,
-});
+  mimeType: uploaded?.data?.mime_type || fallback.type || 'application/pdf',
+  filename: uploaded?.data?.file_name || fallback.name || undefined
+})
 
 /**
  * The file the dropzone was given, before anything is uploaded: ten
@@ -251,9 +250,9 @@ export const gatewayFileOf = (
  * file before the pylon does and a bad file must not reach it at all.
  */
 export const assertInvoiceFile = async (file: File): Promise<void> => {
-  if (file.size > MAX_INVOICE_BYTES) throw new InvoiceFileError("size");
-  if (!(await looksLikePdf(file))) throw new InvoiceFileError("type");
-};
+  if (file.size > MAX_INVOICE_BYTES) throw new InvoiceFileError('size')
+  if (!(await looksLikePdf(file))) throw new InvoiceFileError('type')
+}
 
 /**
  * The invoice as the ride's INVOICE document. The bytes went to the storage
@@ -264,40 +263,40 @@ export const assertInvoiceFile = async (file: File): Promise<void> => {
  * what the invoice carries, typed by the dispatcher, optional.
  */
 export const uploadInvoice = async (
-  transfer: { id: string; language?: string },
+  transfer: {id: string; language?: string},
   uploaded: GatewayFile,
-  number?: string,
+  number?: string
 ): Promise<TransferDocument> => {
   if (!uploaded?.fileId || !uploaded?.url) {
-    throw new Error("the storage gateway answered no file");
+    throw appError('NoFile', 'the storage gateway answered no file')
   }
   const node = await call(
-    "uploadTransferDocument",
+    'uploadTransferDocument',
     {
       args: {
         transferId: transfer.id,
-        kind: "INVOICE",
+        kind: 'INVOICE',
         fileId: uploaded.fileId,
         url: uploaded.url,
         thumbUrl: uploaded.thumbUrl || undefined,
         size: uploaded.size,
-        mimeType: uploaded.mimeType || "application/pdf",
-        filename: uploaded.filename || "invoice.pdf",
+        mimeType: uploaded.mimeType || 'application/pdf',
+        filename: uploaded.filename || 'invoice.pdf',
         number: number?.trim() || undefined,
-        language: transfer.language || undefined,
-      },
+        language: transfer.language || undefined
+      }
     },
     DOCUMENT_FIELDS,
-    "mutation",
-  );
-  const doc = mapDocument(node);
-  if (!doc.id) throw new Error("no document id in the answer");
-  await invalidateDocuments(transfer.id);
+    'mutation'
+  )
+  const doc = mapDocument(node)
+  if (!doc.id) throw appError('NoLink', 'no document id in the answer')
+  await invalidateDocuments(transfer.id)
   // The Media tree's Dokumente folder lists the brand's documents, so it is
   // a page behind after an upload here.
-  void invalidateDocumentsPage();
-  return doc;
-};
+  void invalidateDocumentsPage()
+  return doc
+}
 
 /**
  * The row, gone. The file stays on the gateway, which has no delete.
@@ -306,18 +305,13 @@ export const uploadInvoice = async (
  * read again instead of one.
  */
 export const deleteDocument = async (doc: {
-  id: string;
-  transferId?: string;
+  id: string
+  transferId?: string
 }): Promise<void> => {
-  await call(
-    "deleteTransferDocument",
-    { args: { id: doc.id } },
-    "",
-    "mutation",
-  );
-  await invalidateDocuments(doc.transferId);
-  void invalidateDocumentsPage();
-};
+  await call('deleteTransferDocument', {args: {id: doc.id}}, '', 'mutation')
+  await invalidateDocuments(doc.transferId)
+  void invalidateDocumentsPage()
+}
 
 // --------------- The status writes ---------------
 
@@ -325,38 +319,38 @@ export const deleteDocument = async (doc: {
 const readMutationNames = async (): Promise<string[]> => {
   const result: any = await fetchGraphQL(
     {
-      query: "query { __schema { mutationType { fields { name } } } }",
+      query: 'query { __schema { mutationType { fields { name } } } }',
       variables: undefined,
-      operationName: undefined,
+      operationName: undefined
     },
-    {},
-  );
-  const fields = result?.data?.__schema?.mutationType?.fields;
+    {}
+  )
+  const fields = result?.data?.__schema?.mutationType?.fields
   return Array.isArray(fields)
     ? fields.map((f: any) => String(f?.name)).filter(Boolean)
-    : [];
-};
+    : []
+}
 
 const mutationNames = async (): Promise<Set<string>> => {
   try {
     return new Set(
-      await cachedRead(keys.schema("mutationNames"), readMutationNames),
-    );
+      await cachedRead(keys.schema('mutationNames'), readMutationNames)
+    )
   } catch {
-    return new Set();
+    return new Set()
   }
-};
+}
 
 /** After a status write: the ride read fresh and remembered on every screen, the lists read again. */
 const settle = async (transferId: string): Promise<TransferRow | null> => {
-  const row = await fetchTransfer(transferId);
-  if (row) rememberTransfer(row);
-  void invalidateTransfers();
-  void invalidateOffers();
-  void invalidateDocuments(transferId);
-  void invalidateDocumentsPage();
-  return row;
-};
+  const row = await fetchTransfer(transferId)
+  if (row) rememberTransfer(row)
+  void invalidateTransfers()
+  void invalidateOffers()
+  void invalidateDocuments(transferId)
+  void invalidateDocumentsPage()
+  return row
+}
 
 /**
  * One status write. The answer's shape is the backend's business (the ride,
@@ -367,22 +361,22 @@ const settle = async (transferId: string): Promise<TransferRow | null> => {
 const statusWrite = async (
   field: string,
   args: Record<string, unknown>,
-  transferId: string,
+  transferId: string
 ): Promise<TransferRow | null> => {
-  const names = await mutationNames();
+  const names = await mutationNames()
   // An endpoint that will not introspect is taken to answer an object.
-  const object = names.size === 0 || names.has(field);
-  await call(field, { args }, object ? "{ __typename }" : "", "mutation");
-  return settle(transferId);
-};
+  const object = names.size === 0 || names.has(field)
+  await call(field, {args}, object ? '{ __typename }' : '', 'mutation')
+  return settle(transferId)
+}
 
 /** Mails the uploaded invoice in the booking's language and sets INVOICED. */
-export const sendInvoice = (doc: { id: string; transferId: string }) =>
-  statusWrite("sendInvoice", { documentId: doc.id }, doc.transferId);
+export const sendInvoice = (doc: {id: string; transferId: string}) =>
+  statusWrite('sendInvoice', {documentId: doc.id}, doc.transferId)
 
 /** INVOICED to PAID, with the instant. */
 export const markPaid = (transferId: string) =>
-  statusWrite("markPaid", { transferId }, transferId);
+  statusWrite('markPaid', {transferId}, transferId)
 
 /**
  * OFFERED to CONFIRMED by the dispatcher, the customer having said yes on
@@ -391,9 +385,9 @@ export const markPaid = (transferId: string) =>
  * only.
  */
 export const confirmAsAdmin = (
-  transferId: string,
+  transferId: string
 ): Promise<TransferRow | null> =>
-  statusWrite("confirmOffer", { transferId }, transferId);
+  statusWrite('confirmOffer', {transferId}, transferId)
 
 /**
  * NEW to CONFIRMED for a booking that carries no offer, the office's own
@@ -403,9 +397,21 @@ export const confirmAsAdmin = (
  * through `confirmAsAdmin` above instead, so the two paths never race.
  */
 export const confirmBooking = (
-  transferId: string,
+  transferId: string
 ): Promise<TransferRow | null> =>
-  statusWrite("confirmBooking", { transferId }, transferId);
+  statusWrite('confirmBooking', {transferId}, transferId)
+
+/**
+ * OFFERED to DECLINED by the dispatcher, the customer having said no on the
+ * phone (dispatch.md section 14.1): the same `declineOffer` the customer's
+ * link calls, with the ride's id in place of the token. The pylon records the
+ * admin as the author beside the instant, mails the customer their "leider"
+ * and cancels the ride when nobody has driven it yet.
+ */
+export const declineForCustomer = (
+  transferId: string
+): Promise<TransferRow | null> =>
+  statusWrite('declineOffer', {transferId}, transferId)
 
 /**
  * Who the pylon would address the confirmation of a ride to. It is the
@@ -421,50 +427,50 @@ export const confirmBooking = (
  * (okf/architecture/dispatch.md section 11).
  */
 export interface ConfirmationRecipient {
-  email: string;
-  name: string;
-  source: "PASSENGER" | "ACCOUNT" | "NONE";
+  email: string
+  name: string
+  source: 'PASSENGER' | 'ACCOUNT' | 'NONE'
 }
 
 export const fetchConfirmationRecipient = async (
-  transferId: string,
+  transferId: string
 ): Promise<ConfirmationRecipient | undefined> => {
   try {
     const data = await call(
-      "confirmationRecipient",
-      { args: { transferId } },
-      "{ email name source }",
-    );
-    const row = data?.confirmationRecipient;
-    if (!row) return undefined;
+      'confirmationRecipient',
+      {args: {transferId}},
+      '{ email name source }'
+    )
+    const row = data?.confirmationRecipient
+    if (!row) return undefined
     return {
-      email: String(row.email ?? ""),
-      name: String(row.name ?? ""),
-      source: (row.source ?? "NONE") as ConfirmationRecipient["source"],
-    };
+      email: String(row.email ?? ''),
+      name: String(row.name ?? ''),
+      source: (row.source ?? 'NONE') as ConfirmationRecipient['source']
+    }
   } catch (err) {
     // An older pylon has no such field. The dialog then reads the
     // passengers alone, which is what it did before this query existed;
     // any other failure is the same for the dispatcher, a line without an
     // address, so it is not raised into the dialog either.
     if (!isUnknownField(err)) {
-      console.warn("confirmationRecipient: not answered", err);
+      console.warn('confirmationRecipient: not answered', err)
     }
-    return undefined;
+    return undefined
   }
-};
+}
 
 /** The dialog's read of the address the confirmation will really go to. */
 export const useConfirmationRecipient = (
   transferId: string | undefined,
-  enabled: boolean,
+  enabled: boolean
 ) =>
   useAppQuery<ConfirmationRecipient | undefined>({
-    queryKey: keys.confirmationRecipient(transferId ?? ""),
+    queryKey: keys.confirmationRecipient(transferId ?? ''),
     queryFn: () => fetchConfirmationRecipient(transferId as string),
     enabled: enabled && !!transferId,
-    staleTime: 60_000,
-  });
+    staleTime: 60_000
+  })
 
 // --------------- The brand's whole list, the Media tab's Dokumente source ---------------
 
@@ -481,55 +487,55 @@ export const useConfirmationRecipient = (
  */
 export interface DocumentListRow {
   /** `document:<uuid>`, the id documentUrl and the delete take. */
-  id: string;
-  transferId: string;
-  kind: DocumentKind;
+  id: string
+  transferId: string
+  kind: DocumentKind
   /** AN-260003, or whatever the invoice carries. */
-  number?: string;
-  filename: string;
-  contentType: string;
+  number?: string
+  filename: string
+  contentType: string
   /** Bytes. */
-  size: number;
-  language: string;
+  size: number
+  language: string
   /** What the storage gateway answered for the file, see media.md. */
-  fileId?: string;
+  fileId?: string
   /** The gateway's url, public and permanent, what a link opens. */
-  url?: string;
+  url?: string
   /** The gateway's thumbnail where the driver gives one. */
-  thumbUrl?: string;
+  thumbUrl?: string
   /** `application/pdf` for everything the app writes today. */
-  mimeType?: string;
+  mimeType?: string
   /** BQ7Q4W-1, the ride a person reads. */
-  code: string;
+  code: string
   /** The addressee's first line, else the first passenger's name. */
-  customer: string;
-  createdAt: string;
-  sentAt?: string;
-  sentTo?: string;
+  customer: string
+  createdAt: string
+  sentAt?: string
+  sentTo?: string
 }
 
 const mapDocumentRow = (node: any): DocumentListRow => ({
-  id: String(node?.id ?? ""),
-  transferId: String(node?.transferId ?? ""),
-  kind: node?.kind === "INVOICE" ? "INVOICE" : "OFFER",
+  id: String(node?.id ?? ''),
+  transferId: String(node?.transferId ?? ''),
+  kind: node?.kind === 'INVOICE' ? 'INVOICE' : 'OFFER',
   number: str(node?.number),
-  filename: str(node?.filename) ?? "",
-  contentType: str(node?.contentType) ?? "application/pdf",
-  size: typeof node?.size === "number" ? node.size : 0,
-  language: str(node?.language) ?? "de",
+  filename: str(node?.filename) ?? '',
+  contentType: str(node?.contentType) ?? 'application/pdf',
+  size: typeof node?.size === 'number' ? node.size : 0,
+  language: str(node?.language) ?? 'de',
   fileId: str(node?.fileId),
   url: str(node?.url),
   thumbUrl: str(node?.thumbUrl),
   mimeType: str(node?.mimeType) ?? str(node?.contentType),
-  code: str(node?.code) ?? "",
-  customer: str(node?.customer) ?? "",
-  createdAt: str(node?.createdAt) ?? "",
+  code: str(node?.code) ?? '',
+  customer: str(node?.customer) ?? '',
+  createdAt: str(node?.createdAt) ?? '',
   sentAt: str(node?.sentAt),
-  sentTo: str(node?.sentTo),
-});
+  sentTo: str(node?.sentTo)
+})
 
 const LISTING_BASE_FIELDS =
-  "id transferId kind number filename contentType size language code customer createdAt sentAt sentTo";
+  'id transferId kind number filename contentType size language code customer createdAt sentAt sentTo'
 
 /**
  * What the gateway answered, new on the row with media.md's revision: a
@@ -540,29 +546,29 @@ const LISTING_BASE_FIELDS =
  * is for. The mime type is not among them: the column is `mimeType` and the
  * field stayed `contentType`, which is in the base fields already.
  */
-const LISTING_GATEWAY_FIELDS = "fileId url thumbUrl";
+const LISTING_GATEWAY_FIELDS = 'fileId url thumbUrl'
 
-const LISTING_FIELDS = `{ ${LISTING_BASE_FIELDS} ${LISTING_GATEWAY_FIELDS} }`;
+const LISTING_FIELDS = `{ ${LISTING_BASE_FIELDS} ${LISTING_GATEWAY_FIELDS} }`
 
-const LISTING_FIELDS_WITHOUT_GATEWAY = `{ ${LISTING_BASE_FIELDS} }`;
+const LISTING_FIELDS_WITHOUT_GATEWAY = `{ ${LISTING_BASE_FIELDS} }`
 
 export interface DocumentPageArgs {
-  first: number;
-  after?: string;
-  kind?: DocumentKind;
+  first: number
+  after?: string
+  kind?: DocumentKind
   /** YYYY-MM, the document's own date. */
-  month?: string;
+  month?: string
   /** Matches the number and the ride's code, on the pylon. */
-  search?: string;
+  search?: string
 }
 
 export interface DocumentPage {
-  rows: DocumentListRow[];
-  endCursor: string | null;
-  hasNextPage: boolean;
-  totalCount: number;
+  rows: DocumentListRow[]
+  endCursor: string | null
+  hasNextPage: boolean
+  totalCount: number
   /** True when the deployed pylon has no such field yet, so the tab says so instead of failing. */
-  unavailable?: boolean;
+  unavailable?: boolean
 }
 
 const EMPTY_PAGE: DocumentPage = {
@@ -570,31 +576,31 @@ const EMPTY_PAGE: DocumentPage = {
   endCursor: null,
   hasNextPage: false,
   totalCount: 0,
-  unavailable: true,
-};
+  unavailable: true
+}
 
 export const documentsPageKey = (args: Record<string, unknown>) =>
-  ["documents", "page", args] as const;
+  ['documents', 'page', args] as const
 
 /** Every page of the source is read again after an upload or a delete. */
 export const invalidateDocumentsPage = () =>
-  queryClient.invalidateQueries({ queryKey: ["documents", "page"] });
+  queryClient.invalidateQueries({queryKey: ['documents', 'page']})
 
 const readDocumentsPage = async (
-  args: DocumentPageArgs,
+  args: DocumentPageArgs
 ): Promise<DocumentPage> => {
-  const listArgs: Record<string, unknown> = { first: args.first };
-  if (args.after) listArgs.after = args.after;
-  if (args.kind) listArgs.kind = args.kind;
-  if (args.month) listArgs.month = args.month;
-  if (args.search) listArgs.search = args.search;
+  const listArgs: Record<string, unknown> = {first: args.first}
+  if (args.after) listArgs.after = args.after
+  if (args.kind) listArgs.kind = args.kind
+  if (args.month) listArgs.month = args.month
+  if (args.search) listArgs.search = args.search
 
   const readPage = async (fields: string): Promise<DocumentPage> => {
     const result = await call(
-      "transferDocumentsPage",
-      { args: listArgs },
-      `{ totalCount pageInfo { endCursor hasNextPage } edges { node ${fields} } }`,
-    );
+      'transferDocumentsPage',
+      {args: listArgs},
+      `{ totalCount pageInfo { endCursor hasNextPage } edges { node ${fields} } }`
+    )
     return {
       rows: (Array.isArray(result?.edges) ? result.edges : [])
         .map((e: any) => e?.node)
@@ -602,35 +608,34 @@ const readDocumentsPage = async (
         .map(mapDocumentRow),
       endCursor: result?.pageInfo?.endCursor ?? null,
       hasNextPage: !!result?.pageInfo?.hasNextPage,
-      totalCount:
-        typeof result?.totalCount === "number" ? result.totalCount : 0,
-    };
-  };
+      totalCount: typeof result?.totalCount === 'number' ? result.totalCount : 0
+    }
+  }
 
   try {
-    return await readPage(LISTING_FIELDS);
+    return await readPage(LISTING_FIELDS)
   } catch (err) {
     // A pylon from before this field: the list is empty and says why, rather
     // than a red error on a page whose other views are fine. A pylon that
     // has the list but not the gateway's four names answers the rest, and a
     // document of that vintage has no url to open, see media.md.
-    if (!isUnknownField(err)) throw err;
+    if (!isUnknownField(err)) throw err
   }
 
   try {
-    return await readPage(LISTING_FIELDS_WITHOUT_GATEWAY);
+    return await readPage(LISTING_FIELDS_WITHOUT_GATEWAY)
   } catch (err) {
-    if (isUnknownField(err)) return EMPTY_PAGE;
-    throw err;
+    if (isUnknownField(err)) return EMPTY_PAGE
+    throw err
   }
-};
+}
 
 export interface DocumentListArgs {
-  pageSize?: number;
-  kind?: DocumentKind;
-  month?: string;
-  search?: string;
-  enabled?: boolean;
+  pageSize?: number
+  kind?: DocumentKind
+  month?: string
+  search?: string
+  enabled?: boolean
 }
 
 /**
@@ -640,33 +645,31 @@ export interface DocumentListArgs {
  * other view of the app.
  */
 export function useDocumentsPage(args: DocumentListArgs = {}) {
-  const pageSize = args.pageSize ?? 24;
-  const { kind, month } = args;
-  const search = args.search?.trim() || undefined;
+  const pageSize = args.pageSize ?? 24
+  const {kind, month} = args
+  const search = args.search?.trim() || undefined
 
-  const pager = usePager(
-    JSON.stringify({ first: pageSize, kind, month, search }),
-  );
+  const pager = usePager(JSON.stringify({first: pageSize, kind, month, search}))
   const pageArgs = useMemo<DocumentPageArgs>(
-    () => ({ first: pageSize, after: pager.after, kind, month, search }),
-    [pageSize, pager.after, kind, month, search],
-  );
+    () => ({first: pageSize, after: pager.after, kind, month, search}),
+    [pageSize, pager.after, kind, month, search]
+  )
 
   const {
     query: q,
     isLoading,
     error,
     isFetching,
-    refetch,
+    refetch
   } = useAppQuery({
-    queryKey: documentsPageKey({ ...pageArgs }),
+    queryKey: documentsPageKey({...pageArgs}),
     queryFn: () => readDocumentsPage(pageArgs),
     placeholderData: keepPreviousData,
-    enabled: args.enabled !== false,
-  });
+    enabled: args.enabled !== false
+  })
 
-  const page = q.data;
-  const rows = page?.rows ?? EMPTY_PAGE.rows;
+  const page = q.data
+  const rows = page?.rows ?? EMPTY_PAGE.rows
 
   return {
     rows,
@@ -680,10 +683,10 @@ export function useDocumentsPage(args: DocumentListArgs = {}) {
     currentPage: pager.page,
     totalPages: Math.max(1, Math.ceil((page?.totalCount ?? 0) / pageSize)),
     nextPage: () => {
-      if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor);
+      if (page?.hasNextPage && page.endCursor) pager.next(page.endCursor)
     },
     prevPage: pager.prev,
     firstPage: pager.first,
-    refetch,
-  };
+    refetch
+  }
 }

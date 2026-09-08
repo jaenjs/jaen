@@ -20,6 +20,7 @@ import {useI18nCode} from '../../i18n'
 import {getI18nOffers} from '../../locales/i18nOffers'
 import {openDocument, type DocumentKind} from '../../hooks/documents'
 import {toaster} from '../toaster'
+import {failureText} from '../../errors'
 
 /** What a button needs of a document: the id documentUrl takes, the kind, the number for the title. */
 export interface DocumentRef {
@@ -46,7 +47,7 @@ function DocumentButton({doc, size}: {doc: DocumentRef; size: 'xs' | 'sm'}) {
     } catch (err) {
       toaster.error({
         title: so.OpenFailed,
-        description: err instanceof Error ? err.message : String(err)
+        description: failureText(err)
       })
     } finally {
       setOpening(false)

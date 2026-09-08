@@ -60,6 +60,7 @@ import {FaEuroSign} from '@react-icons/all-files/fa/FaEuroSign'
 import {FaExchangeAlt} from '@react-icons/all-files/fa/FaExchangeAlt'
 import {FaCheck} from '@react-icons/all-files/fa/FaCheck'
 import {useCaller} from '../auth'
+import {addressOf, printableAddress, storedPoint} from '../address'
 import {useAppNavigate, useAppParams} from '../navigation'
 import {useCars, useDrivers, useUsers} from '../hooks'
 import {
@@ -68,6 +69,7 @@ import {
   declineAssignment,
   removeTransferExtra,
   unassignDriver,
+  setTransferAddress,
   updateTransferState,
   driverStopIndex,
   isClosed,
@@ -86,7 +88,10 @@ import {
   type TransferRow
 } from '../hooks/transfers'
 import {formatPhone, needsCountryCode} from '../phone'
+import {failureText} from '../errors'
 import {
+  AddressCheckBadge,
+  CashReceived,
   ConfirmDialog,
   DetailRow,
   DriverColorDot,
@@ -138,8 +143,14 @@ import {
   useTransferStrings
 } from './TransfersView'
 
+/**
+ * A failure as a sentence in the reader's language (rule 14). The shared
+ * catalogue words every machine answer, so a toast on this screen never shows
+ * the backend's English; the fallback is this screen's own word for a failure
+ * nothing knows.
+ */
 const errorMessage = (err: unknown, fallback: string): string =>
-  err instanceof Error && err.message ? err.message : fallback
+  failureText(err, fallback)
 
 // ============================================================
 // Pieces
@@ -184,6 +195,71 @@ function Section({
  */
 function Item({label, value}: {label: string; value: React.ReactNode}) {
   return <DetailRow label={label} value={value} />
+}
+
+/**
+ * One address on the detail: the free text as the dispatcher typed it, and
+ * beneath it what the pylon made of it where that is worth showing.
+ * okf/architecture/dispatch.md section 14.2.
+ *
+ * A RESOLVED side draws its canonical address quietly, so a dispatcher can
+ * see that "Flughafen" became Schwechat without being asked anything. A
+ * GUESSED or UNRESOLVED side draws the warning, and one tap on it confirms
+ * the guess or corrects it.
+ */
+function AddressValue({
+  transfer,
+  side,
+  editable,
+  onChanged
+}: {
+  transfer: TransferRow
+  side: 'PICKUP' | 'DROPOFF'
+  editable: boolean
+  onChanged: (row: TransferRow) => void
+}) {
+  const resolved = addressOf(transfer, side)
+  const typed = side === 'PICKUP' ? transfer.pickup : transfer.dropoff
+  const canonical =
+    resolved.address && resolved.address.trim() !== typed.trim()
+      ? resolved.address.trim()
+      : null
+
+  return (
+    <Stack gap="1" minW="0">
+      <Selectable>{typed}</Selectable>
+      {canonical && resolved.resolution === 'RESOLVED' && (
+        <Text
+          textStyle="xs"
+          color="fg.muted"
+          style={{overflowWrap: 'anywhere'}}>
+          {canonical}
+        </Text>
+      )}
+      <AddressCheckBadge
+        transfer={{...transfer, ...oneSide(side)}}
+        onCorrect={
+          editable
+            ? async (which, address) =>
+                setTransferAddress(transfer.id, which, address)
+            : undefined
+        }
+        onCorrected={row => onChanged(row as TransferRow)}
+      />
+    </Stack>
+  )
+}
+
+/**
+ * The row with the other side's doubt blanked out, so the badge under the
+ * pickup is about the pickup and the badge under the destination about the
+ * destination, and a ride with two doubts draws two warnings where they
+ * belong rather than one that stands for both.
+ */
+function oneSide(side: 'PICKUP' | 'DROPOFF') {
+  return side === 'PICKUP'
+    ? {dropoffResolution: undefined}
+    : {pickupResolution: undefined}
 }
 
 /** The extras of a transfer, and for the dispatcher a way to add and remove them. */
@@ -475,7 +551,11 @@ function DriverRideScreen({
   const name = passengerName(transfer)
   const phone = transfer.passengers[0]?.phone
   const tel = telHref(phone)
-  const map = mapHref(transfer.pickup)
+  // The map link reads what the pylon worked out where a person or a
+  // geocoder stands behind it, and the typed text otherwise (dispatch.md
+  // 14.2): "vor dem Haupteingang" opens nothing useful, its canonical
+  // address does.
+  const map = mapHref(printableAddress(transfer, 'PICKUP'))
   const done = state === 'COMPLETED'
 
   // The driver's answer (dispatch.md section 9). While the request is open
@@ -601,6 +681,14 @@ function DriverRideScreen({
               <Selectable textStyle="sm" color="fg.muted" ms="6">
                 → {transfer.dropoff}
               </Selectable>
+              {/*
+                The doubt the pylon left on the address (dispatch.md 14.2).
+                Read only here: a driver sees that the address is a guess
+                before they drive to it, and the office corrects it.
+              */}
+              <Box mt="2" ms="6">
+                <AddressCheckBadge transfer={transfer} />
+              </Box>
             </Box>
             {map && (
               <IconButton
@@ -740,6 +828,15 @@ function DriverRideScreen({
             )}
           </Box>
         )}
+
+        {/*
+          The cash the passenger handed over, dispatch.md section 14.3. It
+          sits under the fare and above the slider: the driver is holding the
+          money at that moment, and the ride is not over. The component draws
+          nothing before the car has left, nothing on a ride the passenger
+          does not pay for, and the record with its instant once it stands.
+        */}
+        <CashReceived transfer={transfer} onChanged={onChanged} />
 
         {/* The request: Annehmen and Ablehnen with the reason, above the locked slider. */}
         {requested && !done && (
@@ -1172,14 +1269,48 @@ function DetailScreen({
           p="4"
         />
 
+        {/*
+          Two columns from lg, one below it (design-consistency.md rule 13).
+          They used to split at md, so a window at half a desktop screen drew
+          two 352 px columns whose detail rows had 176 px left for a value
+          after the label's floor: a 60 character address broke into four
+          lines and a date with its time into two. The money section on this
+          same page has always split at lg, and this grid now reads like it.
+        */}
         <Box
           display="grid"
-          gridTemplateColumns={{base: '1fr', md: '1fr 1fr'}}
+          gridTemplateColumns={{base: '1fr', lg: '1fr 1fr'}}
           gap="4">
           <Section title={t.SectionRoute}>
             <DataList.Root orientation="horizontal" size="sm">
-              <Item label={t.Pickup} value={transfer.pickup} />
-              <Item label={t.Dropoff} value={transfer.dropoff} />
+              {/*
+                The address of the request, dispatch.md section 14.2: the row
+                keeps what the dispatcher typed, and under it, where the pylon
+                could not work it out with certainty, the canonical address it
+                did find and the warning that opens the one tap correction.
+              */}
+              <Item
+                label={t.Pickup}
+                value={
+                  <AddressValue
+                    transfer={transfer}
+                    side="PICKUP"
+                    onChanged={onChanged}
+                    editable={editable}
+                  />
+                }
+              />
+              <Item
+                label={t.Dropoff}
+                value={
+                  <AddressValue
+                    transfer={transfer}
+                    side="DROPOFF"
+                    onChanged={onChanged}
+                    editable={editable}
+                  />
+                }
+              />
               {transfer.subject && (
                 <Item label={t.LabelSubject} value={transfer.subject} />
               )}
@@ -1635,6 +1766,7 @@ function DetailScreen({
             editable={editable}
             onChanged={onChanged}
             documentsVersion={documentsVersion}
+            nameOf={nameOf}
           />
         )}
 
@@ -1644,6 +1776,7 @@ function DetailScreen({
             transferId={transfer.id}
             state={transfer.state}
             pickupAddress={transfer.pickup}
+            pickupPoint={storedPoint(transfer, 'PICKUP')}
             audience="admin"
             fallback={{
               driverId: transfer.driverId,

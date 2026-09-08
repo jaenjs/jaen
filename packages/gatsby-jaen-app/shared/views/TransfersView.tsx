@@ -73,6 +73,8 @@ import {FaCar} from '@react-icons/all-files/fa/FaCar'
 import {FaTimes} from '@react-icons/all-files/fa/FaTimes'
 import type {BadgeProps, StackProps} from '@chakra-ui/react'
 import {useCaller} from '../auth'
+import {failureText} from '../errors'
+import {hasAddressDoubt} from '../address'
 import {useI18nCode, type I18nCode} from '../i18n'
 import {useAppNavigate} from '../navigation'
 import {
@@ -91,6 +93,7 @@ import {
   fetchTransfer,
   isClosed,
   setPrice,
+  setTransferAddress,
   updateTransferState,
   passengerName,
   transferPath,
@@ -113,7 +116,9 @@ import {
 import {isPickupInPast} from '../hooks/bookings'
 import {countryForLanguage, formatPhone, parsePhone} from '../phone'
 import {
+  AddressCheckBadge,
   AmountInput,
+  CustomerAnswerActions,
   CarImage,
   DriverColorDot,
   EmptyState,
@@ -239,8 +244,14 @@ export const driverDisplayName = (u: ResourceUser): string => {
 export const carDisplayName = (c: ResourceCar): string =>
   c.carName || c.licensePlate
 
+/**
+ * A failure as a sentence in the reader's language (rule 14). The shared
+ * catalogue words every machine answer, so a toast on this screen never shows
+ * the backend's English; the fallback is this screen's own word for a failure
+ * nothing knows.
+ */
 const errorMessage = (err: unknown, fallback: string): string =>
-  err instanceof Error && err.message ? err.message : fallback
+  failureText(err, fallback)
 
 // ============================================================
 // A dialog that is a bottom drawer on a phone
@@ -2103,7 +2114,14 @@ export type ColumnId =
 
 const COLUMN_WIDTHS: Record<ColumnId, number> = {
   code: 96,
-  status: 160,
+  // The Status column carries three things since section 14.1: the ride's
+  // state, the customer's status and the confirm. The widest of them at the
+  // table's 14px is the customer's "Offen" at 161px, and the 160px this
+  // column had left 9px of it past the cell at 1440 and at 1024, measured on
+  // the live booklimo.at by tests/22-design-consistency.ipynb on 2026-09-08
+  // (design-consistency.md, rule 8). The padding a cell adds is the 24px the
+  // vehicle column already allows for its own badge.
+  status: 190,
   route: 240,
   // "Mo., 07. Sep. 2026" is 123px at the table's 14px and the cell adds
   // 16px of padding, the 130px of the first build cut it (design-consistency.md, rule 8).
@@ -2768,6 +2786,21 @@ function transferCell(
           <Text textStyle="sm" color="fg.muted" truncate>
             {row.dropoff}
           </Text>
+          {/*
+            The doubt the pylon left on the address (dispatch.md 14.2). Drawn
+            only where there is one, so a board of worked out rides is as
+            quiet as it was, and one tap on it confirms or corrects the guess.
+          */}
+          {hasAddressDoubt(row) && (
+            <Box mt="1">
+              <AddressCheckBadge
+                transfer={row}
+                onCorrect={async (which, address) =>
+                  setTransferAddress(row.id, which, address)
+                }
+              />
+            </Box>
+          )}
         </Box>
       )
     case 'pickup':
@@ -2981,8 +3014,36 @@ export function TransferCard({
         <Box flex="1" minW="0">
           <Text fontWeight="medium">{row.pickup}</Text>
           <Text color="fg.muted">→ {row.dropoff}</Text>
+          {/* The same warning on the card, which is the whole board on a phone. */}
+          {hasAddressDoubt(row) && (
+            <Box mt="1" onClick={e => e.stopPropagation()}>
+              <AddressCheckBadge
+                transfer={row}
+                onCorrect={async (which, address) =>
+                  setTransferAddress(row.id, which, address)
+                }
+              />
+            </Box>
+          )}
         </Box>
       </HStack>
+
+      {/*
+        The customer's answer taken on the telephone (dispatch.md section
+        14.1), beside the customer status of the card's head. Below md the
+        card is the whole board, so the office records a yes or a no from the
+        list rather than opening the ride. The driver's own list draws none of
+        it: `compact` is that list, and the customer's money is not a driver's
+        business.
+      */}
+      {!compact && actions.onAnswered && (
+        <Box mt="3" onClick={e => e.stopPropagation()}>
+          <CustomerAnswerActions
+            transfer={row}
+            onAnswered={actions.onAnswered}
+          />
+        </Box>
+      )}
 
       {/*
         The answer on the card (dispatch.md section 9a): the requested driver

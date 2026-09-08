@@ -88,6 +88,7 @@ import {
   profileName
 } from './UsersView'
 import {StatementsView} from './StatementsView'
+import {failureText} from '../errors'
 
 const isDriverRole = (key: string) =>
   key === DRIVER_ROLE || key.endsWith(':driver')
@@ -354,7 +355,7 @@ function RolesCard({user, t, isSelf, onSaved}: CardProps & {isSelf: boolean}) {
       setRoles(roles)
       toaster.error({
         title: t.RolesFailed,
-        description: err instanceof Error ? err.message : undefined
+        description: failureText(err)
       })
     } finally {
       setSaving(null)
@@ -409,7 +410,7 @@ function StateCard({user, t, onSaved}: CardProps & {tc: string}) {
     } catch (err) {
       toaster.error({
         title: t.StateChangeFailed,
-        description: err instanceof Error ? err.message : undefined
+        description: failureText(err)
       })
     } finally {
       setSaving(false)
@@ -477,7 +478,7 @@ function ColorCard({
     } catch (err) {
       toaster.error({
         title: t.DriverColorFailed,
-        description: err instanceof Error ? err.message : undefined
+        description: failureText(err)
       })
     } finally {
       setSaving(false)
@@ -571,7 +572,7 @@ function PayoutCard({user, t, save, onSaved}: CardProps & {save: string}) {
     } catch (err) {
       toaster.error({
         title: t.PayoutFailed,
-        description: err instanceof Error ? err.message : undefined
+        description: failureText(err)
       })
     } finally {
       setSaving(false)
@@ -720,7 +721,7 @@ function ExpensesCard({
     } catch (err) {
       toaster.error({
         title: t.ExpenseFailed,
-        description: err instanceof Error ? err.message : undefined
+        description: failureText(err)
       })
     } finally {
       setSaving(false)

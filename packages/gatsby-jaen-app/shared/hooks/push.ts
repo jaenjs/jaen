@@ -12,16 +12,17 @@
  * like shared/hooks.ts, so no input type is named and the same code is valid
  * against either brand's build.
  */
-import { useCallback, useEffect, useState } from 'react'
-import { fetchGraphQL } from '../../client/limosen'
+import {useCallback, useEffect, useState} from 'react'
+import {fetchGraphQL} from '../../client/limosen'
+import {appError, graphqlError} from '../errors'
 
 const run = async (document: string): Promise<any> => {
   const result: any = await fetchGraphQL(
-    { query: document, variables: undefined, operationName: undefined },
+    {query: document, variables: undefined, operationName: undefined},
     {}
   )
   if (result?.errors?.length) {
-    throw new Error(String(result.errors[0]?.message || 'GraphQL error'))
+    throw graphqlError(result.errors)
   }
   return result?.data
 }
@@ -29,7 +30,8 @@ const run = async (document: string): Promise<any> => {
 export async function fetchVapidPublicKey(): Promise<string> {
   const data = await run('query { vapidPublicKey }')
   const key = data?.vapidPublicKey
-  if (typeof key !== 'string' || !key) throw new Error('No VAPID public key')
+  if (typeof key !== 'string' || !key)
+    throw appError('PushIncomplete', 'no VAPID public key')
   return key
 }
 
@@ -39,7 +41,9 @@ export interface PushSubscriptionArgs {
   auth: string
 }
 
-export async function addPushSubscriptionMutation(args: PushSubscriptionArgs): Promise<boolean> {
+export async function addPushSubscriptionMutation(
+  args: PushSubscriptionArgs
+): Promise<boolean> {
   const data = await run(
     `mutation { addPushSubscription(args: {endpoint: ${JSON.stringify(args.endpoint)}, ` +
       `p256dh: ${JSON.stringify(args.p256dh)}, auth: ${JSON.stringify(args.auth)}}) }`
@@ -47,7 +51,9 @@ export async function addPushSubscriptionMutation(args: PushSubscriptionArgs): P
   return data?.addPushSubscription !== false
 }
 
-export async function removePushSubscriptionMutation(endpoint: string): Promise<boolean> {
+export async function removePushSubscriptionMutation(
+  endpoint: string
+): Promise<boolean> {
   const data = await run(
     `mutation { removePushSubscription(args: {endpoint: ${JSON.stringify(endpoint)}}) }`
   )
@@ -76,7 +82,8 @@ const supportsPush = (): boolean =>
  * screen can say so instead of "not supported".
  */
 const isIOSBrowserTab = (): boolean => {
-  if (typeof navigator === 'undefined' || typeof window === 'undefined') return false
+  if (typeof navigator === 'undefined' || typeof window === 'undefined')
+    return false
   const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent)
   const standalone =
     (window.navigator as any).standalone === true ||
@@ -104,7 +111,8 @@ export interface PushNotificationsState {
 export function usePushNotifications(): PushNotificationsState {
   const [isSupported, setIsSupported] = useState(false)
   const [needsHomeScreen, setNeedsHomeScreen] = useState(false)
-  const [permission, setPermission] = useState<NotificationPermission>('default')
+  const [permission, setPermission] =
+    useState<NotificationPermission>('default')
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -144,7 +152,9 @@ export function usePushNotifications(): PushNotificationsState {
 
       const reg = await navigator.serviceWorker.ready
       const key = await fetchVapidPublicKey()
-      const applicationServerKey = urlBase64ToUint8Array(key) as unknown as BufferSource
+      const applicationServerKey = urlBase64ToUint8Array(
+        key
+      ) as unknown as BufferSource
 
       let subscription = await reg.pushManager.getSubscription()
       if (subscription) {
@@ -165,7 +175,7 @@ export function usePushNotifications(): PushNotificationsState {
       if (!subscription) {
         subscription = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey,
+          applicationServerKey
         })
       }
 
@@ -174,10 +184,10 @@ export function usePushNotifications(): PushNotificationsState {
       const p256dh = raw.keys?.p256dh
       const auth = raw.keys?.auth
       if (!endpoint || !p256dh || !auth) {
-        throw new Error('Push subscription is incomplete')
+        throw appError('PushIncomplete', 'push subscription is incomplete')
       }
 
-      await addPushSubscriptionMutation({ endpoint, p256dh, auth })
+      await addPushSubscriptionMutation({endpoint, p256dh, auth})
       setIsSubscribed(true)
       return true
     } catch (err) {
@@ -209,35 +219,39 @@ export function usePushNotifications(): PushNotificationsState {
     }
   }, [])
 
-  const showLocalNotification = useCallback(async (title: string, body: string) => {
-    if (typeof window === 'undefined' || !('Notification' in window)) {
-      throw new Error('Notifications are not supported')
-    }
-    const result = await Notification.requestPermission()
-    setPermission(result)
-    if (result !== 'granted') throw new Error('Notification permission was not granted')
-
-    const options: NotificationOptions = {
-      body,
-      icon: '/icons/icon-192x192.png',
-      // The same tag the service worker uses for a transfer, so the test
-      // looks exactly like the real thing and replaces itself when repeated.
-      tag: 'transfer-test',
-      data: { url: '/app/me' },
-    }
-    // Android refuses `new Notification` from a page and wants the service
-    // worker's registration to show it. The page constructor is the fallback
-    // for a browser without a worker.
-    if ('serviceWorker' in navigator) {
-      const reg = await navigator.serviceWorker.getRegistration()
-      if (reg) {
-        await reg.showNotification(title, options)
-        return
+  const showLocalNotification = useCallback(
+    async (title: string, body: string) => {
+      if (typeof window === 'undefined' || !('Notification' in window)) {
+        throw appError('PushUnsupported', 'notifications are not supported')
       }
-    }
-    // eslint-disable-next-line no-new
-    new Notification(title, options)
-  }, [])
+      const result = await Notification.requestPermission()
+      setPermission(result)
+      if (result !== 'granted')
+        throw appError('PushDenied', 'notification permission was not granted')
+
+      const options: NotificationOptions = {
+        body,
+        icon: '/icons/icon-192x192.png',
+        // The same tag the service worker uses for a transfer, so the test
+        // looks exactly like the real thing and replaces itself when repeated.
+        tag: 'transfer-test',
+        data: {url: '/app/me'}
+      }
+      // Android refuses `new Notification` from a page and wants the service
+      // worker's registration to show it. The page constructor is the fallback
+      // for a browser without a worker.
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration()
+        if (reg) {
+          await reg.showNotification(title, options)
+          return
+        }
+      }
+      // eslint-disable-next-line no-new
+      new Notification(title, options)
+    },
+    []
+  )
 
   return {
     isSupported,
@@ -248,6 +262,6 @@ export function usePushNotifications(): PushNotificationsState {
     error,
     subscribe,
     unsubscribe,
-    showLocalNotification,
+    showLocalNotification
   }
 }

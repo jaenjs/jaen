@@ -65,6 +65,7 @@ import {
 import {useViewRefresh} from '../hooks/view-refresh'
 import {DetailSkeleton} from '../components/skeletons'
 import {DriverTrackingCard} from '../components/locations'
+import {failureText} from '../errors'
 
 type Strings = ReturnType<typeof getI18nBookings>['strings']
 
@@ -189,7 +190,7 @@ function DocumentLink({
     } catch (err) {
       toaster.error({
         title: so.OpenFailed,
-        description: err instanceof Error ? err.message : String(err)
+        description: failureText(err)
       })
     } finally {
       setOpening(false)
@@ -278,7 +279,7 @@ export function BookingDetailView() {
     } catch (err) {
       toaster.error({
         title: t.CancelError,
-        description: err instanceof Error ? err.message : String(err)
+        description: failureText(err)
       })
     } finally {
       setCancelling(false)

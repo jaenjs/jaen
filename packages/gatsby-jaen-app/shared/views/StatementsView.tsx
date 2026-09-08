@@ -56,6 +56,7 @@ import {FaUserTie} from '@react-icons/all-files/fa/FaUserTie'
 import {useCaller} from '../auth'
 import {useI18nCode, type I18nCode} from '../i18n'
 import {getI18nBookings} from '../locales/i18nBookings'
+import {getI18nCash} from '../locales/i18nCash'
 import {getI18nCommon} from '../locales/i18nCommon'
 import {fill} from '../locales/i18nCommon'
 import {getI18nFinance, type FinanceStrings} from '../locales/i18nFinance'
@@ -64,6 +65,7 @@ import {useAppNavigate} from '../navigation'
 import {fetchDriverColor} from '../hooks'
 import {keys, useAppQuery} from '../hooks/query'
 import {
+  invalidateDriverPayouts,
   markDriverPayout,
   openStatement,
   revokeDriverPayout,
@@ -86,8 +88,9 @@ import {
   type OfferRow
 } from '../hooks/offers'
 import {bookingPath} from '../hooks/bookings'
-import {transferPath} from '../hooks/transfers'
+import {transferPath, useTransfer} from '../hooks/transfers'
 import {
+  CashReceived,
   ConfirmDialog,
   DriverColorDot,
   EmptyState,
@@ -112,6 +115,7 @@ import {
   formatDay,
   useTodayTomorrow
 } from './TransfersView'
+import {failureText} from '../errors'
 
 type Strings = ReturnType<typeof getI18nBookings>['strings']
 
@@ -177,21 +181,35 @@ function StatementLines({
   userId,
   month,
   kind,
-  t
+  t,
+  correctable = false
 }: {
   userId: string | undefined
   month: string
   kind: StatementKind
   t: Strings
+  /**
+   * The admin's correction of a ride's cash, from the billing screen itself
+   * (dispatch.md section 14.3). A driver reading their own settlement sees
+   * the column and no control.
+   */
+  correctable?: boolean
 }) {
   const code = useI18nCode()
   const navigate = useAppNavigate()
+  const {strings: cash} = getI18nCash(code)
+  const {strings: f} = getI18nFinance(code)
   const {lines, isLoading, error, refetch} = useStatementLines(
     userId,
     month,
     kind,
     true
   )
+  // The ride whose cash is being corrected, opened under the table rather
+  // than in a dialog: the cash control carries a confirmation of its own and
+  // a dialog inside a dialog is one modal too many.
+  const [correcting, setCorrecting] = useState<string | null>(null)
+  const corrected = useTransfer(correcting ?? undefined)
   const stripe = useStatementStripe(userId, kind)
   const {today, tomorrow} = useTodayTomorrow()
   // The offer and the invoice of the month's rides, one request, so a
@@ -290,9 +308,41 @@ function StatementLines({
         align: 'end',
         cell: line => <MoneyText value={line.share} />
       })
+      // The cash the driver was handed on this ride, and the admin's way into
+      // correcting it without leaving the screen (dispatch.md section 14.3).
+      own.push({
+        id: 'cash',
+        label: cash.Column,
+        width: correctable ? 180 : 120,
+        align: 'end',
+        cell: line => (
+          <HStack gap="2" justify="flex-end">
+            {line.cash ? (
+              <MoneyText value={line.cash} data-cash-line={line.cash} />
+            ) : (
+              <Text as="span" color="fg.muted">
+                –
+              </Text>
+            )}
+            {correctable && (
+              <Button
+                size="xs"
+                variant="ghost"
+                minH={{base: '44px', md: '8'}}
+                data-testid="cash-correct-line"
+                onClick={e => {
+                  e.stopPropagation()
+                  setCorrecting(line.transferId)
+                }}>
+                {cash.Correct}
+              </Button>
+            )}
+          </HStack>
+        )
+      })
     }
     return own
-  }, [t, kind, documents])
+  }, [t, kind, documents, cash, correctable])
 
   const group = useMemo<DataGroup<StatementLine>>(
     () => ({
@@ -304,24 +354,62 @@ function StatementLines({
   )
 
   return (
-    <DataTable
-      tableId={kind === 'DRIVER' ? 'statement-lines-driver' : 'statement-lines'}
-      columns={columns}
-      rows={lines}
-      rowId={line => line.transferId}
-      onOpen={line => navigate(`/transfers/${line.code || line.transferId}`)}
-      group={group}
-      stripe={() => stripe}
-      summary={fill(t.StatementsLinesCount, {count: lines.length})}
-      isLoading={isLoading}
-      error={error ? t.StatementsLinesError : null}
-      onRetry={refetch}
-      empty={
-        <Text textStyle="sm" color="fg.muted" px="3" py="2">
-          {t.StatementsLinesEmpty}
-        </Text>
-      }
-    />
+    <Stack gap="3">
+      <DataTable
+        tableId={
+          kind === 'DRIVER' ? 'statement-lines-driver' : 'statement-lines'
+        }
+        columns={columns}
+        rows={lines}
+        rowId={line => line.transferId}
+        onOpen={line => navigate(`/transfers/${line.code || line.transferId}`)}
+        group={group}
+        stripe={() => stripe}
+        summary={fill(t.StatementsLinesCount, {count: lines.length})}
+        isLoading={isLoading}
+        error={error ? t.StatementsLinesError : null}
+        onRetry={refetch}
+        empty={
+          <Text textStyle="sm" color="fg.muted" px="3" py="2">
+            {t.StatementsLinesEmpty}
+          </Text>
+        }
+      />
+
+      {correcting && corrected.transfer && (
+        <Box
+          rounded="surface"
+          borderWidth="1px"
+          borderColor="border.default"
+          bg="bg.surface"
+          p="4"
+          data-testid="cash-correction">
+          <HStack justify="space-between" gap="2" mb="3" flexWrap="wrap">
+            <Text fontWeight="semibold" fontFamily="mono">
+              {corrected.transfer.code}
+            </Text>
+            <Button
+              size="sm"
+              variant="ghost"
+              minH="44px"
+              onClick={() => setCorrecting(null)}>
+              {f.RidesHide}
+            </Button>
+          </HStack>
+          <CashReceived
+            transfer={corrected.transfer}
+            onChanged={row => {
+              corrected.replace(row)
+              // The month's own figures move with the ride, so the lines and
+              // the Fahrer row above them are read again.
+              void refetch()
+              void invalidateDriverPayouts()
+            }}
+            variant="inline"
+          />
+        </Box>
+      )}
+    </Stack>
   )
 }
 
@@ -367,7 +455,7 @@ export function StatementMonths({
     } catch (err) {
       toaster.error({
         title: t.StatementsDownloadError,
-        description: err instanceof Error ? err.message : String(err)
+        description: failureText(err)
       })
     } finally {
       setBusy(null)
@@ -845,7 +933,7 @@ export function DriversHalf({
     } catch (err) {
       toaster.error({
         title: f.DownloadError,
-        description: err instanceof Error ? err.message : String(err)
+        description: failureText(err)
       })
     } finally {
       setBusy(null)
@@ -1169,6 +1257,7 @@ export function DriversHalf({
             month={opened.month}
             kind="DRIVER"
             t={tb}
+            correctable={!readOnly}
           />
         </Stack>
       )}

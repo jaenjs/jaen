@@ -41,6 +41,7 @@ import {
 } from '../components'
 import {useI18nCode} from '../i18n'
 import {getI18nMe} from '../locales/i18nMe'
+import {failureText} from '../errors'
 
 // ---------------------------------------------------------------------------
 // The colours a driver can pick. A driver may type any hex, these are the
@@ -100,7 +101,7 @@ export function MeView() {
     } catch (err) {
       toaster.error({
         title: t.ColorFailed,
-        description: err instanceof Error ? err.message : undefined
+        description: failureText(err)
       })
     } finally {
       setColorSaving(false)
@@ -165,7 +166,7 @@ export function MeView() {
     } catch (err) {
       toaster.error({
         title: t.PushTestFailed,
-        description: err instanceof Error ? err.message : undefined
+        description: failureText(err)
       })
     }
   }

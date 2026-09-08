@@ -15,6 +15,7 @@
 import {useCallback, useMemo, useState} from 'react'
 import {keepPreviousData} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
+import {appError, graphqlError, machineText} from '../errors'
 import {ADMIN_ROLE, brandKnownRoles, CUSTOMER_ROLE, DRIVER_ROLE} from '../auth'
 import {setDriverColorMutation, type PaginationState} from '../hooks'
 import {fetchDashboard} from './dashboard'
@@ -78,7 +79,7 @@ export const gql = async (
   )
 
   if (result?.errors?.length) {
-    throw new Error(String(result.errors[0]?.message || 'GraphQL error'))
+    throw graphqlError(result.errors)
   }
 
   return result?.data?.[field]
@@ -512,8 +513,8 @@ const mapExpense = (r: any): DriverExpense => ({
  */
 const isUnknownField = (err: unknown, field: string) =>
   err instanceof Error &&
-  /Cannot query field/i.test(err.message) &&
-  err.message.includes(field)
+  /Cannot query field/i.test(machineText(err)) &&
+  machineText(err).includes(field)
 
 /**
  * The expenses an admin entered for this driver.
@@ -638,6 +639,81 @@ export async function createDriverMutation(
 }
 
 /**
+ * The four languages a customer reads, as the account carries them. The
+ * catalogue codes are `de-AT` and the like; what goes to the backend is the
+ * primary subtag, which is what Zitadel writes on the profile.
+ */
+export const CUSTOMER_LANGUAGES = ['de', 'en', 'tr', 'ar'] as const
+
+export type CustomerLanguage = (typeof CUSTOMER_LANGUAGES)[number]
+
+export interface CreateCustomerArgs {
+  email: string
+  givenName: string
+  familyName: string
+  phone?: string
+  /** The language the customer reads. German when nobody chose one. */
+  language?: CustomerLanguage
+  /** A hotel or a company: what an invoice is billed to. All optional. */
+  company?: string
+  vatId?: string
+  street?: string
+  postalCode?: string
+  city?: string
+  country?: string
+}
+
+export interface CreatedCustomer {
+  userId: string
+  /** False when the account exists but the customer role could not be granted. */
+  roleGranted: boolean
+  /** False when the account exists and the identity server did not take the invitation. */
+  invited: boolean
+}
+
+/**
+ * `createCustomer(args:{email, givenName, familyName, phone?, language?, and
+ * the billing block})`, answering CreatedCustomer.
+ *
+ * The customer's half of dispatch.md section 14.4, beside `createDriver` and
+ * built on the same helpers: an empty optional is left out of the document
+ * rather than sent as an empty string, so the backend never writes one.
+ */
+export async function createCustomerMutation(
+  args: CreateCustomerArgs
+): Promise<CreatedCustomer> {
+  const optional = (value?: string) => {
+    const trimmed = value?.trim()
+    return trimmed ? trimmed : undefined
+  }
+  const result = await mutate(
+    'createCustomer',
+    {
+      args: {
+        email: args.email.trim(),
+        givenName: args.givenName.trim(),
+        familyName: args.familyName.trim(),
+        phone: optional(args.phone),
+        language: args.language || undefined,
+        company: optional(args.company),
+        vatId: optional(args.vatId),
+        street: optional(args.street),
+        postalCode: optional(args.postalCode),
+        city: optional(args.city),
+        country: optional(args.country)
+      }
+    },
+    '{ __typename userId roleGranted invited }'
+  )
+  await invalidatePeople()
+  return {
+    userId: String(result?.userId ?? ''),
+    roleGranted: result?.roleGranted !== false,
+    invited: result?.invited !== false
+  }
+}
+
+/**
  * `setUserRoles(args:{userId, roleKeys})` takes this brand's three keys and
  * refuses any other, keeping foreign grants on its own. So only those are
  * sent, whatever else the account carries.
@@ -678,7 +754,7 @@ export async function setDriverPayoutPercentMutation(
   percent: number
 ): Promise<void> {
   if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
-    throw new Error('percent must be between 0 and 100')
+    throw appError('InvalidPercent', 'percent must be between 0 and 100')
   }
   await mutate('setDriverPayoutPercent', {args: {userId, percent}})
   await queryClient.invalidateQueries({queryKey: keys.user(userId)})

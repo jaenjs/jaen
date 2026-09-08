@@ -71,6 +71,7 @@ import {
   type CarInput,
   type FleetCar
 } from '../hooks/fleet'
+import {failureText} from '../errors'
 
 const classLabel = (c: CarClass | undefined, t: FleetStrings): string =>
   c ? t[`Class_${c}`] : t.ClassNone
@@ -231,7 +232,7 @@ export function FleetView() {
     } catch (err) {
       toaster.error({
         title: t.AssignFailed,
-        description: err instanceof Error ? err.message : undefined
+        description: failureText(err)
       })
     } finally {
       setAssigning(null)
@@ -481,7 +482,8 @@ function ColorField({
   const root = useRef<HTMLDivElement | null>(null)
   // `ssr: false` because the app is a client shell inside jaen: the first
   // paint happens in the browser and the value is read there.
-  const inline = useBreakpointValue({base: true, md: false}, {ssr: false}) ?? true
+  const inline =
+    useBreakpointValue({base: true, md: false}, {ssr: false}) ?? true
 
   const close = useCallback(() => setOpen(false), [])
 
@@ -489,7 +491,8 @@ function ColorField({
     if (!open) return
     const onPointerDown = (event: PointerEvent) => {
       const node = root.current
-      if (node && event.target instanceof Node && !node.contains(event.target)) close()
+      if (node && event.target instanceof Node && !node.contains(event.target))
+        close()
     }
     document.addEventListener('pointerdown', onPointerDown, true)
     // Scroll closes the portalled picker only. That one is anchored to the
@@ -498,7 +501,8 @@ function ColorField({
     // the field and scrolls with it, and opening it lengthens the dialog's
     // body, so a scroll listener there would shut it the instant it opened.
     if (inline) {
-      return () => document.removeEventListener('pointerdown', onPointerDown, true)
+      return () =>
+        document.removeEventListener('pointerdown', onPointerDown, true)
     }
     const onScroll = () => close()
     // Capture, so the dialog body's own scroll is heard and not only the page's.
@@ -617,7 +621,9 @@ const galleryPlan = (before: CarGalleryItem[], after: CarGalleryItem[]) => {
   const removed = before.filter(image => image.id && !kept.has(image.id))
   const added = after.filter(image => !image.id)
   const resulting = [
-    ...before.filter(image => image.id && kept.has(image.id)).map(image => image.fileId),
+    ...before
+      .filter(image => image.id && kept.has(image.id))
+      .map(image => image.fileId),
     ...added.map(image => image.fileId)
   ]
   const wanted = after.map(image => image.fileId)
@@ -663,7 +669,9 @@ async function writeGallery(
     // gallery somebody else changed under this form, and the backend refuses
     // a partial list rather than half applying it.
     const byFile = new Map(stored.map(row => [row.fileId, row.id]))
-    const ids = plan.wanted.map(fileId => byFile.get(fileId)).filter(Boolean) as string[]
+    const ids = plan.wanted
+      .map(fileId => byFile.get(fileId))
+      .filter(Boolean) as string[]
     if (ids.length === stored.length && ids.length > 1) {
       await reorderCarImagesMutation(carId, ids)
     }
@@ -726,7 +734,7 @@ function CarDialog({open, car, drivers, onClose, onSaved}: CarDialogProps) {
       }
       onSaved()
     } catch (err) {
-      setFailure(err instanceof Error ? err.message : t.CarSaveFailed)
+      setFailure(failureText(err, t.CarSaveFailed))
     } finally {
       setSaving(false)
     }

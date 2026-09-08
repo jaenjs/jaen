@@ -16,6 +16,7 @@
  * row from as well. See okf/architecture/data-layer.md.
  */
 import {fetchGraphQL} from '../../client/limosen'
+import {graphqlError} from '../errors'
 import {keys, useAppQuery} from './query'
 
 export interface DashboardToday {
@@ -146,7 +147,7 @@ export async function fetchDashboard(month: string): Promise<Dashboard> {
   )
 
   if (result?.errors?.length) {
-    throw new Error(String(result.errors[0]?.message || 'GraphQL error'))
+    throw graphqlError(result.errors)
   }
 
   return mapDashboard(result?.data?.dashboard)

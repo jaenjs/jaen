@@ -36,6 +36,8 @@ export {ErrorBanner} from './ErrorBanner'
 export type {ErrorBannerProps} from './ErrorBanner'
 export {LoadingOverlay} from './LoadingOverlay'
 export type {LoadingOverlayProps} from './LoadingOverlay'
+export {AddressCheckBadge, AddressCheckDialog} from './AddressCheck'
+export type {AddressCheckProps} from './AddressCheck'
 export {ConfirmDialog} from './ConfirmDialog'
 export {DialogActions} from './DialogActions'
 export type {DialogActionsProps} from './DialogActions'
@@ -53,3 +55,11 @@ export {RefreshButton, useSpinning, REFRESH_SPIN_MIN_MS} from './RefreshButton'
 export type {RefreshButtonProps} from './RefreshButton'
 export {PullToRefresh, PULL_THRESHOLD, PULL_MAX} from './PullToRefresh'
 export type {PullToRefreshProps} from './PullToRefresh'
+
+// The customer's yes and no taken on the telephone, and the driver's cash:
+// dispatch.md sections 14.1 and 14.3. Both are one component drawn on more
+// than one screen, so the fact reads the same wherever it is written.
+export {CustomerAnswerActions, canAnswerForCustomer} from './CustomerAnswer'
+export type {CustomerAnswerActionsProps} from './CustomerAnswer'
+export {CashReceived, cashOffered} from './CashReceived'
+export type {CashReceivedProps} from './CashReceived'

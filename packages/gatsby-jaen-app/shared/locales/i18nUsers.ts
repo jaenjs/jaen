@@ -51,6 +51,37 @@ const de = {
     'Das Konto wurde angelegt, die Fahrerrolle konnte aber nicht vergeben werden. Bitte unten in den Rollen nachholen.',
   OpenAccount: 'Konto öffnen',
 
+  // The customer beside the driver, dispatch.md section 14.4.
+  CreateUser: 'Benutzer anlegen',
+  CreateCustomer: 'Kunde anlegen',
+  CreateCustomerTitle: 'Neuen Kunden anlegen',
+  CreateCustomerBody:
+    'Das Konto wird in Zitadel angelegt, erhält die Kundenrolle und bekommt eine Einladung in seiner Sprache.',
+  FieldLanguage: 'Sprache',
+  FieldLanguageHint: 'Die Sprache der Einladung und aller weiteren E-Mails.',
+  LanguageGerman: 'Deutsch',
+  LanguageEnglish: 'Englisch',
+  LanguageTurkish: 'Türkisch',
+  LanguageArabic: 'Arabisch',
+  SectionBilling: 'Rechnungsdaten',
+  BillingHint:
+    'Für ein Hotel oder eine Firma. Bei Privatkunden bleibt der Block leer.',
+  FieldCompany: 'Firma oder Hotel',
+  FieldVatId: 'UID-Nummer',
+  FieldStreet: 'Straße und Hausnummer',
+  FieldPostalCode: 'PLZ',
+  FieldCity: 'Ort',
+  FieldCountry: 'Land',
+  ValidationPhone: 'Bitte mit Landesvorwahl',
+  CreateCustomerSuccess: 'Kunde angelegt',
+  CreateCustomerFailed: 'Kunde konnte nicht angelegt werden',
+  InvitationSent:
+    'Die Einladung ist unterwegs. Der Kunde setzt sein Passwort selbst.',
+  InvitationNotSent:
+    'Das Konto wurde angelegt, die Einladung konnte aber nicht verschickt werden. Bitte sie im Identitätsserver erneut senden.',
+  CustomerRoleNotGranted:
+    'Das Konto wurde angelegt, die Kundenrolle konnte aber nicht vergeben werden. Bitte unten in den Rollen nachholen.',
+
   DetailBackLink: 'Zurück zu Benutzer',
   DetailNotFound: 'Benutzer nicht gefunden',
   SectionAccountDetails: 'Kontodetails',
@@ -164,6 +195,37 @@ const en: UsersStrings = {
     'The account was created but the driver role could not be granted. Please set it under Roles.',
   OpenAccount: 'Open account',
 
+  CreateUser: 'Create user',
+  CreateCustomer: 'Create customer',
+  CreateCustomerTitle: 'Create a new customer',
+  CreateCustomerBody:
+    'The account is created in Zitadel, receives the customer role and is invited in its own language.',
+  FieldLanguage: 'Language',
+  FieldLanguageHint:
+    'The language of the invitation and of every mail after it.',
+  LanguageGerman: 'German',
+  LanguageEnglish: 'English',
+  LanguageTurkish: 'Turkish',
+  LanguageArabic: 'Arabic',
+  SectionBilling: 'Billing details',
+  BillingHint:
+    'For a hotel or a company. Leave it empty for a private customer.',
+  FieldCompany: 'Company or hotel',
+  FieldVatId: 'VAT id',
+  FieldStreet: 'Street and number',
+  FieldPostalCode: 'Postcode',
+  FieldCity: 'City',
+  FieldCountry: 'Country',
+  ValidationPhone: 'Please include the country code',
+  CreateCustomerSuccess: 'Customer created',
+  CreateCustomerFailed: 'The customer could not be created',
+  InvitationSent:
+    'The invitation is on its way. The customer sets their own password.',
+  InvitationNotSent:
+    'The account was created but the invitation could not be sent. Please send it again in the identity server.',
+  CustomerRoleNotGranted:
+    'The account was created but the customer role could not be granted. Please set it under Roles.',
+
   DetailBackLink: 'Back to users',
   DetailNotFound: 'User not found',
   SectionAccountDetails: 'Account details',
@@ -273,6 +335,34 @@ const tr: UsersStrings = {
     'Hesap oluşturuldu ancak şoför rolü verilemedi. Lütfen Roller altında ayarlayın.',
   OpenAccount: 'Hesabı aç',
 
+  CreateUser: 'Kullanıcı ekle',
+  CreateCustomer: 'Müşteri ekle',
+  CreateCustomerTitle: 'Yeni müşteri ekle',
+  CreateCustomerBody:
+    'Hesap Zitadel üzerinde oluşturulur, müşteri rolünü alır ve kendi dilinde bir davet gönderilir.',
+  FieldLanguage: 'Dil',
+  FieldLanguageHint: 'Davetin ve sonraki tüm e-postaların dili.',
+  LanguageGerman: 'Almanca',
+  LanguageEnglish: 'İngilizce',
+  LanguageTurkish: 'Türkçe',
+  LanguageArabic: 'Arapça',
+  SectionBilling: 'Fatura bilgileri',
+  BillingHint: 'Otel veya şirket için. Bireysel müşteride boş bırakın.',
+  FieldCompany: 'Şirket veya otel',
+  FieldVatId: 'Vergi numarası',
+  FieldStreet: 'Cadde ve numara',
+  FieldPostalCode: 'Posta kodu',
+  FieldCity: 'Şehir',
+  FieldCountry: 'Ülke',
+  ValidationPhone: 'Lütfen ülke kodunu ekleyin',
+  CreateCustomerSuccess: 'Müşteri eklendi',
+  CreateCustomerFailed: 'Müşteri eklenemedi',
+  InvitationSent: 'Davet gönderildi. Müşteri şifresini kendisi belirler.',
+  InvitationNotSent:
+    'Hesap oluşturuldu ancak davet gönderilemedi. Lütfen kimlik sunucusundan yeniden gönderin.',
+  CustomerRoleNotGranted:
+    'Hesap oluşturuldu ancak müşteri rolü verilemedi. Lütfen aşağıdaki Roller bölümünden ekleyin.',
+
   DetailBackLink: 'Kullanıcılara dön',
   DetailNotFound: 'Kullanıcı bulunamadı',
   SectionAccountDetails: 'Hesap bilgileri',
@@ -381,6 +471,34 @@ const ar: UsersStrings = {
   RoleNotGranted:
     'تم إنشاء الحساب لكن تعذّر منح دور السائق. يرجى ضبطه ضمن الأدوار.',
   OpenAccount: 'فتح الحساب',
+
+  CreateUser: 'إضافة مستخدم',
+  CreateCustomer: 'إضافة عميل',
+  CreateCustomerTitle: 'إضافة عميل جديد',
+  CreateCustomerBody:
+    'يُنشأ الحساب في Zitadel ويحصل على دور العميل وتُرسل إليه دعوة بلغته.',
+  FieldLanguage: 'اللغة',
+  FieldLanguageHint: 'لغة الدعوة وكل رسالة بعدها.',
+  LanguageGerman: 'الألمانية',
+  LanguageEnglish: 'الإنجليزية',
+  LanguageTurkish: 'التركية',
+  LanguageArabic: 'العربية',
+  SectionBilling: 'بيانات الفوترة',
+  BillingHint: 'للفندق أو الشركة. اتركها فارغة للعميل الخاص.',
+  FieldCompany: 'الشركة أو الفندق',
+  FieldVatId: 'الرقم الضريبي',
+  FieldStreet: 'الشارع ورقم المبنى',
+  FieldPostalCode: 'الرمز البريدي',
+  FieldCity: 'المدينة',
+  FieldCountry: 'البلد',
+  ValidationPhone: 'يرجى إضافة رمز الدولة',
+  CreateCustomerSuccess: 'تمت إضافة العميل',
+  CreateCustomerFailed: 'تعذّرت إضافة العميل',
+  InvitationSent: 'أُرسلت الدعوة. يضبط العميل كلمة المرور بنفسه.',
+  InvitationNotSent:
+    'أُنشئ الحساب لكن تعذّر إرسال الدعوة. يرجى إرسالها مجددًا من خادم الهوية.',
+  CustomerRoleNotGranted:
+    'أُنشئ الحساب لكن تعذّر منح دور العميل. يرجى ضبطه في الأدوار أدناه.',
 
   DetailBackLink: 'العودة إلى المستخدمين',
   DetailNotFound: 'المستخدم غير موجود',

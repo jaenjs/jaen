@@ -333,6 +333,28 @@ const de = {
   ToastPriceSet: 'Preis gespeichert',
   ToastStateUpdated: 'Status geändert',
   ToastCancelled: 'Transfer storniert',
+
+  // The address of a request, worked out and doubted, dispatch.md 14.2
+  AddressCheck: 'Adresse prüfen',
+  AddressCheckTitle: 'Adresse prüfen',
+  AddressCheckHint:
+    'Die eingegebene Adresse konnte nicht sicher bestimmt werden. Bitte den Vorschlag bestätigen oder die richtige Adresse eintragen.',
+  AddressTyped: 'Eingegeben',
+  AddressGuess: 'Vorschlag',
+  AddressNoGuess: 'Kein Vorschlag gefunden',
+  AddressPickup: 'Abholadresse',
+  AddressDropoff: 'Zieladresse',
+  AddressConfirm: 'Vorschlag übernehmen',
+  AddressCorrect: 'Adresse korrigieren',
+  AddressLabel: 'Richtige Adresse',
+  AddressPlaceholder: 'Straße, Hausnummer, PLZ, Ort',
+  AddressSave: 'Adresse speichern',
+  AddressRetry: 'Erneut bestimmen',
+  AddressGuessed: 'Geschätzt',
+  AddressUnresolved: 'Nicht gefunden',
+  AddressBySource: 'ermittelt per {source}',
+  ToastAddressSaved: 'Adresse gespeichert',
+  ToastAddressFailed: 'Die Adresse wurde nicht gespeichert',
   ToastFailed: 'Das hat nicht geklappt'
 }
 
@@ -644,6 +666,27 @@ const en: TransfersStrings = {
   ToastPriceSet: 'Price saved',
   ToastStateUpdated: 'Status changed',
   ToastCancelled: 'Transfer cancelled',
+
+  AddressCheck: 'Check address',
+  AddressCheckTitle: 'Check address',
+  AddressCheckHint:
+    'The address entered could not be determined with certainty. Please confirm the suggestion or enter the correct address.',
+  AddressTyped: 'Entered',
+  AddressGuess: 'Suggestion',
+  AddressNoGuess: 'No suggestion found',
+  AddressPickup: 'Pickup address',
+  AddressDropoff: 'Destination address',
+  AddressConfirm: 'Use suggestion',
+  AddressCorrect: 'Correct address',
+  AddressLabel: 'Correct address',
+  AddressPlaceholder: 'Street, number, postcode, city',
+  AddressSave: 'Save address',
+  AddressRetry: 'Work it out again',
+  AddressGuessed: 'Guessed',
+  AddressUnresolved: 'Not found',
+  AddressBySource: 'found by {source}',
+  ToastAddressSaved: 'Address saved',
+  ToastAddressFailed: 'The address was not saved',
   ToastFailed: 'That did not work'
 }
 
@@ -954,6 +997,27 @@ const tr: TransfersStrings = {
   ToastPriceSet: 'Fiyat kaydedildi',
   ToastStateUpdated: 'Durum değiştirildi',
   ToastCancelled: 'Transfer iptal edildi',
+
+  AddressCheck: 'Adresi kontrol et',
+  AddressCheckTitle: 'Adresi kontrol et',
+  AddressCheckHint:
+    'Girilen adres kesin olarak belirlenemedi. Lütfen öneriyi onaylayın veya doğru adresi girin.',
+  AddressTyped: 'Girilen',
+  AddressGuess: 'Öneri',
+  AddressNoGuess: 'Öneri bulunamadı',
+  AddressPickup: 'Alış adresi',
+  AddressDropoff: 'Varış adresi',
+  AddressConfirm: 'Öneriyi kullan',
+  AddressCorrect: 'Adresi düzelt',
+  AddressLabel: 'Doğru adres',
+  AddressPlaceholder: 'Cadde, numara, posta kodu, şehir',
+  AddressSave: 'Adresi kaydet',
+  AddressRetry: 'Yeniden belirle',
+  AddressGuessed: 'Tahmini',
+  AddressUnresolved: 'Bulunamadı',
+  AddressBySource: '{source} ile bulundu',
+  ToastAddressSaved: 'Adres kaydedildi',
+  ToastAddressFailed: 'Adres kaydedilmedi',
   ToastFailed: 'Bu işe yaramadı'
 }
 
@@ -1259,6 +1323,27 @@ const ar: TransfersStrings = {
   ToastPriceSet: 'تم حفظ السعر',
   ToastStateUpdated: 'تم تغيير الحالة',
   ToastCancelled: 'تم إلغاء التحويل',
+
+  AddressCheck: 'تحقق من العنوان',
+  AddressCheckTitle: 'تحقق من العنوان',
+  AddressCheckHint:
+    'تعذّر تحديد العنوان المُدخل بشكل مؤكد. يرجى تأكيد الاقتراح أو إدخال العنوان الصحيح.',
+  AddressTyped: 'المُدخل',
+  AddressGuess: 'اقتراح',
+  AddressNoGuess: 'لم يُعثر على اقتراح',
+  AddressPickup: 'عنوان الاستلام',
+  AddressDropoff: 'عنوان الوجهة',
+  AddressConfirm: 'استخدام الاقتراح',
+  AddressCorrect: 'تصحيح العنوان',
+  AddressLabel: 'العنوان الصحيح',
+  AddressPlaceholder: 'الشارع، الرقم، الرمز البريدي، المدينة',
+  AddressSave: 'حفظ العنوان',
+  AddressRetry: 'إعادة التحديد',
+  AddressGuessed: 'تقديري',
+  AddressUnresolved: 'غير موجود',
+  AddressBySource: 'تم تحديده بواسطة {source}',
+  ToastAddressSaved: 'تم حفظ العنوان',
+  ToastAddressFailed: 'لم يتم حفظ العنوان',
   ToastFailed: 'لم ينجح ذلك'
 }
 

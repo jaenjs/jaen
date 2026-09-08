@@ -67,6 +67,7 @@ import {
   setOfflineLanguage
 } from '../../shared/offline'
 import {getI18nOffline} from '../../shared/locales/i18nOffline'
+import {setErrorLanguage} from '../../shared/errors'
 import {navFor} from './nav'
 import {
   GlassTabBar,
@@ -202,6 +203,10 @@ export function AppShell({children}: AppShellProps) {
   const offline = getI18nOffline(code).strings
   // The layer's refusals are thrown outside React, and read like the screen.
   setOfflineLanguage(code)
+  // And so does every other failure: a machine answer becomes a sentence
+  // where the error is made, not where a screen draws it (rule 14,
+  // shared/errors.ts).
+  setErrorLanguage(code)
 
   const nothingToOffer = !caller.loading && navFor(caller).length === 0
   // App mode and the switch on. The bar itself hides at md in CSS, and so

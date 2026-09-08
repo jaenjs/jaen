@@ -14,11 +14,28 @@
  * component's: a refusal is shown as the backend spelled it.
  */
 import {useEffect, useMemo, useState} from 'react'
-import {Box, Card, DataList, HStack, Spinner, Stack, Text} from '@chakra-ui/react'
+import {
+  Box,
+  Card,
+  DataList,
+  HStack,
+  Spinner,
+  Stack,
+  Text
+} from '@chakra-ui/react'
 import {useI18nCode} from '../../i18n'
-import {getI18nTracking, fillTracking, formatAge} from '../../locales/i18nTracking'
+import {
+  getI18nTracking,
+  fillTracking,
+  formatAge
+} from '../../locales/i18nTracking'
 import {getI18nTransfers} from '../../locales/i18nTransfers'
-import {isTracked, useGeocode, useTransferTracking, DEFAULT_TRACKING_POLL_MS} from '../../hooks/tracking'
+import {
+  isTracked,
+  useGeocode,
+  useTransferTracking,
+  DEFAULT_TRACKING_POLL_MS
+} from '../../hooks/tracking'
 import {isClosed} from '../../hooks/transfers'
 import {DriverColorDot} from '../DriverColor'
 import {ErrorBanner} from '../ErrorBanner'
@@ -31,6 +48,13 @@ export interface DriverTrackingCardProps {
   state: string
   /** The pickup as typed, geocoded for the pin. The tracking answer's own wins when present. */
   pickupAddress?: string | null
+  /**
+   * The coordinates the pylon worked out for the pickup
+   * (okf/architecture/dispatch.md section 14.2). Given, the pin is drawn from
+   * them and no geocoder is asked; the address stays the fallback for a ride
+   * resolved before the columns existed.
+   */
+  pickupPoint?: {lng: number; lat: number} | null
   /** Whose screen this is. Changes the title and nothing else. */
   audience: 'customer' | 'admin'
   /** What the screen already holds, shown while the tracking read is out or missing. */
@@ -38,7 +62,12 @@ export interface DriverTrackingCardProps {
     driverId?: string
     driverName?: string
     driverColor?: string | null
-    car?: {licensePlate?: string | null; carName?: string | null; carClass?: string | null; color?: string | null} | null
+    car?: {
+      licensePlate?: string | null
+      carName?: string | null
+      carClass?: string | null
+      color?: string | null
+    } | null
   }
   pollMs?: number
 }
@@ -59,6 +88,7 @@ export function DriverTrackingCard({
   transferId,
   state,
   pickupAddress,
+  pickupPoint,
   audience,
   fallback,
   pollMs = DEFAULT_TRACKING_POLL_MS
@@ -68,20 +98,32 @@ export function DriverTrackingCard({
   const {strings: tt} = getI18nTransfers(code)
   const token = mapboxToken()
 
-  const {tracking, isLoading, error, unavailable, live} = useTransferTracking(transferId, pollMs)
+  const {tracking, isLoading, error, unavailable, live} = useTransferTracking(
+    transferId,
+    pollMs
+  )
 
   const effectiveState = tracking?.state ?? state
   const tracked = isTracked(effectiveState)
   const driverName = tracking?.driver?.name || fallback?.driverName || ''
   const driverColor = tracking?.driver?.color ?? fallback?.driverColor ?? null
-  const hasDriver = !!(tracking?.driver || fallback?.driverId || fallback?.driverName)
+  const hasDriver = !!(
+    tracking?.driver ||
+    fallback?.driverId ||
+    fallback?.driverName
+  )
   const car = tracking?.car ?? fallback?.car ?? null
 
   const address = tracking?.pickupLocation ?? pickupAddress ?? null
-  // The pin is only worth a geocoder call while there is a map to put it on.
-  const geocode = useGeocode(tracked && hasDriver ? address : null, token)
+  // The pin is only worth a geocoder call while there is a map to put it on,
+  // and it is worth none at all once the pylon has worked the address out.
+  const geocode = useGeocode(
+    tracked && hasDriver && !pickupPoint ? address : null,
+    token
+  )
+  const pickupPin = pickupPoint ?? geocode.point
 
-  const location = tracked ? tracking?.location ?? null : null
+  const location = tracked ? (tracking?.location ?? null) : null
   const recordedAtMs = useMemo(() => {
     const iso = location?.recordedAt
     if (!iso) return null
@@ -103,7 +145,10 @@ export function DriverTrackingCard({
 
   const caption = (() => {
     if (!tracked) return null
-    if (recordedAtMs) return fillTracking(t.PositionAge, {age: formatAge(t, now - recordedAtMs)})
+    if (recordedAtMs)
+      return fillTracking(t.PositionAge, {
+        age: formatAge(t, now - recordedAtMs)
+      })
     if (isLoading) return t.Updating
     return t.NoPositionYet
   })()
@@ -117,7 +162,9 @@ export function DriverTrackingCard({
         </HStack>
       </Card.Header>
       <Card.Body gap="4">
-        {error && !unavailable && <ErrorBanner title={t.TrackingUnavailable} message={error} />}
+        {error && !unavailable && (
+          <ErrorBanner title={t.TrackingUnavailable} message={error} />
+        )}
 
         {!hasDriver ? (
           <Box>
@@ -146,7 +193,9 @@ export function DriverTrackingCard({
                       <HStack gap="2">
                         <DriverColorDot color={car.color} size="3.5" />
                         <Text fontWeight="medium">
-                          {[car.carName, classLabel(car.carClass)].filter(Boolean).join(' · ') || t.NoCarYet}
+                          {[car.carName, classLabel(car.carClass)]
+                            .filter(Boolean)
+                            .join(' · ') || t.NoCarYet}
                         </Text>
                       </HStack>
                     </DataList.ItemValue>
@@ -155,7 +204,10 @@ export function DriverTrackingCard({
                     <DataList.Item>
                       <DataList.ItemLabel>{t.PlateLabel}</DataList.ItemLabel>
                       <DataList.ItemValue>
-                        <Text fontFamily="mono" fontWeight="semibold" letterSpacing="wider">
+                        <Text
+                          fontFamily="mono"
+                          fontWeight="semibold"
+                          letterSpacing="wider">
                           {car.licensePlate}
                         </Text>
                       </DataList.ItemValue>
@@ -175,10 +227,15 @@ export function DriverTrackingCard({
             {tracked && (
               <Box>
                 <TrackingMap
-                  pickup={geocode.point}
+                  pickup={pickupPin}
                   driver={
                     location
-                      ? {lng: location.lng, lat: location.lat, color: driverColor, accuracy: location.accuracy}
+                      ? {
+                          lng: location.lng,
+                          lat: location.lat,
+                          color: driverColor,
+                          accuracy: location.accuracy
+                        }
                       : null
                   }
                   caption={caption}

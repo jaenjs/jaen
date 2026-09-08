@@ -19,6 +19,29 @@
  * to the end of the line, the subtitle under the title in fg.muted, and
  * `meta` (a status badge, chips) under both. `leading` is an avatar or the
  * like before the title.
+ *
+ * The action row wraps, at every width (design-consistency.md rule 13). Owner,
+ * 2026-09-08: "Transferdetails, wenn das Fenster auf halber Breite ist, Bug".
+ * The row used to be `flexShrink={0}` with `w={{base: 'full', md: 'auto'}}`,
+ * and those two together are what broke a window at half a desktop screen. A
+ * flex item that may not shrink is laid out at its max-content width, which
+ * for a wrapping row is every button on one line, and `flexWrap` then never
+ * gets a chance to wrap: the row stays as wide as its buttons, the title
+ * beside it shrinks to nothing first, and the rest leaves the page. The
+ * transfer detail's seven actions measured 1053 px on the live booklimo.at,
+ * so at 768 "Stornieren" stood 321 px past the window's right edge, at 900
+ * 189 px and at 1024 65 px, and because the app's body is `overflow-x: clip`
+ * (rule 12) they were not merely off screen, they were cut away with no way
+ * to scroll to them. Below `md` the same row was `w="full"`, which is a
+ * stretched item rather than a max-content one, which is exactly why the
+ * phone was always right.
+ *
+ * So the row shrinks like any other flex item and wraps into as many lines as
+ * it needs, right aligned. The title takes the rest and keeps a floor of 14rem
+ * from `md` up, because two shrinkable items share a shortfall in proportion
+ * to their content and the title, being the shorter of the two, would
+ * otherwise be squeezed to a couple of characters while the buttons kept
+ * nearly all their width.
  */
 import React from 'react'
 import {Box, Flex, Heading, HStack, Text} from '@chakra-ui/react'
@@ -36,7 +59,14 @@ export interface PageHeaderProps {
   mono?: boolean
 }
 
-export function PageHeader({title, subtitle, actions, leading, meta, mono = false}: PageHeaderProps) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+  leading,
+  meta,
+  mono = false
+}: PageHeaderProps) {
   return (
     <Flex
       as="header"
@@ -45,7 +75,11 @@ export function PageHeader({title, subtitle, actions, leading, meta, mono = fals
       direction={{base: 'column', md: 'row'}}
       gap="3"
       w="full">
-      <HStack gap="4" align="center" minW="0">
+      <HStack
+        gap="4"
+        align="center"
+        flex={{md: '1 1 auto'}}
+        minW={{base: '0', md: '56'}}>
         {leading}
         <Box minW="0">
           <Heading
@@ -71,7 +105,12 @@ export function PageHeader({title, subtitle, actions, leading, meta, mono = fals
         </Box>
       </HStack>
       {actions ? (
-        <HStack gap="2" flexWrap="wrap" flexShrink={0} w={{base: 'full', md: 'auto'}}>
+        <HStack
+          gap="2"
+          flexWrap="wrap"
+          minW="0"
+          justify={{base: 'flex-start', md: 'flex-end'}}
+          w={{base: 'full', md: 'auto'}}>
           {actions}
         </HStack>
       ) : null}

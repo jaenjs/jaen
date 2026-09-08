@@ -105,9 +105,19 @@ export interface RideMapProps {
   token: string
   /** The ride's state as the summary answered it, so the map renders right before the first read. */
   state: string
-  /** The addresses as booked, geocoded for the two pins. */
+  /** The addresses as booked, geocoded for the two pins where no point is given. */
   pickupAddress?: string | null
   dropoffAddress?: string | null
+  /**
+   * The coordinates the pylon worked out for those addresses
+   * (okf/architecture/dispatch.md section 14.2). Where they are given the map
+   * draws the pin from them and asks no geocoder at all, which is the point of
+   * resolving an address once: "vor dem Haupteingang" has a pin here and never
+   * had one before. The addresses above stay the fallback for a ride resolved
+   * before the columns existed.
+   */
+  pickupPoint?: LngLat | null
+  dropoffPoint?: LngLat | null
   /** de | en | tr | ar, the booking's language. */
   language?: string
   /** The card under the map, once the driver said yes. */
@@ -209,11 +219,23 @@ const useNow = (running: boolean): number => {
   return now
 }
 
-/** One address as a point, asked once per address while there is a map to put it on. */
-const useGeocoded = (address: string | null | undefined, token: string) => {
+/**
+ * One address as a point. The pylon's own coordinates win where the ride
+ * carries them, and only an address nothing has been worked out for is
+ * geocoded here, once, while there is a map to put it on.
+ */
+const useGeocoded = (
+  address: string | null | undefined,
+  token: string,
+  stored?: LngLat | null
+) => {
   const [point, setPoint] = useState<LngLat | null>(null)
   const key = (address ?? '').trim()
   useEffect(() => {
+    if (stored) {
+      setPoint(stored)
+      return
+    }
     if (!key || !token) {
       setPoint(null)
       return
@@ -232,7 +254,7 @@ const useGeocoded = (address: string | null | undefined, token: string) => {
     return () => {
       alive = false
     }
-  }, [key, token])
+  }, [key, token, stored?.lat, stored?.lng])
   return point
 }
 
@@ -241,6 +263,8 @@ export function RideMap({
   state,
   pickupAddress,
   dropoffAddress,
+  pickupPoint,
+  dropoffPoint,
   language,
   car,
   driverColor,
@@ -261,8 +285,8 @@ export function RideMap({
   const [tracking, setTracking] = useState<RideTracking | null>(null)
   const held = useRef<RideTracking | null>(null)
 
-  const pickup = useGeocoded(pickupAddress, mapToken)
-  const dropoff = useGeocoded(dropoffAddress, mapToken)
+  const pickup = useGeocoded(pickupAddress, mapToken, pickupPoint)
+  const dropoff = useGeocoded(dropoffAddress, mapToken, dropoffPoint)
 
   const underway = isRideUnderway(tracking?.state ?? state)
 

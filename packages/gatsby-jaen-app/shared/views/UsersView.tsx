@@ -3,8 +3,10 @@
  *
  * One page of accounts from Zitadel with the name, the roles, whether the
  * account may sign in, and the driver's colour. Search narrows the page in
- * the browser. "Create driver" is the one create path: a customer creates
- * themselves by booking, a dispatcher is made by hand in Zitadel.
+ * the browser. "Benutzer anlegen" carries the two create paths, the driver's
+ * and, since dispatch.md section 14.4, the customer's: a dispatcher is still
+ * made by hand in Zitadel, and a customer who books on the website still
+ * creates themselves.
  *
  * The list is the shared DataTable (okf/architecture/data-layer.md,
  * acceptance 4): the board's header row, the driver's colour on the left
@@ -31,7 +33,10 @@ import {
   IconButton,
   Input,
   InputGroup,
+  Menu,
+  NativeSelect,
   Portal,
+  Separator,
   SimpleGrid,
   Stack,
   Stat,
@@ -59,13 +64,20 @@ import {useViewRefresh} from '../hooks/view-refresh'
 import {DataTable, type DataColumn} from '../components/table'
 import {NumberSkeleton} from '../components/skeletons'
 import {
+  createCustomerMutation,
   createDriverMutation,
   fullName,
   useUserDirectory,
+  CUSTOMER_LANGUAGES,
+  type CreateCustomerArgs,
   type CreateDriverArgs,
+  type CreatedCustomer,
   type CreatedDriver,
+  type CustomerLanguage,
   type DirectoryUser
 } from '../hooks/users'
+import {countryForLanguage, parsePhone} from '../phone'
+import {failureText} from '../errors'
 
 /**
  * The three role keys, as chips. booklimo's retired `krc:driver` is shown as
@@ -239,6 +251,7 @@ export function UsersView() {
   useViewRefresh(refetch, isFetching)
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
+  const [customerOpen, setCustomerOpen] = useState(false)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -335,12 +348,35 @@ export function UsersView() {
         subtitle={t.Subtitle}
         actions={
           <>
-            <Button
-              size="sm"
-              colorPalette="brand"
-              onClick={() => setCreateOpen(true)}>
-              <FaUserPlus /> {t.CreateDriver}
-            </Button>
+            {/*
+              One solid brand action on the header, rule 2a, and two things
+              to create under it: a driver and, since section 14.4, a
+              customer. Neither path changes what it did, they share an
+              entry.
+            */}
+            <Menu.Root lazyMount unmountOnExit>
+              <Menu.Trigger asChild>
+                <Button size="sm" colorPalette="brand">
+                  <FaUserPlus /> {t.CreateUser}
+                </Button>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.Item
+                      value="driver"
+                      onSelect={() => setCreateOpen(true)}>
+                      {t.CreateDriver}
+                    </Menu.Item>
+                    <Menu.Item
+                      value="customer"
+                      onSelect={() => setCustomerOpen(true)}>
+                      {t.CreateCustomer}
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
             <RefreshButton />
           </>
         }
@@ -404,6 +440,16 @@ export function UsersView() {
         onClose={() => setCreateOpen(false)}
         onCreated={created => {
           setCreateOpen(false)
+          refetch()
+          if (created.userId) navigate(`/users/${created.userId}`)
+        }}
+      />
+
+      <CreateCustomerDialog
+        open={customerOpen}
+        onClose={() => setCustomerOpen(false)}
+        onCreated={created => {
+          setCustomerOpen(false)
           refetch()
           if (created.userId) navigate(`/users/${created.userId}`)
         }}
@@ -525,7 +571,7 @@ function CreateDriverDialog({
         onCreated(result)
       }
     } catch (err) {
-      setFailure(err instanceof Error ? err.message : t.CreateDriverFailed)
+      setFailure(failureText(err, t.CreateDriverFailed))
     } finally {
       setSaving(false)
     }
@@ -673,6 +719,322 @@ function CreateDriverDialog({
                 <DialogActions
                   onCancel={finish}
                   confirmLabel={t.CreateDriver}
+                  confirmType="submit"
+                  loading={saving}
+                />
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" disabled={saving} />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          )}
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  )
+}
+
+interface CreateCustomerDialogProps {
+  open: boolean
+  onClose: () => void
+  /** Called when the dialog is done with the new account, after the invitation was reported. */
+  onCreated: (created: CreatedCustomer) => void
+}
+
+const EMPTY_CUSTOMER: CreateCustomerArgs = {
+  email: '',
+  givenName: '',
+  familyName: '',
+  phone: '',
+  language: 'de',
+  company: '',
+  vatId: '',
+  street: '',
+  postalCode: '',
+  city: '',
+  country: ''
+}
+
+/** The label of each language, in the reader's own words. */
+const languageLabel = (language: CustomerLanguage, t: UsersStrings): string => {
+  if (language === 'en') return t.LanguageEnglish
+  if (language === 'tr') return t.LanguageTurkish
+  if (language === 'ar') return t.LanguageArabic
+  return t.LanguageGerman
+}
+
+/**
+ * The form behind "Kunde anlegen", dispatch.md section 14.4.
+ *
+ * The driver's four fields, plus the language the person reads and, for a
+ * hotel or a company, what an invoice is billed to. Nobody hands a password
+ * over here: the account is invited and sets its own, so the second page of
+ * the dialog reports whether the invitation went out rather than showing a
+ * secret.
+ *
+ * The number is read in the country of the chosen language, which is the
+ * rule of section 13 and the same one the pylon applies, so a `0660 …` typed
+ * on a German customer becomes `+43660…` and a number that names its own
+ * country is untouched.
+ */
+function CreateCustomerDialog({
+  open,
+  onClose,
+  onCreated
+}: CreateCustomerDialogProps) {
+  const code = useI18nCode()
+  const {strings: t} = getI18nUsers(code)
+  const [form, setForm] = useState<CreateCustomerArgs>(EMPTY_CUSTOMER)
+  const [touched, setTouched] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [failure, setFailure] = useState<string | null>(null)
+  const [created, setCreated] = useState<CreatedCustomer | null>(null)
+
+  const set =
+    (key: keyof CreateCustomerArgs) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm(f => ({...f, [key]: e.target.value}))
+
+  const phone = form.phone?.trim() ?? ''
+  const errors = {
+    email: !form.email.trim()
+      ? t.ValidationRequired
+      : !EMAIL.test(form.email.trim())
+        ? t.ValidationEmail
+        : undefined,
+    givenName: !form.givenName.trim() ? t.ValidationRequired : undefined,
+    familyName: !form.familyName.trim() ? t.ValidationRequired : undefined,
+    phone:
+      phone && !parsePhone(phone, countryForLanguage(form.language)).e164
+        ? t.ValidationPhone
+        : undefined
+  }
+  const valid =
+    !errors.email && !errors.givenName && !errors.familyName && !errors.phone
+
+  const reset = () => {
+    setForm(EMPTY_CUSTOMER)
+    setTouched(false)
+    setFailure(null)
+    setCreated(null)
+  }
+
+  const finish = () => {
+    const done = created
+    reset()
+    if (done) onCreated(done)
+    else onClose()
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setTouched(true)
+    if (!valid || saving) return
+    setSaving(true)
+    setFailure(null)
+    try {
+      const result = await createCustomerMutation(form)
+      toaster.success({title: t.CreateCustomerSuccess})
+      // Always a second page, unlike the driver's: the dispatcher is told
+      // whether the invitation went out, which is the whole handover here.
+      setCreated(result)
+    } catch (err) {
+      setFailure(failureText(err, t.CreateCustomerFailed))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={e => {
+        if (!e.open && !saving) finish()
+      }}
+      size="md"
+      placement="center"
+      scrollBehavior="inside"
+      lazyMount
+      unmountOnExit>
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          {created ? (
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>{t.CreateCustomerSuccess}</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Stack gap="4">
+                  <Text textStyle="sm" color="fg.muted">
+                    {form.email.trim()}
+                  </Text>
+                  {created.invited ? (
+                    <Text textStyle="sm">{t.InvitationSent}</Text>
+                  ) : (
+                    <ErrorBanner
+                      title={t.CreateCustomerSuccess}
+                      message={t.InvitationNotSent}
+                    />
+                  )}
+                  {!created.roleGranted && (
+                    <ErrorBanner
+                      title={t.RoleNone}
+                      message={t.CustomerRoleNotGranted}
+                    />
+                  )}
+                </Stack>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <DialogActions
+                  confirmLabel={t.OpenAccount}
+                  onConfirm={finish}
+                />
+              </Dialog.Footer>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+            </Dialog.Content>
+          ) : (
+            <Dialog.Content as="form" onSubmit={submit}>
+              <Dialog.Header>
+                <Dialog.Title>{t.CreateCustomerTitle}</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Stack gap="4">
+                  <Text textStyle="sm" color="fg.muted">
+                    {t.CreateCustomerBody}
+                  </Text>
+                  <Field.Root required invalid={touched && !!errors.email}>
+                    <Field.Label>
+                      {t.FieldEmail} <Field.RequiredIndicator />
+                    </Field.Label>
+                    <Input
+                      type="email"
+                      autoComplete="off"
+                      value={form.email}
+                      onChange={set('email')}
+                    />
+                    <Field.ErrorText>{errors.email}</Field.ErrorText>
+                  </Field.Root>
+                  <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
+                    <Field.Root
+                      required
+                      invalid={touched && !!errors.givenName}>
+                      <Field.Label>
+                        {t.FieldGivenName} <Field.RequiredIndicator />
+                      </Field.Label>
+                      <Input
+                        value={form.givenName}
+                        onChange={set('givenName')}
+                      />
+                      <Field.ErrorText>{errors.givenName}</Field.ErrorText>
+                    </Field.Root>
+                    <Field.Root
+                      required
+                      invalid={touched && !!errors.familyName}>
+                      <Field.Label>
+                        {t.FieldFamilyName} <Field.RequiredIndicator />
+                      </Field.Label>
+                      <Input
+                        value={form.familyName}
+                        onChange={set('familyName')}
+                      />
+                      <Field.ErrorText>{errors.familyName}</Field.ErrorText>
+                    </Field.Root>
+                  </SimpleGrid>
+                  <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
+                    <Field.Root invalid={touched && !!errors.phone}>
+                      <Field.Label>{t.FieldPhone}</Field.Label>
+                      <Input
+                        type="tel"
+                        value={form.phone ?? ''}
+                        onChange={set('phone')}
+                      />
+                      <Field.ErrorText>{errors.phone}</Field.ErrorText>
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t.FieldLanguage}</Field.Label>
+                      <NativeSelect.Root>
+                        <NativeSelect.Field
+                          value={form.language ?? 'de'}
+                          onChange={e =>
+                            setForm(f => ({
+                              ...f,
+                              language: e.currentTarget
+                                .value as CustomerLanguage
+                            }))
+                          }>
+                          {CUSTOMER_LANGUAGES.map(language => (
+                            <option key={language} value={language}>
+                              {languageLabel(language, t)}
+                            </option>
+                          ))}
+                        </NativeSelect.Field>
+                        <NativeSelect.Indicator />
+                      </NativeSelect.Root>
+                      <Field.HelperText>{t.FieldLanguageHint}</Field.HelperText>
+                    </Field.Root>
+                  </SimpleGrid>
+
+                  <Separator />
+                  <Box>
+                    <Text textStyle="sm" fontWeight="medium">
+                      {t.SectionBilling}
+                    </Text>
+                    <Text textStyle="sm" color="fg.muted">
+                      {t.BillingHint}
+                    </Text>
+                  </Box>
+                  <SimpleGrid columns={{base: 1, sm: 2}} gap="4">
+                    <Field.Root>
+                      <Field.Label>{t.FieldCompany}</Field.Label>
+                      <Input
+                        value={form.company ?? ''}
+                        onChange={set('company')}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t.FieldVatId}</Field.Label>
+                      <Input value={form.vatId ?? ''} onChange={set('vatId')} />
+                    </Field.Root>
+                  </SimpleGrid>
+                  <Field.Root>
+                    <Field.Label>{t.FieldStreet}</Field.Label>
+                    <Input value={form.street ?? ''} onChange={set('street')} />
+                  </Field.Root>
+                  <SimpleGrid columns={{base: 1, sm: 3}} gap="4">
+                    <Field.Root>
+                      <Field.Label>{t.FieldPostalCode}</Field.Label>
+                      <Input
+                        value={form.postalCode ?? ''}
+                        onChange={set('postalCode')}
+                      />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t.FieldCity}</Field.Label>
+                      <Input value={form.city ?? ''} onChange={set('city')} />
+                    </Field.Root>
+                    <Field.Root>
+                      <Field.Label>{t.FieldCountry}</Field.Label>
+                      <Input
+                        value={form.country ?? ''}
+                        onChange={set('country')}
+                      />
+                    </Field.Root>
+                  </SimpleGrid>
+                  {failure && (
+                    <ErrorBanner
+                      title={t.CreateCustomerFailed}
+                      message={failure}
+                    />
+                  )}
+                </Stack>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <DialogActions
+                  onCancel={finish}
+                  confirmLabel={t.CreateCustomer}
                   confirmType="submit"
                   loading={saving}
                 />

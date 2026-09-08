@@ -25,6 +25,7 @@
 import {useCallback, useMemo} from 'react'
 import {keepPreviousData} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
+import {machineText} from '../errors'
 import {queryClient, useAppQuery, usePager} from './query'
 import {GraphQLRequestError, hasTransferField, transferCode} from './transfers'
 
@@ -223,7 +224,9 @@ export const isUnknownField = (err: unknown): boolean => {
   const code = (err as {code?: unknown}).code
   if (code === 'GRAPHQL_VALIDATION_FAILED') return true
   if (typeof code === 'string') return false
-  return /^Cannot query field|^Unknown argument|^Unknown type/.test(err.message)
+  return /^Cannot query field|^Unknown argument|^Unknown type/.test(
+    machineText(err)
+  )
 }
 
 // --------------- The row ---------------

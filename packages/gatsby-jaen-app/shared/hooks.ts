@@ -26,6 +26,7 @@
 import {useCallback, useMemo} from 'react'
 import {keepPreviousData} from '@tanstack/react-query'
 import {fetchGraphQL} from '../client/limosen'
+import {graphqlError} from './errors'
 import {
   cachedRead,
   keys,
@@ -104,7 +105,7 @@ const query = async (
   )
 
   if (result?.errors?.length) {
-    throw new Error(String(result.errors[0]?.message || 'GraphQL error'))
+    throw graphqlError(result.errors)
   }
 
   return result?.data?.[field]

@@ -27,6 +27,7 @@
 import {useCallback, useMemo} from 'react'
 import {keepPreviousData} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
+import {appError, sentenceFor} from '../errors'
 import {
   asTransferState,
   TRANSFER_STATES,
@@ -65,16 +66,22 @@ const literal = (value: unknown): string => {
 }
 
 /**
- * The error a resolver answered with, kept as the backend spelled it, plus
- * the extension code so a screen can tell FORBIDDEN from AUTH_REQUIRED.
+ * The error a resolver answered with: the reader's sentence as its message,
+ * the extension code so a screen can tell FORBIDDEN from AUTH_REQUIRED, and
+ * the backend's own words as `detail` for the console and for the checks that
+ * branch on how the schema worded a failure (design-consistency.md rule 14,
+ * shared/errors.ts). Nothing draws `detail`.
  */
 export class GraphQLRequestError extends Error {
+  readonly detail: string
+
   constructor(
-    message: string,
+    detail: string,
     public readonly code?: string
   ) {
-    super(message)
+    super(sentenceFor(code, detail))
     this.name = 'GraphQLRequestError'
+    this.detail = detail
   }
 }
 
@@ -332,6 +339,26 @@ export interface TransferRow {
   endDateTime?: string
   pickup: string
   dropoff: string
+  /**
+   * The address of the request as the pylon worked it out (dispatch.md
+   * section 14.2). `pickup` and `dropoff` above stay what the dispatcher
+   * typed; these are the canonical address, the coordinates every map reads
+   * instead of geocoding again, and how it got there: `resolution` is
+   * RESOLVED, GUESSED or UNRESOLVED, `resolvedBy` is GEOCODER, MODEL or
+   * DISPATCHER. Undefined on a schema from before the columns and in the
+   * seconds between the booking and the resolution.
+   */
+  pickupAddress?: string
+  pickupLat?: number | null
+  pickupLng?: number | null
+  pickupResolution?: string
+  pickupResolvedBy?: string
+  dropoffAddress?: string
+  dropoffLat?: number | null
+  dropoffLng?: number | null
+  dropoffResolution?: string
+  dropoffResolvedBy?: string
+  addressesResolvedAt?: string
   subject?: string
   /** null for a driver caller, the backend strips it. */
   price: number | null
@@ -366,6 +393,24 @@ export interface TransferRow {
   declinedAt?: string
   invoicedAt?: string
   paidAt?: string
+  /**
+   * Who wrote the customer's yes or no, when that was not the customer: the
+   * dispatcher who took it on the telephone (dispatch.md section 14.1). A
+   * Zitadel id, undefined where the customer answered through their own link
+   * and on a schema from before the columns.
+   */
+  confirmedBy?: string
+  declinedBy?: string
+  /**
+   * The cash the driver was handed on this ride (dispatch.md section 14.3):
+   * the amount, the instant it was recorded and the Zitadel id of whoever
+   * recorded it, the driver or the admin who corrected it. Money, so a driver
+   * reads them on their own started ride only and everybody else's answer is
+   * null, the same rule the fare follows.
+   */
+  cashReceivedAmount?: number | null
+  cashReceivedAt?: string
+  cashReceivedBy?: string
   /** The driver's answer, undefined on a schema without it. */
   driverStatus?: DriverStatus
   /**
@@ -382,6 +427,10 @@ export interface TransferRow {
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/** A coordinate as the backend answered it, null for anything that is not one. */
+const coord = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isFinite(v) ? v : null
 
 const str = (v: unknown): string | undefined =>
   typeof v === 'string' && v.length ? v : undefined
@@ -500,6 +549,17 @@ export const mapTransfer = (node: any): TransferRow => {
     endDateTime: str(node?.endDateTime),
     pickup: String(node?.pickupLocation ?? ''),
     dropoff: String(node?.dropoffLocation ?? ''),
+    pickupAddress: str(node?.pickupAddress),
+    pickupLat: coord(node?.pickupLat),
+    pickupLng: coord(node?.pickupLng),
+    pickupResolution: str(node?.pickupResolution),
+    pickupResolvedBy: str(node?.pickupResolvedBy),
+    dropoffAddress: str(node?.dropoffAddress),
+    dropoffLat: coord(node?.dropoffLat),
+    dropoffLng: coord(node?.dropoffLng),
+    dropoffResolution: str(node?.dropoffResolution),
+    dropoffResolvedBy: str(node?.dropoffResolvedBy),
+    addressesResolvedAt: str(node?.addressesResolvedAt),
     subject: str(node?.subject),
     price: typeof node?.price === 'number' ? node.price : null,
     paymentMethode: str(node?.paymentMethode) ?? null,
@@ -556,6 +616,14 @@ export const mapTransfer = (node: any): TransferRow => {
     declinedAt: str(node?.declinedAt),
     invoicedAt: str(node?.invoicedAt),
     paidAt: str(node?.paidAt),
+    confirmedBy: str(node?.confirmedBy),
+    declinedBy: str(node?.declinedBy),
+    cashReceivedAmount:
+      typeof node?.cashReceivedAmount === 'number'
+        ? node.cashReceivedAmount
+        : null,
+    cashReceivedAt: str(node?.cashReceivedAt),
+    cashReceivedBy: str(node?.cashReceivedBy),
     driverStatus: asDriverStatus(node?.driverStatus),
     lastAttempt: mapAttempt(node?.lastAttempt),
     attempts: Array.isArray(node?.attempts)
@@ -708,6 +776,20 @@ const transferSelection = async (
     'requestedAt',
     'pickupLocation',
     'dropoffLocation',
+    // The address of the request, worked out by the pylon (dispatch.md
+    // section 14.2). Asked for only where the deployed schema carries them,
+    // like every other field added after a site was built.
+    'pickupAddress',
+    'pickupLat',
+    'pickupLng',
+    'pickupResolution',
+    'pickupResolvedBy',
+    'dropoffAddress',
+    'dropoffLat',
+    'dropoffLng',
+    'dropoffResolution',
+    'dropoffResolvedBy',
+    'addressesResolvedAt',
     'subject',
     'price',
     'paymentMethode',
@@ -723,6 +805,15 @@ const transferSelection = async (
     'declinedAt',
     'invoicedAt',
     'paidAt',
+    // Who answered for the customer, and the driver's cash: dispatch.md
+    // sections 14.1 and 14.3, asked for only where the deployed schema has
+    // them, so a site built ahead of its pylon reads the ride rather than
+    // failing the whole query.
+    'confirmedBy',
+    'declinedBy',
+    'cashReceivedAmount',
+    'cashReceivedAt',
+    'cashReceivedBy',
     'driverStatus'
   ].filter(has)
 
@@ -1135,12 +1226,68 @@ export const unassignDriver = (transferId: string) =>
 export const setPrice = (transferId: string, price: number) =>
   mutate('setPrice', {transferId, price})
 
+/**
+ * The dispatcher's one tap on a doubtful address (dispatch.md section 14.2).
+ * With no address it confirms the guess the row already carries; with one it
+ * corrects it, and the pylon looks the correction up so the pin follows.
+ * Either way the side becomes RESOLVED by DISPATCHER and the warning goes.
+ */
+export const setTransferAddress = (
+  transferId: string,
+  which: 'PICKUP' | 'DROPOFF',
+  address?: string
+) =>
+  mutate('setTransferAddress', {
+    transferId,
+    which,
+    address: address?.trim() || undefined
+  })
+
+/**
+ * Work the two addresses out again. The pylon does this by itself when a ride
+ * is created, so this is the retry a dispatcher gets on a ride whose address
+ * the geocoder and the model were both out for, and the migration path for
+ * every ride written before the columns existed. The answer is the cost
+ * report, not the row, so the row is read again afterwards.
+ */
+export const resolveTransferAddresses = async (
+  transferId: string,
+  force = false
+): Promise<TransferRow | null> => {
+  await gql(
+    'resolveTransferAddresses',
+    {transferId, force},
+    '{ transferId code written geocoderCalls modelCalls modelTokens ms model ' +
+      'pickup { which resolution source address lat lng note } ' +
+      'dropoff { which resolution source address lat lng note } }',
+    'mutation'
+  )
+  void invalidateTransfers()
+  return fetchTransfer(transferId)
+}
+
+/**
+ * "Bar erhalten", dispatch.md section 14.3: the driver of this ride was
+ * handed `amount` by the passenger. The driver writes it on their own ride
+ * from ON_THE_WAY on, an admin on any ride and again to correct it, and the
+ * pylon refuses a ride whose paying party is not the passenger
+ * (CASH_NOT_OFFERED) and one the car has not left (CASH_TOO_EARLY).
+ */
+export const markCashReceived = (transferId: string, amount: number) =>
+  mutate('markCashReceived', {transferId, amount})
+
+/** The admin's correction that takes the record back. Idempotent on a ride that carries none. */
+export const clearCashReceived = (transferId: string) =>
+  mutate('clearCashReceived', {transferId})
+
 export const updateTransferState = (
   transferId: string,
   state: TransferState
 ) => {
   if (!TRANSFER_STATES.includes(state))
-    throw new Error(`unknown state ${state}`)
+    // A programmer's slip rather than something a person can do, and it still
+    // reads in the reader's language: the developer's words are the detail.
+    throw appError('InvalidInput', `unknown state ${state}`)
   return mutate('updateTransferState', {
     transferId,
     state: new EnumValue(state)

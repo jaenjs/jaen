@@ -18,6 +18,7 @@
  */
 import {useMemo} from 'react'
 import {fetchGraphQL} from '../../client/limosen'
+import {graphqlError} from '../errors'
 import {cachedRead, keys, queryClient, useAppQuery} from './query'
 
 /** The schema's default: nobody chose a colour, drawn as no colour everywhere. */
@@ -39,7 +40,9 @@ const NO_COLORS: DriverColors = {}
 
 /** Distinct, non-empty, sorted, so one set of ids spells one key. */
 const normalise = (userIds: readonly string[]): string[] =>
-  Array.from(new Set(userIds.filter(id => typeof id === 'string' && id.length > 0))).sort()
+  Array.from(
+    new Set(userIds.filter(id => typeof id === 'string' && id.length > 0))
+  ).sort()
 
 const pick = (data: StoredColors, ids: readonly string[]): DriverColors => {
   const out: DriverColors = {}
@@ -60,11 +63,13 @@ const fetchBatch = async (ids: string[]): Promise<StoredColors> => {
     {}
   )
   if (result?.errors?.length) {
-    throw new Error(String(result.errors[0]?.message || 'GraphQL error'))
+    throw graphqlError(result.errors)
   }
   const out: StoredColors = {}
   for (const id of ids) out[id] = null
-  const rows: any[] = Array.isArray(result?.data?.driverColors) ? result.data.driverColors : []
+  const rows: any[] = Array.isArray(result?.data?.driverColors)
+    ? result.data.driverColors
+    : []
   for (const row of rows) {
     const id = typeof row?.userId === 'string' ? row.userId : ''
     if (!id || !(id in out)) continue
@@ -78,12 +83,17 @@ const fetchBatch = async (ids: string[]): Promise<StoredColors> => {
  * A fresh batch in the cache that holds every id asked for, if there is one:
  * the board's batch covers the detail page's one driver and the map's.
  */
-const held = (ids: readonly string[]): {data: StoredColors; at: number} | undefined => {
+const held = (
+  ids: readonly string[]
+): {data: StoredColors; at: number} | undefined => {
   const now = Date.now()
-  for (const query of queryClient.getQueryCache().findAll({queryKey: ['driverColors']})) {
+  for (const query of queryClient
+    .getQueryCache()
+    .findAll({queryKey: ['driverColors']})) {
     const data = query.state.data as StoredColors | undefined
     if (!data || now - query.state.dataUpdatedAt > COLOR_STALE) continue
-    if (ids.every(id => id in data)) return {data, at: query.state.dataUpdatedAt}
+    if (ids.every(id => id in data))
+      return {data, at: query.state.dataUpdatedAt}
   }
   return undefined
 }
@@ -97,13 +107,22 @@ const held = (ids: readonly string[]): {data: StoredColors; at: number} | undefi
  * without `driverColors` or a refused call, so when every dot is grey, look
  * here first (the hard rule on swallowed errors, okf/decisions/hard-rules.md).
  */
-export async function readDriverColors(userIds: readonly string[]): Promise<DriverColors> {
+export async function readDriverColors(
+  userIds: readonly string[]
+): Promise<DriverColors> {
   const ids = normalise(userIds)
   if (!ids.length) return NO_COLORS
   const have = held(ids)
   if (have) return pick(have.data, ids)
   try {
-    return pick(await cachedRead(keys.driverColors(ids), () => fetchBatch(ids), COLOR_STALE), ids)
+    return pick(
+      await cachedRead(
+        keys.driverColors(ids),
+        () => fetchBatch(ids),
+        COLOR_STALE
+      ),
+      ids
+    )
   } catch {
     return NO_COLORS
   }

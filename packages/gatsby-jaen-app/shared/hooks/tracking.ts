@@ -41,8 +41,9 @@ import {useCallback, useEffect, useMemo, useState} from 'react'
 import {useQueries} from '@tanstack/react-query'
 import {useCaller} from '../auth'
 import {isOnline} from '../offline'
+import {appError, machineText} from '../errors'
 import {gql} from './bookings'
-import {hasCarField} from './transfers'
+import {hasCarField, hasTransferField} from './transfers'
 import {
   errorMessage,
   keys,
@@ -166,7 +167,7 @@ export const fetchTransferTracking = async (
 /** True when the deployed schema has no transferTracking field yet. */
 const isMissingField = (err: unknown): boolean =>
   err instanceof Error &&
-  /Cannot query field "transferTracking"/.test(err.message)
+  /Cannot query field "transferTracking"/.test(machineText(err))
 
 export const DEFAULT_TRACKING_POLL_MS = 10_000
 
@@ -242,6 +243,14 @@ export interface CustomerRide {
   state: string
   pickupAtISO: string | null
   pickupLocation: string | null
+  /**
+   * The coordinates the pylon worked out for that pickup
+   * (okf/architecture/dispatch.md section 14.2). Null on a ride resolved
+   * before the columns existed and on one the pylon could not work out, and
+   * the map falls back to geocoding the text for those alone.
+   */
+  pickupLat: number | null
+  pickupLng: number | null
   driverId: string | null
   /** The plate stamped on the ride, the tracking answer's own wins when present. */
   licensePlate: string | null
@@ -283,6 +292,7 @@ export const customerRideWindow = (
  */
 const customerRideSelection = async (): Promise<string> =>
   '{ edges { node { id code state pickupDateTime pickupLocation driverId ' +
+  ((await hasTransferField('pickupLat')) ? 'pickupLat pickupLng ' : '') +
   `car { licensePlate carClass${(await hasCarField('imageThumbUrl')) ? ' imageThumbUrl' : ''} } } } }`
 
 export const mapCustomerRide = (node: any): CustomerRide => ({
@@ -291,6 +301,8 @@ export const mapCustomerRide = (node: any): CustomerRide => ({
   state: String(node?.state ?? ''),
   pickupAtISO: text(node?.pickupDateTime) ?? null,
   pickupLocation: text(node?.pickupLocation) ?? null,
+  pickupLat: typeof node?.pickupLat === 'number' ? node.pickupLat : null,
+  pickupLng: typeof node?.pickupLng === 'number' ? node.pickupLng : null,
   driverId: text(node?.driverId) ?? null,
   licensePlate: text(node?.car?.licensePlate) ?? null,
   carClass: text(node?.car?.carClass) ?? null,
@@ -461,7 +473,8 @@ export const geocodeAddress = async (
     '&limit=1&proximity=16.3738,48.2082' +
     `&access_token=${encodeURIComponent(token)}`
   const res = await fetch(url)
-  if (!res.ok) throw new Error(`Geocoding answered ${res.status}`)
+  if (!res.ok)
+    throw appError('GeocodingFailed', `geocoding answered ${res.status}`)
   const body: any = await res.json()
   const coords = body?.features?.[0]?.geometry?.coordinates
   const lng = number(coords?.[0])

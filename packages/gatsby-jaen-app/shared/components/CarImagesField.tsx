@@ -42,6 +42,7 @@ import {uploadFile} from 'jaen'
 import {MediaDropzone} from 'gatsby-plugin-jaen'
 
 import {StorageImage} from './StorageImage'
+import {failureText} from '../errors'
 
 /**
  * One picture of the draft. `id` is the row on the backend, absent while the
@@ -167,7 +168,7 @@ export function CarImagesField({
       } catch (error) {
         // The dialog shows this beside its other failures. Swallowing it
         // would leave the form looking as if the pictures had been taken.
-        onFailure?.(error instanceof Error ? error.message : s.ImageFailed)
+        onFailure?.(failureText(error, s.ImageFailed))
       } finally {
         setBusy(false)
         // Whatever did arrive is kept: an upload that failed on the fourth

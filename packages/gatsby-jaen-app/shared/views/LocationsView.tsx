@@ -223,10 +223,18 @@ function CustomerLocations() {
   // The refresh button in the header refetches the rides and every position at once.
   useViewRefresh(refetch, isFetching)
 
-  // One pin per ride under way, at the pickup the tracking answer names, or
-  // the one the ride carries until the answer lands.
+  // One pin per ride under way, at the pickup the pylon already worked out
+  // (dispatch.md section 14.2). Only a ride that carries no coordinates is
+  // geocoded here, from the pickup the tracking answer names or the one the
+  // ride carries until that answer lands, which is what this map did for
+  // every ride before the addresses were resolved once.
   const addresses = useMemo(
-    () => live.map(r => r.tracking?.pickupLocation ?? r.ride.pickupLocation),
+    () =>
+      live.map(r =>
+        r.ride.pickupLat !== null && r.ride.pickupLng !== null
+          ? null
+          : (r.tracking?.pickupLocation ?? r.ride.pickupLocation)
+      ),
     [live]
   )
   const points = useGeocodes(addresses, token)
@@ -234,7 +242,11 @@ function CustomerLocations() {
   const pins = useMemo<TrackingMapPin[]>(
     () =>
       live.flatMap((r, i) => {
-        const p = points[i]
+        const stored =
+          r.ride.pickupLat !== null && r.ride.pickupLng !== null
+            ? {lng: r.ride.pickupLng, lat: r.ride.pickupLat}
+            : null
+        const p = stored ?? points[i]
         return p ? [{id: r.ride.id, lng: p.lng, lat: p.lat}] : []
       }),
     [live, points]

@@ -16,6 +16,7 @@
  * a connection. See okf/architecture/data-layer.md.
  */
 import {fetchGraphQL} from '../client/limosen'
+import {graphqlError} from './errors'
 import {keys, queryClient, useAppQuery} from './hooks/query'
 import {sessionSubject} from './offline'
 
@@ -38,7 +39,8 @@ export const CUSTOMER_ROLE = 'limosen:customer'
  */
 export const brandDriverRole = (): string => {
   try {
-    return typeof __JAEN_APP_DRIVER_ROLE__ !== 'undefined' && __JAEN_APP_DRIVER_ROLE__
+    return typeof __JAEN_APP_DRIVER_ROLE__ !== 'undefined' &&
+      __JAEN_APP_DRIVER_ROLE__
       ? __JAEN_APP_DRIVER_ROLE__
       : DRIVER_ROLE
   } catch {
@@ -48,7 +50,8 @@ export const brandDriverRole = (): string => {
 
 export const brandCustomerRole = (): string => {
   try {
-    return typeof __JAEN_APP_CUSTOMER_ROLE__ !== 'undefined' && __JAEN_APP_CUSTOMER_ROLE__
+    return typeof __JAEN_APP_CUSTOMER_ROLE__ !== 'undefined' &&
+      __JAEN_APP_CUSTOMER_ROLE__
       ? __JAEN_APP_CUSTOMER_ROLE__
       : CUSTOMER_ROLE
   } catch {
@@ -106,7 +109,8 @@ const driverRoleKeys = (): string[] => {
   const keys = [DRIVER_ROLE]
   try {
     const configured =
-      typeof __JAEN_APP_DRIVER_ROLE__ !== 'undefined' && __JAEN_APP_DRIVER_ROLE__
+      typeof __JAEN_APP_DRIVER_ROLE__ !== 'undefined' &&
+      __JAEN_APP_DRIVER_ROLE__
         ? __JAEN_APP_DRIVER_ROLE__
         : undefined
     if (configured && !keys.includes(configured)) keys.push(configured)
@@ -140,7 +144,7 @@ const fetchCaller = async (): Promise<Caller> => {
   )
 
   if (result?.errors?.length) {
-    throw new Error(String(result.errors[0]?.message || 'GraphQL error'))
+    throw graphqlError(result.errors)
   }
 
   const user = result?.data?.currentUser

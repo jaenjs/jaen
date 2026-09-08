@@ -26,6 +26,7 @@
  * (no `Worker`, or the worker's first message fails) the same engine runs
  * on the main thread, which is slower for the page and otherwise the same.
  */
+import {appError} from '../errors'
 import arabicBoldFont from './fonts/NotoSansArabic-Bold.ttf'
 import mathFont from './fonts/NotoSansMath-Regular.ttf'
 import arabicFont from './fonts/NotoSansArabic-Regular.ttf'
@@ -161,7 +162,8 @@ interface Backend {
 
 const fetchBytes = async (url: string | URL): Promise<ArrayBuffer> => {
   const response = await fetch(url)
-  if (!response.ok) throw new Error(`${response.status} for ${String(url)}`)
+  if (!response.ok)
+    throw appError('Server', `${response.status} for ${String(url)}`)
   return response.arrayBuffer()
 }
 
@@ -182,7 +184,7 @@ type WorkerAnswer =
 /** The worker, wrapped: one pending promise per message id. */
 const startWorker = async (): Promise<Backend> => {
   if (typeof Worker === 'undefined')
-    throw new Error('no Worker in this browser')
+    throw appError('BrowserUnsupported', 'no Worker in this browser')
 
   const worker = new Worker(new URL('./compile.worker.ts', import.meta.url), {
     type: 'module'
@@ -235,7 +237,8 @@ const startWorker = async (): Promise<Backend> => {
       })
       if (!answer.ok)
         throw new TypstCompileError(answer.error, answer.diagnostics ?? [])
-      if (!answer.pdf) throw new Error('the compiler answered without a PDF')
+      if (!answer.pdf)
+        throw appError('Server', 'the compiler answered without a PDF')
       return answer.pdf
     }
   }
@@ -311,7 +314,7 @@ const fetchAsset = async (
   url: string | URL
 ): Promise<TypstFileContent> => {
   const response = await fetch(url)
-  if (!response.ok) throw new Error(`${response.status} for ${path}`)
+  if (!response.ok) throw appError('Server', `${response.status} for ${path}`)
   return TEXT_EXTENSIONS.test(path)
     ? response.text()
     : new Uint8Array(await response.arrayBuffer())

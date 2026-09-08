@@ -20,6 +20,7 @@ import init, {
   TypstCompilerBuilder,
   type TypstCompiler
 } from '@myriaddreamin/typst-ts-web-compiler'
+import {appError} from '../errors'
 
 /** A file of the template family: Typst source as text, anything else as bytes. */
 export type TypstFileContent = string | Uint8Array
@@ -146,7 +147,7 @@ let instantiated: Promise<void> | null = null
 const fetchModule = async (url: URL): Promise<ArrayBuffer> => {
   const response = await fetch(url)
   if (!response.ok || !response.body)
-    throw new Error(`${response.status} for the compiler module`)
+    throw appError('Server', `${response.status} for the compiler module`)
   if (!/\.gz(\?.*)?$/i.test(url.pathname)) return response.arrayBuffer()
   if (typeof DecompressionStream === 'undefined') {
     throw new Error(

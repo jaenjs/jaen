@@ -21,6 +21,12 @@ import {
   throughCache,
   type GraphQLResponse
 } from '../../shared/offline'
+import {
+  appError,
+  graphqlError,
+  httpKey,
+  statusInText
+} from '../../shared/errors'
 
 /**
  * The backend comes from the plugin's `pylonUrl` option, not from a constant.
@@ -62,11 +68,16 @@ const readSession = (): {token?: string; subject?: string} => {
         const user = User.fromStorageString(oidcStorage)
         return {
           token: user?.access_token || undefined,
-          subject: typeof user?.profile?.sub === 'string' ? user.profile.sub : undefined
+          subject:
+            typeof user?.profile?.sub === 'string'
+              ? user.profile.sub
+              : undefined
         }
       }
     }
-  } catch { /* auth not available */ }
+  } catch {
+    /* auth not available */
+  }
   return {}
 }
 
@@ -98,6 +109,38 @@ const send = async (
  * storage is missing or throws it is a pass-through and this is the plain
  * fetch it was. See okf/architecture/offline.md.
  */
+/**
+ * GQty's response handler, with the reader's language put back on
+ * (design-consistency.md rule 14).
+ *
+ * This is where every English word a person ever read in this app came from,
+ * and it is one function. `defaultResponseHandler` throws before any caller
+ * sees the answer: `GQtyError.fromGraphQLErrors` takes the first error's
+ * message and nothing else, so `Forbidden` travelled through the query layer,
+ * onto the board's banner and into every toast in all four languages, and
+ * `extensions.code` was dropped on the floor with it. The half dozen clients
+ * of shared/hooks that inspect `result.errors` themselves almost never ran:
+ * the throw had already happened. Its siblings in the same file are English
+ * too, for an HTTP status, an empty body and malformed JSON.
+ *
+ * So the answer is read here. A refusal becomes the app's own error with the
+ * reader's sentence as its message, the pylon's code as `code` (which is what
+ * finally makes AUTH_REQUIRED and FORBIDDEN two different answers on a
+ * screen, hard-rules.md) and the machine's words as `detail`. Everything else
+ * gqty throws is the platform failing rather than refusing, and says so.
+ */
+const readAnswer = async (response: Response): Promise<GraphQLResponse> => {
+  try {
+    return (await defaultResponseHandler(response)) as GraphQLResponse
+  } catch (err) {
+    const errors = (err as {graphQLErrors?: unknown})?.graphQLErrors
+    if (Array.isArray(errors) && errors.length) throw graphqlError(errors)
+    const detail = err instanceof Error ? err.message : String(err)
+    const status = statusInText(detail)
+    throw appError(status === undefined ? 'Server' : httpKey(status), detail)
+  }
+}
+
 const queryFetcher: QueryFetcher = async function (
   {query, variables, operationName},
   fetchOptions
@@ -109,9 +152,9 @@ const queryFetcher: QueryFetcher = async function (
   return (await throughCache(
     {operationName, query, variables, subject},
     async () =>
-      (await defaultResponseHandler(
+      await readAnswer(
         await send({query, variables, operationName}, fetchOptions)
-      )) as GraphQLResponse
+      )
   )) as Awaited<ReturnType<QueryFetcher>>
 }
 
@@ -138,7 +181,7 @@ const cache = new Cache(
     staleWhileRevalidate: 5 * 60 * 1000,
     normalization: true
   }
-);
+)
 
 /**
  * The endpoint and the fetcher, for the one thing GQty cannot express.
@@ -161,21 +204,14 @@ export const client = createClient<GeneratedSchema>({
   fetchOptions: {
     fetcher: queryFetcher
   }
-});
+})
 
 // Core functions
-export const { resolve, subscribe, schema } = client;
+export const {resolve, subscribe, schema} = client
 
 // Legacy functions
-export const {
-  query,
-  mutation,
-  mutate,
-  subscription,
-  resolved,
-  refetch,
-  track
-} = client;
+export const {query, mutation, mutate, subscription, resolved, refetch, track} =
+  client
 
 export const {
   graphql,
@@ -197,4 +233,4 @@ export const {
   }
 })
 
-export * from './schema.generated';
+export * from './schema.generated'

@@ -21,6 +21,7 @@
 import {useCallback, useMemo} from 'react'
 import {keepPreviousData, useQueries} from '@tanstack/react-query'
 import {fetchGraphQL} from '../../client/limosen'
+import {appError, graphqlError} from '../errors'
 import {
   invalidateTransfers,
   keys,
@@ -95,12 +96,9 @@ export const gql = async (
   const data = result?.data?.[field]
 
   if ((data === undefined || data === null) && result?.errors?.length) {
-    const first = result.errors[0]
-    const code = first?.extensions?.code
-    const message = String(first?.message || 'GraphQL error')
-    const err = new Error(message) as Error & {code?: string}
-    if (typeof code === 'string') err.code = code
-    throw err
+    // The reader's sentence, the pylon's code and the machine's own words,
+    // all three on one error (shared/errors.ts, rule 14).
+    throw graphqlError(result.errors)
   }
 
   return data
@@ -638,7 +636,8 @@ const count = (n: number | undefined): string | undefined =>
  */
 export async function bookRide(input: BookRideInput): Promise<Booking> {
   const pickupDateTime = toPickupInstant(input.date, input.time)
-  if (!pickupDateTime) throw new Error('Invalid pickup date or time')
+  if (!pickupDateTime)
+    throw appError('InvalidDate', 'invalid pickup date or time')
 
   const people = Math.min(Math.max(Math.floor(input.passengers ?? 0), 0), 50)
   const passengers =

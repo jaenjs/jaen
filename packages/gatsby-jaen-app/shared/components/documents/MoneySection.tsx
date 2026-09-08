@@ -11,8 +11,10 @@
  * documentUrl, never by a bucket link.
  *
  * The dispatcher's actions, offered by the status alone and refused by the
- * backend for real: "Bestätigen" while OFFERED (the customer said yes on
- * the phone), the dropzone "Rechnung hochladen" from CONFIRMED on (PDF
+ * backend for real: the customer's answer taken on the telephone while NEW or
+ * OFFERED ("Für den Kunden bestätigen" and "Für den Kunden ablehnen",
+ * dispatch.md section 14.1, drawn by CustomerAnswerActions), the driver's cash
+ * on the ride (section 14.3), the dropzone "Rechnung hochladen" from CONFIRMED on (PDF
  * only, one file, 10 MB, a new file replaces the row's), "Rechnung senden"
  * once an invoice is there, "Als bezahlt markieren" while INVOICED.
  * "Angebot senden" lives in the page header beside the other actions and
@@ -46,7 +48,6 @@ import {
 } from '../../hooks/offers'
 import {
   assertInvoiceFile,
-  confirmAsAdmin,
   gatewayFileOf,
   InvoiceFileError,
   markPaid,
@@ -62,6 +63,8 @@ import {ConfirmDialog} from '../ConfirmDialog'
 import {ErrorBanner} from '../ErrorBanner'
 import {toaster} from '../toaster'
 import {CustomerStatusBadge} from '../CustomerStatusBadge'
+import {CustomerAnswerActions} from '../CustomerAnswer'
+import {CashReceived} from '../CashReceived'
 
 // --------------- Words ---------------
 
@@ -113,7 +116,8 @@ const stepsOf = (
   offer: TransferDocument | undefined,
   invoice: TransferDocument | undefined,
   s: OffersStrings,
-  code: string
+  code: string,
+  nameOf?: (id: string) => string | undefined
 ): Step[] => {
   const status = asCustomerStatus(transfer.customerStatus) ?? 'NEW'
   const instant = (st: CustomerStatus): string | undefined => {
@@ -143,6 +147,17 @@ const stepsOf = (
     }
     if (st === 'INVOICED' && invoice?.sentTo)
       return fill(s.SentTo, {email: invoice.sentTo})
+    // Who answered for the customer, dispatch.md section 14.1. The absence of
+    // an author is the customer's own answer through their own link, so the
+    // line appears only where the office took the call.
+    if (st === 'CONFIRMED' && transfer.confirmedBy)
+      return fill(s.ConfirmedBy, {
+        name: nameOf?.(transfer.confirmedBy) ?? transfer.confirmedBy
+      })
+    if (st === 'DECLINED' && transfer.declinedBy)
+      return fill(s.DeclinedBy, {
+        name: nameOf?.(transfer.declinedBy) ?? transfer.declinedBy
+      })
     return undefined
   }
   if (status === 'DECLINED') {
@@ -282,13 +297,21 @@ export interface MoneySectionProps {
   onChanged: (row: TransferRow) => void
   /** Bumped by the parent after the offer dialog sent, so the documents are read again. */
   documentsVersion?: number
+  /**
+   * A Zitadel id to a display name, for the author of an answer taken on the
+   * telephone (dispatch.md section 14.1). The detail page has the driver and
+   * user lists loaded and the section does not, so the lookup is passed in;
+   * without it the timeline prints the id, which is still true.
+   */
+  nameOf?: (id: string) => string | undefined
 }
 
 export function MoneySection({
   transfer,
   editable,
   onChanged,
-  documentsVersion = 0
+  documentsVersion = 0,
+  nameOf
 }: MoneySectionProps) {
   const {code, s} = useWords()
   const {
@@ -305,11 +328,8 @@ export function MoneySection({
     if (documentsVersion > 0) refetch()
   }, [documentsVersion, refetch])
 
-  const [busy, setBusy] = useState<
-    'confirm' | 'upload' | 'send' | 'paid' | null
-  >(null)
+  const [busy, setBusy] = useState<'upload' | 'send' | 'paid' | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
   const [paidOpen, setPaidOpen] = useState(false)
   const [number, setNumber] = useState('')
   // The shared dropzone keeps the accepted file in its own state. Clearing
@@ -318,8 +338,8 @@ export function MoneySection({
   const dropzone = useRef<MediaDropzoneControl | null>(null)
 
   const steps = useMemo(
-    () => stepsOf(transfer, offer, invoice, s, code),
-    [transfer, offer, invoice, s, code]
+    () => stepsOf(transfer, offer, invoice, s, code, nameOf),
+    [transfer, offer, invoice, s, code, nameOf]
   )
 
   const run = async (
@@ -340,11 +360,6 @@ export function MoneySection({
     } finally {
       setBusy(null)
     }
-  }
-
-  const confirm = async () => {
-    if (await run('confirm', () => confirmAsAdmin(transfer.id), s.Confirmed))
-      setConfirmOpen(false)
   }
 
   const paid = async () => {
@@ -450,16 +465,33 @@ export function MoneySection({
             )}
           </Stack>
 
-          {editable && status === 'OFFERED' && (
-            <Button
-              size="sm"
-              colorPalette="brand"
+          {/*
+            The customer's answer taken on the telephone (dispatch.md section
+            14.1), beside the customer status this section's header carries.
+            It replaces the bare "Bestätigen" that stood here: the dispatcher
+            is not confirming, the customer is, through them, and the no was
+            missing altogether.
+          */}
+          {editable && (
+            <CustomerAnswerActions
+              transfer={transfer}
+              onAnswered={onChanged}
               alignSelf="flex-start"
-              minH={{base: '44px', md: '8'}}
-              onClick={() => setConfirmOpen(true)}
-              data-testid="confirm-as-admin">
-              <FaCheck /> {s.ConfirmAsAdmin}
-            </Button>
+            />
+          )}
+
+          {/*
+            The driver's cash on this ride, read and corrected by the office
+            (dispatch.md section 14.3). It is money and it belongs to the
+            money side of the page; a ride whose paying party is not the
+            passenger draws nothing at all.
+          */}
+          {editable && (
+            <CashReceived
+              transfer={transfer}
+              onChanged={onChanged}
+              variant="inline"
+            />
           )}
 
           {editable && (
@@ -550,15 +582,6 @@ export function MoneySection({
 
       {editable && (
         <>
-          <ConfirmDialog
-            open={confirmOpen}
-            onClose={() => setConfirmOpen(false)}
-            onConfirm={confirm}
-            title={s.ConfirmAsAdminTitle}
-            body={s.ConfirmAsAdminBody}
-            confirmLabel={s.ConfirmAsAdmin}
-            loading={busy === 'confirm'}
-          />
           <ConfirmDialog
             open={paidOpen}
             onClose={() => setPaidOpen(false)}

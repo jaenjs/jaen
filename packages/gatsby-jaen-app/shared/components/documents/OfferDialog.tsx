@@ -39,6 +39,7 @@ import {Box, Link, Skeleton, Stack, Text} from '@chakra-ui/react'
 import {uploadFile} from 'jaen'
 import {useI18nCode, type I18nCode} from '../../i18n'
 import {fill} from '../../locales/i18nCommon'
+import {printableAddress} from '../../address'
 import {getI18nTransfers} from '../../locales/i18nTransfers'
 import {fetchGraphQL} from '../../../client/limosen'
 import {useCaller} from '../../auth'
@@ -46,6 +47,7 @@ import {fullName, mutate, useUserDetail} from '../../hooks/users'
 import {GraphQLRequestError, type TransferRow} from '../../hooks/transfers'
 import {gatewayFileOf} from '../../hooks/documents'
 import {isOfflineError} from '../../offline'
+import {appError, failureText, machineText} from '../../errors'
 import {DialogActions} from '../DialogActions'
 import {ErrorBanner} from '../ErrorBanner'
 import {toaster} from '../toaster'
@@ -403,7 +405,12 @@ export const offerItems = (
   const description = [
     dateTimeIn(row.pickupDateTime, language),
     // An en dash, not an arrow: Open Sans carries no U+2192 and the PDF would show a blank.
-    `${row.pickup} – ${row.dropoff}`,
+    // The addresses are the canonical ones where a person or a geocoder
+    // stands behind them and the typed text otherwise (dispatch.md section
+    // 14.2, printableAddress): a paper the customer signs must not carry a
+    // machine's reading of "vor dem Haupteingang" as though the office had
+    // written it, so a GUESSED address stays out of it.
+    `${printableAddress(row, 'PICKUP')} – ${printableAddress(row, 'DROPOFF')}`,
     [
       carClass ? enumLabel(t, 'Class_', carClass) : '',
       people ? `${people} ${words.persons}` : ''
@@ -541,7 +548,7 @@ const RESERVATION_MS = 10 * 60 * 1000
 const isUnknownField = (err: unknown): boolean =>
   err instanceof Error &&
   /Cannot query field|Unknown argument|Unknown field|is not defined|Unknown type/i.test(
-    err.message
+    machineText(err)
   )
 
 /**
@@ -651,8 +658,10 @@ const reasonOf = (err: unknown, s: OfferStrings): string => {
   const code = (err as {code?: unknown})?.code
   if (code === 'FORBIDDEN') return s.Forbidden
   if (code === 'AUTH_REQUIRED') return s.AuthRequired
-  if (err instanceof Error && err.message) return err.message
-  return s.Unknown
+  // Everything else used to be the backend's own English on this banner
+  // (rule 14). The shared catalogue words it, and this dialog's Unknown is
+  // what is left when nothing knows the failure.
+  return failureText(err, s.Unknown)
 }
 
 export function OfferDialog({
@@ -815,7 +824,7 @@ export function OfferDialog({
         filename
       )
       if (!uploaded?.data?.file_id || !uploaded?.fileUrl) {
-        throw new Error('the storage gateway answered no file')
+        throw appError('NoFile', 'the storage gateway answered no file')
       }
     } catch (err) {
       setPhase('ready')
@@ -850,7 +859,7 @@ export function OfferDialog({
         number: String(node?.number ?? reservation.number),
         filename: String(node?.filename ?? '')
       }
-      if (!document.id) throw new Error('no document id in the answer')
+      if (!document.id) throw appError('NoLink', 'no document id in the answer')
     } catch (err) {
       setPhase('ready')
       setError(fill(s.ErrorUpload, {reason: reasonOf(err, s)}))

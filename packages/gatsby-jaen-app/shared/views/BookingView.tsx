@@ -91,6 +91,7 @@ import {
   type ColumnId,
   type RowActions
 } from './TransfersView'
+import {failureText} from '../errors'
 
 type Strings = ReturnType<typeof getI18nBookings>['strings']
 
@@ -213,7 +214,7 @@ function BookRideDialog({open, onClose, onBooked}: BookRideDialogProps) {
       reset()
       onBooked(booking)
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      const message = failureText(err)
       setFailure(message)
       toaster.error({title: t.BookingCreatedError, description: message})
     } finally {

@@ -22,9 +22,10 @@
  * asks once, one request with an alias per ride, rather than once per row.
  */
 import {gql} from './bookings'
-import {keys, queryClient, useAppQuery} from './query'
+import {cachedRead, keys, queryClient, useAppQuery} from './query'
 import {mapDocument, type TransferDocument} from './documents'
 import {fetchGraphQL} from '../../client/limosen'
+import {appError} from '../errors'
 
 export type StatementKind = 'CUSTOMER' | 'DRIVER'
 export type StatementFormat = 'pdf' | 'xlsx'
@@ -51,6 +52,47 @@ export interface StatementLine {
   payment: string
   /** The driver's Anteil on a driver statement, null on an invoice. */
   share: number | null
+  /**
+   * The cash the driver was handed on this ride, on a driver statement
+   * (dispatch.md section 14.3): what the driver recorded, else the fare of a
+   * ride marked CASH, which is what the settlement's Bar-erhalten column has
+   * always meant. Null on an invoice line and on a pylon without the columns.
+   */
+  cash: number | null
+  /** When the cash was recorded, ISO, and the Zitadel id of whoever recorded it. */
+  cashAt?: string
+  cashBy?: string
+}
+
+/**
+ * Which fields the deployed `StatementLine` carries. The cash of a line
+ * arrived with dispatch.md section 14.3, so it is asked for only where the
+ * pylon answers it: a site built ahead of its pylon reads the month's rides
+ * without the column rather than failing the whole read. Asked once through
+ * the query client, and an endpoint that will not introspect is taken to be
+ * the current schema.
+ */
+const statementLineFields = async (): Promise<Set<string>> => {
+  try {
+    const names = await cachedRead(keys.schema('statementLine'), async () => {
+      const result: any = await fetchGraphQL(
+        {
+          query:
+            'query { line: __type(name: "StatementLine") { fields { name } } }',
+          variables: undefined,
+          operationName: undefined
+        },
+        {}
+      )
+      const fields = result?.data?.line?.fields
+      return Array.isArray(fields)
+        ? fields.map((f: any) => String(f?.name)).filter(Boolean)
+        : []
+    })
+    return new Set(names)
+  } catch {
+    return new Set<string>()
+  }
 }
 
 const MONTH = /^\d{4}-\d{2}$/
@@ -97,10 +139,13 @@ export async function fetchStatementLines(
   month: string,
   kind: StatementKind
 ): Promise<StatementLine[]> {
+  const known = await statementLineFields()
+  const has = (name: string) => known.size === 0 || known.has(name)
+  const cashFields = ['cash', 'cashAt', 'cashBy'].filter(has).join(' ')
   const rows = await gql(
     'statementLines',
     {args: {userId, month, kind}},
-    '{ nr code transferId date time pickup dropoff vehicle amount payment share }'
+    `{ nr code transferId date time pickup dropoff vehicle amount payment share${cashFields ? ' ' + cashFields : ''} }`
   )
   return (Array.isArray(rows) ? rows : []).map((r: any) => ({
     nr: Number(r?.nr ?? 0),
@@ -113,7 +158,10 @@ export async function fetchStatementLines(
     vehicle: String(r?.vehicle ?? ''),
     amount: typeof r?.amount === 'number' ? r.amount : null,
     payment: String(r?.payment ?? ''),
-    share: typeof r?.share === 'number' ? r.share : null
+    share: typeof r?.share === 'number' ? r.share : null,
+    cash: typeof r?.cash === 'number' ? r.cash : null,
+    cashAt: typeof r?.cashAt === 'string' ? r.cashAt : undefined,
+    cashBy: typeof r?.cashBy === 'string' ? r.cashBy : undefined
   }))
 }
 
@@ -157,13 +205,14 @@ export const fetchStatementUrl = async (
   format: StatementFormat,
   kind?: StatementKind
 ): Promise<string> => {
-  if (!MONTH.test(month)) throw new Error('Invalid month')
+  if (!MONTH.test(month)) throw appError('InvalidMonth', 'invalid month')
   const url = await gql(
     'statementUrl',
     {args: {userId, month, format, kind}},
     ''
   )
-  if (typeof url !== 'string' || !url) throw new Error('no link in the answer')
+  if (typeof url !== 'string' || !url)
+    throw appError('NoLink', 'no link in the answer')
   return url
 }
 
@@ -409,13 +458,13 @@ export async function markDriverPayout(
   month: string,
   note?: string
 ): Promise<DriverPayout> {
-  if (!MONTH.test(month)) throw new Error('Invalid month')
+  if (!MONTH.test(month)) throw appError('InvalidMonth', 'invalid month')
   const args: Record<string, unknown> = {driverId, month}
   const trimmed = note?.trim()
   if (trimmed) args.note = trimmed
   const raw = await gql('markDriverPayout', {args}, PAYOUT_FIELDS, 'mutation')
   const payout = mapPayout(raw)
-  if (!payout) throw new Error('no payout in the answer')
+  if (!payout) throw appError('NoLink', 'no payout in the answer')
   await invalidateDriverPayouts()
   return payout
 }
@@ -429,7 +478,7 @@ export async function revokeDriverPayout(
   driverId: string,
   month: string
 ): Promise<DriverPayout> {
-  if (!MONTH.test(month)) throw new Error('Invalid month')
+  if (!MONTH.test(month)) throw appError('InvalidMonth', 'invalid month')
   const raw = await gql(
     'revokeDriverPayout',
     {args: {driverId, month}},
@@ -437,7 +486,7 @@ export async function revokeDriverPayout(
     'mutation'
   )
   const payout = mapPayout(raw)
-  if (!payout) throw new Error('no payout in the answer')
+  if (!payout) throw appError('NoLink', 'no payout in the answer')
   await invalidateDriverPayouts()
   return payout
 }

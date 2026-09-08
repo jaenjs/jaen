@@ -33,6 +33,54 @@ const updateNotice = (): ((reload?: boolean) => void) | undefined =>
  * blank reads as an update and not as the app dying. See
  * okf/architecture/offline.md.
  */
+const RELOAD_STAMP = 'taxi-app:update-reload'
+const RELOAD_GAP_MS = 20000
+
+/**
+ * Whether this document is one the reload exists for.
+ *
+ * The stale shell is an `/app` problem: the service worker serves its
+ * precached shell for those routes and an installed app can sit on
+ * yesterday's bundle for days. A public page has no shell, it is fetched
+ * from the network, and the new worker takes over at the next navigation on
+ * its own. So a public page must never reload itself, and on 2026-09-08 it
+ * did: `updateNotice` is written into `/app` documents only, so on the
+ * homepage this handler fell through to an unguarded reload and any browser
+ * carrying an older worker reloaded every few seconds. See
+ * okf/architecture/offline.md.
+ */
+const reloadBelongsHere = (): boolean => {
+  try {
+    if (window.location.pathname.startsWith('/app')) return true
+
+    const standalone =
+      window.matchMedia?.('(display-mode: standalone)')?.matches === true ||
+      (window.navigator as unknown as {standalone?: boolean}).standalone ===
+        true
+
+    return standalone
+  } catch {
+    return false
+  }
+}
+
+/** One reload per document per twenty seconds, whoever asks for it. */
+const reloadOnce = (): void => {
+  try {
+    const last = Number(window.sessionStorage.getItem(RELOAD_STAMP)) || 0
+
+    if (Date.now() - last < RELOAD_GAP_MS) return
+
+    window.sessionStorage.setItem(RELOAD_STAMP, String(Date.now()))
+  } catch {
+    // No session storage, no way to remember: reloading blind is how a loop
+    // starts, so the update waits for the next navigation instead.
+    return
+  }
+
+  window.location.reload()
+}
+
 export const onServiceWorkerUpdateReady: GatsbyBrowser['onServiceWorkerUpdateReady'] =
   () => {
     const notice = updateNotice()
@@ -40,5 +88,8 @@ export const onServiceWorkerUpdateReady: GatsbyBrowser['onServiceWorkerUpdateRea
       notice(true)
       return
     }
-    window.location.reload()
+
+    if (!reloadBelongsHere()) return
+
+    reloadOnce()
   }

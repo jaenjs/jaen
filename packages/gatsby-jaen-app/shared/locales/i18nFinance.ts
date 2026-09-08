@@ -1,6 +1,8 @@
 /**
- * Every word of the billing screen, /app/statements/, "Abrechnungen"
- * (okf/architecture/finance.md, "The billing screen, both sides"): the
+ * Every word of the billing screen, /app/statements/, "Abrechnung" in the
+ * singular since 2026-09-08 (okf/architecture/finance.md, "The screen is
+ * called Abrechnung"): a person opens their settlement and not a filing
+ * cabinet, and only a list of several months keeps the plural. The
  * page, its two halves Kunden and Fahrer, the Fahrer table with the payout
  * status and its two actions, and the customer's own half with the rides'
  * invoice and payment status. The offers table keeps its words in
@@ -13,7 +15,7 @@ import type {I18nCode} from '../i18n'
 
 const de = {
   // The page
-  Heading: 'Abrechnungen',
+  Heading: 'Abrechnung',
   Subtitle: 'Angebote und Rechnungen der Kunden, Auszahlungen der Fahrer',
   SubtitleDriver: 'Ihre Monatsabrechnungen und deren Auszahlung',
   SubtitleCustomer: 'Ihre Monatsabrechnungen, Rechnungen und Zahlungen',
@@ -152,7 +154,7 @@ const en: FinanceStrings = {
 }
 
 const tr: FinanceStrings = {
-  Heading: 'Faturalama',
+  Heading: 'Hesap',
   Subtitle: 'Müşterilerin teklif ve faturaları, sürücülerin ödemeleri',
   SubtitleDriver: 'Aylık hakedişleriniz ve ödemeleri',
   SubtitleCustomer: 'Aylık hesap özetleriniz, faturalarınız ve ödemeleriniz',
