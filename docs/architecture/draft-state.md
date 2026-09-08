@@ -88,6 +88,101 @@ a gateway where every read carries a Zitadel token
 (`private-storage.md`). One file and one commit per publish, which is what
 it always was.
 
+### Built 2026-09-08, and measured on a throwaway branch of booklimo.at
+
+`packages/jaen-agent/src/publish.ts`, with `src/gateway.ts` beside it for the
+one file it uploads. Everything above this heading was written before any of it
+existed.
+
+**The order is the safety, and it is the only thing in this path that is not
+obvious.** The gateway file is written before the commit, so a failure between
+the two leaves a file that nothing names: a few kilobytes on a gateway with no
+delete, and no site changed. The commit is made before `markPublished`, so a
+failure between those two leaves a published migration the object still calls
+unpublished, and the CMS then says "not published" about something that is.
+Both failures understate what is live. The reverse order of either pair would
+overstate it, which is the direction that names a file that is not there or
+claims an unpublished edit is public.
+
+**The migration is read back off the gateway before its line is committed.**
+One extra round trip on an act that happens rarely, against the one failure
+this path can produce that nobody would notice for weeks: a line in
+`patches.txt` naming a file the build cannot fetch. Every build of the site
+from then on replays that line. If the read back fails, nothing has been
+committed and the publish is simply not made.
+
+**`markPublished` is a fifth operation and the design asked for four.** It is
+not expressible as a `write` of the `meta` key, because a write bumps the
+revision: a publish that bumped the revision it had just taken would either
+stamp the new revision as published, which is a lie the moment an editor's
+save lands in the same instant, or leave `revision > publishedRevision`
+immediately after a publish, which tells every editor there is something
+unpublished when there is not. The toolbar may say neither. The interface
+grows by one operation instead, named in `src/draft/store.ts` beside the four
+rather than hidden among them. The two sessions that built the two halves
+arrived at that independently.
+
+**The credential is the brand's storage machine user and not the editor's
+token.** `osgTokenVar` per site, `OSG_TOKEN_BOOKLIMO` and `OSG_TOKEN_LIMOSEN`,
+because the gateway stamps a file with the organisation of the token that sent
+it and one estate wide token would give every brand's migration one owner. It
+is `osg-krc` and `osg-limosen`, which hold `storage:write`, and never
+`osg-build-<brand>`, which `private-storage.md` gave `storage:read` and nothing
+else on purpose. `osg-krc` was introspected at `accounts.netsnek.com` before it
+was used rather than tried: active, organisation `356348844407002709`,
+`storage:read`, `storage:write`, `storage:sign`. Who published is recorded
+where it belongs, in the commit's author line, and a publish that outlives the
+editor's access token does not fail on a credential that expired between the
+snapshot and the upload.
+
+**Two answers and not one.** `published` and `queued` are different questions
+and the result keeps them apart. Both limousine sites name no
+`publishWorkflow`, so a publish there writes the migration and queues nothing,
+and a caller reading only `queued` would call that a failure. A publish with
+nothing new writes no file, no line and no commit and still dispatches the
+build, because publish with nothing to publish is a person asking for a
+rebuild.
+
+**Measured.** `packages/jaen-agent/tests/agent.test.ts`, six tests, against a
+throwaway branch of `netsnek/booklimo.at`, the live `osg.netsnek.com` and the
+live identity server. Run twice, 6 / 0 both times, 52 s and 50 s. The branch is
+cut before and deleted after, and nothing of it reached `main`.
+
+| what was asked                  | what the systems answered                                                                                                                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| a save produces no commit       | a field write into the object left the branch head exactly where it was                                                                                                                 |
+| one gateway file                | `…/storage/BQACAgQAAx0Ed6zoewACBg5qn7p40HERKjukVLWWOlVSesj0FgACCh4AAlWvAAFRd6amM6vGE-g9BA`, 485 bytes, sha256 `b1a9f1be…`, keys exactly `createdAt`, `data`, `message` and no `authors` |
+| the gate is on it               | 401 anonymously, 200 to the KRC storage token                                                                                                                                           |
+| one line                        | `patches.txt` after equals `patches.txt` before plus that URL, and nothing else about the file moved                                                                                    |
+| one commit                      | one commit between the two heads, one file changed, `jaen-data/patches.txt` +1 −0                                                                                                       |
+| in the publishing editor's name | author the calling editor, committer `jaen-agent`, the body naming the migration URL, the revision and the publisher                                                                    |
+| nothing new publishes nothing   | `published: false`, no file, no line, the head unmoved, the reason "Everything in the draft is already published."                                                                      |
+| a second publish appends        | a second URL after the first, the first still at its own index and named once                                                                                                           |
+| the chain still replays         | all 22 lines of the branch's `patches.txt` fetched and merged the way `gatsby-source-jaen` merges them, and the merged value of the field is what the second publish wrote              |
+| the refusals stay apart         | anonymous `AUTH_REQUIRED`, a `krc:customer` of the same site `FORBIDDEN`                                                                                                                |
+
+The migration is 485 bytes because a throwaway branch's object holds only what
+the test saved into it. The chain it was appended to is booklimo's real one:
+twenty existing lines, the remote ones fetched off the private gateway with the
+site's own credential.
+
+**What the CMS says, which is the other half.** The save state item reads
+"Saved 14:02, not published" while `revision` is past `publishedRevision`, and
+the control beside it reads "Everything published" when it is not. Both are
+translated in all seven locales `gatsby-plugin-jaen` carries rather than left
+as an English `defaultMessage` on a German site. The publish flow prompts for
+the migration's message, passes it, and reads `published` rather than `queued`,
+so a site with no Actions build is told its migration is in the chain instead
+of being told nothing happened.
+
+**What this did not do.** Neither site carries the `agent` plugin option, which
+is where the transition of 2026-09-08 left them and is this design's own
+rollback, and the agent Worker is not deployed with the Durable Object binding.
+So the publish path is proven on a throwaway branch and against the live
+gateway and the live identity server, and it has not been driven from a browser
+on the live `booklimo.at`. That is the deploy step's, and until it is taken the
+acceptance below is measured and not served.
+
 ## What localStorage does
 
 It keeps being the per browser copy and the offline queue, which is what

@@ -168,7 +168,9 @@ export class JaenDraftObject {
           return json(
             await this.read(
               site,
-              typeof body.sinceRevision === 'number' ? body.sinceRevision : null
+              typeof body.sinceRevision === 'number'
+                ? body.sinceRevision
+                : null
             )
           )
         case 'write':
@@ -196,8 +198,7 @@ export class JaenDraftObject {
   private async meta(site: string): Promise<DraftMeta> {
     const stored = await this.storage.get<DraftMeta>(KEY.meta)
 
-    if (stored)
-      return {...emptyMeta(site), ...stored, site: stored.site || site}
+    if (stored) return {...emptyMeta(site), ...stored, site: stored.site || site}
 
     return emptyMeta(site)
   }
@@ -252,8 +253,7 @@ export class JaenDraftObject {
     let siteState: JaenSiteState | null = null
 
     for (const [key, value] of await this.listAll<JaenPageNode>(KEY.page)) {
-      if (value.r > since && value.v)
-        pages[key.slice(KEY.page.length)] = value.v
+      if (value.r > since && value.v) pages[key.slice(KEY.page.length)] = value.v
     }
 
     for (const [key, value] of await this.listAll<unknown>(KEY.media)) {
@@ -277,8 +277,7 @@ export class JaenDraftObject {
     }
 
     for (const [key, value] of await this.listAll<FieldAuthor>(KEY.author)) {
-      if (value.r > since && value.v)
-        authors[key.slice(KEY.author.length)] = value.v
+      if (value.r > since && value.v) authors[key.slice(KEY.author.length)] = value.v
     }
 
     const stored = await this.storage.get<Stored<JaenSiteState>>(KEY.site)
@@ -364,10 +363,7 @@ export class JaenDraftObject {
       for (const [id, page] of Object.entries(draft.pages)) {
         if (beforePages.get(id) === stable(page)) continue
 
-        writes.set(KEY.page + id, {
-          r: revision,
-          v: page
-        } as Stored<JaenPageNode>)
+        writes.set(KEY.page + id, {r: revision, v: page} as Stored<JaenPageNode>)
       }
 
       for (const widget of draft.widgets) {
@@ -380,10 +376,7 @@ export class JaenDraftObject {
       }
 
       if (stable(draft.site) !== beforeSite) {
-        writes.set(KEY.site, {
-          r: revision,
-          v: draft.site
-        } as Stored<JaenSiteState>)
+        writes.set(KEY.site, {r: revision, v: draft.site} as Stored<JaenSiteState>)
       }
 
       for (const key of result.touched) {
@@ -411,9 +404,7 @@ export class JaenDraftObject {
       )
 
       const entries =
-        change.value &&
-        typeof change.value === 'object' &&
-        !Array.isArray(change.value)
+        change.value && typeof change.value === 'object' && !Array.isArray(change.value)
           ? (change.value as Record<string, unknown>)
           : {}
 
@@ -422,9 +413,7 @@ export class JaenDraftObject {
         // send a merge does. Everything it does not name is gone.
         const given = new Set(Object.keys(entries))
 
-        for (const [storedKey, value] of await this.listAll<unknown>(
-          KEY.media
-        )) {
+        for (const [storedKey, value] of await this.listAll<unknown>(KEY.media)) {
           const id = storedKey.slice(KEY.media.length)
 
           if (given.has(id) || value.deleted) continue
@@ -449,10 +438,7 @@ export class JaenDraftObject {
         for (const id of removed) {
           if (typeof id !== 'string') continue
 
-          writes.set(KEY.media + id, {
-            r: revision,
-            deleted: true
-          } as Stored<unknown>)
+          writes.set(KEY.media + id, {r: revision, deleted: true} as Stored<unknown>)
         }
       }
 
@@ -905,9 +891,7 @@ export class JaenDraftObject {
     const entries = Array.from(writes.entries())
 
     for (let i = 0; i < entries.length; i += PUT_BATCH) {
-      await this.storage.put(
-        Object.fromEntries(entries.slice(i, i + PUT_BATCH))
-      )
+      await this.storage.put(Object.fromEntries(entries.slice(i, i + PUT_BATCH)))
     }
   }
 }
