@@ -31,6 +31,15 @@ const remoteSlice = createSlice({
     record: (state, action: PayloadAction<JaenChange>) => {
       state.outbox.push({id: state.nextId, change: action.payload})
       state.nextId += 1
+
+      // Something is waiting, and the toolbar has to say so. `offline`,
+      // `error` and `saving` are left alone: all three already say that
+      // something is out or waiting, and each of them says more than
+      // `pending` does. Only the two states that claim there is nothing to do
+      // are corrected.
+      if (state.saveState === 'idle' || state.saveState === 'saved') {
+        state.saveState = 'pending'
+      }
     },
 
     /**
@@ -40,7 +49,11 @@ const remoteSlice = createSlice({
      */
     resume: state => {
       state.saveState =
-        state.outbox.length > 0 ? 'idle' : state.lastSavedAt ? 'saved' : 'idle'
+        state.outbox.length > 0
+          ? 'pending'
+          : state.lastSavedAt
+            ? 'saved'
+            : 'idle'
       state.lastOverwrote = []
     },
 
@@ -71,7 +84,9 @@ const remoteSlice = createSlice({
       state.blobSha = action.payload.blobSha
       state.lastSavedAt = action.payload.savedAt
       state.lastCommitUrl = action.payload.commitUrl
-      state.saveState = state.outbox.length > 0 ? 'idle' : 'saved'
+      // What the recorder appended while the call was out is not saved, and
+      // the toolbar keeps saying so until the next flush takes it.
+      state.saveState = state.outbox.length > 0 ? 'pending' : 'saved'
       state.lastError = undefined
       state.lastOverwrote = action.payload.overwrote || []
 

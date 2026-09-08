@@ -52,7 +52,13 @@ export interface IRemoteState {
   /** The branch head the client last saw, sent as `baseSha` and `sinceSha`. */
   headSha?: string
   blobSha?: string
-  saveState: 'idle' | 'saving' | 'saved' | 'offline' | 'error'
+  /**
+   * What the toolbar says. `pending` is a change that has been recorded and is
+   * waiting out its quiet window, which is a state the CMS has to be able to
+   * say out loud: with saving batched, `idle` with a full outbox would read as
+   * "Saved" while nothing had been saved.
+   */
+  saveState: 'idle' | 'pending' | 'saving' | 'saved' | 'offline' | 'error'
   lastSavedAt?: string
   lastCommitUrl?: string
   lastError?: string

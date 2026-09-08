@@ -22,7 +22,7 @@ export interface AgentConfig {
   pollMs: number
   /** The interval of the poll while the tab is visible or a save is out. */
   activePollMs: number
-  /** Quiet time before a keystroke stream is committed. */
+  /** Quiet time a field write waits out before the outbox is committed. */
   debounceMs: number
 }
 
@@ -294,6 +294,6 @@ export const agentConfig = (): AgentConfig | null => {
     site: raw.site,
     pollMs: raw.pollMs || 5000,
     activePollMs: raw.activePollMs || 1500,
-    debounceMs: raw.debounceMs || 800
+    debounceMs: raw.debounceMs || 1000
   }
 }

@@ -47,28 +47,47 @@ const MAX_BATCH = 20
 const CALL_LIMIT = 200
 
 /**
- * The field types that write on every keystroke rather than on a settled
- * value. The MDX editor is the one family jaen has: its CodeMirror state
- * change runs `onUpdateValue` on every character.
+ * The longest the oldest change in the outbox is allowed to wait, whatever the
+ * quiet window would do with it.
+ *
+ * The window below moves its deadline to the last change, which is what a
+ * debounce is, and a person who writes a field every second would otherwise
+ * push it in front of them until `MAX_BATCH` cut it off twenty changes later.
+ * `draft-state.md` measured the warm path of a text change reaching the second
+ * editor at 6.25 s against a ten second acceptance, so this is the room that
+ * was left: 2500 ms of waiting puts the worst case at about 8.75 s and still
+ * inside it. See docs/architecture/editing-performance.md, "The window".
  */
-const STREAMING_FIELD = /mdx|rich|editor/i
+const MAX_WAIT_MS = 2500
 
 /**
- * Whether a recorded change is one keystroke of a stream.
+ * Whether a recorded change is sent without waiting for the quiet window.
  *
- * The quiet time exists for exactly that case and no other: it turns a typed
- * paragraph into one commit instead of one commit per letter and one contents
- * API round trip with it.
+ * Everything a person does with one gesture goes at once, because waiting is
+ * only ever waiting for a second change that arrives from the same hand, and
+ * a gesture has no second change to wait for: a picture is picked once, a
+ * media node is uploaded once, a section is added, moved or removed by a
+ * click, a page is created, deleted or moved by a click, a widget and the site
+ * metadata are written by a form that has its own button.
  *
- * Nothing else in jaen writes that way. `Field.Text` writes on blur and has
- * already waited out its own 500 ms debounce by the time the change is
- * recorded, an image is picked once, a media node is uploaded once, a section
- * is added, moved or removed by a click. For all of those the 800 ms is not a
- * batching window, it is 800 ms of a ten second budget spent waiting for a
- * second change that cannot arrive, so they go at once.
+ * What waits is a field a person types into, and that is every `fieldWrite`
+ * and `fieldMerge` that is not the media catalogue. Until 2026-09-08 only a
+ * field whose type looked like an MDX editor waited, on the reading that
+ * `Field.Text` writes once on blur and therefore has nothing to batch. It does
+ * write once on blur, and a person still walks through four fields of a card
+ * in a few seconds, so that reading bought four commits, four round trips and
+ * four whole-store writes where one would do.
  */
-const isKeystroke = (change: JaenChange): boolean =>
-  change.kind === 'fieldWrite' && STREAMING_FIELD.test(change.fieldType || '')
+const goesAtOnce = (change: JaenChange): boolean => {
+  if (change.kind !== 'fieldWrite' && change.kind !== 'fieldMerge') {
+    return true
+  }
+
+  // The gallery's own write. It is a picture that was uploaded, not a
+  // sentence, and the other editor's library is the one thing the budget in
+  // draft-state.md measures a picture against.
+  return change.fieldType === MEDIA_FIELD_TYPE
+}
 
 /**
  * The recorder: the eight draft-bearing actions of the `page`, `site` and
@@ -250,6 +269,8 @@ export default (config: AgentConfig) => {
     let inFlight = false
     let failures = 0
     let stopped = false
+    /** When the outbox last went from empty to holding something. */
+    let queuedSince: number | undefined
 
     const state = () => store.getState() as any
 
@@ -328,10 +349,10 @@ export default (config: AgentConfig) => {
     }
 
     const scheduleFlush = (delay: number) => {
-      // A keystroke moves its own deadline to the last keystroke, which is
+      // A field write moves its own deadline to the last field write, which is
       // what a debounce is, but it must never move a flush that was asked for
       // at once: a picture recorded and then a letter typed would otherwise
-      // put the picture 800 ms behind the letter.
+      // put the picture a quiet window behind the letter.
       if (delay > 0 && flushTimer && flushIsImmediate) return
 
       if (flushTimer) clearTimeout(flushTimer)
@@ -342,6 +363,22 @@ export default (config: AgentConfig) => {
         flushIsImmediate = false
         void flush()
       }, delay)
+    }
+
+    /**
+     * The quiet window a field write waits out, cut short so that the oldest
+     * change in the outbox never waits longer than `MAX_WAIT_MS`. Without the
+     * clamp a person who writes a field just often enough resets the deadline
+     * for ever and the first thing they typed sits in the browser.
+     */
+    const quietDelay = (): number => {
+      const window = config.debounceMs
+
+      if (queuedSince === undefined) return window
+
+      const left = queuedSince + MAX_WAIT_MS - Date.now()
+
+      return Math.max(0, Math.min(window, left))
     }
 
     /**
@@ -460,7 +497,31 @@ export default (config: AgentConfig) => {
     const onVisibilityChange = () => {
       syncPolling()
 
-      if (isVisible()) void poll()
+      if (isVisible()) {
+        void poll()
+        return
+      }
+
+      // The tab went away. Whatever is waiting out its quiet window is sent
+      // now rather than when the person comes back, because they may not.
+      // This is best effort and it is not what holds the invariant: the call
+      // is a `fetch` with an `Authorization` header, so it cannot be a beacon,
+      // and a browser is free to drop it. What holds the invariant is the
+      // outbox being part of the persisted store, which `persist-state` writes
+      // synchronously on exactly this event. See
+      // docs/architecture/editing-performance.md, "The window".
+      clearFlush()
+      void flush()
+    }
+
+    /**
+     * The page is being unloaded, or put into the back/forward cache. Same
+     * best effort send, and the pair `visibilitychange` plus `pagehide` is
+     * what iOS Safari actually delivers.
+     */
+    const onPageHide = () => {
+      clearFlush()
+      void flush()
     }
 
     store.dispatch(remoteActions.resume())
@@ -474,18 +535,25 @@ export default (config: AgentConfig) => {
 
       const length = remote.outbox.length
 
+      if (length === 0) {
+        queuedSince = undefined
+      } else if (queuedSince === undefined) {
+        queuedSince = Date.now()
+      }
+
       if (length > lastOutboxLength) {
-        // A typed field waits for the quiet, twenty queued changes or not, so
-        // that a sentence is one commit rather than one contents API round
-        // trip per character and a history nobody can read. Anything else is
-        // one gesture and goes at once: an uploaded picture reaches the other
-        // editor a debounce sooner for it.
+        // A field a person typed into waits out the quiet window, so that
+        // walking through the fields of a card is one commit rather than one
+        // commit, one round trip and one whole-store write per field. The
+        // batch size still wins over the window: twenty queued changes are
+        // sent whatever they are, which is the bound on how far behind the
+        // repository a fast hand can put itself.
         const latest = remote.outbox[length - 1]?.change
 
         scheduleFlush(
-          length >= MAX_BATCH || !latest || !isKeystroke(latest)
+          length >= MAX_BATCH || !latest || goesAtOnce(latest)
             ? 0
-            : config.debounceMs
+            : quietDelay()
         )
       }
 
@@ -509,6 +577,7 @@ export default (config: AgentConfig) => {
 
     if (typeof window !== 'undefined') {
       window.addEventListener('online', onOnline)
+      window.addEventListener('pagehide', onPageHide)
     }
 
     if (typeof document !== 'undefined') {
@@ -525,6 +594,7 @@ export default (config: AgentConfig) => {
       if (pollTimer) clearInterval(pollTimer)
       if (typeof window !== 'undefined') {
         window.removeEventListener('online', onOnline)
+        window.removeEventListener('pagehide', onPageHide)
       }
 
       if (typeof document !== 'undefined') {

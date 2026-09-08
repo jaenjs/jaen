@@ -34,7 +34,12 @@ declare global {
          * browser is still out. Default 1500.
          */
         activePollMs?: number
-        /** Quiet time before a batch is committed. Default 800. */
+        /**
+         * Quiet time a field write waits out before the outbox is committed.
+         * Default 1000. A media write, a page or a section gesture, twenty
+         * queued changes and the tab going away do not wait. See
+         * docs/architecture/editing-performance.md, "The window".
+         */
         debounceMs?: number
       }
     | undefined
