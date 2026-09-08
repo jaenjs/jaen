@@ -37,6 +37,16 @@ export interface SharedDraftState {
   hasUnpublished: boolean
   /** `socket` while the object is pushing, `poll` while it is not. */
   connection: IRemoteState['connection']
+  /**
+   * The last site wide discard this browser has taken, if any.
+   *
+   * The CMS says who discarded and when rather than letting the draft change
+   * under a person's hands, which is what `draft-state.md` asks of the third
+   * of the three acts that rewrite the shared draft.
+   */
+  discardedRevision?: number
+  discardedAt?: string
+  discardedBy?: string
 }
 
 export const useSharedDraft = (): SharedDraftState => {
@@ -58,6 +68,9 @@ export const useSharedDraft = (): SharedDraftState => {
     hasUnpublished:
       typeof remote?.revision === 'number' &&
       remote.revision > (remote.publishedRevision ?? 0),
-    connection: remote?.connection || 'poll'
+    connection: remote?.connection || 'poll',
+    discardedRevision: remote?.discardedRevision,
+    discardedAt: remote?.discardedAt,
+    discardedBy: remote?.discardedBy
   }
 }

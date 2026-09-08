@@ -36,6 +36,7 @@ import {Store} from 'redux'
 
 import {
   AgentConfig,
+  AgentError,
   AgentOfflineError,
   DraftAnswer,
   DraftDelta,
@@ -259,6 +260,80 @@ const isRemoteWrite = (type: string) =>
   type.endsWith('/hydrateFromRemote') || type.endsWith('/discardAllChanges')
 
 /**
+ * Where an outbox goes when a discard takes it, and why it goes anywhere.
+ *
+ * A site wide discard invalidates every browser's unsent changes: folding them
+ * back on top of the restored draft would resurrect part of what was just
+ * undone, which is the whole reason the operation carries an invalidation
+ * revision. So they are dropped.
+ *
+ * They are not destroyed. "An edit a person made is never lost" is above every
+ * number in this design, and there is a real window in which a person is typing
+ * while an admin somewhere else confirms a discard: their change is refused by
+ * the object, or dropped here, a second or two after they made it. Nothing in
+ * the shared draft may keep it, and this browser can, so it does. The parked
+ * changes are a plain `localStorage` key, the last few discards deep, and
+ * nothing reads them automatically: they are there for the person who says
+ * "it deleted what I was writing".
+ *
+ * Best effort by construction. A browser with no storage, or a full one, has
+ * to discard all the same, so a failure here is logged and changes nothing.
+ */
+// The literal and not `persistKey` from ./index, which imports this file: the
+// two would be a cycle. It is the persisted store's key with a suffix, so a
+// person looking for their parked changes finds them beside the draft.
+const DISCARDED_KEY = 'jaenjs-state-discarded'
+const DISCARDED_KEEP = 5
+
+const parkDiscardedOutbox = (
+  outbox: Array<{change: JaenChange}>,
+  discard: {revision: number; at?: string | null; by?: string | null}
+): void => {
+  if (!outbox?.length) return
+
+  try {
+    if (typeof localStorage === 'undefined') return
+
+    const held = JSON.parse(localStorage.getItem(DISCARDED_KEY) || '[]')
+    const parks = Array.isArray(held) ? held : []
+
+    parks.push({
+      revision: discard.revision,
+      at: discard.at || new Date().toISOString(),
+      by: discard.by || null,
+      changes: outbox.map(entry => entry.change)
+    })
+
+    localStorage.setItem(
+      DISCARDED_KEY,
+      JSON.stringify(parks.slice(-DISCARDED_KEEP))
+    )
+  } catch (error) {
+    console.error(
+      'jaen agent: the discarded changes could not be parked in this browser',
+      error
+    )
+  }
+}
+
+/**
+ * Whether this browser's copy was thrown away by somebody else's discard.
+ *
+ * The mark is the last discard this browser honoured, so a discard invalidates
+ * it exactly once. A browser that has never seen a revision at all is not
+ * invalidated by an old discard, it simply takes the draft as it is, and the
+ * mark is recorded either way so the next answer is compared against the right
+ * number.
+ */
+const discardInvalidates = (
+  remote: {discardedRevision?: number; revision?: number} | undefined,
+  discardedRevision: number | null | undefined
+): boolean =>
+  typeof discardedRevision === 'number' &&
+  discardedRevision > 0 &&
+  discardedRevision > (remote?.discardedRevision ?? 0)
+
+/**
  * The object's delta, folded onto a draft.
  *
  * Four kinds of key, and each one is merged the way the object splits it.
@@ -463,6 +538,46 @@ export default (config: AgentConfig) => {
           void poll()
         }
       } catch (error) {
+        /**
+         * The one refusal that is acted on rather than retried.
+         *
+         * `DRAFT_DISCARDED` says this batch was made against a draft an admin
+         * has thrown away, so the object refused it instead of rebasing it.
+         * Retrying would refuse it again for ever, and rebasing it is exactly
+         * what the discard was asked to prevent. The changes are parked in
+         * this browser, the outbox is dropped, and the draft is read whole.
+         *
+         * It is the only place a save that came back is not a save: every
+         * other stale write in this system is rebased and never rejected.
+         */
+        if (error instanceof AgentError && error.code === 'DRAFT_DISCARDED') {
+          const now = state().remote
+          const revision =
+            (error.details?.discardedRevision as number) ||
+            (now.discardedRevision ?? 0) + 1
+
+          parkDiscardedOutbox(now.outbox, {
+            revision,
+            at: error.details?.discardedAt,
+            by: error.details?.discardedByName
+          })
+
+          store.dispatch(
+            remoteActions.draftDiscarded({
+              revision,
+              at: error.details?.discardedAt,
+              by: error.details?.discardedByName
+            })
+          )
+
+          failures = 0
+          inFlight = false
+
+          void readWhole()
+
+          return
+        }
+
         failures += 1
 
         store.dispatch(
@@ -542,19 +657,59 @@ export default (config: AgentConfig) => {
     const hydrate = (answer: DraftAnswer) => {
       const current = state()
 
-      const base: JaenDraftState = answer.full
-        ? emptyDraftState()
-        : {
-            pages: {...(current.page?.pages?.nodes || {})},
-            site: {
-              siteMetadata: {...(current.site?.siteMetadata || {})}
-            },
-            widgets: [...(current.widget?.nodes || [])]
-          }
+      /**
+       * An admin discarded every unpublished change of the site, and this
+       * browser is one of the ones that has to let go.
+       *
+       * It is the one case in which the outbox is **not** folded back on top
+       * of the answer. Everything in it was made against a draft that no
+       * longer exists, so reapplying it would put part of what was discarded
+       * back, in this browser and, on the next flush, in everybody else's. The
+       * local copy goes with it for the same reason, which is why the base is
+       * empty here whatever the answer says: the object forces a full answer
+       * after a discard, and this does not depend on it having done so.
+       *
+       * What the person typed is parked in this browser first. See
+       * `parkDiscardedOutbox`.
+       */
+      const invalidated = discardInvalidates(
+        current.remote,
+        answer.discardedRevision
+      )
+
+      if (invalidated) {
+        parkDiscardedOutbox(current.remote.outbox, {
+          revision: answer.discardedRevision as number,
+          at: answer.discardedAt,
+          by: answer.discardedByName || answer.discardedBy
+        })
+
+        store.dispatch(
+          remoteActions.draftDiscarded({
+            revision: answer.discardedRevision as number,
+            publishedRevision: answer.publishedRevision,
+            at: answer.discardedAt,
+            by: answer.discardedByName || answer.discardedBy
+          })
+        )
+      }
+
+      const base: JaenDraftState =
+        answer.full || invalidated
+          ? emptyDraftState()
+          : {
+              pages: {...(current.page?.pages?.nodes || {})},
+              site: {
+                siteMetadata: {...(current.site?.siteMetadata || {})}
+              },
+              widgets: [...(current.widget?.nodes || [])]
+            }
 
       applyDelta(base, answer.delta)
 
-      const outbox = current.remote.outbox as Array<{change: JaenChange}>
+      const outbox = (invalidated ? [] : current.remote.outbox) as Array<{
+        change: JaenChange
+      }>
 
       const merged = applyChanges(
         base,
@@ -578,6 +733,26 @@ export default (config: AgentConfig) => {
       )
     }
 
+    /**
+     * The whole draft, asked for without a revision.
+     *
+     * The one caller is a discard: this browser's copy is the draft that was
+     * thrown away, and its revision may already be the object's, in which case
+     * the ordinary poll is answered `changed: false` and nothing on the screen
+     * moves. A read with no revision is always answered whole.
+     */
+    const readWhole = async (): Promise<void> => {
+      if (stopped) return
+
+      try {
+        const answer = await fetchDraft(config)
+
+        if (answer.changed) hydrate(answer)
+      } catch (error) {
+        console.debug('jaen agent: the whole draft could not be read', error)
+      }
+    }
+
     const poll = async (): Promise<void> => {
       if (stopped || inFlight) return
 
@@ -585,6 +760,37 @@ export default (config: AgentConfig) => {
 
       try {
         const answer = await fetchDraft(config, remote.revision)
+
+        // A discard reaches a browser whose revision is already the object's
+        // through this branch as well, which is what a browser that adopted a
+        // revision without reading the draft looks like. It is answered the
+        // same way: drop, and read the draft whole.
+        if (discardInvalidates(remote, answer.discardedRevision)) {
+          parkDiscardedOutbox(remote.outbox, {
+            revision: answer.discardedRevision as number,
+            at: answer.discardedAt,
+            by: answer.discardedByName || answer.discardedBy
+          })
+
+          store.dispatch(
+            remoteActions.draftDiscarded({
+              revision: answer.discardedRevision as number,
+              publishedRevision: answer.publishedRevision,
+              at: answer.discardedAt,
+              by: answer.discardedByName || answer.discardedBy
+            })
+          )
+
+          if (!answer.changed) {
+            // Nothing to merge, and the copy on this screen is the discarded
+            // one. Asking with no revision at all is the only question that
+            // answers the whole draft here: asking again with the mark now set
+            // would be answered `changed: false` a second time.
+            void readWhole()
+
+            return
+          }
+        }
 
         if (!answer.changed) {
           if (

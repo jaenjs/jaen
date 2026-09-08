@@ -86,6 +86,19 @@ export interface IRemoteState {
    * was not applied, because it is older than what is on the screen.
    */
   objectRestartedAt?: string
+  /**
+   * The last site wide discard this browser has honoured.
+   *
+   * A read or a frame carrying a higher number means the draft this browser
+   * holds was thrown away by an admin, so the outbox and the local copy are
+   * dropped instead of being folded back on top of the answer. Keeping the
+   * mark is what makes that happen exactly once per discard, and what lets a
+   * browser that was offline through it act on the first answer it gets.
+   */
+  discardedRevision?: number
+  discardedAt?: string
+  /** Who discarded, so the CMS says it rather than reverting under a hand. */
+  discardedBy?: string
   /** fieldKey -> who last wrote it, from the agent. */
   authors: JaenAuthors
   /** Fields the last save took from somebody else, for the CMS to report. */

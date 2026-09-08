@@ -216,6 +216,48 @@ const remoteSlice = createSlice({
 
     dismissOverwrote: state => {
       state.lastOverwrote = []
+    },
+
+    /**
+     * An admin discarded every unpublished change of the site.
+     *
+     * This is the invalidation of `docs/architecture/draft-state.md`, "Three
+     * operations that rewrite the shared draft", and it is the one place the
+     * outbox is emptied without having been sent. Everything in it was made
+     * against a draft that no longer exists, so folding it back on top of the
+     * answer would put part of what was discarded back into every editor's
+     * CMS, which is exactly what the operation was asked to prevent.
+     *
+     * The changes are not destroyed on the way out: `remote-state` parks them
+     * under a key of their own in `localStorage` first, because "an edit a
+     * person made is never lost" is above every number and a machine may not
+     * be the thing that throws one away. What this reducer does is stop them
+     * being sent and stop them being reapplied.
+     *
+     * `saveState` goes back to `saved` rather than staying `pending`: there is
+     * nothing waiting any more, and the toolbar must not claim there is.
+     */
+    draftDiscarded: (
+      state,
+      action: PayloadAction<{
+        revision: number
+        publishedRevision?: number | null
+        at?: string | null
+        by?: string | null
+      }>
+    ) => {
+      state.outbox = []
+      state.revision = action.payload.revision
+      state.publishedRevision =
+        typeof action.payload.publishedRevision === 'number'
+          ? action.payload.publishedRevision
+          : action.payload.revision
+      state.discardedRevision = action.payload.revision
+      state.discardedAt = action.payload.at || new Date().toISOString()
+      state.discardedBy = action.payload.by || undefined
+      state.saveState = 'saved'
+      state.lastError = undefined
+      state.lastOverwrote = []
     }
   }
 })

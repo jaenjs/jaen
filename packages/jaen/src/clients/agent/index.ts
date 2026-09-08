@@ -1,7 +1,8 @@
 /**
  * The jaen agent's client.
  *
- * Four calls over plain `fetch` and one WebSocket, no generated client: the
+ * A handful of calls over plain `fetch` and one WebSocket, no generated
+ * client: the
  * agent is a Pylon of jaen's own and its schema moves with this package, so a
  * generated client would be a second copy of the same documents that has to be
  * regenerated on both sides of one repository. The selections below are
@@ -93,7 +94,73 @@ export interface DraftAnswer {
    */
   full?: boolean
   delta?: DraftDelta | null
+  /**
+   * The revision the last site wide discard produced, carried by every read.
+   *
+   * It is the invalidation of `draft-state.md`, "Three operations that rewrite
+   * the shared draft": a browser holding a revision below this one is holding
+   * a draft that was thrown away, so it drops its outbox and its local copy
+   * instead of folding them back on top. It rides on the answer and not only
+   * on the socket frame, because a browser that was offline through the
+   * discard was not there for the frame.
+   */
+  discardedRevision?: number | null
+  discardedAt?: string | null
+  discardedBy?: string | null
+  discardedByName?: string | null
   readAt: string
+}
+
+/** One person, as a confirmation and a push have to name them. */
+export interface DraftEditor {
+  sub: string
+  name: string
+  at?: string | null
+}
+
+/**
+ * What a site wide discard would undo.
+ *
+ * The CMS shows this and never a count of its own: the draft is shared, so
+ * what this browser holds is not what will go. See the agent's
+ * `discardPreview`.
+ */
+export interface DiscardPreviewAnswer {
+  site: string
+  revision: number
+  publishedRevision: number
+  canDiscard: boolean
+  reason?: string | null
+  pages: number
+  fields: number
+  pagesAdded?: string[] | null
+  pagesRemoved?: string[] | null
+  mediaAdded: number
+  mediaRemoved: number
+  siteChanged: boolean
+  widgetsChanged: number
+  editors: DraftEditor[]
+  since?: string | null
+  publishedAt?: string | null
+  takenAt: string
+}
+
+/** What a discard did. `revision` is also the invalidation. */
+export interface DiscardAnswer {
+  site: string
+  discarded: boolean
+  revision: number
+  previousRevision: number
+  publishedRevision: number
+  pages: number
+  fields: number
+  editors: DraftEditor[]
+  snapshotRevision: number
+  snapshotAt?: string | null
+  snapshotBytes: number
+  by: DraftEditor
+  at: string
+  reason?: string | null
 }
 
 export interface SaveAnswer {
@@ -166,10 +233,27 @@ export class AgentOfflineError extends Error {
   }
 }
 
+/**
+ * The agent answered, and it said no.
+ *
+ * The code travels with it, because one refusal has to be acted on rather than
+ * retried: `DRAFT_DISCARDED` means this browser's outbox was made against a
+ * draft that has been thrown away, and the only right answer is to drop it and
+ * read the draft whole. Everything else is reported and retried as before.
+ */
 export class AgentError extends Error {
-  constructor(message: string) {
+  readonly code?: string
+  readonly details?: Record<string, any>
+
+  constructor(
+    message: string,
+    code?: string,
+    details?: Record<string, any> | null
+  ) {
     super(message)
     this.name = 'AgentError'
+    this.code = code
+    this.details = details ?? undefined
   }
 }
 
@@ -215,7 +299,13 @@ const request = async <T>(
     throw new AgentOfflineError(`HTTP ${response.status}`)
   }
 
-  let body: {data?: T; errors?: Array<{message: string}>}
+  let body: {
+    data?: T
+    errors?: Array<{
+      message: string
+      extensions?: {code?: string; details?: Record<string, any>}
+    }>
+  }
 
   try {
     body = await response.json()
@@ -224,7 +314,13 @@ const request = async <T>(
   }
 
   if (body.errors?.length) {
-    throw new AgentError(body.errors.map(e => e.message).join('; '))
+    const first = body.errors[0]
+
+    throw new AgentError(
+      body.errors.map(e => e.message).join('; '),
+      first?.extensions?.code,
+      first?.extensions?.details
+    )
   }
 
   if (!body.data) {
@@ -284,7 +380,64 @@ const DRAFT = `query JaenAgentDraft($site: String!, $sinceRevision: Number) {
         fieldName
       }
     }
+    discardedRevision
+    discardedAt
+    discardedBy
+    discardedByName
     readAt
+  }
+}`
+
+const DISCARD_PREVIEW = `query JaenAgentDiscardPreview($site: String!) {
+  discardPreview(site: $site) {
+    site
+    revision
+    publishedRevision
+    canDiscard
+    reason
+    pages
+    fields
+    pagesAdded
+    pagesRemoved
+    mediaAdded
+    mediaRemoved
+    siteChanged
+    widgetsChanged
+    editors {
+      sub
+      name
+      at
+    }
+    since
+    publishedAt
+    takenAt
+  }
+}`
+
+const DISCARD = `mutation JaenAgentDiscard($site: String!, $atRevision: Number) {
+  discard(site: $site, atRevision: $atRevision) {
+    site
+    discarded
+    revision
+    previousRevision
+    publishedRevision
+    pages
+    fields
+    editors {
+      sub
+      name
+      at
+    }
+    snapshotRevision
+    snapshotAt
+    snapshotBytes
+    by {
+      sub
+      name
+      at
+    }
+    at
+    reason
   }
 }`
 
@@ -420,6 +573,45 @@ export const publishSite = async (
   })
 
   return data.publish
+}
+
+/**
+ * What a site wide discard would undo, for the confirmation to name.
+ *
+ * It writes nothing, and it is asked every time the control is used rather
+ * than kept: the draft is shared, so a count taken a minute ago is a count of
+ * a different draft.
+ */
+export const fetchDiscardPreview = async (
+  config: AgentConfig
+): Promise<DiscardPreviewAnswer> => {
+  const data = await request<{discardPreview: DiscardPreviewAnswer}>(
+    config,
+    DISCARD_PREVIEW,
+    {site: config.site}
+  )
+
+  return data.discardPreview
+}
+
+/**
+ * Every unpublished change of the site, undone at once.
+ *
+ * `atRevision` is the revision the confirmation named. The agent refuses a
+ * confirmation about a draft that has moved since, which is what keeps "3
+ * pages, by Ann, since 14:02" a true sentence at the moment the person says
+ * yes rather than at the moment they were shown it.
+ */
+export const discardDraft = async (
+  config: AgentConfig,
+  atRevision?: number
+): Promise<DiscardAnswer> => {
+  const data = await request<{discard: DiscardAnswer}>(config, DISCARD, {
+    site: config.site,
+    atRevision: typeof atRevision === 'number' ? atRevision : null
+  })
+
+  return data.discard
 }
 
 /**
