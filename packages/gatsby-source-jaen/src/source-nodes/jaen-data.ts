@@ -293,6 +293,34 @@ export const sourceNodes = async (
 
     deepRemoveDeleted(jaenDataNode)
 
+    /**
+     * The sourced jaen data, written out when `JAEN_DATA_DUMP` names a path.
+     *
+     * Once a build has finished, the merged data lives only in Gatsby's LMDB
+     * datastore, so there is no way to read back what a build actually
+     * sourced. `draft-state.md` makes a byte comparison of exactly that the
+     * gate of its transition ("the build of booklimo produces byte identical
+     * data before and after"), and a gate you cannot take a reading for is
+     * not a gate. This is that reading: the created node with Gatsby's own
+     * `id` and `internal` taken off, which is the content and nothing else.
+     *
+     * It writes nothing unless the variable is set, so a normal build and a
+     * deploy are untouched.
+     */
+    const dumpPath = process.env['JAEN_DATA_DUMP']
+
+    if (dumpPath) {
+      const {
+        id: _id,
+        internal: _internal,
+        ...sourced
+      } = jaenDataNode as Record<string, unknown>
+
+      await fs.writeFile(dumpPath, JSON.stringify(sourced, null, 2))
+
+      reporter.info(`jaen data: sourced data written to ${dumpPath}`)
+    }
+
     // 5. Create JaenData node using createNode action
     await createNode(jaenDataNode)
 
