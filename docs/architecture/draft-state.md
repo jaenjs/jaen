@@ -851,3 +851,65 @@ checkout, `okf/operations/versions.md`.
 - A browser offline keeps editing, and the queue drains when it is back.
 - Nothing about this lives in `gatsby-jaen-app`; the taxi platform only
   gains the plugin option in its two site configs.
+
+## Read adversarially off the live site, 2026-09-08 at half past two
+
+Two browser contexts on the deployed booklimo.at, the first signed in as the
+booklimo human admin `taxi-test-admin-krc` and the second as the brand's human
+customer `taxi-test-customer-krc`, whose CMS authorization was widened to
+`jaen:admin` on the CMS project `268283277977065078` for the run and set back
+to `krc:customer` alone afterwards. Both contexts drove the real
+`jaen-agent.booklimo.at`, and every edit below is a commit on `main` of
+`netsnek/booklimo.at`.
+
+**A text change reaches the second editor, but not inside eight seconds every
+time.** Six samples in two runs of three, each run a fresh sign in of both
+contexts, the clock starting on the blur of `AboutTitle` on the home page and
+stopping when the second context renders the new value.
+
+| run | first sample | second | third  |
+| --- | ------------ | ------ | ------ |
+| 1   | 8.77 s       | 7.44 s | 6.36 s |
+| 2   | 8.24 s       | 6.58 s | 6.52 s |
+
+The warm samples sit where "The budget" left them, 6.4 to 6.6 s. The first
+sample of each run is two seconds slower, in both runs, and both of those are
+over eight seconds.
+
+**Where the two seconds are.** The agent's introspection cache, the copied
+module of the taxi pylon, holds a token for `AUTH_CACHE_TTL_MS` and defaults to
+sixty seconds, in a module scoped map of one Worker isolate. Measured straight
+against the agent with a machine token: a call whose token the isolate has not
+seen takes 3.77 s, the three calls after it take 1.72, 1.47 and 1.77 s. That is
+the whole of the gap. It is not a warm up that an editor pays once: it comes
+back after a minute without a save, and again on any request that lands on
+another isolate. Ten seconds absorbs it, eight does not.
+
+**A picture reaches the second editor at the top of the gallery.** Two samples,
+9.82 s and 9.71 s, the uploader's own library 2.15 s and 2.81 s. In both the new
+node is item zero of the second editor's grid and of the first's. Both are
+inside the ten second acceptance with less than three tenths of a second to
+spare, and the same cold introspection above is inside those numbers.
+
+**Load more loads the whole library.** Scrolling the grid to its end grew it 30
+to 60 to 90 to 120 to 150 to 151 nodes, the whole library, at 1440 by 900 and
+again at 390 by 780.
+
+**Every change is one commit by the editor.** Twelve saves, twelve commits, each
+touching `jaen-data/live.json` and nothing else, `author Taxi Test Admin
+<office+taxi-test-admin-krc@netsnek.com>` for the admin's and `author Taxi Test
+Customer <office+taxi-test-customer-krc@netsnek.com>` for the two the customer
+made, `committer jaen-agent` on all of them. No Actions run started on any of
+them: the newest run on the repository is still the deploy of `0457b9c7` from
+the evening before.
+
+**Reverted.** `AboutTitle` is `"About us"` again in `jaen-data/live.json`, the
+media field is back at 140 nodes and holds no `verify-pic.png`, and both test
+pictures are gone from both galleries. The uploaded blobs stay on the storage
+gateway with nothing pointing at them, which is what deleting a node in the
+library has always done.
+
+**What has to change for eight seconds.** Introspect once when the CMS opens
+rather than on the first save, or raise `AUTH_CACHE_TTL_MS` toward the token's
+own expiry, which the cache already caps against. Nothing else in the six
+samples is over budget.
