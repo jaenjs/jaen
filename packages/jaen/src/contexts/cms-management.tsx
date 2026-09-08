@@ -121,7 +121,9 @@ const CMSManagementContext = createContext<CMSManagementContextData>({
     enabled: false,
     saveState: 'idle',
     pending: 0,
-    authors: {}
+    authors: {},
+    hasUnpublished: false,
+    connection: 'poll'
   }
 })
 
@@ -602,17 +604,19 @@ export const CMSManagementProvider = withRedux(
     }, [setIsEditing, setIsPublishing])
 
     const publishDraft = useCallback(async () => {
-      // With the agent configured, publish means build now and nothing else.
-      // Everything the editors wrote was committed at save time, so there is
-      // no commit message to ask for: asking would be asking about a commit
-      // that no longer exists.
+      // With the agent configured, publish is the only writer of history: the
+      // object's draft becomes one migration file on the storage gateway, one
+      // line is appended to `jaen-data/patches.txt`, one commit is made and the
+      // build is triggered. Nothing a save did reached a repository, which is
+      // why this confirmation says what is about to become public rather than
+      // claiming everything already is. See docs/architecture/draft-state.md.
       if (jaenAgent) {
         try {
           const confirmed = await notification.confirm({
             icon: FaRocket,
             title: 'Publish',
             message:
-              'Start a build from the current state of the repository? Every change is already committed.',
+              'Publish the shared draft? Everything saved becomes one migration and the site is rebuilt.',
             confirmText: 'Publish',
             cancelText: 'Cancel'
           })
@@ -623,6 +627,11 @@ export const CMSManagementProvider = withRedux(
 
           if (answer.queued) {
             setIsPublishing(true)
+
+            // What the publish took is what the site will serve, so the CMS
+            // stops saying there is something unpublished. The agent's own
+            // answer wins over this browser's guess where it carries one.
+            dispatch(remoteActions.publishQueued({revision: answer.revision}))
 
             notification.toast({
               status: 'success',
@@ -733,7 +742,7 @@ export const CMSManagementProvider = withRedux(
           description: 'An unexpected error occurred'
         })
       }
-    }, [])
+    }, [dispatch])
 
     return (
       <CMSManagementContext.Provider

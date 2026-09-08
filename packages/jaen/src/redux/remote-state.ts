@@ -1,15 +1,32 @@
 /**
- * The shared draft's persistence layer, beside `persist-state.ts` and shaped
- * like it.
+ * The shared draft's client, beside `persist-state.ts` and shaped like it.
  *
  * `persist-state` writes the whole store to `localStorage` after every action,
  * where it stays until the browser that wrote it publishes. That is the flaw:
  * a change exists in exactly one browser. This file adds the second writer.
- * Every change is recorded, batched and sent to the jaen agent, which commits
- * it to the site's repository; every other open CMS polls the agent and takes
- * the new head. `localStorage` is demoted to what it is good at, an offline
- * queue and a cache, and it keeps that job for free because the outbox is a
- * slice of the same store `persist-state` already writes.
+ * Every change is recorded, batched and sent to the jaen agent, which writes
+ * it into the site's Durable Object and bumps that object's revision; every
+ * other open CMS is pushed the new revision over a WebSocket and asks for the
+ * delta. `localStorage` keeps its two jobs, the per browser copy and the
+ * offline queue, and it keeps them for free because the outbox is a slice of
+ * the same store `persist-state` already writes.
+ *
+ * **A save is not a commit.** Until 2026-09-08 it was, and this file spoke of
+ * a `headSha` and a `blobSha` because the shared draft was the site's
+ * repository. `docs/architecture/draft-state.md` separates the two lifecycles:
+ * a draft is mutable, shared and worth hours, and it lives in the object; a
+ * migration is immutable and permanent, and it is written by a publish alone.
+ * So the whole of this client's model of "where the draft is" is one number,
+ * `revision`, and nothing here writes a repository.
+ *
+ * **The socket, and the poll under it.** The object pushes revisions and never
+ * content, which is `subscribe(site)` of that design's four operation
+ * interface. A frame is a number this browser did not have, and what it makes
+ * this client do is ask the same `draft` query the poll asks, so there is one
+ * read path, one authorisation path and one place where the unsent outbox is
+ * folded back on top of the answer. The poll is never switched off, only
+ * slowed to a safety interval, because an open socket that has quietly stopped
+ * delivering frames looks exactly like a site nobody is editing.
  *
  * `RemoteState(config)` returns `{recordMiddleware, connect}`. `index.tsx`
  * adds the middleware and calls `connect` only when the site was built with the
@@ -21,6 +38,7 @@ import {
   AgentConfig,
   AgentOfflineError,
   fetchDraft,
+  openDraftSocket,
   saveChanges
 } from '../clients/agent'
 import {
@@ -59,6 +77,16 @@ const CALL_LIMIT = 200
  * inside it. See docs/architecture/editing-performance.md, "The window".
  */
 const MAX_WAIT_MS = 2500
+
+/**
+ * How often the poll still runs while the object's socket is up.
+ *
+ * The socket is what makes a change arrive in under two seconds, and this is
+ * the floor under it: a socket that is open and silent, which is what a proxy
+ * that keeps the connection and drops the frames looks like, is caught within
+ * half a minute instead of never. See `wantedPollMs`.
+ */
+const SOCKET_SAFETY_POLL_MS = 30000
 
 /**
  * Whether a recorded change is sent without waiting for the quiet window.
@@ -269,6 +297,9 @@ export default (config: AgentConfig) => {
     let inFlight = false
     let failures = 0
     let stopped = false
+    /** True while the object's socket is open. Drives `wantedPollMs`. */
+    let socketLive = false
+    let closeSocket: (() => void) | undefined
     /** When the outbox last went from empty to holding something. */
     let queuedSince: number | undefined
 
@@ -308,20 +339,28 @@ export default (config: AgentConfig) => {
       const changes = batch.map((entry: any) => entry.change)
 
       try {
-        const answer = await saveChanges(config, changes, remote.headSha)
+        const answer = await saveChanges(config, changes, remote.revision)
 
         failures = 0
 
         store.dispatch(
           remoteActions.saveSucceeded({
             ids,
-            headSha: answer.headSha,
-            blobSha: answer.blobSha,
+            revision: answer.revision,
             savedAt: answer.savedAt || new Date().toISOString(),
-            commitUrl: answer.commitUrl,
             overwrote: answer.overwrote
           })
         )
+
+        // The object had moved past the base this call carried, so it folded
+        // the write onto the newer draft and this browser's copy is behind by
+        // definition: it does not hold whatever the other editor wrote in
+        // between. Asking at once rather than waiting for the next interval is
+        // the difference between seeing the other editor's field and looking
+        // at a value that is no longer the draft's.
+        if (answer.rebased) {
+          void poll()
+        }
       } catch (error) {
         failures += 1
 
@@ -389,8 +428,8 @@ export default (config: AgentConfig) => {
      */
     const hydrate = (
       remoteState: JaenDraftState,
-      headSha: string,
-      blobSha?: string,
+      revision: number,
+      publishedRevision?: number | null,
       authors?: any
     ) => {
       const outbox = state().remote.outbox as Array<{change: JaenChange}>
@@ -405,8 +444,8 @@ export default (config: AgentConfig) => {
       store.dispatch(widgetActions.hydrateFromRemote(merged.widgets))
       store.dispatch(
         remoteActions.remoteHydrated({
-          headSha,
-          blobSha,
+          revision,
+          publishedRevision,
           authors: authors || undefined
         })
       )
@@ -418,11 +457,19 @@ export default (config: AgentConfig) => {
       const remote = state().remote
 
       try {
-        const answer = await fetchDraft(config, remote.headSha)
+        const answer = await fetchDraft(config, remote.revision)
 
         if (!answer.changed) {
-          if (answer.headSha && answer.headSha !== remote.headSha) {
-            store.dispatch(remoteActions.headSeen(answer.headSha))
+          if (
+            typeof answer.revision === 'number' &&
+            answer.revision !== remote.revision
+          ) {
+            store.dispatch(
+              remoteActions.revisionSeen({
+                revision: answer.revision,
+                publishedRevision: answer.publishedRevision
+              })
+            )
           }
 
           return
@@ -430,8 +477,8 @@ export default (config: AgentConfig) => {
 
         hydrate(
           draftDataToState(answer.data),
-          answer.headSha,
-          answer.blobSha,
+          answer.revision,
+          answer.publishedRevision,
           answer.authors
         )
       } catch (error) {
@@ -451,22 +498,101 @@ export default (config: AgentConfig) => {
       typeof document === 'undefined' || document.visibilityState !== 'hidden'
 
     /**
-     * The interval, adaptive. A poll whose `sinceSha` is still the head costs
-     * the agent one KV read and answers `changed: false` with no body, so the
-     * interval is not a load question, it is the tail of the ten second
-     * acceptance: it decides how long the other editor's CMS waits before it
-     * asks about a change that is already committed.
+     * The interval, adaptive. A poll whose `sinceRevision` is still the
+     * object's revision costs one read of one key and answers
+     * `changed: false` with no body, so the interval is not a load question,
+     * it is the tail of the two second acceptance: it decides how long the
+     * other editor's CMS waits before it asks about a change the object
+     * already holds.
      *
-     * Fast while somebody is looking at this tab, and while this browser's
-     * own save is still out or waiting in the outbox, because that is exactly
-     * when a second head is about to appear. Slow when the tab is hidden,
-     * where nobody can read the answer anyway and the poll only exists so
-     * that coming back is not a blank wait.
+     * Three speeds now, where there were two.
+     *
+     * `SOCKET_SAFETY_POLL_MS` is the one the socket added, and it is the one
+     * worth arguing about. With a socket up the poll is not how a change
+     * arrives, so it could be switched off entirely and the CMS would be
+     * faster and cheaper. It is not switched off, because an open socket that
+     * has stopped delivering frames is indistinguishable from a site nobody is
+     * editing, and the failure it produces is the one this CMS is sold on not
+     * having: an editor looking at a stale field for as long as they keep the
+     * tab open. Thirty seconds of a `changed: false` answer is what that costs,
+     * and where the plan and safety disagree, safety wins.
+     *
+     * Without a socket it is the old pair: fast while somebody is looking at
+     * this tab, and while this browser's own save is still out or waiting in
+     * the outbox, because that is exactly when a second revision is about to
+     * appear; slow when the tab is hidden, where nobody can read the answer
+     * anyway and the poll only exists so that coming back is not a blank wait.
      */
-    const wantedPollMs = () =>
-      isVisible() || inFlight || (state().remote?.outbox?.length || 0) > 0
+    const wantedPollMs = () => {
+      if (socketLive) {
+        return SOCKET_SAFETY_POLL_MS
+      }
+
+      return isVisible() ||
+        inFlight ||
+        (state().remote?.outbox?.length || 0) > 0
         ? config.activePollMs
         : config.pollMs
+    }
+
+    /**
+     * The socket lives exactly as long as the poll does, and for the same
+     * reason: a visitor who never opens the CMS opens no connection, so a
+     * public page costs the object nothing.
+     */
+    const syncSocket = () => {
+      if (stopped || !shouldPoll()) {
+        if (closeSocket) {
+          closeSocket()
+          closeSocket = undefined
+        }
+
+        if (socketLive) {
+          socketLive = false
+          store.dispatch(remoteActions.connectionChanged('poll'))
+        }
+
+        return
+      }
+
+      if (closeSocket) return
+
+      closeSocket = openDraftSocket(config, {
+        onRevision: (revision, publishedRevision) => {
+          const remote = state().remote
+
+          // A frame about a revision this browser already has is the object
+          // telling it about its own save, which is every save it makes. The
+          // read is skipped and the mark is moved, which is what keeps a busy
+          // editor from asking for a delta after each of their own writes.
+          if (
+            typeof remote?.revision === 'number' &&
+            revision <= remote.revision
+          ) {
+            if (typeof publishedRevision === 'number') {
+              store.dispatch(
+                remoteActions.revisionSeen({revision, publishedRevision})
+              )
+            }
+
+            return
+          }
+
+          void poll()
+        },
+        onLive: live => {
+          socketLive = live
+          store.dispatch(
+            remoteActions.connectionChanged(live ? 'socket' : 'poll')
+          )
+          syncPolling()
+
+          // Coming up, and coming back after a drop, both ask once: whatever
+          // happened while there was no socket is not in a frame anywhere.
+          if (live) void poll()
+        }
+      })
+    }
 
     const syncPolling = () => {
       if (!shouldPoll()) {
@@ -496,6 +622,7 @@ export default (config: AgentConfig) => {
      */
     const onVisibilityChange = () => {
       syncPolling()
+      syncSocket()
 
       if (isVisible()) {
         void poll()
@@ -560,6 +687,7 @@ export default (config: AgentConfig) => {
       lastOutboxLength = length
 
       syncPolling()
+      syncSocket()
     })
 
     // Anything left in the outbox from the last visit is sent as soon as the
@@ -573,6 +701,9 @@ export default (config: AgentConfig) => {
       failures = 0
       scheduleFlush(0)
       void poll()
+      // The socket died with the network. Its own backoff would get there in
+      // the end; this is the browser saying the wait is over.
+      syncSocket()
     }
 
     if (typeof window !== 'undefined') {
@@ -585,6 +716,7 @@ export default (config: AgentConfig) => {
     }
 
     syncPolling()
+    syncSocket()
 
     return () => {
       stopped = true
@@ -592,6 +724,10 @@ export default (config: AgentConfig) => {
       clearFlush()
       if (retryTimer) clearTimeout(retryTimer)
       if (pollTimer) clearInterval(pollTimer)
+      if (closeSocket) {
+        closeSocket()
+        closeSocket = undefined
+      }
       if (typeof window !== 'undefined') {
         window.removeEventListener('online', onOnline)
         window.removeEventListener('pagehide', onPageHide)

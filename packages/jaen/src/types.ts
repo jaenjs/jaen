@@ -25,13 +25,26 @@ declare global {
         /** The site's key in the agent's SITES table, e.g. "booklimo.at" */
         site: string
         /**
-         * Poll interval of the shared draft while the tab is hidden.
-         * Default 5000.
+         * Where the draft object's WebSocket is, when it is not derived from
+         * `url`. Derived it is `url` with the scheme swapped to `wss` and a
+         * trailing `/graphql` replaced by `/draft/<site>`.
+         */
+        socketUrl?: string
+        /**
+         * Poll interval of the shared draft while the tab is hidden and the
+         * object's socket is not up. Default 5000.
          */
         pollMs?: number
         /**
          * Poll interval while the tab is visible, or while a save of this
-         * browser is still out. Default 1500.
+         * browser is still out, and the object's socket is not up.
+         * Default 1500.
+         *
+         * Neither interval is how a change normally arrives any more: the
+         * object pushes a revision over its socket and the poll is the
+         * fallback for a browser whose socket was refused. With a socket up
+         * the poll still runs, at thirty seconds, because an open socket that
+         * has stopped delivering frames looks like a quiet site.
          */
         activePollMs?: number
         /**

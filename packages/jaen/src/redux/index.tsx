@@ -89,13 +89,17 @@ const rootReducer = (state: any, action: any) => {
       status: statusInitialState,
       popup: deepmerge(popupInitialState, payload.popup || {}),
       widget: deepmerge(widgetInitialState, payload.widget || {}),
-      // Discard means the unsent changes go too. Anything the agent already
-      // committed stays committed, which is what the CMS says on the button.
+      // Discard means the unsent changes go too. Anything the object already
+      // took stays in the object, which is what the CMS says on the button:
+      // this browser stops carrying what it had not sent, and the revision it
+      // last saw is kept so the next read asks for a delta rather than the
+      // whole draft.
       remote: {
         ...remoteInitialState,
         active: state?.remote?.active ?? false,
-        headSha: state?.remote?.headSha,
-        blobSha: state?.remote?.blobSha,
+        revision: state?.remote?.revision,
+        publishedRevision: state?.remote?.publishedRevision,
+        connection: state?.remote?.connection ?? 'poll',
         authors: state?.remote?.authors ?? {}
       }
     }

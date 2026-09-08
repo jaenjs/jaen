@@ -49,9 +49,28 @@ export interface IRemoteState {
   active: boolean
   outbox: Array<{id: number; change: JaenChange}>
   nextId: number
-  /** The branch head the client last saw, sent as `baseSha` and `sinceSha`. */
-  headSha?: string
-  blobSha?: string
+  /**
+   * The draft revision the client last saw, sent as `baseRevision` on a save
+   * and as `sinceRevision` on a read.
+   *
+   * It replaced a `headSha` and a `blobSha` on 2026-09-08. A save is no longer
+   * a commit and the draft is no longer the repository, so there is nothing a
+   * sha could name: the draft lives in one Durable Object per site whose
+   * revision is a monotonic counter. See docs/architecture/draft-state.md.
+   */
+  revision?: number
+  /**
+   * The revision the last publish took. `revision > publishedRevision` is the
+   * CMS being able to say that what is saved is not yet what the site serves,
+   * which is the whole reason the two lifecycles are kept apart.
+   */
+  publishedRevision?: number
+  /**
+   * Which path is carrying the other editors' changes right now. `socket` is
+   * the object pushing, `poll` is the fallback for a browser whose socket was
+   * refused. The poll never stops, it only slows down while a socket is up.
+   */
+  connection: 'socket' | 'poll'
   /**
    * What the toolbar says. `pending` is a change that has been recorded and is
    * waiting out its quiet window, which is a state the CMS has to be able to
@@ -60,7 +79,6 @@ export interface IRemoteState {
    */
   saveState: 'idle' | 'pending' | 'saving' | 'saved' | 'offline' | 'error'
   lastSavedAt?: string
-  lastCommitUrl?: string
   lastError?: string
   /** fieldKey -> who last wrote it, from the agent. */
   authors: JaenAuthors
