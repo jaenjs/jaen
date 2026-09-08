@@ -7,12 +7,15 @@
  * its own repository in the structure it has today, and what editors share is
  * the repository's HEAD.
  *
- * Three verbs. `save` commits, on every debounced batch of changes, in the
- * editor's name. `draft` reads the branch HEAD, and answers `changed: false`
- * when the caller's `sinceSha` is still the head, which is what almost every
- * poll costs. `publish` triggers the build and commits nothing, because
- * everything was committed at save time. There is no commit verb: saving is
- * committing.
+ * `save` and `draft` are the shared draft's two verbs and are being moved off
+ * the repository and into one Durable Object per site (`draft-state.md`, "The
+ * draft: one Durable Object per site").
+ *
+ * `publish` is the only act of this service that writes a repository: one
+ * migration file on the storage gateway, one line appended to
+ * `jaen-data/patches.txt`, one commit in the publishing editor's name. The
+ * ordered collection of those files, and nothing else, is what live and
+ * published mean. See ./publish.
  *
  * See docs/architecture/draft-state.md.
  */
@@ -27,10 +30,21 @@ import {
 import type {JaenChangeInput} from './apply-change'
 import {cachedIntrospection} from './auth/cache'
 import {editor as callerEditor, requireSiteAdmin} from './auth'
-import {env, site as siteEntry, siteBranch, USER_AGENT} from './env'
-import {dispatchWorkflow, latestRunUrl} from './github'
+import {env, site as siteEntry, USER_AGENT} from './env'
+import {headFilesDraft} from './head-files-draft'
+import {publish as publishSite, useDraftSource} from './publish'
 import {readHead, readHeadSha, save as saveToRepository} from './store'
 import type {FieldAuthors} from './types'
+
+/**
+ * The draft store publish reads.
+ *
+ * One line, and it is the seam `draft-state.md` asks for: the Durable Object
+ * implementation of the same interface replaces the argument here and nothing
+ * in ./publish moves. Until it lands the interim reader stands in, see
+ * ./head-files-draft.
+ */
+useDraftSource(headFilesDraft)
 
 // --------------------------------------------------------------------------
 // The answers
@@ -99,12 +113,34 @@ export interface SaveResult {
   wrote: string[]
 }
 
+/**
+ * What a publish did, and what it did not do.
+ *
+ * `published` and `queued` are two different questions and the answer keeps
+ * them apart: a migration can be written and committed on a site that has no
+ * Actions build, and a build can be dispatched on a publish that wrote no
+ * migration because nothing had changed. A caller that reads only `queued`
+ * would call the first of those a failure.
+ */
 export interface PublishResult {
+  /** One migration file, one line, one commit were written. */
+  published: boolean
+  /** The draft revision this publish took. */
+  revision: number | null
+  /** The revision that is published after this call. */
+  publishedRevision: number | null
+  /** The migration on the storage gateway. */
+  migrationUrl: string | null
+  migrationBytes: number | null
+  /** The commit that appended its line. */
+  commitSha: string | null
+  commitUrl: string | null
+  publishedAt: string | null
+  /** A build was dispatched. */
   queued: boolean
-  headSha: string
   workflow: string | null
   runUrl: string | null
-  /** Why not, when queued is false. */
+  /** Why not, whenever `published` or `queued` is false. */
   reason: string | null
 }
 
@@ -266,59 +302,37 @@ export const graphql = {
     },
 
     /**
-     * The build, from the repository's HEAD. Nothing is committed here that
-     * was not committed at save time.
+     * The only act in this service that writes a repository.
      *
-     * A site entry without a publishWorkflow answers `queued: false` with the
-     * reason, and so does a workflow GitHub refuses to dispatch. That is the
-     * honest answer for both limousine sites today, where the build is
-     * scripts/deploy.sh run by the operator after a pull. The agent reports
-     * what GitHub answered and does not pretend a build started.
+     * It reads the draft out of the store, writes one migration in jaen's
+     * shape, uploads it to the storage gateway with the site's machine token,
+     * appends its URL as one line to `jaen-data/patches.txt`, commits that one
+     * line in the publishing editor's name, records the revision it took, and
+     * triggers the build where the site has one.
+     *
+     * A site entry without a `publishWorkflow` answers `queued: false` with
+     * the reason, and so does a workflow GitHub refuses to dispatch. That is
+     * the honest answer for both limousine sites today, where the build is
+     * `scripts/deploy.sh` run by the operator after a pull. The migration is
+     * in the chain either way, which is what `published` says and what a
+     * caller has to read instead of `queued`.
+     *
+     * `message` is the migration's own message, the line the CMS shows in its
+     * publish list. An empty one is replaced rather than refused.
+     *
+     * See ./publish and docs/architecture/draft-state.md, "Publish: the only
+     * writer of history".
      */
-    publish: async (site: string): Promise<PublishResult> => {
+    publish: async (site: string, message?: string): Promise<PublishResult> => {
       const entry = siteEntry(site)
+      const admin = await requireSiteAdmin(site, entry)
 
-      await requireSiteAdmin(site, entry)
+      const outcome = await publishSite(site, entry, {
+        editor: {sub: admin.sub, name: admin.name, email: admin.email},
+        message: message ?? null
+      })
 
-      const state = await readHead(site, entry, {fresh: true})
-      const workflow = entry.publishWorkflow
-
-      if (!workflow) {
-        return {
-          queued: false,
-          headSha: state.head,
-          workflow: null,
-          runUrl: null,
-          reason:
-            'This site names no publish workflow. Everything is committed ' +
-            'already; the build is run by the operator.'
-        }
-      }
-
-      const dispatched = await dispatchWorkflow(
-        entry,
-        workflow,
-        siteBranch(entry)
-      )
-
-      if (!dispatched.ok) {
-        return {
-          queued: false,
-          headSha: state.head,
-          workflow,
-          runUrl: null,
-          reason:
-            `GitHub answered ${dispatched.status}: ${dispatched.reason ?? ''}`.trim()
-        }
-      }
-
-      return {
-        queued: true,
-        headSha: state.head,
-        workflow,
-        runUrl: (await latestRunUrl(entry, workflow)) ?? null,
-        reason: null
-      }
+      return outcome
     }
   }
 }

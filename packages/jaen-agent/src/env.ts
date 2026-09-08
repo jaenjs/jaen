@@ -34,6 +34,18 @@ export interface SiteEntry {
    * fail for the other. `ORG_USER_MANAGER_TOKEN` when absent.
    */
   orgManagerTokenVar?: string
+  /**
+   * The environment variable holding the storage gateway credential a publish
+   * uploads its migration with. One per site, the way `orgManagerTokenVar` is:
+   * a file belongs to the organisation of the token that sent it, so one
+   * estate wide token would stamp every brand's migration with one
+   * organisation. `OSG_TOKEN` when absent.
+   *
+   * It is the brand's storage machine user (`osg-krc`, `osg-limosen`), which
+   * holds `storage:write`, and never `osg-build-<brand>`, which
+   * private-storage.md gave `storage:read` and nothing else on purpose.
+   */
+  osgTokenVar?: string
   /** The workflow `publish` dispatches. No build when absent. */
   publishWorkflow?: string
   /** The GitHub App installation that holds the repository, when the App is used. */
@@ -50,6 +62,10 @@ export interface AgentEnv {
   GITHUB_APP_ID?: string
   GITHUB_APP_PRIVATE_KEY?: string
   ORG_USER_MANAGER_TOKEN?: string
+  /** The storage gateway a publish uploads its migration to. */
+  STORAGE_URL?: string
+  /** The default storage credential, when a site entry names no var of its own. */
+  OSG_TOKEN?: string
   AGENT_VERSION?: string
   AGENT_COMMIT?: string
   AGENT_BUILT_AT?: string
@@ -84,7 +100,9 @@ export const sites = (): Record<string, SiteEntry> => {
     // A malformed table is a deployment mistake, not a caller's. Saying so
     // beats answering every site with "unknown site".
     throw new Error(
-      `SITES is not valid JSON: ${(error as Error).message}. It is a Worker var, see wrangler.toml.`
+      `SITES is not valid JSON: ${
+        (error as Error).message
+      }. It is a Worker var, see wrangler.toml.`
     )
   }
 
