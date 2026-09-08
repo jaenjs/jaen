@@ -16,6 +16,7 @@ import {
   DrawerRight,
   DrawerRightProps
 } from './components/DrawerRight/DrawerRight'
+import {useJaenFrameDrawerRouter} from './drawer-state'
 
 export interface JaenFrameProps {
   logo?: JSX.Element
@@ -83,6 +84,11 @@ const logoSlotCss = {
 } as const
 
 export const JaenFrame: React.FC<JaenFrameProps> = React.memo(props => {
+  // The frame owns the gesture on its own two drawer buttons while a drawer
+  // stands, because the page is inert then and the buttons are not reachable.
+  // See drawer-state.ts for the measurement this answers.
+  useJaenFrameDrawerRouter()
+
   return (
     <HStack
       id="momo"

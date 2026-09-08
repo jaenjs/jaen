@@ -6,16 +6,16 @@ import {
   Icon,
   IconButton,
   Text,
-  useDisclosure,
   Portal
 } from '@chakra-ui/react'
-import {useRef} from 'react'
+import React, {useRef} from 'react'
 import {FaBars} from '@react-icons/all-files/fa/FaBars'
 import {JaenFullLogo} from '../../../shared/JaenLogo/JaenLogo'
 import {
   NavigationGroups,
   NavigationGroupsProps
 } from '../NavigationGroups/index'
+import {useJaenFrameDrawer, useJaenFrameDrawerTrigger} from '../../drawer-state'
 
 export interface DrawerLeftProps {
   navigationGroups: NavigationGroupsProps['groups']
@@ -23,36 +23,56 @@ export interface DrawerLeftProps {
   version: string
 }
 
-export const DrawerLeft: React.FC<DrawerLeftProps> = ({
-  navigationGroups,
-  logo,
-  version
-}) => {
-  const {open, onClose, onToggle} = useDisclosure()
+/**
+ * `React.memo`, and the open state is not this component's any more.
+ *
+ * The frame re-renders 53 to 59 times a second while edit mode is on (see
+ * `docs/architecture/editing-performance.md`), and `useDisclosure` keeps its
+ * state in the component that does the re-rendering. Nothing was measured
+ * throwing that state away, but a drawer must not depend on that: the state
+ * lives in `drawer-state.ts`, outside React, where neither a re-render nor a
+ * remount can reach it. The memo is the cost half of the same reading, so the
+ * storm stops re-rendering this subtree when nothing about it changed.
+ */
+export const DrawerLeft: React.FC<DrawerLeftProps> = React.memo(
+  ({navigationGroups, logo, version}) => {
+    const {open, setOpen} = useJaenFrameDrawer('left')
+    const triggerRef = useJaenFrameDrawerTrigger('left')
 
-  const initialFocusRef = useRef<HTMLButtonElement>(null)
+    const onClose = React.useCallback(() => {
+      setOpen(false)
+    }, [setOpen])
 
-  return (
-    <>
-      <IconButton
-        aria-label="Open main menu"
-        size="sm"
-        onClick={onToggle}
-        variant="outline">
-        <Icon fontSize="lg" color="brand.500 !important" asChild>
-          <FaBars />
-        </Icon>
-      </IconButton>
+    const initialFocusRef = useRef<HTMLButtonElement>(null)
+
+    return (
       <Drawer.Root
         placement="start"
         size="xs"
         open={open}
         initialFocusEl={() => initialFocusRef.current}
         onOpenChange={e => {
-          if (!e.open) {
-            onClose()
-          }
+          setOpen(e.open)
         }}>
+        {/* The trigger belongs inside the root.
+            Outside it, it is furniture the dismissable layer covers and
+            ignores: it carries no `aria-controls`, it is not excluded from
+            "outside", and focus does not come back to it on close. Ark's
+            `Drawer.Root` renders no DOM of its own, so moving the button in
+            here changes the markup by attributes only and not by layout.
+            While a drawer stands the page is inert and this trigger is
+            reached by the frame's own router instead, see drawer-state.ts. */}
+        <Drawer.Trigger asChild>
+          <IconButton
+            ref={triggerRef}
+            aria-label="Open main menu"
+            size="sm"
+            variant="outline">
+            <Icon fontSize="lg" color="brand.500 !important" asChild>
+              <FaBars />
+            </Icon>
+          </IconButton>
+        </Drawer.Trigger>
         <Portal>
           <Drawer.Backdrop bg="rgba(0,0,0,0.1)" />
 
@@ -72,7 +92,13 @@ export const DrawerLeft: React.FC<DrawerLeftProps> = ({
                     maxW="12rem"
                     display="flex"
                     alignItems="center"
-                    css={{'& > svg, & > img': {height: '100%', width: 'auto', maxWidth: '12rem'}}}>
+                    css={{
+                      '& > svg, & > img': {
+                        height: '100%',
+                        width: 'auto',
+                        maxWidth: '12rem'
+                      }
+                    }}>
                     {logo || <JaenFullLogo />}
                   </Box>
                   {/* v3's CloseTrigger renders whatever it is handed and
@@ -114,6 +140,8 @@ export const DrawerLeft: React.FC<DrawerLeftProps> = ({
           </Drawer.Positioner>
         </Portal>
       </Drawer.Root>
-    </>
-  )
-}
+    )
+  }
+)
+
+DrawerLeft.displayName = 'DrawerLeft'

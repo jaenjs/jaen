@@ -10,10 +10,9 @@ import {
   Spacer,
   Stack,
   Text,
-  useDisclosure,
   Portal
 } from '@chakra-ui/react'
-import {useRef} from 'react'
+import React, {useRef} from 'react'
 import {FaMoon} from '@react-icons/all-files/fa/FaMoon'
 import {FaSun} from '@react-icons/all-files/fa/FaSun'
 
@@ -21,6 +20,7 @@ import {
   NavigationGroups,
   NavigationGroupsProps
 } from '../NavigationGroups/index'
+import {useJaenFrameDrawer, useJaenFrameDrawerTrigger} from '../../drawer-state'
 
 export interface DrawerRightProps {
   user: {
@@ -34,62 +34,69 @@ export interface DrawerRightProps {
   isBadgeVisible?: boolean
 }
 
-export const DrawerRight: React.FC<DrawerRightProps> = ({
-  navigationGroups,
-  user,
-  isBadgeVisible
-}) => {
-  const {open, onClose, onToggle} = useDisclosure()
+/**
+ * The same two changes as DrawerLeft, for the same measured reasons: the open
+ * state lives outside React in `drawer-state.ts`, and the avatar that opens
+ * this drawer is the root's own `Drawer.Trigger` rather than a button beside
+ * it. See the comment at the top of `DrawerLeft.tsx`.
+ */
+export const DrawerRight: React.FC<DrawerRightProps> = React.memo(
+  ({navigationGroups, user, isBadgeVisible}) => {
+    const {open, setOpen} = useJaenFrameDrawer('right')
+    const triggerRef = useJaenFrameDrawerTrigger('right')
 
-  const initialFocusRef = useRef<HTMLButtonElement>(null)
+    const onClose = React.useCallback(() => {
+      setOpen(false)
+    }, [setOpen])
 
-  const colorMode = useColorMode()
+    const initialFocusRef = useRef<HTMLButtonElement>(null)
 
-  return (
-    <>
-      {/* No fallback initials to compute: Chakra derives them from `name`,
-          which is the same username the replaced code was splitting by hand. */}
-      <Avatar.Root
-        as="button"
-        aria-label="Open user menu"
-        p="0"
-        m="0"
-        size="sm"
-        cursor="pointer"
-        onClick={onToggle}>
-        <Avatar.Fallback name={user.username} />
-        <Avatar.Image src={user.avatarURL} />
+    const colorMode = useColorMode()
 
-        {/* v3 has no AvatarBadge, and Float, the pattern that replaces it,
-            hangs the dot half outside the avatar where v2's badge sat a
-            quarter outside. The v2 geometry, including the ring colour the
-            avatar theme used to supply, is written out so the badge does not
-            move. */}
-        <Box
-          pos="absolute"
-          bottom="0"
-          insetEnd="0"
-          boxSize="1.25em"
-          bg="pink.500"
-          rounded="full"
-          border="0.2em solid"
-          // bg.subtle is the bar's own surface in both modes, white and jaen's
-          // gray.800, the literals that stood here.
-          borderColor={{base: 'white', _dark: 'bg.subtle'}}
-          transform="translate(25%, 25%)"
-          visibility={isBadgeVisible ? 'visible' : 'hidden'}
-        />
-      </Avatar.Root>
+    return (
       <Drawer.Root
         placement="end"
         size="xs"
         open={open}
         initialFocusEl={() => initialFocusRef.current}
         onOpenChange={e => {
-          if (!e.open) {
-            onClose()
-          }
+          setOpen(e.open)
         }}>
+        {/* No fallback initials to compute: Chakra derives them from `name`,
+            which is the same username the replaced code was splitting by hand. */}
+        <Drawer.Trigger asChild>
+          <Avatar.Root
+            ref={triggerRef}
+            as="button"
+            aria-label="Open user menu"
+            p="0"
+            m="0"
+            size="sm"
+            cursor="pointer">
+            <Avatar.Fallback name={user.username} />
+            <Avatar.Image src={user.avatarURL} />
+
+            {/* v3 has no AvatarBadge, and Float, the pattern that replaces it,
+            hangs the dot half outside the avatar where v2's badge sat a
+            quarter outside. The v2 geometry, including the ring colour the
+            avatar theme used to supply, is written out so the badge does not
+            move. */}
+            <Box
+              pos="absolute"
+              bottom="0"
+              insetEnd="0"
+              boxSize="1.25em"
+              bg="pink.500"
+              rounded="full"
+              border="0.2em solid"
+              // bg.subtle is the bar's own surface in both modes, white and jaen's
+              // gray.800, the literals that stood here.
+              borderColor={{base: 'white', _dark: 'bg.subtle'}}
+              transform="translate(25%, 25%)"
+              visibility={isBadgeVisible ? 'visible' : 'hidden'}
+            />
+          </Avatar.Root>
+        </Drawer.Trigger>
         <Portal>
           <Drawer.Backdrop bg="rgba(0,0,0,0.1)" />
 
@@ -155,6 +162,8 @@ export const DrawerRight: React.FC<DrawerRightProps> = ({
           </Drawer.Positioner>
         </Portal>
       </Drawer.Root>
-    </>
-  )
-}
+    )
+  }
+)
+
+DrawerRight.displayName = 'DrawerRight'
