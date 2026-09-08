@@ -1425,3 +1425,31 @@ test('a refusal on one site does not refuse the same caller on another', async (
     await startWorker()
   }
 })
+
+/**
+ * A save that changes nothing is not a revision.
+ *
+ * The CMS reads `revision > publishedRevision` as "there is something
+ * unpublished", so a write of the value that is already in the draft used to
+ * make it say the site had unpublished changes it did not have. Every field
+ * write stamps the page's `modifiedAt`, which is why this could not be seen by
+ * comparing the page nodes and why the object puts that stamp back.
+ */
+test('a save of the value already there does not move the revision', async () => {
+  const field = `noop-${Date.now()}`
+  const value = 'the same either way'
+
+  const first = (await write(field, value)).data.save
+
+  assert.equal(typeof first.revision, 'number')
+  assert.ok(first.keys > 0)
+
+  const again = (await write(field, value, first.revision)).data.save
+
+  assert.equal(again.revision, first.revision, 'the revision stood still')
+  assert.equal(again.keys, 0, 'and nothing was written')
+
+  const draft = await readDraft()
+
+  assert.equal(draft.data.draft.revision, first.revision)
+})

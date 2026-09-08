@@ -373,6 +373,13 @@ export class JaenDraftObject {
       const beforePages = new Map(
         Object.entries(draft.pages).map(([id, page]) => [id, stable(page)])
       )
+      // Every field write stamps the page's `modifiedAt`, whether or not it
+      // changed anything, so the page node always serialises differently and
+      // a write that changed nothing cannot be told apart by comparison
+      // alone. The stamp is put back where it was in exactly that case, below.
+      const beforeModified = new Map(
+        Object.entries(draft.pages).map(([id, page]) => [id, page.modifiedAt])
+      )
       const beforeWidgets = new Map(
         draft.widgets.map(widget => [widget.id, stable(widget)])
       )
@@ -393,6 +400,22 @@ export class JaenDraftObject {
 
       for (const [id, page] of Object.entries(draft.pages)) {
         if (beforePages.get(id) === stable(page)) continue
+
+        // A page whose only difference is the stamp the write itself put on
+        // it. Nothing about the content moved, so the stamp goes back and the
+        // key is not written: "modified" is a claim about content and a save
+        // of the value that is already there did not modify anything.
+        const wasModified = beforeModified.get(id)
+
+        if (wasModified !== undefined && page.modifiedAt !== wasModified) {
+          const stamped = page.modifiedAt
+
+          page.modifiedAt = wasModified
+
+          if (beforePages.get(id) === stable(page)) continue
+
+          page.modifiedAt = stamped
+        }
 
         writes.set(KEY.page + id, {
           r: revision,
