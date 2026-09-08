@@ -243,6 +243,16 @@ export const TextField = connectField<string, TextFieldProps>(
     const renderedRef = useRef<typeof displayValue>(displayValue)
     const [, bumpRender] = useReducer((count: number) => count + 1, 0)
 
+    // Leaving edit mode takes the focus with it, and it does not always take
+    // it through a `blur`: a browser that has `contenteditable` removed from
+    // the element under the caret is free to move the focus without an event.
+    // A field frozen by a focus nothing ever cleared would keep painting the
+    // value it had when the person left the CMS.
+    if (!jaenField.isEditing) {
+      focusedRef.current = false
+      dirtyRef.current = false
+    }
+
     if (!focusedRef.current) {
       renderedRef.current = displayValue
     }
