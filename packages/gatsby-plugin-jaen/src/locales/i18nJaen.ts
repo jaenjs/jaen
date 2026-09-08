@@ -37,6 +37,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveStateOffline:
           'Offline, {count, plural, one {# Änderung wartet} other {# Änderungen warten}}',
         CmsFrameSaveStateError: 'Speichern fehlgeschlagen, neuer Versuch',
+        CmsFrameSaveStatePending: 'Noch nicht gespeichert',
         CmsFramePublish:
           '{isPublishing, select, true {Veröffentlichung läuft} other {Änderungen veröffentlichen}}',
         CmsFrameNewMedia: 'Neue Medien',
@@ -792,6 +793,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveStateSaved: '{at} kaydedildi',
         CmsFrameSaveStateOffline: 'Çevrimdışı, {count} değişiklik bekliyor',
         CmsFrameSaveStateError: 'Kaydetme başarısız, yeniden deneniyor',
+        CmsFrameSaveStatePending: 'Henüz kaydedilmedi',
         CmsFramePublish:
           '{isPublishing, select, true {Yayımlanıyor} other {Değişiklikleri yayımla}}',
         CmsFrameNewMedia: 'Yeni medya',
@@ -1525,6 +1527,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveStateSaved: 'تم الحفظ {at}',
         CmsFrameSaveStateOffline: 'غير متصل، بانتظار الإرسال: {count}',
         CmsFrameSaveStateError: 'فشل الحفظ، تتم إعادة المحاولة',
+        CmsFrameSaveStatePending: 'لم يتم الحفظ بعد',
         CmsFramePublish:
           '{isPublishing, select, true {جارٍ النشر} other {نشر التغييرات}}',
         CmsFrameNewMedia: 'وسائط جديدة',
@@ -2232,6 +2235,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveStateSaved: 'Shranjeno {at}',
         CmsFrameSaveStateOffline: 'Brez povezave, čaka sprememb: {count}',
         CmsFrameSaveStateError: 'Shranjevanje ni uspelo, poskušam znova',
+        CmsFrameSaveStatePending: 'Še ni shranjeno',
         CmsFramePublish:
           '{isPublishing, select, true {Objavljanje poteka} other {Objavi spremembe}}',
         CmsFrameNewMedia: 'Nova predstavnost',
@@ -2977,6 +2981,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveStateOffline:
           'Offline, {count, plural, one {# modifica in attesa} other {# modifiche in attesa}}',
         CmsFrameSaveStateError: 'Salvataggio non riuscito, nuovo tentativo',
+        CmsFrameSaveStatePending: 'Non ancora salvato',
         CmsFramePublish:
           '{isPublishing, select, true {Pubblicazione in corso} other {Pubblica le modifiche}}',
         CmsFrameNewMedia: 'Nuovo media',
@@ -3728,6 +3733,7 @@ export function getI18nJaen(code: I18nCode) {
         CmsFrameSaveStateSaved: '{at} に保存',
         CmsFrameSaveStateOffline: 'オフライン、{count} 件の変更が待機中',
         CmsFrameSaveStateError: '保存に失敗しました。再試行します',
+        CmsFrameSaveStatePending: 'まだ保存されていません',
         CmsFramePublish:
           '{isPublishing, select, true {公開処理中} other {変更を公開}}',
         CmsFrameNewMedia: '新規メディア',
@@ -4461,6 +4467,7 @@ export function getI18nJaen(code: I18nCode) {
       CmsFrameSaveStateOffline:
         'Offline, {count, plural, one {# change} other {# changes}} waiting',
       CmsFrameSaveStateError: 'Save failed, retrying',
+      CmsFrameSaveStatePending: 'Not saved yet',
       CmsFramePublish:
         '{isPublishing, select, true {Publish in progress} other {Publish changes}}',
       CmsFrameNewMedia: 'New media',

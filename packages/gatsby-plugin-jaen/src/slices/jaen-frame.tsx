@@ -19,6 +19,7 @@ import {FaCloudUploadAlt} from '@react-icons/all-files/fa/FaCloudUploadAlt'
 import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTriangle'
 import {FaGlobe} from '@react-icons/all-files/fa/FaGlobe'
 import {FaPlug} from '@react-icons/all-files/fa/FaPlug'
+import {FaRegClock} from '@react-icons/all-files/fa/FaRegClock'
 import {FaImage} from '@react-icons/all-files/fa/FaImage'
 import {FaSitemap} from '@react-icons/all-files/fa/FaSitemap'
 import {FaTrash} from '@react-icons/all-files/fa/FaTrash'
@@ -138,6 +139,15 @@ const Slice: React.FC<SliceProps> = props => {
        * See docs/architecture/draft-state.md, "The save state and the publish
        * button".
        */
+      /**
+       * `pending` is the state saving in batches added, and it is there so the
+       * toolbar does not lie. A field write waits out a quiet window before it
+       * is committed (change 3 of docs/architecture/editing-performance.md),
+       * and in that window there is a change in this browser that is in no
+       * repository. Saying "Saved 14:02" then would be true about the last
+       * commit and false about what the person is looking at, which is the
+       * one thing the CMS is not allowed to be wrong about.
+       */
       const saveStateItem = {
         label:
           sharedDraft.saveState === 'saving'
@@ -159,23 +169,30 @@ const Slice: React.FC<SliceProps> = props => {
                     id: 'CmsFrameSaveStateError',
                     defaultMessage: 'Save failed, retrying'
                   })
-                : intl.formatMessage(
-                    {
-                      id: 'CmsFrameSaveStateSaved',
-                      defaultMessage: 'Saved {at}'
-                    },
-                    {
-                      at: sharedDraft.lastSavedAt
-                        ? intl.formatTime(new Date(sharedDraft.lastSavedAt))
-                        : ''
-                    }
-                  ),
+                : sharedDraft.saveState === 'pending'
+                  ? intl.formatMessage({
+                      id: 'CmsFrameSaveStatePending',
+                      defaultMessage: 'Not saved yet'
+                    })
+                  : intl.formatMessage(
+                      {
+                        id: 'CmsFrameSaveStateSaved',
+                        defaultMessage: 'Saved {at}'
+                      },
+                      {
+                        at: sharedDraft.lastSavedAt
+                          ? intl.formatTime(new Date(sharedDraft.lastSavedAt))
+                          : ''
+                      }
+                    ),
         icon:
           sharedDraft.saveState === 'offline'
             ? FaPlug
             : sharedDraft.saveState === 'error'
               ? FaExclamationTriangle
-              : FaCloudUploadAlt,
+              : sharedDraft.saveState === 'pending'
+                ? FaRegClock
+                : FaCloudUploadAlt,
         isLoading: sharedDraft.saveState === 'saving',
         onClick: () => {
           if (sharedDraft.lastCommitUrl) {
