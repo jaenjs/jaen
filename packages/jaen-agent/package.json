@@ -1,6 +1,6 @@
 {
   "name": "jaen-agent",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "description": "The jaen agent: the one process that reads a site's jaen data from its repository and writes every saved change back as a git commit.",
   "license": "EUPL-1.2",
