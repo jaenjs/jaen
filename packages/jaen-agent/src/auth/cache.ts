@@ -10,11 +10,22 @@
 //
 // The plugin's own middleware is wrapped rather than replaced: it stays the
 // only thing that validates a token, and this only remembers what it decided,
-// in the module, keyed by the SHA-256 of the token, for AUTH_CACHE_TTL_MS
-// (sixty seconds, 0 disables). A revoked token therefore keeps working for up
-// to a minute and no longer. A hit past half its life is refreshed in the
-// background against a context of its own, so a caller who keeps working
-// never pays the round trips again.
+// keyed by the SHA-256 of the token, for AUTH_CACHE_TTL_MS (sixty seconds, 0
+// disables). A revoked token therefore keeps working for up to a minute and
+// no longer. A hit past half its life is refreshed in the background against
+// a context of its own, so a caller who keeps working never pays the round
+// trips again.
+//
+// Two tiers, because one was not enough. The module scoped map belongs to one
+// Worker isolate, and Cloudflare starts isolates as it pleases: the shared
+// draft verifier measured 3.77 s on the first call of a run and 1.7 s on the
+// three after it, twice, and that two second gap is a token this isolate had
+// not seen. So the same answer also goes into the CACHE KV under
+// `auth:<sha256 of the token>`, which every isolate of every colo reads, and a
+// cold isolate pays a KV read of a few milliseconds instead of an
+// introspection and a userinfo round trip. The KV holds an identity, so the
+// key is the hash of the token and nothing else: reading it back means holding
+// the token, which already means being that caller.
 //
 // Two things it also fixes, both peculiar to the v3 plugin:
 //   * an anonymous request never reaches next(), because the plugin returns
@@ -32,18 +43,94 @@ export const AUTH_CACHE_ENTRY_KEY = 'authCacheEntry'
 
 const DEFAULT_TTL_MS = 60_000
 
+/** Cloudflare KV refuses an expirationTtl below sixty seconds. */
+const KV_MIN_TTL_SECONDS = 60
+
+/** The KV prefix. The rest of the key is the SHA-256 of the bearer. */
+const KV_PREFIX = 'auth:'
+
 /** Bounded, so a flood of distinct bad tokens cannot grow the isolate. */
 const MAX_ENTRIES = 2_000
 
 export type AuthCacheEntry = {
+  /** The SHA-256 of the bearer, so the grant list can be written back. */
+  key?: string
   auth: Record<string, unknown>
-  grants?: unknown[]
+  grants?: unknown
   storedAt: number
   expiresAt: number
   refreshing?: boolean
 }
 
 const entries = new Map<string, AuthCacheEntry>()
+
+/** The KV namespace, or null on a runner that has none bound. */
+const kvOf = (ctx: Context): KVNamespace | null =>
+  ((ctx.env as any)?.CACHE as KVNamespace | undefined) ?? null
+
+/**
+ * The entry as the KV holds it.
+ *
+ * `expiresAt` is an absolute instant and is what the entry is read against,
+ * because KV's own expiry has a minute as its floor while the TTL here may be
+ * shorter. KV only ever holds a value longer than it is honoured.
+ */
+const kvRead = async (
+  ctx: Context,
+  key: string
+): Promise<AuthCacheEntry | null> => {
+  const kv = kvOf(ctx)
+
+  if (!kv) return null
+
+  try {
+    const hit = (await kv.get(KV_PREFIX + key, 'json')) as AuthCacheEntry | null
+
+    if (!hit || typeof hit !== 'object') return null
+    if (!(hit.auth as any)?.user?.sub) return null
+    if (!(hit.expiresAt > Date.now())) return null
+
+    return hit
+  } catch {
+    // A KV that is not there is a slower request and never a wrong answer.
+    return null
+  }
+}
+
+const kvWrite = async (ctx: Context, key: string, entry: AuthCacheEntry) => {
+  const kv = kvOf(ctx)
+
+  if (!kv) return
+
+  const seconds = Math.max(
+    KV_MIN_TTL_SECONDS,
+    Math.ceil((entry.expiresAt - entry.storedAt) / 1000)
+  )
+
+  try {
+    await kv.put(
+      KV_PREFIX + key,
+      JSON.stringify({
+        auth: entry.auth,
+        grants: entry.grants,
+        storedAt: entry.storedAt,
+        expiresAt: entry.expiresAt
+      }),
+      {expirationTtl: seconds}
+    )
+  } catch {
+    // Same: the next request pays the round trips instead.
+  }
+}
+
+/** Off the response path where there is an execution context, inline where not. */
+const inTheBackground = (ctx: Context, work: Promise<unknown>) => {
+  try {
+    ctx.executionCtx.waitUntil(work)
+  } catch {
+    void work
+  }
+}
 
 const ttlMs = (ctx: Context): number => {
   const raw = (ctx.env as any)?.AUTH_CACHE_TTL_MS
@@ -104,6 +191,7 @@ const remember = (
   }
 
   const entry: AuthCacheEntry = {
+    key,
     auth: auth as Record<string, unknown>,
     grants:
       previous && (previous.auth as any)?.user?.sub === user.sub
@@ -130,6 +218,8 @@ const refresh = async (
   ttl: number,
   previous: AuthCacheEntry
 ) => {
+  const kv = kvOf(ctx)
+
   const vars = new Map<string, unknown>()
 
   const shadow = {
@@ -148,10 +238,19 @@ const refresh = async (
 
     // An introspection that came back inactive, or not at all, forgets the
     // token: the next request pays the round trip and is refused properly.
-    if (!entry) entries.delete(key)
+    // Both tiers, or a cold isolate would read the forgotten answer back out
+    // of the KV and the revocation would not stick.
+    if (!entry) {
+      entries.delete(key)
+      await kv?.delete(KV_PREFIX + key).catch(() => undefined)
+      return
+    }
+
+    await kvWrite(ctx, key, entry)
   } catch (error) {
     console.error('auth cache: background refresh failed', error)
     entries.delete(key)
+    await kv?.delete(KV_PREFIX + key).catch(() => undefined)
   }
 }
 
@@ -171,35 +270,55 @@ export const cachedIntrospection = (
 
     const key = await keyOf(token)
     const now = Date.now()
+
+    const use = (entry: AuthCacheEntry) => {
+      ctx.set('auth' as never, entry.auth as never)
+      ctx.set(AUTH_CACHE_ENTRY_KEY as never, entry as never)
+      if (entry.grants) ctx.set(ROLES_CACHE_KEY as never, entry.grants as never)
+
+      if (now - entry.storedAt > ttl / 2 && !entry.refreshing) {
+        entry.refreshing = true
+
+        inTheBackground(
+          ctx,
+          refresh(initialize, ctx, key, ttl, entry).finally(() => {
+            entry.refreshing = false
+          })
+        )
+      }
+    }
+
     const hit = entries.get(key)
 
     if (hit && hit.expiresAt > now) {
-      ctx.set('auth' as never, hit.auth as never)
-      ctx.set(AUTH_CACHE_ENTRY_KEY as never, hit as never)
-      if (hit.grants) ctx.set(ROLES_CACHE_KEY as never, hit.grants as never)
-
-      if (now - hit.storedAt > ttl / 2 && !hit.refreshing) {
-        hit.refreshing = true
-
-        const work = refresh(initialize, ctx, key, ttl, hit).finally(() => {
-          hit.refreshing = false
-        })
-
-        try {
-          ctx.executionCtx.waitUntil(work)
-        } catch {
-          // No execution context (a local runner): the refresh runs on its own.
-        }
-      }
-
+      use(hit)
       return next()
     }
 
     if (hit) entries.delete(key)
 
+    // This isolate has not seen the token, which does not mean nobody has.
+    // A KV read of a few milliseconds is the whole of what a cold isolate
+    // used to pay two seconds for.
+    const shared = await kvRead(ctx, key)
+
+    if (shared) {
+      shared.key = key
+      entries.set(key, shared)
+      use(shared)
+      return next()
+    }
+
     return runOnce(initialize, ctx, async () => {
       const entry = remember(key, ctx.get('auth' as never), ttl, hit)
-      if (entry) ctx.set(AUTH_CACHE_ENTRY_KEY as never, entry as never)
+
+      if (entry) {
+        ctx.set(AUTH_CACHE_ENTRY_KEY as never, entry as never)
+        // Off the response path: the caller waits for the answer, not for the
+        // write that saves the next isolate the round trips.
+        inTheBackground(ctx, kvWrite(ctx, key, entry))
+      }
+
       return next()
     })
   }
@@ -228,6 +347,25 @@ const runOnce = async (
   await initialize(ctx, once as never)
 
   if (!went) await once()
+}
+
+/**
+ * The resolved grant list, written back into the shared tier.
+ *
+ * `../index` resolveCaller works out which roles a caller holds and in which
+ * organisation, sometimes with a lookup through the site's identity facade,
+ * and hangs the answer on the request's cache entry. Without this the answer
+ * would live in one isolate: a cold one would read the identity out of the KV
+ * and then pay the facade lookup anyway, which is the round trip this whole
+ * file exists to avoid.
+ */
+export const persistCallerGrants = (
+  ctx: Context,
+  entry: AuthCacheEntry
+): void => {
+  if (!entry?.key) return
+
+  inTheBackground(ctx, kvWrite(ctx, entry.key, entry))
 }
 
 /** For a debug hook and the tests: how many tokens are remembered right now. */

@@ -1,13 +1,19 @@
 /**
- * Reading the head patch, and writing it back as a commit.
+ * Reading the head files, and writing back the one a save touched.
  *
  * The repository is the store. Every read comes from the branch HEAD through
  * the GitHub API, every write is a commit in the editor's name, and the only
  * state the agent keeps of its own is a thirty second read cache and a
  * fifteen second in-flight lock, both in KV, neither a store of record.
  *
- * The rule for a stale save is that it is rebased and never rejected: the
- * changes are applied onto the document read under the lock, which is the
+ * Two files and not one, see ./document: `jaen-data/live.json` carries the
+ * pages, the site metadata and the widgets, `jaen-data/live-media.json`
+ * carries the media catalogue. A save reads and writes only the file its
+ * changes belong to, so a text change no longer PUTs the 80 KB of media nodes
+ * it does not touch and a picture no longer PUTs the pages.
+ *
+ * The rule for a stale save is unchanged: it is rebased and never rejected.
+ * The changes are applied onto the file read under the lock, which is the
  * rebase, and the answer names every field whose remote value it replaced.
  */
 import {
@@ -16,14 +22,22 @@ import {
   type JaenChangeInput
 } from './apply-change'
 import {
-  LIVE_PATH,
-  PATCHES_PATH,
+  emptyMediaPatch,
   emptyPatch,
   fromDraft,
+  HEAD_LINES,
+  isMediaChange,
+  LIVE_LINE,
+  LIVE_PATH,
+  MEDIA_LINE,
+  MEDIA_PATH,
+  mergePatches,
   parsePatch,
+  PATCHES_PATH,
   serialisePatch,
+  splitPatch,
   toDraft,
-  withLiveLine,
+  withHeadLines,
   type HeadPatch
 } from './document'
 import {cache, siteBranch, sitePath, type SiteEntry} from './env'
@@ -34,7 +48,7 @@ import {
   writeFile,
   type CommitAuthor
 } from './github'
-import type {FieldAuthors} from './types'
+import type {FieldAuthors, JaenDraft} from './types'
 
 /** The committer of every commit. The author is the editor. */
 export const COMMITTER: CommitAuthor = {
@@ -58,7 +72,9 @@ const MAX_ATTEMPTS = 3
 
 export interface ReadState {
   head: string
+  /** `jaen-data/live.json` at that commit, which is what the API answers. */
   blobSha: string | null
+  /** The two files put back together. */
   patch: HeadPatch
   readAt: string
 }
@@ -68,10 +84,64 @@ interface CachedRead extends ReadState {
   goodUntil: number
 }
 
+// --------------------------------------------------------------------------
+// One file of the head
+// --------------------------------------------------------------------------
+
+interface PartRead {
+  path: string
+  /** Null when the file is not in the repository yet. */
+  text: string | null
+  blobSha: string | null
+  patch: HeadPatch
+}
+
+const readPart = async (
+  entry: SiteEntry,
+  path: string,
+  ref: string,
+  fallback: () => HeadPatch
+): Promise<PartRead> => {
+  const file = await readFile(entry, sitePath(entry, path), ref)
+
+  return {
+    path,
+    text: file?.text ?? null,
+    blobSha: file?.sha ?? null,
+    patch: file ? parsePatch(file.text).patch : fallback()
+  }
+}
+
 /**
- * The current head patch.
+ * The branch head alone.
  *
- * `fresh` skips the KV cache, which every write does: a save that applied
+ * This is what a poll costs whose `sinceSha` is still the head, which is
+ * almost every poll of every open CMS: one commit lookup and no file read at
+ * all, or nothing when the cache is warm. Before the split it read the whole
+ * head patch to answer `changed: false` with no body.
+ */
+export const readHeadSha = async (
+  siteKey: string,
+  entry: SiteEntry
+): Promise<string> => {
+  const kv = cache()
+
+  if (kv) {
+    const hit = (await kv.get(
+      headKey(siteKey, entry),
+      'json'
+    )) as CachedRead | null
+
+    if (hit && hit.goodUntil > Date.now()) return hit.head
+  }
+
+  return headSha(entry, siteBranch(entry))
+}
+
+/**
+ * The current head, both files merged.
+ *
+ * `fresh` skips the KV cache. Every write does, because a save that applied
  * changes onto a thirty second old document would lose whatever landed in
  * between, and the whole point of the lock is that it does not.
  */
@@ -88,9 +158,7 @@ export const readHead = async (
   const cacheKey = headKey(siteKey, entry)
 
   if (!options?.fresh && kv) {
-    const hit = await kv.get(cacheKey, 'json')
-
-    const cached = hit as CachedRead | null
+    const cached = (await kv.get(cacheKey, 'json')) as CachedRead | null
 
     if (cached && cached.goodUntil > Date.now()) {
       return {
@@ -103,14 +171,24 @@ export const readHead = async (
   }
 
   const head = await headSha(entry, branch)
-  const file = await readFile(entry, sitePath(entry, LIVE_PATH), head)
 
-  const {patch} = file ? parsePatch(file.text) : {patch: emptyPatch()}
+  const [main, media] = await Promise.all([
+    readPart(entry, LIVE_PATH, head, emptyPatch),
+    readPart(entry, MEDIA_PATH, head, emptyMediaPatch)
+  ])
+
+  // A site that saved before the split still carries the catalogue inside
+  // live.json. Splitting it here rather than only on the next save is what
+  // lets the CMS read one document either way.
+  const split = splitPatch(main.patch)
 
   const state: ReadState = {
     head,
-    blobSha: file?.sha ?? null,
-    patch,
+    blobSha: main.blobSha,
+    patch: mergePatches(
+      split.main,
+      media.text === null && split.carried ? split.media : media.patch
+    ),
     readAt: new Date().toISOString()
   }
 
@@ -227,6 +305,14 @@ export interface SaveOutcome {
   rebased: boolean
   overwrote: FieldOverwrite[]
   authors: FieldAuthors
+  /** The head files this save actually wrote. Empty is impossible. */
+  wrote: string[]
+}
+
+interface Pending {
+  part: PartRead
+  draft: JaenDraft
+  authors: FieldAuthors
 }
 
 export const save = async (
@@ -241,58 +327,179 @@ export const save = async (
   const branch = siteBranch(entry)
   const lock = await acquireLock(siteKey)
 
+  const mediaChanges = input.changes.filter(isMediaChange)
+  const mainChanges = input.changes.filter(change => !isMediaChange(change))
+
   try {
     let lastError: unknown
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const state = await readHead(siteKey, entry, {fresh: true})
+      const head = await headSha(entry, branch)
+      const rebased = Boolean(input.baseSha) && input.baseSha !== head
 
-      const rebased = Boolean(input.baseSha) && input.baseSha !== state.head
+      // Only the file the changes belong to is read. A picture never opens
+      // the pages and a text change never opens the catalogue, which is one
+      // round trip and 80 KB of parsing each way.
+      let media = mediaChanges.length
+        ? await readPart(entry, MEDIA_PATH, head, emptyMediaPatch)
+        : null
 
-      const draft = toDraft(state.patch)
-      const authors: FieldAuthors = {...(state.patch.authors ?? {})}
+      const needMain = mainChanges.length > 0 || media?.text === null
 
-      const result = applyChanges(
-        draft,
-        input.changes,
-        authors,
-        {sub: input.author.sub, name: input.author.name},
-        {rebased}
-      )
+      let main = needMain
+        ? await readPart(entry, LIVE_PATH, head, emptyPatch)
+        : null
+
+      let mainPatch = main?.patch
+      let carried = false
+
+      if (main) {
+        const split = splitPatch(main.patch)
+
+        mainPatch = split.main
+        carried = split.carried
+
+        // The site saved before the split existed, so the catalogue is still
+        // inside live.json. It moves out here, once, in the same save.
+        if (carried) {
+          if (!media) {
+            media = await readPart(entry, MEDIA_PATH, head, emptyMediaPatch)
+          }
+
+          if (media.text === null) media.patch = split.media
+        }
+      }
+
+      const pending: Array<Pending & {kind: 'main' | 'media'}> = []
+      const overwrote: FieldOverwrite[] = []
+      const summaries: string[] = []
+      const authors: FieldAuthors = {}
+
+      if (main && mainPatch) {
+        const draft = toDraft(mainPatch)
+        const mainAuthors: FieldAuthors = {...(mainPatch.authors ?? {})}
+
+        if (mainChanges.length) {
+          const result = applyChanges(
+            draft,
+            mainChanges,
+            mainAuthors,
+            {sub: input.author.sub, name: input.author.name},
+            {rebased}
+          )
+
+          overwrote.push(...result.overwrote)
+          summaries.push(result.summary)
+        }
+
+        // Written when the batch touched it, and also when the catalogue had
+        // to be lifted out of it, which changes the file without any change
+        // of the caller's.
+        if (mainChanges.length || carried) {
+          pending.push({kind: 'main', part: main, draft, authors: mainAuthors})
+        }
+
+        Object.assign(authors, mainAuthors)
+      }
+
+      if (media) {
+        const draft = toDraft(media.patch)
+        const mediaAuthors: FieldAuthors = {...(media.patch.authors ?? {})}
+
+        if (mediaChanges.length) {
+          const result = applyChanges(
+            draft,
+            mediaChanges,
+            mediaAuthors,
+            {sub: input.author.sub, name: input.author.name},
+            {rebased}
+          )
+
+          overwrote.push(...result.overwrote)
+          summaries.push(result.summary)
+        }
+
+        if (mediaChanges.length || (carried && media.text === null)) {
+          pending.push({
+            kind: 'media',
+            part: media,
+            draft,
+            authors: mediaAuthors
+          })
+        }
+
+        Object.assign(authors, mediaAuthors)
+      }
 
       const message =
-        `jaen: ${input.author.name} ${result.summary}` +
+        `jaen: ${input.author.name} ${summaries.join(', ') || 'saved'}` +
         (rebased ? '\n\nRebased on the current head.' : '')
 
-      const patch = fromDraft(draft, authors, message.split('\n')[0]!)
+      const first = message.split('\n')[0]!
 
       try {
-        const written = await writeFile(entry, {
-          path: sitePath(entry, LIVE_PATH),
-          branch,
-          text: serialisePatch(patch),
-          sha: state.blobSha,
-          message,
-          author: {name: input.author.name, email: input.author.email},
-          committer: COMMITTER
-        })
+        let written: {
+          commitSha: string
+          commitUrl: string
+          blobSha: string
+        } | null = null
+        let mainBlob = main?.blobSha ?? ''
+        const wrote: string[] = []
 
-        // `patches.txt` is touched only when the head patch is not in it yet,
-        // once per site, right after the first save. A second commit rather
-        // than the same one, because the contents API writes one file.
-        await ensureLiveLine(entry, branch, input.author)
+        for (const entryToWrite of pending) {
+          const patch = fromDraft(
+            entryToWrite.draft,
+            entryToWrite.authors,
+            first
+          )
+
+          // The catalogue file carries no site metadata and no widgets: it is
+          // one page stub with one field, and writing empty containers into
+          // it would put them into the build's merge for no reason.
+          if (entryToWrite.kind === 'media') {
+            patch.data.site = {}
+            patch.data.widgets = []
+          }
+
+          const result = await writeFile(entry, {
+            path: sitePath(entry, entryToWrite.part.path),
+            branch,
+            text: serialisePatch(patch),
+            sha: entryToWrite.part.blobSha,
+            message,
+            author: {name: input.author.name, email: input.author.email},
+            committer: COMMITTER
+          })
+
+          written = result
+          wrote.push(entryToWrite.part.path)
+
+          if (entryToWrite.kind === 'main') mainBlob = result.blobSha
+        }
+
+        if (!written) {
+          throw new Error('jaen-agent: a save that wrote no file at all')
+        }
+
+        // `patches.txt` is touched only when the two head files are not
+        // already its last two lines, in that order: once per site after the
+        // first save, and once more when the catalogue is split off.
+        await ensureHeadLines(entry, branch, input.author, {
+          media: wrote.includes(MEDIA_PATH)
+        })
 
         await dropCache(siteKey, entry)
 
         return {
           headSha: written.commitSha,
-          blobSha: written.blobSha,
+          blobSha: mainBlob,
           commitSha: written.commitSha,
           commitUrl: written.commitUrl,
           savedAt: new Date().toISOString(),
           rebased,
-          overwrote: result.overwrote,
-          authors
+          overwrote,
+          authors,
+          wrote
         }
       } catch (error) {
         if (!(error instanceof ConflictError)) throw error
@@ -312,15 +519,35 @@ export const save = async (
   }
 }
 
-/** The head patch has to be the last line of patches.txt or it is not the head. */
-const ensureLiveLine = async (
+/**
+ * The head files have to be the last lines of patches.txt, in this order, or
+ * they are not the head.
+ *
+ * `live-media.json` is listed only once it exists, because the build reads a
+ * local patch line as a file and panics on one that is not there. So the
+ * wanted tail is `live.json` alone until the catalogue file has been written,
+ * and both from then on, which the file itself remembers: a line already in
+ * patches.txt names a file already in the repository.
+ */
+const ensureHeadLines = async (
   entry: SiteEntry,
   branch: string,
-  author: CommitAuthor
+  author: CommitAuthor,
+  options: {media: boolean}
 ): Promise<void> => {
   const path = sitePath(entry, PATCHES_PATH)
   const file = await readFile(entry, path, branch)
-  const {text, changed} = withLiveLine(file?.text ?? '')
+  const current = file?.text ?? ''
+
+  const listed = current
+    .split('\n')
+    .map(line => line.trim())
+    .includes(MEDIA_LINE)
+
+  const {text, changed} = withHeadLines(
+    current,
+    options.media || listed ? HEAD_LINES : [LIVE_LINE]
+  )
 
   if (!changed) return
 
@@ -329,7 +556,7 @@ const ensureLiveLine = async (
     branch,
     text,
     sha: file?.sha ?? null,
-    message: 'jaen: record the head patch in patches.txt',
+    message: 'jaen: record the head patches in patches.txt',
     author: {name: author.name, email: author.email},
     committer: COMMITTER
   })

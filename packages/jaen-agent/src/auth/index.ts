@@ -15,6 +15,7 @@ import {getContext, ServiceError} from '@getcronit/pylon'
 import {env, USER_AGENT, type SiteEntry} from '../env'
 import {
   AUTH_CACHE_ENTRY_KEY,
+  persistCallerGrants,
   ROLES_CACHE_KEY,
   type AuthCacheEntry
 } from './cache'
@@ -219,6 +220,10 @@ export const resolveCaller = async (
 
   if (cacheEntry && typeof cacheEntry === 'object') {
     ;(cacheEntry as any).grants = {grants, orgs: Array.from(orgs)}
+
+    // Into the shared tier as well, or the next cold isolate reads the
+    // identity out of the KV and pays the facade lookup all over again.
+    if (ctx) persistCallerGrants(ctx, cacheEntry)
   }
 
   return resolved

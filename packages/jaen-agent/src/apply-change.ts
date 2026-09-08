@@ -28,6 +28,7 @@ import type {
 
 export type JaenChangeKind =
   | 'fieldWrite' // page.field_write
+  | 'fieldMerge' // page.field_write, of a field that holds a catalogue
   | 'sectionAdd' // page.section_add
   | 'sectionRemove' // page.section_remove
   | 'sectionMove' // page.section_move
@@ -43,6 +44,8 @@ export type JaenChangeKind =
  * Which slot carries what, per kind:
  *
  *   fieldWrite    pageId, fieldType, fieldName, optional section, value, props
+ *   fieldMerge    the same, but value is the entries that changed and
+ *                 props.removed the keys that went
  *   sectionAdd    pageId, section.path, props {between, sectionItemType}
  *   sectionRemove pageId, section.path, section.id, props {between}
  *   sectionMove   pageId, section.path, section.id, props {between, move}
@@ -111,7 +114,8 @@ const pathKey = (path: SectionPath | undefined): string =>
  */
 export const fieldKey = (change: JaenChangeInput): string => {
   switch (change.kind) {
-    case 'fieldWrite': {
+    case 'fieldWrite':
+    case 'fieldMerge': {
       const inSection = change.section
         ? `${pathKey(change.section.path)}/${change.section.id ?? ''}/`
         : ''
@@ -179,6 +183,61 @@ const applyFieldWrite = (draft: JaenDraft, change: JaenChangeInput): void => {
         props
       }
     }
+  }
+}
+
+/**
+ * A field that holds a record, written by its changed keys instead of whole.
+ *
+ * The media library is the one field in jaen that works this way: the gallery
+ * reads `media_nodes` as one object of 140 entries and writes the whole object
+ * back on every upload, clone, edit and delete, so a picture used to send the
+ * entire catalogue up the wire and commit the entire catalogue back down. The
+ * client sends the entries that changed and the ids that went, and this merges
+ * them onto whatever the repository holds now, which also means two editors
+ * uploading at the same time no longer overwrite each other's node.
+ *
+ * A merge whose base is missing is a write of what it was given, which is the
+ * honest answer: the client only sends a merge when it has the remote value to
+ * diff against.
+ */
+const applyFieldMerge = (draft: JaenDraft, change: JaenChangeInput): void => {
+  const {pageId, fieldType, fieldName} = change
+
+  if (!pageId) throw new Error('fieldMerge without a pageId')
+  if (!fieldType || !fieldName) {
+    throw new Error('fieldMerge without a fieldType or fieldName')
+  }
+
+  const page = ensurePage(draft, pageId)
+  page.modifiedAt = nowIso()
+  page.jaenFields = page.jaenFields || {}
+
+  const field = page.jaenFields[fieldType]?.[fieldName]
+  const previous = field?.value
+
+  const merged: Record<string, unknown> =
+    previous && typeof previous === 'object' && !Array.isArray(previous)
+      ? {...(previous as Record<string, unknown>)}
+      : {}
+
+  const removed = Array.isArray(change.props?.removed)
+    ? (change.props!.removed as unknown[])
+    : []
+
+  for (const key of removed) {
+    if (typeof key === 'string') delete merged[key]
+  }
+
+  const added = change.value
+
+  if (added && typeof added === 'object' && !Array.isArray(added)) {
+    Object.assign(merged, added as Record<string, unknown>)
+  }
+
+  page.jaenFields[fieldType] = {
+    ...page.jaenFields[fieldType],
+    [fieldName]: {...field, value: merged}
   }
 }
 
@@ -330,6 +389,9 @@ const applyOne = (draft: JaenDraft, change: JaenChangeInput): void => {
     case 'fieldWrite':
       return applyFieldWrite(draft, change)
 
+    case 'fieldMerge':
+      return applyFieldMerge(draft, change)
+
     case 'sectionAdd':
     case 'sectionRemove':
     case 'sectionMove':
@@ -390,7 +452,9 @@ const applyOne = (draft: JaenDraft, change: JaenChangeInput): void => {
 
 /** The one line a commit message starts with. */
 const summarise = (changes: JaenChangeInput[], pages: Set<string>): string => {
-  const fields = changes.filter(c => c.kind === 'fieldWrite').length
+  const fields = changes.filter(
+    c => c.kind === 'fieldWrite' || c.kind === 'fieldMerge'
+  ).length
   const rest = changes.length - fields
   const parts: string[] = []
 
@@ -437,7 +501,15 @@ export const applyChanges = (
 
     // Only a rebase can overwrite somebody else's value: on a save whose
     // baseSha is the current head, the client already saw what it replaced.
-    if (options?.rebased && previous && previous.sub !== author.sub) {
+    // A merge cannot overwrite: it applies the keys that changed onto
+    // whatever the repository holds, so two editors adding a picture each
+    // keep both pictures and neither replaced the other's value.
+    if (
+      options?.rebased &&
+      previous &&
+      previous.sub !== author.sub &&
+      change.kind !== 'fieldMerge'
+    ) {
       overwrote.push({
         field: key,
         previousAuthor: previous.name,

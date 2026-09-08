@@ -26,10 +26,10 @@ import {
 
 import type {JaenChangeInput} from './apply-change'
 import {cachedIntrospection} from './auth/cache'
-import {requireSiteAdmin} from './auth'
+import {editor as callerEditor, requireSiteAdmin} from './auth'
 import {env, site as siteEntry, siteBranch, USER_AGENT} from './env'
 import {dispatchWorkflow, latestRunUrl} from './github'
-import {readHead, save as saveToRepository} from './store'
+import {readHead, readHeadSha, save as saveToRepository} from './store'
 import type {FieldAuthors} from './types'
 
 // --------------------------------------------------------------------------
@@ -57,6 +57,25 @@ export interface Draft {
   readAt: string
 }
 
+/**
+ * The answer of the warm up call, which is the CMS saying hello.
+ *
+ * It touches no repository and reads no file. Its whole cost is the
+ * introspection the auth middleware pays before a resolver runs, which is
+ * exactly why the CMS makes it when it opens: the two seconds a cold token
+ * costs are then spent while the editor is still looking at the toolbar
+ * rather than inside their first save. See docs/architecture/draft-state.md,
+ * "The budget".
+ */
+export interface Viewer {
+  site: string
+  sub: string
+  name: string
+  email: string
+  /** The instant the agent answered, so the client can see it was reached. */
+  at: string
+}
+
 export interface FieldOverwrite {
   field: string
   previousAuthor: string | null
@@ -72,6 +91,12 @@ export interface SaveResult {
   rebased: boolean
   /** The fields whose remote value this save replaced, and who had written them. */
   overwrote: FieldOverwrite[]
+  /**
+   * The head files this save wrote, relative to the repository root. A text
+   * change writes `jaen-data/live.json` and a picture
+   * `jaen-data/live-media.json`, and neither writes the other.
+   */
+  wrote: string[]
 }
 
 export interface PublishResult {
@@ -115,6 +140,30 @@ export const graphql = {
     },
 
     /**
+     * Who is calling, and nothing else.
+     *
+     * The cheapest authenticated call the agent has: no GitHub round trip, no
+     * file, no KV read but the auth cache's own. The CMS makes it once when it
+     * opens so that the token is introspected and cached before the first
+     * save needs it.
+     */
+    viewer: async (site: string): Promise<Viewer> => {
+      const entry = siteEntry(site)
+
+      await requireSiteAdmin(site, entry)
+
+      const who = callerEditor(site)
+
+      return {
+        site,
+        sub: who.sub,
+        name: who.name,
+        email: who.email,
+        at: new Date().toISOString()
+      }
+    },
+
+    /**
      * The site's jaen data at the repository's HEAD.
      *
      * `sinceSha` is the head the caller already has. When it still matches,
@@ -126,19 +175,25 @@ export const graphql = {
 
       await requireSiteAdmin(site, entry)
 
-      const state = await readHead(site, entry)
+      // The poll that answers `changed: false` reads the branch head and no
+      // file at all, which is what almost every poll of every open CMS is.
+      if (sinceSha) {
+        const head = await readHeadSha(site, entry)
 
-      if (sinceSha && sinceSha === state.head) {
-        return {
-          site,
-          headSha: state.head,
-          blobSha: state.blobSha ?? '',
-          changed: false,
-          data: null,
-          authors: null,
-          readAt: state.readAt
+        if (head === sinceSha) {
+          return {
+            site,
+            headSha: head,
+            blobSha: '',
+            changed: false,
+            data: null,
+            authors: null,
+            readAt: new Date().toISOString()
+          }
         }
       }
+
+      const state = await readHead(site, entry)
 
       return {
         site,
@@ -205,7 +260,8 @@ export const graphql = {
           field: o.field,
           previousAuthor: o.previousAuthor ?? null,
           previousAt: o.previousAt ?? null
-        }))
+        })),
+        wrote: outcome.wrote
       }
     },
 
