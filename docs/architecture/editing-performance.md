@@ -1589,3 +1589,112 @@ What this costs is one dispatch and one React render inside the blur handler's
 own path, which is the path "The blur to the next painted frame is over one
 frame" measures. The reading with the change in is reported with the run that
 made it.
+
+### The other blur, which is the one `09` decides on, and it is 114 ms
+
+Everything above is a blur **with nothing typed**, which is the gesture that
+isolates the cost of leaving a field from the cost of saving what was written
+in it. `tests/09-editing-latency.ipynb` decides its browser acceptance on the
+other one: it types six characters into a live field and leaves. That check
+still fails, and it failed at **139.9 ms** on the build that carries both
+repairs, where ten untyped blurs on the same build read a median of 11 to 14.
+
+One reading cannot tell a regression from a sample, so
+`tests/support/blur-typed.py` takes the same gesture ten times, alternating so
+that five rounds add a character and five take it away and the field ends at
+the value it was found at, which it did (read back out of a second browser that
+had no memory of the run).
+
+| ten change-carrying blurs | reading                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| median gap                | **114.2 ms**                                                                           |
+| max                       | 129.6 ms                                                                               |
+| over one frame            | 10 of 10                                                                               |
+| main thread held          | 1.2 to 2.3 ms longer than the gap, so the gap **is** the task                          |
+| dispatches per blur       | 4 (`pages/field_write`, `remote/record`, `remote/saveStarted`, `remote/saveSucceeded`) |
+| React commits per blur    | **15 to 16**                                                                           |
+| `localStorage` writes     | 0 or 1, which is the deferred single pass working                                      |
+
+The long animation frame entry names one script and it is not ambiguous:
+`DIV#___gatsby.onfocusout`, 96.6 to 123.8 ms, with 1.6 to 5.4 ms of forced
+style and layout inside it. Chromium's trace agrees: the `focusout` dispatch
+runs 139.5 ms and a single React call inside it takes 99.9 ms. Style is 9.6 ms
+across six traced blurs now, against the 273 ms it was before the `:has()`
+repair, so this is not the same cost wearing a different name. It is
+JavaScript.
+
+**Why it is synchronous, and why that is right.** Another session closed a hole
+on the same day: a field's change used to sit in a 500 ms debounce, so a person
+who typed and closed the tab lost it. `handleContentBlur` now calls
+`handleTextSave.flush()` when the field is dirty, which puts the write, the
+recorder's change and the flusher into the `focusout` event itself. React
+treats `focusout` as discrete and flushes synchronously, so the whole chain and
+its fifteen commits land in the gesture. An edit that is in the store before
+the tab can die is worth more than a frame, and this file's own rule is that
+where the plan and speed disagree the plan wins and where the plan and safety
+disagree safety wins. So the number is recorded and the flush is not touched.
+
+**What the next session should take.** Four dispatches producing fifteen to
+sixteen React commits is the thing to attack, not the flush. One field's value
+changing should cost one commit, and the difference between one and fifteen is
+where the hundred milliseconds are. Nothing here has measured which components
+those commits belong to; that is the first thing to instrument, and
+`tests/support/blur-typed.py` already counts them per blur, so the comparison
+before and after is a run of that file.
+
+### The notebooks, run at the end of this repair
+
+| notebook                   | PASS | FAIL | SKIP | WARN |
+| -------------------------- | ---- | ---- | ---- | ---- |
+| `09-editing-latency.ipynb` | 22   | 3    | 4    | 0    |
+| `11-cms-frame.ipynb`       | 26   | 0    | 0    | 0    |
+
+`11` is **26 / 0 / 0 / 0**, which is where the shipping run left it, and its
+storm check reads 0.2 React commits a second, 60.0 frames a second and 0.0
+`localStorage` writes a second with nobody typing.
+
+`09`'s three FAILs are one of this file's and two that are not. The one is the
+blur to the next painted frame, 139.9 ms, the section above. The other two are
+its live-agent edit and the read-back of it, and they failed because a second
+session was typing into the same field of the same live draft while the
+notebook ran: the value it expected to find was gone by the time it looked, and
+the value it did read back is the one that session had put there. Two verifiers
+on one live object is not a measurement anybody should have to disentangle,
+which this file has now said twice.
+
+`10-draft-persistence.ipynb` was **not run**. Its notebook, its two harness
+files and `packages/jaen/src/redux` were being edited by that other session
+while this one worked, and executing a notebook somebody is halfway through
+editing measures neither their work nor mine. It is named here as not run
+rather than reported as green.
+
+### The live draft, and what this run had to put back
+
+`11`'s first run corrupted a field of the live booklimo draft and the notebook
+caught it, which is the whole reason its set-back check reads the value back
+instead of trusting the gesture. `AboutP2` on the home page went from
+"...reliably economically and with comfort in mind..." to "...reliably
+economica comfort in mind...", with the run's own `frame probe` suffix still
+standing at the end. The cause is in `tests/support/frame-drawer.py`: it clicked
+the field, pressed `End` and backspaced over the suffix, and `End` in a
+contenteditable that **wraps** goes to the end of the visual line rather than
+the end of the content, so the twelve backspaces ran in the middle of a
+paragraph.
+
+It was put back by hand, by typing the value the run had found over the field's
+own selection, and read back out of a browser with no memory of the run:
+`AboutP2` is the value that was there before, `.uejej` and all, which was
+somebody else's unpublished edit and was left exactly as found rather than
+tidied. The set-back in `frame-drawer.py` now selects the field's own contents
+through the Selection API, which cannot reach outside the node the way
+`Control+a` can, types the original over them, and types nothing at all if the
+selection is not exactly the field's contents. `11` was re-run and its
+set-back check passes on 214 of 214 characters selected inside the field.
+
+One thing was learned the hard way and is written where the next reader will
+look: `RESTORE` in `tests/support/register-probe.py` dispatches into the
+**innermost** store, below the middleware, so it never reaches the recorder, the
+outbox or the agent. Its own comment claimed the opposite while the comment
+forty lines above it said so correctly. A first attempt to put `AboutP2` back
+went through it, appeared to work in the tab, and left the object holding the
+corrupted value. The misleading half is corrected.
