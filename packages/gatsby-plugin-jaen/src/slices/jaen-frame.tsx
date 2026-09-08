@@ -8,7 +8,7 @@ import {
   useAuthUser
 } from 'jaen'
 import {graphql, SliceComponentProps} from 'gatsby'
-import {useEffect, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {useIntl} from 'react-intl'
 import {globalHistory} from '@reach/router'
 
@@ -62,7 +62,9 @@ const Slice: React.FC<SliceProps> = props => {
     id: 'JaenFrameMediaModal'
   })
 
-  const {toast} = useNotificationsContext()
+  // `confirm` beside `toast`, because the discard below is the one control of
+  // this frame that undoes other people's work and it may not be one click.
+  const {toast, confirm} = useNotificationsContext()
 
   const jaenUpdate = useJaenUpdateModalContext()
 
@@ -91,6 +93,62 @@ const Slice: React.FC<SliceProps> = props => {
       }
     })
   }, [props.pageConfig])
+
+  /**
+   * Somebody discarded every unpublished change of this site.
+   *
+   * `draft-state.md`: "The other editors are told who discarded and when, not
+   * merely reverted under their hands." By the time this runs the draft on the
+   * screen is already the published one, because the invalidation in
+   * `remote-state` drops this browser's copy the moment it hears of the
+   * discard; what is left, and what this is, is saying so.
+   *
+   * The first pass only records what it found, so a browser that opens hours
+   * after a discard does not announce it. Every browser gets it, the one that
+   * asked for it included: it is the same event and one sentence about it is
+   * better than a second wording for the person who pressed the button.
+   */
+  const seenDiscardAt = useRef<string | undefined>(undefined)
+  const discardWatchStarted = useRef(false)
+
+  useEffect(() => {
+    const at = manager.sharedDraft.discardedAt
+
+    if (!discardWatchStarted.current) {
+      discardWatchStarted.current = true
+      seenDiscardAt.current = at
+      return
+    }
+
+    if (!at || at === seenDiscardAt.current) return
+
+    seenDiscardAt.current = at
+
+    toast({
+      status: 'warning',
+      title: intl.formatMessage({
+        id: 'CmsFrameDiscardedTitle',
+        defaultMessage: 'Unpublished changes discarded'
+      }),
+      description: intl.formatMessage(
+        {
+          id: 'CmsFrameDiscardedDescription',
+          defaultMessage:
+            '{who} discarded every unpublished change of this site at {at}. What you see is what is published.'
+        },
+        {
+          who:
+            manager.sharedDraft.discardedBy ||
+            intl.formatMessage({
+              id: 'CmsFrameDiscardedByAnAdmin',
+              defaultMessage: 'An administrator'
+            }),
+          at: intl.formatTime(new Date(at))
+        }
+      ),
+      duration: 8000
+    })
+  }, [manager.sharedDraft.discardedAt])
 
   // Runs again when the language changes. The frame's own entries, Settings
   // and Logout among them, are registered with strings formatted at the
@@ -215,6 +273,142 @@ const Slice: React.FC<SliceProps> = props => {
         order: 2
       }
 
+      /**
+       * Discard, which came back as a different thing.
+       *
+       * The old button emptied this browser's store, and that stopped meaning
+       * anything once the draft became shared: a change reaches the object a
+       * second or two after it is typed, so discarding "my" changes would have
+       * left them in every other editor's CMS. What it is now is site wide, an
+       * admin's, and behind a confirmation that names what will go, how many
+       * pages, whose edits and since when, out of the agent's own count and
+       * never out of this browser's.
+       *
+       * The published state comes back from the snapshot the last publish
+       * kept, so the result is exactly what that migration produced. See
+       * docs/architecture/draft-state.md, "Three operations that rewrite the
+       * shared draft".
+       */
+      const discardAllItem = {
+        label: intl.formatMessage({
+          id: 'CmsFrameDiscardAll',
+          defaultMessage: 'Discard all unpublished changes'
+        }),
+        icon: FaTrash,
+        order: 3,
+        onClick: async () => {
+          const title = intl.formatMessage({
+            id: 'CmsFrameDiscardAllTitle',
+            defaultMessage: 'Discard all unpublished changes'
+          })
+
+          try {
+            const preview = await manager.draft.discardPreview()
+
+            if (!preview) return
+
+            if (!preview.canDiscard) {
+              toast({
+                status: 'info',
+                title,
+                description:
+                  preview.reason ||
+                  intl.formatMessage({
+                    id: 'CmsFrameDiscardNothing',
+                    defaultMessage:
+                      'Nothing in the draft differs from what is published.'
+                  })
+              })
+
+              return
+            }
+
+            const editors = preview.editors
+              .map(editor => editor.name)
+              .filter(Boolean)
+              .join(', ')
+
+            const confirmed = await confirm({
+              icon: FaTrash,
+              title,
+              message: intl.formatMessage(
+                {
+                  id: 'CmsFrameDiscardAllConfirm',
+                  defaultMessage:
+                    '{fields, plural, one {# unpublished change} other {# unpublished changes}} on {pages, plural, one {# page} other {# pages}} will be undone for everybody{who}{when}. The site goes back to what the last publish made.'
+                },
+                {
+                  fields: preview.fields,
+                  pages: preview.pages,
+                  who: editors
+                    ? intl.formatMessage(
+                        {
+                          id: 'CmsFrameDiscardAllConfirmWho',
+                          defaultMessage: ', written by {editors}'
+                        },
+                        {editors}
+                      )
+                    : '',
+                  when: preview.since
+                    ? intl.formatMessage(
+                        {
+                          id: 'CmsFrameDiscardAllConfirmWhen',
+                          defaultMessage: ', since {since}'
+                        },
+                        {
+                          since: `${intl.formatDate(
+                            new Date(preview.since)
+                          )} ${intl.formatTime(new Date(preview.since))}`
+                        }
+                      )
+                    : ''
+                }
+              ),
+              confirmText: intl.formatMessage({
+                id: 'CmsFrameDiscardAllConfirmText',
+                defaultMessage: 'Discard everything'
+              }),
+              cancelText: intl.formatMessage({
+                id: 'CmsFrameDiscardAllCancelText',
+                defaultMessage: 'Keep editing'
+              })
+            })
+
+            if (!confirmed) return
+
+            // The revision the confirmation named. The agent refuses a
+            // confirmation about a draft that has moved since, so the sentence
+            // the person agreed to is still true when they agree to it.
+            const answer = await manager.draft.discard(preview.revision)
+
+            if (answer && !answer.discarded) {
+              toast({
+                status: 'info',
+                title,
+                description:
+                  answer.reason ||
+                  intl.formatMessage({
+                    id: 'CmsFrameDiscardNothing',
+                    defaultMessage:
+                      'Nothing in the draft differs from what is published.'
+                  })
+              })
+            }
+
+            // Nothing is said here on success. The object pushes the discard
+            // to every editor and this browser is one of them, so the toast
+            // above the menu says it once, in the same words everybody else
+            // reads.
+          } catch (error) {
+            toast({
+              status: 'error',
+              title,
+              description: (error as Error).message
+            })
+          }
+        }
+      }
+
       // Add jaenCMS user menu
       extendMenu('user', {
         group: 'jaenCMS',
@@ -257,7 +451,7 @@ const Slice: React.FC<SliceProps> = props => {
             order: 1
           },
           ...(sharedDraft.enabled
-            ? {saveState: saveStateItem}
+            ? {saveState: saveStateItem, discardAll: discardAllItem}
             : {
                 save: {
                   label: intl.formatMessage({
