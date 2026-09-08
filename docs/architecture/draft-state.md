@@ -945,3 +945,112 @@ would drop the agent's two publish commits. The orchestrator pushes.
 | byte identical data before and after the transition            | met 2026-09-08, four builds, sha256 `061e5491f389e376…`                                                                                      |
 | every loss scenario of `10-draft-persistence.ipynb`            | **met**, 35 PASS 0 FAIL 0 SKIP against the deployed agent                                                                                    |
 | the CMS still works on `localStorage` alone                    | met 2026-09-08 against the build the transition left; not re-measurable on a build that carries the option                                   |
+
+## Verified adversarially 2026-09-08, after the deploy
+
+An Opus session that built none of this, reading only and setting back every
+edit it made. booklimo only. Nothing was written on limosen: its draft object
+still answers `revision 0`, `publishedRevision 0`, `updatedAt null`.
+
+Two things about the run itself, because they bound what the numbers mean.
+Another session was writing into booklimo's live draft throughout (revision
+went from 29 to 32 while this run made one save, and a `FleetTitle` of
+`Our fleet r5000` appeared and went again), so every reading below was taken
+against a moving object and the counters are read immediately before and after
+each act rather than assumed. And the run ended locked out, which is the last
+entry in the table.
+
+| what the shape asks                                          | what the systems answered                                                                                                                                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| nothing in either site's `patches.txt` names a draft         | **met in both checkouts, not met on GitHub.** `netsnek/booklimo.at` main still carries `live.json` and `live-media.json` as lines 19 and 20 of its 22, and both blobs are still in its tree      |
+| booklimo's chain replays to the data the transition recorded | met. Two real builds with `JAEN_DATA_DUMP`, `pages`, `site` and `widgets` compared leaf by leaf: **one** differing leaf, `pages[1].modifiedAt`, which the three publishes since moved            |
+| a save produces no commit and no gateway file                | met. Ten saves at 09:28:31 to 09:28:33: `netsnek/booklimo.at` main `517b573d` before and after, `patches.txt` 22 lines before and after, the gateway's ownership store 496 rows before and after |
+| a publish produces exactly one of each                       | met. One commit `6f7b3217`, one file changed, `jaen-data/patches.txt` +1 −0, one new ownership row, the migration 589 bytes, top-level keys exactly `createdAt`, `data`, `message`               |
+| the agent refuses an anonymous call                          | met. `draft`, `save`, `publish` and `subscribe` all `AUTH_REQUIRED` with `statusCode` 401 and `data: null`                                                                                       |
+| the agent refuses a limosen admin on booklimo                | met. `FORBIDDEN` 403 on all four, and the same account is served on `jaen-agent.limosen.at` in the same minute, so the refusal is the site check and not a dead token                            |
+| a change reaches a second editor in under two seconds        | **not met as the acceptance is worded.** The agent's own half is 134, 62 and 71 ms in three of three. The blur is not measured here and cannot be under two seconds, see below                   |
+| the draft store is reached only through the interface        | met, by reading. Outside `src/draft` nothing names a Cloudflare type and nothing calls the object                                                                                                |
+
+**The invariant itself was put to the systems rather than argued.** A marker
+value was written into the live draft, left unpublished, and a full production
+build of booklimo was run with it standing: **zero** occurrences of the marker
+in the sourced jaen data, **zero** in `public/`, and the field's published value
+served instead. The build made no request to any agent host. That is "an
+unpublished edit never reaches a built site", measured with an unpublished edit
+actually in the object rather than with an empty draft.
+
+**The transition's own sha256 reproduces, and its byte count does not.**
+`061e5491f389e37647f044a3beccc77990a3dd2735312f54f5e6a07e0be46cf6` comes back
+exactly from `{pages, site, widgets}` of the kept dump at indent 2 without
+ASCII escaping. That serialisation is 642,007 **bytes** and 629,854
+**characters**. The figure this file records as bytes is the character count, so
+a reader reproducing it by size alone will think the gate moved when it has not.
+
+**GitHub's chain and this checkout's replay to the same bytes today.** Both were
+replayed with the build's own `deepmergeArrayIdMerge` and the `IMA:MdxField`
+custom merge: identical, zero differing leaves. So what the two head lines on
+GitHub cost today is the rule and not the content. They are still what
+`okf/decisions/hard-rules.md` forbids, they are still the only chain a build
+from `main` would replay, and the fix is still the push this run may not make.
+
+**On the two seconds.** The client's own constants settle it before the network
+is asked: a text field waits out its 500 ms debounce and the outbox waits out
+`debounceMs`, which is 1,000 ms because neither site sets it. That is 1,500 ms
+of window before a keystroke leaves the browser, against an acceptance of 2,000
+from the blur. The agent's half measured here is 62 to 134 ms from the save
+leaving one editor to the value being in the other's answer, over the object's
+socket with the ticket as a subprotocol and the hello frame as the design
+describes. So the deploy run's 2.14 s is reproducible arithmetic and not a slow
+day, and this file's own advice holds: whoever tightens this takes the window
+and not the socket. Until then the acceptance as worded is red.
+
+**Two smaller things the reading found.** A `fieldWrite` of a value identical to
+the one already there still bumps the revision, so a save that changes nothing
+makes the CMS say "not published" about content that is. And the change
+vocabulary has no way to remove a field: a field written by mistake can only be
+taken out with a whole `pageUpdate`, which also stamps `id`, `childPagesOrder`
+and `jaenPageMetadata` onto the draft's page node. Both are cheap to live with
+and neither is written down anywhere.
+
+### The run ended locked out, and that is the finding that matters most
+
+From about 09:47 UTC the booklimo machine admin, `taxi-test-admin-krc-api`, sub
+`389619038474475123`, was answered `FORBIDDEN` by `jaen-agent.booklimo.at` on
+`viewer`, `draft`, `save` and `subscribe`, in every one of sixteen calls over
+seven minutes, and at 09:54:53 it was served again with nothing changed on any
+identity. The same account had been served by the same host on dozens of calls
+between 09:24 and 09:44. So it healed on its own, which is what makes it worth
+writing down rather than easy to dismiss: a transient nobody was told about, in
+the one path that decides whether an editor may save.
+
+The identity server disagrees with the agent. `idm.booklimo.at`, asked with the
+KRC personal access token, answers that this user holds `jaen:admin` and lives
+in organisation `356348844407002709`, which is exactly what the agent says it
+requires. `jaen-agent.limosen.at` serves the limosen admin in the same minute,
+so the Worker is up and the refusal is booklimo's own path.
+
+The cause is not established here, and the shape of the code says why it cannot
+be seen from outside. `src/auth/index.ts` resolves a caller's roles from the
+claims first and asks `idm.<brand>` once when the claims say nothing, with the
+Worker's own `ORG_USER_MANAGER_TOKEN_BOOKLIMO`, and its own comment says "a
+failed lookup answers nothing, which is a caller with no roles and never an
+admin". A facade that errors and a role that was revoked are therefore the same
+answer. Measured beside it: `idm.booklimo.at` asked with a token of the wrong
+organisation answers `INTERNAL_SERVER_ERROR` rather than a refusal, which is the
+answer that would be swallowed.
+
+`okf/decisions/hard-rules.md` has a rule for exactly this, "A Zitadel token of
+the wrong organization answers 200 with an empty list", and it ends "an empty
+identity answer is never evidence that the directory is empty". The agent's role
+resolution takes it as evidence. Whatever broke the credential today, an editor
+who cannot save is what it looks like from the CMS, and the agent should tell a
+failed lookup apart from an empty one and refuse to decide rather than refuse
+the person.
+
+Left behind: this run's own field set back to `Our fleet`, which is what the
+site serves, read back at revision 53, and the probe field it had added removed
+again. The object was at revision 59 at the end with the other session's marker
+in `FleetTitle` and `publishedRevision` 29, which is that session's to set back. It was found at revision 18 against a
+published 13, so it is left with unpublished revisions the way it was found. The lockout arrived before a last publish could tidy that, and a publish
+in the middle of another session's edits would have taken their work live in any
+case.
