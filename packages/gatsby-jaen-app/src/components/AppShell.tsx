@@ -34,8 +34,8 @@
  * needs the value, and never toggled from inside the app.
  *
  * Chrome is not selectable, data is (design-consistency.md, rule 11). The one
- * place the app says it is app.css, keyed on this shell's own class, and not a
- * style prop here: a dialog, a drawer, a sheet and a toast render into a
+ * place the app says it is app.css, keyed on the root element's
+ * `jaen-app-open` class that this shell adds, and not a style prop here: a dialog, a drawer, a sheet and a toast render into a
  * portal on `body`, outside this element, and a rule written on this Box would
  * miss every one of them. See "Chrome is not selectable" in src/styles/app.css
  * and shared/components/Selectable.tsx for the mark that says a value is data.
@@ -45,7 +45,15 @@
  * `bg="limosen.bg.card"` here would resolve to nothing. The app looks like the
  * site through the brand ramp, which is the same gold in both systems.
  */
-import React, {useEffect, useMemo} from 'react'
+import React, {useEffect, useLayoutEffect, useMemo} from 'react'
+
+/**
+ * `useLayoutEffect` in the browser and `useEffect` on the server, which is the
+ * only way to run a layout effect in a component Gatsby also renders to HTML
+ * without React warning on every build.
+ */
+const useIsomorphicLayoutEffect =
+  typeof window === 'undefined' ? useEffect : useLayoutEffect
 import {Box} from '@chakra-ui/react'
 import {FaExclamationTriangle} from '@react-icons/all-files/fa/FaExclamationTriangle'
 import {useCaller, resetCaller} from '../../shared/auth'
@@ -222,6 +230,33 @@ export function AppShell({children}: AppShellProps) {
   // viewport meta says in a Safari tab, and the installed app honours the
   // meta but not touch-action. Cancelling gesturestart outside a map is the
   // one thing that stops both; the map keeps its own pinch (rule 7).
+  /**
+   * The root element says the app is open, and the stylesheet reads that.
+   *
+   * app.css used to select on `html:has(.jaen-app)`. That sheet is loaded on
+   * every page of both marketing sites, so on a page a person is editing in
+   * the CMS it marked html, body, #___gatsby and #momo as "affected by
+   * :has()", and Chromium then re-evaluated the `:has()` on every insertion or
+   * removal anywhere in the document and recalculated the style of all 1369
+   * elements. It cost 17 to 27 ms inside the keydown that leaves a field, which
+   * is most of what the owner reported as editing feeling laggy. A class is
+   * invalidated when it changes and at no other time. Measured in
+   * jaen's docs/architecture/editing-performance.md.
+   *
+   * `useLayoutEffect` rather than `useEffect`, so the class is on the element
+   * before the browser paints the commit that renders `.jaen-app` itself: the
+   * marker it replaces started matching at exactly that paint, and one frame of
+   * an app with the site's margins around it would be a visible regression. It
+   * is guarded for the server, where there is no layout to run before.
+   */
+  useIsomorphicLayoutEffect(() => {
+    const root = document.documentElement
+    root.classList.add('jaen-app-open')
+    return () => {
+      root.classList.remove('jaen-app-open')
+    }
+  }, [])
+
   useEffect(() => {
     const refuse = (e: Event) => {
       const target = e.target as Element | null
@@ -234,8 +269,10 @@ export function AppShell({children}: AppShellProps) {
 
   return (
     <Box
-      // The class is a marker for app.css, which hides the CMS footer beneath
-      // the app and zeroes the margins the site layout would add.
+      // The class is what `.jaen-app {touch-action: manipulation}` in app.css
+      // reads, and the marker a reader looks for in the DOM. What zeroes the
+      // margins and hides the CMS footer is `jaen-app-open` on the root
+      // element, added by the layout effect above.
       className="jaen-app"
       dir={code === 'ar-EG' ? 'rtl' : 'ltr'}
       display="flex"

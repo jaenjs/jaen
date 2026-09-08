@@ -3,28 +3,58 @@
    around a page, which a full-height app has to undo. */
 
 /* ── The CMS chrome around the app ──────────────────────────────────────────
-   .jaen-app is the marker the shell puts on its root. The page background and
-   the text colour are Chakra's (bg.canvas, fg.default from jaen's system, both
-   with a dark half that follows next-themes' class on <html>), so nothing here
-   paints a colour. What remains is the frame the site layout would otherwise
-   add around a full-height app. */
+   .jaen-app is the marker the shell puts on its root, and `html.jaen-app-open`
+   is the same fact written where a stylesheet can use it cheaply. The page
+   background and the text colour are Chakra's (bg.canvas, fg.default from
+   jaen's system, both with a dark half that follows next-themes' class on
+   <html>), so nothing here paints a colour. What remains is the frame the site
+   layout would otherwise add around a full-height app.
+
+   ── Why not `:has(.jaen-app)`, measured 2026-09-08 ────────────────────────
+   Every rule below used to be written as `html:has(.jaen-app)`,
+   `body:has(.jaen-app)`, `#___gatsby:has(.jaen-app)` and `#momo:has(.jaen-app)`,
+   which reads well and cost the CMS its editing speed. This sheet is loaded on
+   every page of both sites, not only the app's, so those four elements were
+   marked "affected by :has()" on every page a person edits. Chromium then
+   re-evaluates the `:has()` whenever anything in the document is inserted or
+   removed, and it invalidates all four together: invalidating `html` is a
+   style recalculation of the whole document.
+
+   Chromium's own trace, taken on a local production build of booklimo.at with
+   `disabled-by-default-devtools.timeline.invalidationTracking`, names it:
+   `StyleRecalcInvalidationTracking` with reason "Affected by :has()" on HTML,
+   BODY, DIV#___gatsby and DIV#momo, followed by one `UpdateLayoutTree` over
+   **1369 elements** costing 17 to 27 ms, inside the keydown that leaves a
+   field. Deleting these eleven rules from the live sheet, which changes not one
+   computed style on a page that has no `.jaen-app` on it, took the blur to the
+   next painted frame from a median of 34 to 45 ms down to 15 to 16 ms over ten
+   gestures, four times, and it is the only change that moved that number.
+
+   A class on the root element carries the same fact and is invalidated when
+   the class changes and at no other time. The shell adds it in a layout
+   effect, which runs before the paint of the commit that renders
+   `.jaen-app` itself, so it is on the element no later than the marker it
+   replaces. See src/components/AppShell.tsx.
+
+   The measurement is written up in the jaen repository, in
+   docs/architecture/editing-performance.md. */
 
 /* Hide the jaen page footer beneath the app. jaen renamed its root element
    from coco to momo. Both are listed so the rule survives the rename in either
    direction. */
-#coco:has(.jaen-app) > *:last-child,
-#momo:has(.jaen-app) > *:last-child {
+html.jaen-app-open #coco > *:last-child,
+html.jaen-app-open #momo > *:last-child {
   display: none !important;
 }
 
-#coco:has(.jaen-app),
-#momo:has(.jaen-app) {
+html.jaen-app-open #coco,
+html.jaen-app-open #momo {
   padding-top: 0 !important;
   margin: 0 !important;
 }
 
-html:has(.jaen-app),
-body:has(.jaen-app) {
+html.jaen-app-open,
+html.jaen-app-open body {
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -45,16 +75,16 @@ body:has(.jaen-app) {
    production build of booklimo.at at 390: the board's scrollHeight is the
    document's 5511 px, `window.scrollTo` moves the page, and body.scrollTop
    stays 0. */
-body:has(.jaen-app) {
+html.jaen-app-open body {
   overflow-x: clip !important;
 }
 
-html:has(.jaen-app) {
+html.jaen-app-open {
   overflow-x: hidden !important;
 }
 
-#___gatsby:has(.jaen-app),
-#gatsby-focus-wrapper:has(.jaen-app) {
+html.jaen-app-open #___gatsby,
+html.jaen-app-open #gatsby-focus-wrapper {
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -67,8 +97,8 @@ html:has(.jaen-app) {
    gone as well. The map keeps its own pinch: mapbox sets touch-action none on
    its canvas and handles the touches itself. The public pages carry none of
    this, the selector only matches while the app's shell is on the page. */
-html:has(.jaen-app),
-body:has(.jaen-app) {
+html.jaen-app-open,
+html.jaen-app-open body {
   touch-action: pan-x pan-y;
   /* The browser's own pull to refresh never reloads the app, the shell's
      PullToRefresh owns the gesture (rule 5b). */
@@ -98,25 +128,25 @@ body:has(.jaen-app) {
    button becoming selectable. Every input, textarea and select stays
    selectable whatever it sits in, or a person could not correct the middle of
    an address they typed. */
-html:has(.jaen-app),
-html:has(.jaen-app) body {
+html.jaen-app-open,
+html.jaen-app-open body {
   -webkit-user-select: none;
   user-select: none;
 }
 
-html:has(.jaen-app) [data-selectable] {
+html.jaen-app-open [data-selectable] {
   -webkit-user-select: text;
   user-select: text;
 }
 
-html:has(.jaen-app)
+html.jaen-app-open
   [data-selectable]
   :is(button, [role='button'], .chakra-badge) {
   -webkit-user-select: none;
   user-select: none;
 }
 
-html:has(.jaen-app) :is(input, textarea, select, [contenteditable='true']) {
+html.jaen-app-open :is(input, textarea, select, [contenteditable='true']) {
   -webkit-user-select: text;
   user-select: text;
 }
