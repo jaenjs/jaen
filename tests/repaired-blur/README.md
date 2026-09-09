@@ -6,10 +6,10 @@ stops rebuilding its frame on every focus, and `app.css` stops making `html`,
 `body`, `#___gatsby` and `#momo` the subjects of a `:has(.jaen-app)` on every
 page of both sites.
 
-| notebook                   | PASS | FAIL | SKIP | WARN |
-| -------------------------- | ---- | ---- | ---- | ---- |
-| `09-editing-latency.ipynb` | 22   | 3    | 4    | 0    |
-| `11-cms-frame.ipynb`       | 26   | 0    | 0    | 0    |
+| notebook                     | PASS | FAIL | SKIP | WARN |
+| ---------------------------- | ---- | ---- | ---- | ---- |
+| `09-editing-latency.ipynb`   | 22   | 3    | 4    | 0    |
+| `11-cms-frame.ipynb`         | 26   | 0    | 0    | 0    |
 
 `11` is green, where the first run of it in this session was 24 / 2: one of
 those two FAILs was a second session moving the draft's revision under the

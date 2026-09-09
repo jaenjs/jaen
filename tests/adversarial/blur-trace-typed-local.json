@@ -61973,31 +61973,106 @@
   "signedIn": true,
   "gapMedian": 156.3,
   "msByPhase": [
-    ["EventDispatch", 878.5400000000001],
-    ["FunctionCall", 772.9999999999997],
-    ["V8.GC_MC_BACKGROUND_MARKING", 151.86000000000004],
-    ["V8.GC_SCAVENGER_BACKGROUND_SCAVENGE_PARALLEL", 142.08000000000004],
-    ["RunTask", 43.25000000000007],
-    ["MinorGC", 32.97],
-    ["V8.GC_SCAVENGER", 32.75],
-    ["V8.GC_SCAVENGER_SCAVENGE", 32.64],
-    ["V8.GC_SCAVENGER_SCAVENGE_PARALLEL_PHASE", 29.68],
-    ["V8.GC_SCAVENGER_SCAVENGE_PARALLEL", 21.159999999999997],
-    ["UpdateLayoutTree", 9.639999999999999],
-    ["RasterTask", 6.090000000000001],
-    ["V8.GC_BACKGROUND_UNPARK", 4.47],
-    ["V8.GC_MC_INCREMENTAL", 3.7399999999999975],
-    ["V8.GC_MC_INCREMENTAL_EMBEDDER_TRACING", 1.4600000000000002],
-    ["Layout", 0.8600000000000001],
-    ["V8.GC_SCAVENGER_SCAVENGE_FINALIZE", 0.82],
-    ["V8.GC_MC_INCREMENTAL_START", 0.81],
-    ["V8.GC_SCAVENGER_SCAVENGE_WEAK_GLOBAL_HANDLES_PROCESS", 0.61],
-    ["Paint", 0.56],
-    ["V8.GC_SCAVENGER_FREE_REMEMBERED_SET", 0.5],
-    ["Layerize", 0.44999999999999996],
-    ["V8.GC_SCAVENGER_SCAVENGE_ROOTS", 0.41],
-    ["V8.GC_SCAVENGER_SCAVENGE_WEAK_GLOBAL_HANDLES_IDENTIFY", 0.39],
-    ["PrePaint", 0.37]
+    [
+      "EventDispatch",
+      878.5400000000001
+    ],
+    [
+      "FunctionCall",
+      772.9999999999997
+    ],
+    [
+      "V8.GC_MC_BACKGROUND_MARKING",
+      151.86000000000004
+    ],
+    [
+      "V8.GC_SCAVENGER_BACKGROUND_SCAVENGE_PARALLEL",
+      142.08000000000004
+    ],
+    [
+      "RunTask",
+      43.25000000000007
+    ],
+    [
+      "MinorGC",
+      32.97
+    ],
+    [
+      "V8.GC_SCAVENGER",
+      32.75
+    ],
+    [
+      "V8.GC_SCAVENGER_SCAVENGE",
+      32.64
+    ],
+    [
+      "V8.GC_SCAVENGER_SCAVENGE_PARALLEL_PHASE",
+      29.68
+    ],
+    [
+      "V8.GC_SCAVENGER_SCAVENGE_PARALLEL",
+      21.159999999999997
+    ],
+    [
+      "UpdateLayoutTree",
+      9.639999999999999
+    ],
+    [
+      "RasterTask",
+      6.090000000000001
+    ],
+    [
+      "V8.GC_BACKGROUND_UNPARK",
+      4.47
+    ],
+    [
+      "V8.GC_MC_INCREMENTAL",
+      3.7399999999999975
+    ],
+    [
+      "V8.GC_MC_INCREMENTAL_EMBEDDER_TRACING",
+      1.4600000000000002
+    ],
+    [
+      "Layout",
+      0.8600000000000001
+    ],
+    [
+      "V8.GC_SCAVENGER_SCAVENGE_FINALIZE",
+      0.82
+    ],
+    [
+      "V8.GC_MC_INCREMENTAL_START",
+      0.81
+    ],
+    [
+      "V8.GC_SCAVENGER_SCAVENGE_WEAK_GLOBAL_HANDLES_PROCESS",
+      0.61
+    ],
+    [
+      "Paint",
+      0.56
+    ],
+    [
+      "V8.GC_SCAVENGER_FREE_REMEMBERED_SET",
+      0.5
+    ],
+    [
+      "Layerize",
+      0.44999999999999996
+    ],
+    [
+      "V8.GC_SCAVENGER_SCAVENGE_ROOTS",
+      0.41
+    ],
+    [
+      "V8.GC_SCAVENGER_SCAVENGE_WEAK_GLOBAL_HANDLES_IDENTIFY",
+      0.39
+    ],
+    [
+      "PrePaint",
+      0.37
+    ]
   ],
   "endedAt": 1788906706.6209385
 }

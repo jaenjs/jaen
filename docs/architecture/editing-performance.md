@@ -1605,15 +1605,15 @@ that five rounds add a character and five take it away and the field ends at
 the value it was found at, which it did (read back out of a second browser that
 had no memory of the run).
 
-| ten change-carrying blurs | reading                                                                                |
-| ------------------------- | -------------------------------------------------------------------------------------- |
-| median gap                | **114.2 ms**                                                                           |
-| max                       | 129.6 ms                                                                               |
-| over one frame            | 10 of 10                                                                               |
-| main thread held          | 1.2 to 2.3 ms longer than the gap, so the gap **is** the task                          |
+| ten change-carrying blurs | reading |
+| ------------------------- | ------- |
+| median gap                | **114.2 ms** |
+| max                       | 129.6 ms |
+| over one frame            | 10 of 10 |
+| main thread held          | 1.2 to 2.3 ms longer than the gap, so the gap **is** the task |
 | dispatches per blur       | 4 (`pages/field_write`, `remote/record`, `remote/saveStarted`, `remote/saveSucceeded`) |
-| React commits per blur    | **15 to 16**                                                                           |
-| `localStorage` writes     | 0 or 1, which is the deferred single pass working                                      |
+| React commits per blur    | **15 to 16** |
+| `localStorage` writes     | 0 or 1, which is the deferred single pass working |
 
 The long animation frame entry names one script and it is not ambiguous:
 `DIV#___gatsby.onfocusout`, 96.6 to 123.8 ms, with 1.6 to 5.4 ms of forced
@@ -1644,10 +1644,10 @@ before and after is a run of that file.
 
 ### The notebooks, run at the end of this repair
 
-| notebook                   | PASS | FAIL | SKIP | WARN |
-| -------------------------- | ---- | ---- | ---- | ---- |
-| `09-editing-latency.ipynb` | 22   | 3    | 4    | 0    |
-| `11-cms-frame.ipynb`       | 26   | 0    | 0    | 0    |
+| notebook                     | PASS | FAIL | SKIP | WARN |
+| ---------------------------- | ---- | ---- | ---- | ---- |
+| `09-editing-latency.ipynb`   | 22   | 3    | 4    | 0    |
+| `11-cms-frame.ipynb`         | 26   | 0    | 0    | 0    |
 
 `11` is **26 / 0 / 0 / 0**, which is where the shipping run left it, and its
 storm check reads 0.2 React commits a second, 60.0 frames a second and 0.0

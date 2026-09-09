@@ -249,11 +249,32 @@ export function AppShell({children}: AppShellProps) {
    * an app with the site's margins around it would be a visible regression. It
    * is guarded for the server, where there is no layout to run before.
    */
+  const hostRef = React.useRef<HTMLDivElement>(null)
+
   useIsomorphicLayoutEffect(() => {
     const root = document.documentElement
     root.classList.add('jaen-app-open')
+
+    /**
+     * The layout that holds the app, marked as itself.
+     *
+     * There are two `#momo` elements on a CMS page: jaen's frame header and
+     * the page layout the app renders inside, which are siblings (see
+     * JaenFrame's own note on the id). The rules that zero the margins and
+     * hide the page footer mean the second one, which is why they were
+     * written as `#momo:has(.jaen-app)`. Rewriting them to a root class on
+     * 2026-09-08 made them match both, so in app mode the header's last
+     * child, the user menu, was hidden with `display: none`, and the owner
+     * lost the top bar in the installed app. The class goes on the host
+     * itself: it says the same thing `:has()` said, it invalidates only when
+     * it changes, and it cannot reach the header.
+     */
+    const host = hostRef.current?.closest('#momo, #coco') as HTMLElement | null
+    host?.classList.add('jaen-app-host')
+
     return () => {
       root.classList.remove('jaen-app-open')
+      host?.classList.remove('jaen-app-host')
     }
   }, [])
 
@@ -273,6 +294,7 @@ export function AppShell({children}: AppShellProps) {
       // reads, and the marker a reader looks for in the DOM. What zeroes the
       // margins and hides the CMS footer is `jaen-app-open` on the root
       // element, added by the layout effect above.
+      ref={hostRef}
       className="jaen-app"
       dir={code === 'ar-EG' ? 'rtl' : 'ltr'}
       display="flex"

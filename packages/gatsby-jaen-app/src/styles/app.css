@@ -41,14 +41,18 @@
 
 /* Hide the jaen page footer beneath the app. jaen renamed its root element
    from coco to momo. Both are listed so the rule survives the rename in either
-   direction. */
-html.jaen-app-open #coco > *:last-child,
-html.jaen-app-open #momo > *:last-child {
+   direction, and both carry `.jaen-app-host`, which the shell puts on the one
+   of the two that actually contains the app: jaen's frame header carries the
+   same id and must keep its user menu. Without that class this rule hid the
+   header's last child in app mode, which is the top bar the owner lost on
+   2026-09-08. See src/components/AppShell.tsx. */
+html.jaen-app-open #coco.jaen-app-host > *:last-child,
+html.jaen-app-open #momo.jaen-app-host > *:last-child {
   display: none !important;
 }
 
-html.jaen-app-open #coco,
-html.jaen-app-open #momo {
+html.jaen-app-open #coco.jaen-app-host,
+html.jaen-app-open #momo.jaen-app-host {
   padding-top: 0 !important;
   margin: 0 !important;
 }

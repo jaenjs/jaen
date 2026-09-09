@@ -5,12 +5,25 @@
   "conditions": {
     "base": {
       "rounds": 10,
-      "gaps": [36.1, 10.9, 10.7, 12.3, 12.6, 12.4, 6.0, 10.0, 10.4, 17.5],
+      "gaps": [
+        36.1,
+        10.9,
+        10.7,
+        12.3,
+        12.6,
+        12.4,
+        6.0,
+        10.0,
+        10.4,
+        17.5
+      ],
       "gapMedian": 11.6,
       "gapMax": 36.1,
       "gapOverOneFrame": 2,
       "blockMedian": 24.1,
-      "focusTo": ["DIV#fleet-Mercedes Benz E Class"],
+      "focusTo": [
+        "DIV#fleet-Mercedes Benz E Class"
+      ],
       "loaf": [
         [
           {
@@ -2721,12 +2734,25 @@
     },
     "nohas": {
       "rounds": 10,
-      "gaps": [25.9, 13.1, 11.8, 13.9, 12.8, 11.3, 14.7, 8.7, 18.2, 12.9],
+      "gaps": [
+        25.9,
+        13.1,
+        11.8,
+        13.9,
+        12.8,
+        11.3,
+        14.7,
+        8.7,
+        18.2,
+        12.9
+      ],
       "gapMedian": 13.0,
       "gapMax": 25.9,
       "gapOverOneFrame": 2,
       "blockMedian": 21.0,
-      "focusTo": ["DIV#fleet-Mercedes Benz E Class"],
+      "focusTo": [
+        "DIV#fleet-Mercedes Benz E Class"
+      ],
       "loaf": [
         [
           {
@@ -5535,12 +5561,25 @@
     },
     "base-again": {
       "rounds": 10,
-      "gaps": [27.6, 13.7, 13.8, 14.0, 16.9, 13.9, 15.1, 15.5, 13.9, 7.4],
+      "gaps": [
+        27.6,
+        13.7,
+        13.8,
+        14.0,
+        16.9,
+        13.9,
+        15.1,
+        15.5,
+        13.9,
+        7.4
+      ],
       "gapMedian": 13.95,
       "gapMax": 27.6,
       "gapOverOneFrame": 2,
       "blockMedian": 23.35,
-      "focusTo": ["DIV#fleet-Mercedes Benz E Class"],
+      "focusTo": [
+        "DIV#fleet-Mercedes Benz E Class"
+      ],
       "loaf": [
         [
           {
@@ -8389,12 +8428,25 @@
     },
     "nohas-again": {
       "rounds": 10,
-      "gaps": [40.1, 6.8, 8.6, 12.6, 14.4, 13.1, 13.5, 8.5, 16.0, 14.0],
+      "gaps": [
+        40.1,
+        6.8,
+        8.6,
+        12.6,
+        14.4,
+        13.1,
+        13.5,
+        8.5,
+        16.0,
+        14.0
+      ],
       "gapMedian": 13.3,
       "gapMax": 40.1,
       "gapOverOneFrame": 1,
       "blockMedian": 17.35,
-      "focusTo": ["DIV#fleet-Mercedes Benz E Class"],
+      "focusTo": [
+        "DIV#fleet-Mercedes Benz E Class"
+      ],
       "loaf": [
         [
           {

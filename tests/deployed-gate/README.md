@@ -7,15 +7,15 @@ on a local production build. This directory is the same instrument on the
 deployed, against the live `jaen-agent` 4.4.0, the live object and the live
 identity server. See `docs/architecture/draft-state.md`, "Shipped 2026-09-09".
 
-| file                                | what it is                                                                                                   |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `forced-a.json`, `forced-b.json`    | the first mechanism forced on the **deployed site**, twice: a read answered before a save, arriving after it |
-| `focused-a.json`, `focused-b.json`  | the second on the deployed site, twice: another editor writes the very field the caret is in                 |
-| `forced.json`, `focused.json`       | the notebook's own two, which it drives with `JAEN_LIVE=0` on this checkout's production build               |
-| `draft-before.json`                 | every text field of the live draft as this run found it, taken by `support/draft-guard.py`                   |
-| `draft-after.json`                  | the same after everything, field for field identical to it                                                   |
-| `10-draft-persistence.ship.ipynb`   | the run, with its outputs                                                                                    |
-| `10-draft-persistence.results.json` | the checks and their evidence                                                                                |
+| file                                | what it is                                                                                                     |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `forced-a.json`, `forced-b.json`    | the first mechanism forced on the **deployed site**, twice: a read answered before a save, arriving after it   |
+| `focused-a.json`, `focused-b.json`  | the second on the deployed site, twice: another editor writes the very field the caret is in                   |
+| `forced.json`, `focused.json`       | the notebook's own two, which it drives with `JAEN_LIVE=0` on this checkout's production build                 |
+| `draft-before.json`                 | every text field of the live draft as this run found it, taken by `support/draft-guard.py`                     |
+| `draft-after.json`                  | the same after everything, field for field identical to it                                                     |
+| `10-draft-persistence.ship.ipynb`   | the run, with its outputs                                                                                      |
+| `10-draft-persistence.results.json` | the checks and their evidence                                                                                  |
 
 `10-draft-persistence.ipynb` is **52 PASS 0 FAIL 0 SKIP 1 WARN**, the same
 counts as `../revert-gate/` and now against the deployed build. Its one WARN is
